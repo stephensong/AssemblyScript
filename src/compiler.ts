@@ -299,12 +299,12 @@ export class Compiler {
   initializeClass(node: ts.ClassDeclaration): void {
     const name = node.symbol.name;
 
+    if (node.typeParameters && node.typeParameters.length !== 0)
+      this.error(node.typeParameters[0], "Type parameters are not supported yet");
+
     for (let i = 0, k = node.members.length; i < k; ++i) {
       const member = node.members[i];
       switch (member.kind) {
-
-        case ts.SyntaxKind.Identifier:
-          break;
 
         case ts.SyntaxKind.MethodDeclaration:
           if (isExport(member))
@@ -472,10 +472,11 @@ export class Compiler {
 
       case ts.SyntaxKind.VariableStatement:
       {
-        const stmt = <ts.VariableStatement>node;
+        const variableNode = <ts.VariableStatement>node;
         const initializers: WasmExpression[] = [];
-        for (let i = 0, k = stmt.declarationList.declarations.length; i < k; ++i) {
-          const decl = stmt.declarationList.declarations[i];
+
+        for (let i = 0, k = variableNode.declarationList.declarations.length; i < k; ++i) {
+          const decl = variableNode.declarationList.declarations[i];
           const type = this.resolveType(decl.type);
           (<any>decl).wasmType = type;
           const index = onVariable(decl);
@@ -489,11 +490,12 @@ export class Compiler {
 
       case ts.SyntaxKind.IfStatement:
       {
-        const stmt = <ts.IfStatement>node;
+        const ifNode = <ts.IfStatement>node;
+
         return op.if(
-          this.convertValue(stmt.expression, this.compileExpression(stmt.expression, intType), (<any>stmt.expression).wasmType, intType, true),
-          this.compileStatement(stmt.thenStatement, onVariable),
-          stmt.elseStatement ? this.compileStatement(stmt.elseStatement, onVariable) : undefined
+          this.convertValue(ifNode.expression, this.compileExpression(ifNode.expression, intType), (<any>ifNode.expression).wasmType, intType, true),
+          this.compileStatement(ifNode.thenStatement, onVariable),
+          ifNode.elseStatement ? this.compileStatement(ifNode.elseStatement, onVariable) : undefined
         );
       }
 
@@ -524,35 +526,39 @@ export class Compiler {
 
       case ts.SyntaxKind.WhileStatement:
       {
+        const whileNode = <ts.WhileStatement>node;
+
         ++this.currentBlockIndex;
-        const stmt = <ts.WhileStatement>node;
+
         return op.loop("break$" + this.currentBlockIndex, op.block("continue$" + this.currentBlockIndex, [
-          op.break("break$" + this.currentBlockIndex, op.i32.eqz(this.convertValue(stmt.expression, this.compileExpression(stmt.expression, intType), (<any>stmt.expression).wasmType, intType, true))),
-          this.compileStatement(stmt.statement, onVariable)
+          op.break("break$" + this.currentBlockIndex, op.i32.eqz(this.convertValue(whileNode.expression, this.compileExpression(whileNode.expression, intType), (<any>whileNode.expression).wasmType, intType, true))),
+          this.compileStatement(whileNode.statement, onVariable)
         ]));
       }
 
       case ts.SyntaxKind.DoStatement:
       {
+        const doNode = <ts.WhileStatement>node;
+
         ++this.currentBlockIndex;
-        const stmt = <ts.WhileStatement>node;
+
         return op.loop("break$" + this.currentBlockIndex, op.block("continue$" + this.currentBlockIndex, [
-          this.compileStatement(stmt.statement, onVariable),
-          op.break("break$" + this.currentBlockIndex, op.i32.eqz(this.convertValue(stmt.expression, this.compileExpression(stmt.expression, intType), (<any>stmt.expression).wasmType, intType, true)))
+          this.compileStatement(doNode.statement, onVariable),
+          op.break("break$" + this.currentBlockIndex, op.i32.eqz(this.convertValue(doNode.expression, this.compileExpression(doNode.expression, intType), (<any>doNode.expression).wasmType, intType, true)))
         ]));
       }
 
       case ts.SyntaxKind.Block:
       {
-        const stmt = <ts.Block>node;
-        if (stmt.statements.length === 0)
+        const blockNode = <ts.Block>node;
+        if (blockNode.statements.length === 0)
           return op.nop();
-        else if (stmt.statements.length === 1)
-          return this.compileStatement(stmt.statements[0], onVariable);
+        else if (blockNode.statements.length === 1)
+          return this.compileStatement(blockNode.statements[0], onVariable);
         else {
-          const children: WasmStatement[] = new Array(stmt.statements.length);
+          const children: WasmStatement[] = new Array(blockNode.statements.length);
           for (let i = 0, k = children.length; i < k; ++i)
-            children[i] = this.compileStatement(stmt.statements[i], onVariable);
+            children[i] = this.compileStatement(blockNode.statements[i], onVariable);
           return op.block("", children);
         }
       }
@@ -564,23 +570,27 @@ export class Compiler {
         return op.break("break$" + this.currentBlockIndex);
 
       case ts.SyntaxKind.ExpressionStatement:
-        return this.compileExpression((<ts.ExpressionStatement>node).expression, voidType);
+      {
+        const expressionNode = (<ts.ExpressionStatement>node).expression;
+        const expr = this.compileExpression(expressionNode, voidType);
+        return (<any>expressionNode).wasmType !== voidType ? op.drop(expr) : expr;
+      }
 
       case ts.SyntaxKind.ReturnStatement:
       {
-        const stmt = <ts.ReturnStatement>node;
+        const returnNode = <ts.ReturnStatement>node;
 
         if (this.currentFunction.returnType === voidType) {
 
-          if (stmt.getChildCount() > 1) // return keyword
-            this.error(stmt, "A function without a return type cannot return a value", this.currentFunction.name);
+          if (returnNode.getChildCount() > 1) // return keyword
+            this.error(returnNode, "A function without a return type cannot return a value", this.currentFunction.name);
           return op.return();
 
         } else {
 
-          if (stmt.getChildCount() < 2) // return keyword + expression
-            this.error(stmt, "A function with a return type must return a value", this.currentFunction.name);
-          const expr = <ts.Expression>stmt.getChildAt(1);
+          if (returnNode.getChildCount() < 2) // return keyword + expression
+            this.error(returnNode, "A function with a return type must return a value", this.currentFunction.name);
+          const expr = <ts.Expression>returnNode.getChildAt(1);
           return op.return(
             this.convertValue(
               expr,
@@ -891,6 +901,9 @@ export class Compiler {
         const unaryExpr = this.compileExpression(unaryNode.operand, contextualType);
         const operandType = <WasmType>(<any>unaryNode.operand).wasmType;
 
+        // TODO: simplify where the result is void anyway? (binaryen -O catches this already)
+        // const wantsResult = node.parent.kind !== ts.SyntaxKind.ExpressionStatement;
+
         switch (unaryNode.operator) {
 
           case ts.SyntaxKind.ExclamationToken:
@@ -911,7 +924,11 @@ export class Compiler {
           }
 
           case ts.SyntaxKind.PlusToken: // noop
+          {
+            (<any>node).wasmType = operandType;
+
             return unaryExpr;
+          }
 
           case ts.SyntaxKind.MinusToken:
           {
@@ -970,10 +987,13 @@ export class Compiler {
 
           case ts.SyntaxKind.PlusPlusToken:
           {
+
             if (unaryNode.operand.kind === ts.SyntaxKind.Identifier) {
 
               const local = this.currentLocals[(<ts.Identifier>unaryNode.operand).text];
               if (local) {
+
+                (<any>node).wasmType = local.type;
 
                 if (local.type.isLong) {
                   return op.teeLocal(
@@ -1011,6 +1031,8 @@ export class Compiler {
 
               const local = this.currentLocals[(<ts.Identifier>unaryNode.operand).text];
               if (local) {
+
+                 (<any>node).wasmType = local.type;
 
                 if (local.type.isLong) {
                   return op.teeLocal(
@@ -1058,6 +1080,8 @@ export class Compiler {
 
           const local = this.currentLocals[(<ts.Identifier>unaryNode.operand).text];
           if (local) {
+
+             (<any>node).wasmType = local.type;
 
             switch (unaryNode.operator) {
 
