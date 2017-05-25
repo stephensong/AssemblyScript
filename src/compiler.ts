@@ -18,7 +18,17 @@ import {
   WasmFunctionFlags,
   WasmFunction,
   WasmVariable,
-  WasmConstant
+  WasmConstant,
+  WasmI32Expression,
+  WasmI64Expression,
+  WasmF32Expression,
+  WasmF64Expression,
+  WasmI32Operations,
+  WasmI64Operations,
+  WasmF32Operations,
+  WasmF64Operations,
+  BinaryenType,
+  BinaryenFunction
 } from "./wasm";
 
 import {
@@ -60,11 +70,14 @@ function isStatic(node: ts.Node): boolean {
   return (node.modifierFlagsCache & ts.ModifierFlags.Static) !== 0
 }
 
+// Rule #1: This is a compiler, not an optimizer. Makes life a lot easier.
+
 export class Compiler {
   program: ts.Program;
   checker: ts.TypeChecker;
   entryFile: ts.SourceFile;
   diagnostics: ts.DiagnosticCollection;
+  uintptrSize: number;
   uintptrType: WasmType;
   module: WasmModule;
   signatures: { [key: string]: WasmSignature } = {};
@@ -72,8 +85,8 @@ export class Compiler {
   profiler = new Profiler();
   currentFunction: WasmFunction;
   currentLocals: { [key: string]: WasmVariable };
-  currentBlockNumber = 0;
-  currentBlockDepth = 0;
+  currentBreakContextNumber = 0;
+  currentBreakContextDepth = 0;
 
   static compile(filename: string): WasmModule {
 
@@ -101,10 +114,9 @@ export class Compiler {
 
     // bail out if there were initialization errors
     diagnostics = compiler.diagnostics.getDiagnostics();
-    for (let i = 0, k = diagnostics.length; i < k; ++i) {
+    for (let i = 0, k = diagnostics.length; i < k; ++i)
       if (diagnostics[i].category === ts.DiagnosticCategory.Error)
         return null;
-    }
 
     compiler.profiler.start("compile");
     compiler.compile();
@@ -112,12 +124,9 @@ export class Compiler {
 
     // bail out if there were compilation errors
     diagnostics = compiler.diagnostics.getDiagnostics();
-    for (let i = 0, k = diagnostics.length; i < k; ++i) {
+    for (let i = 0, k = diagnostics.length; i < k; ++i)
       if (diagnostics[i].category === ts.DiagnosticCategory.Error)
         return null;
-    }
-
-    // compiler.module.validate();
 
     return compiler.module;
   }
@@ -130,6 +139,7 @@ export class Compiler {
     this.checker = program.getDiagnosticsProducingTypeChecker();
     this.diagnostics = ts.createDiagnosticCollection();
     this.module = new WasmModule();
+    this.uintptrSize = uintptrSize;
     this.uintptrType = uintptrSize === 4 ? uintptrType32 : uintptrType64;
 
     // the last non-declaration source file is assumed to be the entry file (TODO: does this work in all cases?)
@@ -163,8 +173,7 @@ export class Compiler {
   initialize(): void {
     const compiler = this;
 
-    this.module.setMemory(256, MEM_MAX_32, "memory", []);
-    // TODO: it seem that binaryen.js doesn't support importing memory yet
+    this.module.setMemory(256, MEM_MAX_32, "memory", []); // TODO: it seem that binaryen.js doesn't support importing memory yet
 
     const sourceFiles = this.program.getSourceFiles();
     for (let i = 0, k = sourceFiles.length, file; i < k; ++i) {
@@ -175,7 +184,7 @@ export class Compiler {
       for (let i = 0, k = file.statements.length, statement; i < k; ++i) {
         switch ((statement = file.statements[i]).kind) {
 
-          case ts.SyntaxKind.ImportDeclaration:
+          case ts.SyntaxKind.ImportDeclaration: // already handled
             break;
 
           case ts.SyntaxKind.VariableStatement:
@@ -217,12 +226,12 @@ export class Compiler {
 
     let parameterTypes: WasmType[];
     let signatureIdentifiers: string[]; // including return type
-    let signatureTypes: number[]; // excluding return type
+    let signatureTypes: BinaryenType[]; // excluding return type
     let locals: WasmVariable[];
     let index = 0;
     let flags = 0;
 
-    if (parent && !isStatic(<ts.MethodDeclaration>node)) {
+    if (parent && !isStatic(<ts.MethodDeclaration>node)) { // add implicit 'this' as the first argument
 
       parameterTypes = new Array(node.parameters.length + 1);
       signatureTypes = new Array(parameterTypes.length);
@@ -329,16 +338,17 @@ export class Compiler {
 
     for (let i = 0, k = node.members.length, member; i < k; ++i) {
       const name = enumName + "$" + node.members[i].symbol.name;
+      const value = this.checker.getConstantValue(member);
+
       this.constants[name] = {
         name: name,
         type: intType,
-        value: this.checker.getConstantValue(member)
+        value: value
       };
     }
   }
 
   compile(): void {
-    this.module.autoDrop();
 
     const sourceFiles = this.program.getSourceFiles();
     for (let i = 0, k = sourceFiles.length; i < k; ++i) {
@@ -372,21 +382,21 @@ export class Compiler {
     // TODO
   }
 
-  private _compileFunction(node: ts.FunctionDeclaration | ts.MethodDeclaration) {
+  private _compileFunction(node: ts.FunctionDeclaration | ts.MethodDeclaration): BinaryenFunction {
     const wasmFunction: WasmFunction = (<any>node).wasmFunction;
     const body: WasmStatement[] = new Array(node.body.statements.length);
-    const locals: WasmVariable[] = [];
+    const additionalLocals: BinaryenType[] = [];
     const compiler = this;
 
     this.currentFunction = wasmFunction;
-    this.currentBlockNumber = 0;
-    this.currentBlockDepth = 0;
+    this.currentBreakContextNumber = 0;
+    this.currentBreakContextDepth = 0;
     this.currentLocals = {};
 
     let bodyIndex = 0;
     let localIndex = 0;
 
-    for (let i = 0, k = wasmFunction.locals.length; i < k; ++i) {
+    for (let i = 0, k = wasmFunction.locals.length; i < k; ++i) { // includes 'this'
       const local = wasmFunction.locals[i];
       this.currentLocals[local.name] = local;
       ++localIndex;
@@ -417,21 +427,22 @@ export class Compiler {
         };
       }
 
-      locals.push(type.toBinaryenType());
+      additionalLocals.push(type.toBinaryenType());
 
       return localIndex++;
     }
 
-    return this.module.addFunction(wasmFunction.name, wasmFunction.signature, locals, this.module.block("", body));
+    return this.module.addFunction(wasmFunction.name, wasmFunction.signature, additionalLocals, this.module.block("", body));
   }
 
   compileFunction(node: ts.FunctionDeclaration): void {
-    const wasmFunction: WasmFunction = (<any>node).wasmFunction;
+    const wasmFunction = <WasmFunction>(<any>node).wasmFunction;
     const name = node.symbol.name;
 
-    if ((wasmFunction.flags & WasmFunctionFlags.import) != 0) {
+    if ((wasmFunction.flags & WasmFunctionFlags.import) !== 0) {
       let moduleName: string;
       let baseName: string;
+
       var idx = name.indexOf("$");
       if (idx > 0) {
         moduleName = name.substring(0, idx);
@@ -440,17 +451,21 @@ export class Compiler {
         moduleName = "env";
         baseName = name;
       }
+
       this.module.addImport(name, moduleName, baseName, wasmFunction.signature);
       return;
     }
 
-    const func = this._compileFunction(node);
+    const functionHandle = this._compileFunction(node);
 
-    if ((node.modifierFlagsCache & ts.ModifierFlags.Export) != 0)
+    if ((node.modifierFlagsCache & ts.ModifierFlags.Export) !== 0)
       this.module.addExport(name, name);
 
-    if (name === "start" && wasmFunction.parameterTypes.length === 0 && wasmFunction.returnType === voidType)
-      this.module.setStart(func);
+    if (name === "start") {
+      if (wasmFunction.parameterTypes.length === 0 && wasmFunction.returnType === voidType)
+        this.module.setStart(functionHandle);
+      // else - TODO: should this emit a warning?
+    }
   }
 
   compileClass(node: ts.ClassDeclaration): void {
@@ -461,29 +476,28 @@ export class Compiler {
           this._compileFunction(<ts.MethodDeclaration>member);
           break;
 
-        // default:
-        // already reported by initialize
+        // otherwise already reported by initialize
       }
     }
   }
 
   enterBreakContext(): void {
-    if (this.currentBlockDepth === 0)
-      ++this.currentBlockNumber;
-    ++this.currentBlockDepth;
+    if (this.currentBreakContextDepth === 0)
+      ++this.currentBreakContextNumber;
+    ++this.currentBreakContextDepth;
   }
 
   leaveBreakContext(): void {
-    if (this.currentBlockDepth < 1)
+    if (this.currentBreakContextDepth < 1)
       throw Error("unbalanced break context");
-    --this.currentBlockDepth;
+    --this.currentBreakContextDepth;
   }
 
   get currentBreakLabel(): string {
-    return this.currentBlockNumber + "." + this.currentBlockDepth;
+    return this.currentBreakContextNumber + "." + this.currentBreakContextDepth;
   }
 
-  compileStatement(node: ts.Statement, onVariable?: (node: ts.VariableDeclaration) => number): WasmStatement {
+  compileStatement(node: ts.Statement, onVariable: (node: ts.VariableDeclaration) => number): WasmStatement {
     const op = this.module;
 
     switch (node.kind) {
@@ -496,14 +510,17 @@ export class Compiler {
         for (let i = 0, k = variableNode.declarationList.declarations.length; i < k; ++i) {
           const decl = variableNode.declarationList.declarations[i];
           const type = this.resolveType(decl.type);
+
           (<any>decl).wasmType = type;
+
           const index = onVariable(decl);
           if (decl.initializer)
             initializers.push(op.setLocal(index, this.compileExpression(decl.initializer, type)));
         }
+
         return initializers.length === 0 ? null
              : initializers.length === 1 ? initializers[0]
-             : op.block("", initializers); // TODO: Unfold
+             : op.block("", initializers); // praise rule #1
       }
 
       case ts.SyntaxKind.IfStatement:
@@ -608,20 +625,23 @@ export class Compiler {
 
         if (this.currentFunction.returnType === voidType) {
 
-          if (returnNode.getChildCount() > 1) // return keyword
-            this.error(returnNode, "A function without a return type cannot return a value", this.currentFunction.name);
+          if (returnNode.expression)
+            this.error(returnNode, "A void function cannot return a value", this.currentFunction.name);
+
           return op.return();
 
         } else {
 
-          if (returnNode.getChildCount() < 2) // return keyword + expression
+          if (!returnNode.expression)
             this.error(returnNode, "A function with a return type must return a value", this.currentFunction.name);
-          const expr = <ts.Expression>returnNode.getChildAt(1);
+
+          const returnExpr = <ts.Expression>returnNode.expression;
+
           return op.return(
             this.convertValue(
-              expr,
-              this.compileExpression(expr, this.currentFunction.returnType),
-              (<any>expr).wasmType,
+              returnExpr,
+              this.compileExpression(returnExpr, this.currentFunction.returnType),
+              <WasmType>(<any>returnExpr).wasmType,
               this.currentFunction.returnType,
               false
             )
@@ -634,9 +654,20 @@ export class Compiler {
     }
   }
 
+  categoryOf(type: WasmType): WasmI32Operations | WasmI64Operations | WasmF32Operations | WasmF64Operations {
+    return type.toBinaryenCategory(this.module, this.uintptrType);
+  }
+
+  zeroOf(type: WasmType): WasmI32Expression | WasmI64Expression | WasmF32Expression | WasmF64Expression {
+    return type.toBinaryenZero(this.module, this.uintptrType);
+  }
+
+  oneOf(type: WasmType): WasmI32Expression | WasmI64Expression | WasmF32Expression | WasmF64Expression {
+    return type.toBinaryenOne(this.module, this.uintptrType);
+  }
+
   compileExpression(node: ts.Expression, contextualType: WasmType): WasmExpression {
     const op = this.module;
-
     // remember to always set 'wasmType' on 'node' here
 
     switch (node.kind) {
@@ -645,8 +676,9 @@ export class Compiler {
       {
         const parenNode = (<ts.ParenthesizedExpression>node).expression;
         const parenExpr = this.compileExpression(parenNode, contextualType);
+        const parenType = <WasmType>(<any>parenNode).wasmType;
 
-        (<any>node).wasmType = <WasmType>(<any>parenNode).wasmType;
+        (<any>node).wasmType = parenType;
 
         return parenExpr;
       }
@@ -658,25 +690,26 @@ export class Compiler {
 
         (<any>node).wasmType = asType;
 
-        return this.convertValue(node, this.compileExpression(asNode.expression, contextualType), (<any>asNode.expression).wasmType, asType, true);
+        return this.convertValue(node, this.compileExpression(asNode.expression, contextualType), <WasmType>(<any>asNode.expression).wasmType, asType, true);
       }
 
       case ts.SyntaxKind.BinaryExpression:
       {
         const binaryNode = <ts.BinaryExpression>node;
-
         let leftExpr  = this.compileExpression(binaryNode.left, contextualType);
         let rightExpr = this.compileExpression(binaryNode.right, contextualType);
-        let leftType  = <WasmType>(<any>binaryNode.left).wasmType;
-        let rightType = <WasmType>(<any>binaryNode.right).wasmType;
+        const leftType  = <WasmType>(<any>binaryNode.left).wasmType;
+        const rightType = <WasmType>(<any>binaryNode.right).wasmType;
         let resultType: WasmType;
 
-        if (leftType.isFloat) {
-          if (rightType.isFloat)
+        if (leftType.isAnyFloat) {
+
+          if (rightType.isAnyFloat)
             resultType = leftType.size > rightType.size ? leftType : rightType;
           else
             resultType = leftType;
-        } else if (rightType.isFloat)
+
+        } else if (rightType.isAnyFloat)
           resultType = rightType;
         else
           resultType = leftType.size > rightType.size ? leftType : rightType;
@@ -687,233 +720,122 @@ export class Compiler {
         if (rightType !== resultType)
           rightExpr = this.convertValue(binaryNode.right, this.compileExpression(binaryNode.right, resultType), rightType, resultType, false);
 
-        if (resultType === floatType) {
+        const cat = this.categoryOf(resultType);
 
-          (<any>binaryNode).wasmType = floatType;
+        (<any>binaryNode).wasmType = resultType;
+
+        if (resultType.isAnyFloat) {
+
+          const cat = <WasmF32Operations | WasmF64Operations>this.categoryOf(resultType);
 
           switch (binaryNode.operatorToken.kind) {
 
             case ts.SyntaxKind.PlusToken:
-              return op.f32.add(leftExpr, rightExpr);
+              return cat.add(leftExpr, rightExpr);
 
             case ts.SyntaxKind.MinusToken:
-              return op.f32.sub(leftExpr, rightExpr);
+              return cat.sub(leftExpr, rightExpr);
 
             case ts.SyntaxKind.AsteriskToken:
-              return op.f32.mul(leftExpr, rightExpr);
+              return cat.mul(leftExpr, rightExpr);
 
             case ts.SyntaxKind.SlashToken:
-              return op.f32.div(leftExpr, rightExpr);
+              return cat.div(leftExpr, rightExpr);
 
             case ts.SyntaxKind.EqualsEqualsToken:
-              return op.f32.eq(leftExpr, rightExpr);
+              return cat.eq(leftExpr, rightExpr);
 
             case ts.SyntaxKind.ExclamationEqualsToken:
-              return op.f32.ne(leftExpr, rightExpr);
+              return cat.ne(leftExpr, rightExpr);
 
             case ts.SyntaxKind.GreaterThanToken:
-              return op.f32.gt(leftExpr, rightExpr);
+              return cat.gt(leftExpr, rightExpr);
 
             case ts.SyntaxKind.GreaterThanEqualsToken:
-              return op.f32.ge(leftExpr, rightExpr);
+              return cat.ge(leftExpr, rightExpr);
 
             case ts.SyntaxKind.LessThanToken:
-              return op.f32.lt(leftExpr, rightExpr);
+              return cat.lt(leftExpr, rightExpr);
 
             case ts.SyntaxKind.LessThanEqualsToken:
-              return op.f32.le(leftExpr, rightExpr);
+              return cat.le(leftExpr, rightExpr);
 
           }
 
-        } else if (resultType === doubleType) {
+        } else if (resultType.isAnyInteger) {
 
-          (<any>binaryNode).wasmType = doubleType;
-
-          switch (binaryNode.operatorToken.kind) {
-
-            case ts.SyntaxKind.PlusToken:
-              return op.f64.add(leftExpr, rightExpr);
-
-            case ts.SyntaxKind.MinusToken:
-              return op.f64.sub(leftExpr, rightExpr);
-
-            case ts.SyntaxKind.AsteriskToken:
-              return op.f64.mul(leftExpr, rightExpr);
-
-            case ts.SyntaxKind.SlashToken:
-              return op.f64.div(leftExpr, rightExpr);
-
-            case ts.SyntaxKind.EqualsEqualsToken:
-              return op.f64.eq(leftExpr, rightExpr);
-
-            case ts.SyntaxKind.ExclamationEqualsToken:
-              return op.f64.ne(leftExpr, rightExpr);
-
-            case ts.SyntaxKind.GreaterThanToken:
-              return op.f64.gt(leftExpr, rightExpr);
-
-            case ts.SyntaxKind.GreaterThanEqualsToken:
-              return op.f64.ge(leftExpr, rightExpr);
-
-            case ts.SyntaxKind.LessThanToken:
-              return op.f64.lt(leftExpr, rightExpr);
-
-            case ts.SyntaxKind.LessThanEqualsToken:
-              return op.f64.le(leftExpr, rightExpr);
-
-          }
-
-        } else if (resultType.isLong) {
-
-          (<any>binaryNode).wasmType = longType;
+          const cat = <WasmI32Operations | WasmI64Operations>this.categoryOf(resultType);
 
           switch (binaryNode.operatorToken.kind) {
 
             case ts.SyntaxKind.PlusToken:
-              return op.i64.add(leftExpr, rightExpr);
+              return cat.add(leftExpr, rightExpr);
 
             case ts.SyntaxKind.MinusToken:
-              return op.i64.sub(leftExpr, rightExpr);
+              return cat.sub(leftExpr, rightExpr);
 
             case ts.SyntaxKind.AsteriskToken:
-              return op.i64.mul(leftExpr, rightExpr);
+              return cat.mul(leftExpr, rightExpr);
 
             case ts.SyntaxKind.SlashToken:
               if (resultType.isSigned)
-                return op.i64.div_s(leftExpr, rightExpr);
+                return cat.div_s(leftExpr, rightExpr);
               else
-                return op.i64.div_u(leftExpr, rightExpr);
+                return cat.div_u(leftExpr, rightExpr);
 
             case ts.SyntaxKind.PercentToken:
               if (resultType.isSigned)
-                return op.i64.rem_s(leftExpr, rightExpr);
+                return cat.rem_s(leftExpr, rightExpr);
               else
-                return op.i64.rem_u(leftExpr, rightExpr);
+                return cat.rem_u(leftExpr, rightExpr);
 
             case ts.SyntaxKind.AmpersandToken:
-              return op.i64.and(leftExpr, rightExpr);
+              return cat.and(leftExpr, rightExpr);
 
             case ts.SyntaxKind.BarToken:
-              return op.i64.or(leftExpr, rightExpr);
+              return cat.or(leftExpr, rightExpr);
 
             case ts.SyntaxKind.CaretToken:
-              return op.i64.xor(leftExpr, rightExpr);
+              return cat.xor(leftExpr, rightExpr);
 
             case ts.SyntaxKind.LessThanLessThanToken:
-              return op.i64.shl(leftExpr, rightExpr);
+              return cat.shl(leftExpr, rightExpr);
 
             case ts.SyntaxKind.GreaterThanGreaterThanToken:
               if (resultType.isSigned)
-                return op.i64.shr_s(leftExpr, rightExpr);
+                return cat.shr_s(leftExpr, rightExpr);
               else
-                return op.i64.shr_u(leftExpr, rightExpr);
+                return cat.shr_u(leftExpr, rightExpr);
 
             case ts.SyntaxKind.EqualsEqualsToken:
-              return op.i64.eq(leftExpr, rightExpr);
+              return cat.eq(leftExpr, rightExpr);
 
             case ts.SyntaxKind.ExclamationEqualsToken:
-              return op.i64.ne(leftExpr, rightExpr);
+              return cat.ne(leftExpr, rightExpr);
 
             case ts.SyntaxKind.GreaterThanToken:
               if (resultType.isSigned)
-                return op.i64.gt_s(leftExpr, rightExpr);
+                return cat.gt_s(leftExpr, rightExpr);
               else
-                return op.i64.gt_u(leftExpr, rightExpr);
+                return cat.gt_u(leftExpr, rightExpr);
 
             case ts.SyntaxKind.GreaterThanEqualsToken:
               if (resultType.isSigned)
-                return op.i64.ge_s(leftExpr, rightExpr);
+                return cat.ge_s(leftExpr, rightExpr);
               else
-                return op.i64.ge_u(leftExpr, rightExpr);
+                return cat.ge_u(leftExpr, rightExpr);
 
             case ts.SyntaxKind.LessThanToken:
               if (resultType.isSigned)
-                return op.i64.lt_s(leftExpr, rightExpr);
+                return cat.lt_s(leftExpr, rightExpr);
               else
-                return op.i64.lt_u(leftExpr, rightExpr);
+                return cat.lt_u(leftExpr, rightExpr);
 
             case ts.SyntaxKind.LessThanEqualsToken:
               if (resultType.isSigned)
-                return op.i64.le_s(leftExpr, rightExpr);
+                return cat.le_s(leftExpr, rightExpr);
               else
-                return op.i64.le_u(leftExpr, rightExpr);
-
-          }
-
-        } else { // some i32 type including bool
-
-          (<any>binaryNode).wasmType = intType;
-
-          switch (binaryNode.operatorToken.kind) {
-
-            case ts.SyntaxKind.PlusToken:
-              return op.i32.add(leftExpr, rightExpr);
-
-            case ts.SyntaxKind.MinusToken:
-              return op.i32.sub(leftExpr, rightExpr);
-
-            case ts.SyntaxKind.AsteriskToken:
-              return op.i32.mul(leftExpr, rightExpr);
-
-            case ts.SyntaxKind.SlashToken:
-              if (resultType.isSigned)
-                return op.i32.div_s(leftExpr, rightExpr);
-              else
-                return op.i32.div_u(leftExpr, rightExpr);
-
-            case ts.SyntaxKind.PercentToken:
-              if (resultType.isSigned)
-                return op.i32.rem_s(leftExpr, rightExpr);
-              else
-                return op.i32.rem_u(leftExpr, rightExpr);
-
-            case ts.SyntaxKind.AmpersandToken:
-              return op.i32.and(leftExpr, rightExpr);
-
-            case ts.SyntaxKind.BarToken:
-              return op.i32.or(leftExpr, rightExpr);
-
-            case ts.SyntaxKind.CaretToken:
-              return op.i32.xor(leftExpr, rightExpr);
-
-            case ts.SyntaxKind.LessThanLessThanToken:
-              return op.i32.shl(leftExpr, rightExpr);
-
-            case ts.SyntaxKind.GreaterThanGreaterThanToken:
-              if (resultType.isSigned)
-                return op.i32.shr_s(leftExpr, rightExpr);
-              else
-                return op.i32.shr_u(leftExpr, rightExpr);
-
-            case ts.SyntaxKind.EqualsEqualsToken:
-              return op.i32.eq(leftExpr, rightExpr);
-
-            case ts.SyntaxKind.ExclamationEqualsToken:
-              return op.i32.ne(leftExpr, rightExpr);
-
-            case ts.SyntaxKind.GreaterThanToken:
-              if (resultType.isSigned)
-                return op.i32.gt_s(leftExpr, rightExpr);
-              else
-                return op.i32.gt_u(leftExpr, rightExpr);
-
-            case ts.SyntaxKind.GreaterThanEqualsToken:
-              if (resultType.isSigned)
-                return op.i32.ge_s(leftExpr, rightExpr);
-              else
-                return op.i32.ge_u(leftExpr, rightExpr);
-
-            case ts.SyntaxKind.LessThanToken:
-              if (resultType.isSigned)
-                return op.i32.lt_s(leftExpr, rightExpr);
-              else
-                return op.i32.lt_u(leftExpr, rightExpr);
-
-            case ts.SyntaxKind.LessThanEqualsToken:
-              if (resultType.isSigned)
-                return op.i32.le_s(leftExpr, rightExpr);
-              else
-                return op.i32.le_u(leftExpr, rightExpr);
+                return cat.le_u(leftExpr, rightExpr);
 
           }
         }
@@ -926,9 +848,6 @@ export class Compiler {
         const unaryNode = <ts.PrefixUnaryExpression>node;
         const unaryExpr = this.compileExpression(unaryNode.operand, contextualType);
         const operandType = <WasmType>(<any>unaryNode.operand).wasmType;
-
-        // TODO: simplify where the result is void anyway? (binaryen -O catches this already)
-        // const wantsResult = node.parent.kind !== ts.SyntaxKind.ExpressionStatement;
 
         switch (unaryNode.operator) {
 
@@ -960,30 +879,17 @@ export class Compiler {
           {
             (<any>node).wasmType = operandType;
 
-            switch (operandType) {
+            if (operandType === floatType)
+              return op.f32.neg(unaryNode.operand);
 
-              case sbyteType:
-              case byteType:
-              case shortType:
-              case ushortType:
-                return this.convertValue(node, op.i32.sub(op.i32.const(0), unaryExpr), intType, operandType, true);
+            else if (operandType === doubleType)
+              return op.f64.neg(unaryNode.operand);
 
-              case intType:
-              case uintType:
-              case uintptrType32:
-                return op.i32.sub(op.i32.const(0), unaryExpr);
+            else if (operandType.isLong)
+              return op.i64.sub(op.i64.const(0, 0), unaryExpr);
 
-              case longType:
-              case ulongType:
-              case uintptrType64:
-                return op.i64.sub(op.i64.const(0, 0), unaryExpr);
-
-              case floatType:
-                return op.f32.neg(unaryNode.operand);
-
-              case doubleType:
-                return op.f64.neg(unaryNode.operand);
-            }
+            else
+              return this.convertValue(node, op.i32.sub(op.i32.const(0), unaryExpr), intType, operandType, true);
           }
 
           case ts.SyntaxKind.TildeToken:
@@ -998,7 +904,7 @@ export class Compiler {
               (<any>node).wasmType = operandType;
               return op.i32.xor(unaryExpr, op.i32.const(-1));
 
-            } else if (contextualType.isLong) {
+            } else if (contextualType.isLong) { // TODO: is the following correct / doesn't generate useless ops?
 
               (<any>node).wasmType = contextualType;
               return op.i64.xor(this.convertValue(unaryNode.operand, unaryExpr, operandType, contextualType, true), op.i64.const(-1, -1));
@@ -1012,45 +918,6 @@ export class Compiler {
           }
 
           case ts.SyntaxKind.PlusPlusToken:
-          {
-
-            if (unaryNode.operand.kind === ts.SyntaxKind.Identifier) {
-
-              const local = this.currentLocals[(<ts.Identifier>unaryNode.operand).text];
-              if (local) {
-
-                (<any>node).wasmType = local.type;
-
-                if (local.type.isLong) {
-                  return op.teeLocal(
-                    local.index,
-                    op.i64.add(
-                      op.getLocal(
-                        local.index,
-                        local.type.toBinaryenType(this.uintptrType)
-                      ),
-                      op.i64.const(1, 0)
-                    )
-                  );
-
-                } else if (!local.type.isFloat) {
-
-                  return this.convertValue(unaryNode, op.teeLocal(
-                    local.index,
-                    op.i32.add(
-                      op.getLocal(
-                        local.index,
-                        local.type.toBinaryenType(this.uintptrType)
-                      ),
-                      op.i32.const(1)
-                    )
-                  ), intType, local.type, true);
-
-                }
-              }
-            }
-          }
-
           case ts.SyntaxKind.MinusMinusToken:
           {
             if (unaryNode.operand.kind === ts.SyntaxKind.Identifier) {
@@ -1058,34 +925,20 @@ export class Compiler {
               const local = this.currentLocals[(<ts.Identifier>unaryNode.operand).text];
               if (local) {
 
-                 (<any>node).wasmType = local.type;
+                const cat = this.categoryOf(local.type);
+                const one = this.oneOf(local.type);
+                const isIncrement = unaryNode.operator === ts.SyntaxKind.PlusPlusToken;
 
-                if (local.type.isLong) {
-                  return op.teeLocal(
+                const calculate = (isIncrement ? cat.add : cat.sub).call(cat,
+                  op.getLocal(
                     local.index,
-                    op.i64.sub(
-                      op.getLocal(
-                        local.index,
-                        local.type.toBinaryenType(this.uintptrType)
-                      ),
-                      op.i64.const(1, 0)
-                    )
-                  );
+                    local.type.toBinaryenType(this.uintptrType)
+                  ),
+                  one
+                );
 
-                } else if (!local.type.isFloat) {
-
-                  return this.convertValue(unaryNode, op.teeLocal(
-                    local.index,
-                    op.i32.sub(
-                      op.getLocal(
-                        local.index,
-                        local.type.toBinaryenType(this.uintptrType)
-                      ),
-                      op.i32.const(1)
-                    )
-                  ), intType, local.type, true)
-
-                }
+                (<any>node).wasmType = local.type;
+                return this.convertValue(unaryNode, op.teeLocal(local.index, calculate), intType, local.type, true);
               }
             }
           }
@@ -1100,95 +953,41 @@ export class Compiler {
         const unaryNode = <ts.PostfixUnaryExpression>node;
         const unaryExpr = this.compileExpression(unaryNode.operand, contextualType);
 
-        (<any>node).wasmType = (<any>unaryExpr).wasmType;
+        (<any>unaryNode).wasmType = (<any>unaryNode.operand).wasmType;
 
-        if (unaryNode.operand.kind === ts.SyntaxKind.Identifier) {
-
+        if (unaryNode.operand.kind === ts.SyntaxKind.Identifier)
+        {
           const local = this.currentLocals[(<ts.Identifier>unaryNode.operand).text];
-          if (local) {
 
-             (<any>node).wasmType = local.type;
+          if (local) {
 
             switch (unaryNode.operator) {
 
-              // TODO: this isn't optimal (i.e. can save an operation when using a temporary var)
-
               case ts.SyntaxKind.PlusPlusToken:
-
-                if (local.type.isLong) {
-
-                  return op.i64.sub(
-                    op.teeLocal(
-                      local.index,
-                      op.i64.add(
-                        op.getLocal(
-                          local.index,
-                          local.type.toBinaryenType(this.uintptrType)
-                        ),
-                        op.i64.const(1, 0)
-                      )
-                    ),
-                    op.i64.const(1, 0)
-                  );
-
-                } else if (!local.type.isFloat) {
-
-                  return this.convertValue(unaryNode, op.i32.sub(
-                    op.teeLocal(
-                      local.index,
-                      op.i32.add(
-                        op.getLocal(
-                          local.index,
-                          local.type.toBinaryenType(this.uintptrType)
-                        ),
-                        op.i32.const(1)
-                      )
-                    ),
-                    op.i32.const(1)
-                  ), intType, local.type, true);
-
-                }
-
               case ts.SyntaxKind.MinusMinusToken:
+              {
+                const cat = this.categoryOf(local.type);
+                const one = this.oneOf(local.type);
+                const isIncrement = unaryNode.operator === ts.SyntaxKind.PlusPlusToken;
 
-                if (local.type.isLong) {
+                let calculate = (isIncrement ? cat.add : cat.sub).call(cat,
+                  op.getLocal(
+                    local.index,
+                    local.type.toBinaryenType(this.uintptrType)
+                  ),
+                  one
+                );
 
-                  return op.i64.add(
-                    op.teeLocal(
-                      local.index,
-                      op.i64.sub(
-                        op.getLocal(
-                          local.index,
-                          local.type.toBinaryenType(this.uintptrType)
-                        ),
-                        op.i64.const(1, 0)
-                      )
-                    ),
-                    op.i64.const(1, 0)
-                  );
+                if (local.type.isByte || local.type.isShort)
+                  calculate = this.convertValue(unaryNode, calculate, intType, local.type, true);
 
-                } else if (!local.type.isFloat) {
-
-                  return this.convertValue(unaryNode, op.i32.add(
-                    op.teeLocal(
-                      local.index,
-                      op.i32.sub(
-                        op.getLocal(
-                          local.index,
-                          local.type.toBinaryenType(this.uintptrType)
-                        ),
-                        op.i32.const(1)
-                      )
-                    ),
-                    op.i32.const(1)
-                  ), intType, local.type, true)
-
-                }
+                return (isIncrement ? cat.sub : cat.add).call(cat, op.teeLocal(local.index, calculate), one);
+              }
             }
           }
         }
 
-        this.error(unaryNode, "Unsupported unary postfix operation", ts.SyntaxKind[unaryNode.operator]);
+        this.error(unaryNode, "Unsupported unary postfix operation");
         return unaryExpr;
       }
 
@@ -1220,7 +1019,7 @@ export class Compiler {
 
         } else if (/^(?![eE])[0-9]*(?:\.[0-9]*)?(?:[eE][+-]?[0-9]+)?$/.test(literalText)) {
 
-          if (!contextualType.isFloat) { // explicit float in non-float context must be converted
+          if (!contextualType.isAnyFloat) { // explicit float in non-float context must be converted
             (<any>node).wasmType = doubleType;
             return op.f64.const(parseFloat(literalText));
           }
@@ -1290,8 +1089,6 @@ export class Compiler {
             const propertyName = (<ts.Identifier>accessNode.name).text;
             const referencedConstant = this.constants[targetName + "$" + propertyName];
 
-            let long: Long;
-
             if (referencedConstant) {
               switch (referencedConstant.type) {
 
@@ -1302,21 +1099,25 @@ export class Compiler {
                 case intType:
                 case uintType:
                 case uintptrType32:
+
                   (<any>node).wasmType = intType;
                   return op.i32.const(referencedConstant.value);
 
                 case longType:
                 case ulongType:
                 case uintptrType64:
-                  long = Long.fromValue(referencedConstant.value);
+
+                  const long = Long.fromValue(referencedConstant.value);
                   (<any>node).wasmType = longType;
                   return op.i64.const(long.low, long.high);
 
                 case floatType:
+
                   (<any>node).wasmType = floatType;
                   return op.f32.const(referencedConstant.value);
 
                 case doubleType:
+
                   (<any>node).wasmType = doubleType;
                   return op.f64.const(referencedConstant.value);
 
@@ -1335,7 +1136,7 @@ export class Compiler {
           (<any>node).wasmType = longType;
           return op.i64.const(1, 0);
 
-        } else {
+        } else { // TODO: this should result in an invalid implicit conversion for floats, does it?
 
           (<any>node).wasmType = intType;
           return op.i32.const(1);
@@ -1350,7 +1151,7 @@ export class Compiler {
           (<any>node).wasmType = longType;
           return op.i64.const(0, 0);
 
-        } else {
+        } else { // TODO: see comment above
 
           (<any>node).wasmType = intType;
           return op.i32.const(0);
@@ -1360,34 +1161,36 @@ export class Compiler {
       case ts.SyntaxKind.CallExpression:
       {
         const callNode = <ts.CallExpression>node;
-        const signature = this.checker.getResolvedSignature(callNode);
-        const declaration = signature.declaration;
-        const func = <WasmFunction>(<any>declaration).wasmFunction;
-        const argumentExpressions: WasmExpression[] = new Array(func.parameterTypes.length);
+        const declaration = this.checker.getResolvedSignature(callNode).declaration;
+        const wasmFunction = <WasmFunction>(<any>declaration).wasmFunction;
+        const argumentExpressions: WasmExpression[] = new Array(wasmFunction.parameterTypes.length);
 
-        (<any>node).wasmType = func.returnType;
+        (<any>node).wasmType = wasmFunction.returnType;
 
         let i = 0;
 
-        if ((func.flags & WasmFunctionFlags.instance) !== 0)
-          argumentExpressions[i++] = op.getLocal(0, func.parameterTypes[0].toBinaryenType(this.uintptrType));
+        if ((wasmFunction.flags & WasmFunctionFlags.instance) !== 0)
+          argumentExpressions[i++] = op.getLocal(0, wasmFunction.parameterTypes[0].toBinaryenType(this.uintptrType));
 
         for (let k = argumentExpressions.length; i < k; ++i)
-          argumentExpressions[i] = this.compileExpression(callNode.arguments[i], func.parameterTypes[i]);
+          argumentExpressions[i] = this.compileExpression(callNode.arguments[i], wasmFunction.parameterTypes[i]);
 
         if (i < argumentExpressions.length) { // TODO: pull default value initializers from declaration
+
           this.error(callNode, "Invalid number of arguemnts", "Expected " + declaration.parameters.length + " but saw " + callNode.arguments.length);
           return op.unreachable();
+
         }
 
         if (!isImport(declaration)) { // user function
 
-          return op.call(func.name, argumentExpressions, func.returnType.toBinaryenType(this.uintptrType));
+          return op.call(wasmFunction.name, argumentExpressions, wasmFunction.returnType.toBinaryenType(this.uintptrType));
 
         } else { // import or builtin
 
-          if (func)
-            return op.call(func.name, argumentExpressions, func.returnType.toBinaryenType(this.uintptrType));
+          if (wasmFunction)
+
+            return op.call(wasmFunction.name, argumentExpressions, wasmFunction.returnType.toBinaryenType(this.uintptrType));
 
           switch (declaration.symbol.name) {
 
@@ -1463,11 +1266,11 @@ export class Compiler {
     if (fromType.kind === toType.kind)
       return expr;
 
-    const $this = this;
+    const _this = this;
     const op = this.module;
 
     function illegalImplicitConversion() {
-      $this.error(node, "Cannot convert from '" + fromType + "' to '" + toType + "' without a cast");
+      _this.error(node, "Cannot convert from '" + fromType + "' to '" + toType + "' without a cast");
       explicit = true; // report this only once for the topmost node
     }
 
@@ -1652,7 +1455,7 @@ export class Compiler {
     const text = type.getText();
 
     switch (text) {
-      case "byte": return byteType;
+      case "byte":return byteType;
       case "sbyte": return sbyteType;
       case "short": return shortType;
       case "ushort": return ushortType;
@@ -1669,13 +1472,16 @@ export class Compiler {
 
     if (type.kind == ts.SyntaxKind.TypeReference) {
       var reference = <ts.TypeReferenceNode>type;
+
       switch (reference.typeName.getText()) {
+
         case "Ptr":
           if (reference.typeArguments.length !== 1)
             throw Error("illegal number of type parameters on Ptr<T>");
           if (reference.typeArguments[0].kind !== ts.SyntaxKind.TypeReference)
             throw Error("unsupported type parameter on Ptr<T>");
           return this.uintptrType.withUnderlyingType(this.resolveType(<ts.TypeReferenceNode>reference.typeArguments[0]));
+
       }
     }
 
