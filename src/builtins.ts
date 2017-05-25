@@ -202,3 +202,17 @@ export function max(compiler: Compiler, node: TSExpressionPair, expr: WasmExpres
   }
   throw Error("unsupported operation");
 }
+
+export function copysign(compiler: Compiler, node: TSExpressionPair, expr: WasmExpressionPair): WasmExpression {
+  if ((<any>node[0]).wasmType === (<any>node[1]).wasmType) {
+    switch ((<any>node[0]).wasmType) {
+
+      case floatType:
+        return compiler.module.f32.copysign(expr[0], expr[1]);
+
+      case doubleType:
+        return compiler.module.f64.copysign(expr[0], expr[1]);
+    }
+  }
+  throw Error("unsupported operation");
+}

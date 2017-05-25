@@ -94,3 +94,5 @@ declare function min(left: double, right: double): double;
 declare function minf(left: float, right: float): float;
 declare function max(left: double, right: double): double;
 declare function maxf(left: float, right: float): float;
+declare function copysign(left: double, right: double): double;
+declare function copysignf(left: float, right: float): float;

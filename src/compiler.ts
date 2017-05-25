@@ -1246,6 +1246,10 @@ export class Compiler {
             case "maxf":
               return builtins.max(this, [ callNode.arguments[0], callNode.arguments[1] ], [ argumentExpressions[0], argumentExpressions[1] ]);
 
+            case "copysign":
+            case "copysignf":
+              return builtins.copysign(this, [ callNode.arguments[0], callNode.arguments[1] ], [ argumentExpressions[0], argumentExpressions[1] ]);
+
           }
         }
 
