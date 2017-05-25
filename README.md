@@ -95,8 +95,8 @@ Function                                        | OpCode
 `minf(left: float, right: float): float`        | f32.min
 `max(left: double, right: double): double`      | f64.max
 `maxf(left: float, right: float): float`        | f32.max
-`copysign(left: double, right: double): double` | f64.max
-`copysignf(left: float, right: float): float`   | f32.max
+`copysign(left: double, right: double): double` | f64.copysign
+`copysignf(left: float, right: float): float`   | f32.copysign
 
 Type coercion requires an explicit cast where precision is lost respectively is implicit where precision is maintained. For example, to cast a `double` to an `int`:
 
