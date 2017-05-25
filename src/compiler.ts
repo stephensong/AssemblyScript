@@ -72,7 +72,8 @@ export class Compiler {
   profiler = new Profiler();
   currentFunction: WasmFunction;
   currentLocals: { [key: string]: WasmVariable };
-  currentBlockIndex: -1;
+  currentBlockNumber = 0;
+  currentBlockDepth = 0;
 
   static compile(filename: string): WasmModule {
 
@@ -378,7 +379,8 @@ export class Compiler {
     const compiler = this;
 
     this.currentFunction = wasmFunction;
-    this.currentBlockIndex = -1;
+    this.currentBlockNumber = 0;
+    this.currentBlockDepth = 0;
     this.currentLocals = {};
 
     let bodyIndex = 0;
@@ -465,6 +467,22 @@ export class Compiler {
     }
   }
 
+  enterBreakContext(): void {
+    if (this.currentBlockDepth === 0)
+      ++this.currentBlockNumber;
+    ++this.currentBlockDepth;
+  }
+
+  leaveBreakContext(): void {
+    if (this.currentBlockDepth < 1)
+      throw Error("unbalanced break context");
+    --this.currentBlockDepth;
+  }
+
+  get currentBreakLabel(): string {
+    return this.currentBlockNumber + "." + this.currentBlockDepth;
+  }
+
   compileStatement(node: ts.Statement, onVariable?: (node: ts.VariableDeclaration) => number): WasmStatement {
     const op = this.module;
 
@@ -528,24 +546,32 @@ export class Compiler {
       {
         const whileNode = <ts.WhileStatement>node;
 
-        ++this.currentBlockIndex;
+        this.enterBreakContext();
+        const label = this.currentBreakLabel;
 
-        return op.loop("break$" + this.currentBlockIndex, op.block("continue$" + this.currentBlockIndex, [
-          op.break("break$" + this.currentBlockIndex, op.i32.eqz(this.convertValue(whileNode.expression, this.compileExpression(whileNode.expression, intType), (<any>whileNode.expression).wasmType, intType, true))),
+        const context = op.loop("break$" + label, op.block("continue$" + label, [
+          op.break("break$" + label, op.i32.eqz(this.convertValue(whileNode.expression, this.compileExpression(whileNode.expression, intType), (<any>whileNode.expression).wasmType, intType, true))),
           this.compileStatement(whileNode.statement, onVariable)
         ]));
+
+        this.leaveBreakContext();
+        return context;
       }
 
       case ts.SyntaxKind.DoStatement:
       {
         const doNode = <ts.WhileStatement>node;
 
-        ++this.currentBlockIndex;
+        this.enterBreakContext();
+        const label = this.currentBreakLabel;
 
-        return op.loop("break$" + this.currentBlockIndex, op.block("continue$" + this.currentBlockIndex, [
+        const context = op.loop("break$" + label, op.block("continue$" + label, [
           this.compileStatement(doNode.statement, onVariable),
-          op.break("break$" + this.currentBlockIndex, op.i32.eqz(this.convertValue(doNode.expression, this.compileExpression(doNode.expression, intType), (<any>doNode.expression).wasmType, intType, true)))
+          op.break("break$" + label, op.i32.eqz(this.convertValue(doNode.expression, this.compileExpression(doNode.expression, intType), (<any>doNode.expression).wasmType, intType, true)))
         ]));
+
+        this.leaveBreakContext();
+        return context;
       }
 
       case ts.SyntaxKind.Block:
@@ -564,10 +590,10 @@ export class Compiler {
       }
 
       case ts.SyntaxKind.ContinueStatement:
-        return op.break("continue$" + this.currentBlockIndex);
+        return op.break("continue$" + this.currentBreakLabel);
 
       case ts.SyntaxKind.BreakStatement:
-        return op.break("break$" + this.currentBlockIndex);
+        return op.break("break$" + this.currentBreakLabel);
 
       case ts.SyntaxKind.ExpressionStatement:
       {
