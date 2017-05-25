@@ -5,10 +5,19 @@ export {
   Signature as WasmSignature,
   Statement as WasmStatement,
   Expression as WasmExpression,
+
+  Type as BinaryenType,
+  Function as BinaryenFunction,
+
   I32Expression as WasmI32Expression,
   I64Expression as WasmI64Expression,
   F32Expression as WasmF32Expression,
-  F64Expression as WasmF64Expression
+  F64Expression as WasmF64Expression,
+
+  I32Operations as WasmI32Operations,
+  I64Operations as WasmI64Operations,
+  F32Operations as WasmF32Operations,
+  F64Operations as WasmF64Operations
 } from "../lib/binaryen";
 
 export enum WasmTypeKind {
@@ -48,7 +57,7 @@ export class WasmType {
     }
   }
 
-  get isInteger(): boolean {
+  get isAnyInteger(): boolean {
     switch (this.kind) {
       case WasmTypeKind.byte:
       case WasmTypeKind.sbyte:
@@ -65,7 +74,7 @@ export class WasmType {
     return false;
   }
 
-  get isFloat(): boolean {
+  get isAnyFloat(): boolean {
     switch (this.kind) {
       case WasmTypeKind.float:
       case WasmTypeKind.double:
@@ -168,7 +177,7 @@ export class WasmType {
     throw Error("unexpected type");
   }
 
-  toBinaryenType(uintptrType: WasmType): any {
+  toBinaryenType(uintptrType: WasmType): binaryen.Type {
     switch (this.kind) {
 
       case WasmTypeKind.byte:
@@ -199,16 +208,101 @@ export class WasmType {
     throw Error("unexpected type");
   }
 
+  toBinaryenCategory(module: binaryen.Module, uintptrTyoe: WasmType): binaryen.I32Operations | binaryen.I64Operations | binaryen.F32Operations | binaryen.F64Operations {
+    switch (this.kind) {
+
+      case WasmTypeKind.byte:
+      case WasmTypeKind.short:
+      case WasmTypeKind.ushort:
+      case WasmTypeKind.int:
+      case WasmTypeKind.uint:
+      case WasmTypeKind.bool:
+        return module.i32;
+
+      case WasmTypeKind.long:
+      case WasmTypeKind.ulong:
+        return module.i64;
+
+      case WasmTypeKind.float:
+        return module.f32;
+
+      case WasmTypeKind.double:
+        return module.f64;
+
+      case WasmTypeKind.uintptr:
+        return uintptrTyoe.size == 4 ? module.i32 : module.i64;
+
+    }
+    throw Error("unexpected type");
+  }
+
+  toBinaryenZero(module: binaryen.Module, uintptrTyoe: WasmType): binaryen.I32Expression | binaryen.I64Expression | binaryen.F32Expression | binaryen.F64Expression {
+    switch (this.kind) {
+
+      case WasmTypeKind.byte:
+      case WasmTypeKind.short:
+      case WasmTypeKind.ushort:
+      case WasmTypeKind.int:
+      case WasmTypeKind.uint:
+      case WasmTypeKind.bool:
+        return module.i32.const(0);
+
+      case WasmTypeKind.long:
+      case WasmTypeKind.ulong:
+        return module.i64.const(0, 0);
+
+      case WasmTypeKind.float:
+        return module.f32.const(0);
+
+      case WasmTypeKind.double:
+        return module.f64.const(0);
+
+      case WasmTypeKind.uintptr:
+        return uintptrTyoe.size == 4 ? module.i32.const(0) : module.i64.const(0, 0);
+
+    }
+    throw Error("unexpected type");
+  }
+
+  toBinaryenOne(module: binaryen.Module, uintptrTyoe: WasmType): binaryen.I32Expression | binaryen.I64Expression | binaryen.F32Expression | binaryen.F64Expression {
+    switch (this.kind) {
+
+      case WasmTypeKind.byte:
+      case WasmTypeKind.short:
+      case WasmTypeKind.ushort:
+      case WasmTypeKind.int:
+      case WasmTypeKind.uint:
+      case WasmTypeKind.bool:
+        return module.i32.const(1);
+
+      case WasmTypeKind.long:
+      case WasmTypeKind.ulong:
+        return module.i64.const(1, 0);
+
+      case WasmTypeKind.float:
+        return module.f32.const(1);
+
+      case WasmTypeKind.double:
+        return module.f64.const(1);
+
+      case WasmTypeKind.uintptr:
+        return uintptrTyoe.size == 4 ? module.i32.const(1) : module.i64.const(1, 0);
+
+    }
+    throw Error("unexpected type");
+  }
+
   toString(): string {
     return WasmTypeKind[this.kind];
   }
 }
 
 export enum WasmFunctionFlags {
-  none     = 0,
-  import   = 1 << 0,
-  export   = 1 << 1,
-  instance = 1 << 2
+  none        = 0,
+  import      = 1 << 0,
+  export      = 1 << 1,
+  instance    = 1 << 2,
+  constructor = 1 << 3
 }
 
 export interface WasmFunction {
@@ -231,4 +325,15 @@ export interface WasmConstant {
   name: string,
   type: WasmType,
   value: any
+}
+
+export interface WasmField {
+  name: string;
+  offset: number;
+  size: number;
+}
+
+export interface WasmClass {
+  fields: WasmField[]
+  constructor: WasmFunction
 }
