@@ -67,34 +67,36 @@ Type      | WASM type | Description
 
 WebAssembly-specific operations are available as built-in functions that translate to the respective opcode directly:
 
-Function                                   | OpCode
--------------------------------------------|----------
-`rotl(value: int, shift: int): int`        | i32.rotl
-`rotll(value: long, shift: long): long`    | i64.rotl
-`rotr(value: int, shift: int): int`        | i32.rotr
-`rotrl(value: long, shift: long): long`    | i64.rotr
-`clz(value: int): int`                     | i32.clz
-`clzl(value: long): long`                  | i64.clz
-`ctz(value: int): int`                     | i32.ctz
-`ctzl(value: long): long`                  | i64.ctz
-`popcnt(value: int): int`                  | i32.popcnt
-`popcntl(value: long): long`               | i64.popcnt
-`abs(value: double): double`               | f64.abs
-`absf(value: float): float`                | f32.abs
-`ceil(value: double): double`              | f64.ceil
-`ceilf(value: float): float`               | f32.ceil
-`floor(value: double): double`             | f64.floor
-`floorf(value: float): float`              | f32.floor
-`sqrt(value: double): double`              | f64.sqrt
-`sqrtf(value: float): float`               | f32.sqrt
-`trunc(value: double): double`             | f64.trunc
-`truncf(value: float): float`              | f32.trunc
-`nearest(value: double): double`           | f64.nearest
-`nearestf(value: float): float`            | f32.nearest
-`min(left: double, right: double): double` | f64.min
-`minf(left: float, right: float): float`   | f32.min
-`max(left: double, right: double): double` | f64.max
-`maxf(left: float, right: float): float`   | f32.max
+Function                                        | OpCode
+------------------------------------------------|----------
+`rotl(value: int, shift: int): int`             | i32.rotl
+`rotll(value: long, shift: long): long`         | i64.rotl
+`rotr(value: int, shift: int): int`             | i32.rotr
+`rotrl(value: long, shift: long): long`         | i64.rotr
+`clz(value: int): int`                          | i32.clz
+`clzl(value: long): long`                       | i64.clz
+`ctz(value: int): int`                          | i32.ctz
+`ctzl(value: long): long`                       | i64.ctz
+`popcnt(value: int): int`                       | i32.popcnt
+`popcntl(value: long): long`                    | i64.popcnt
+`abs(value: double): double`                    | f64.abs
+`absf(value: float): float`                     | f32.abs
+`ceil(value: double): double`                   | f64.ceil
+`ceilf(value: float): float`                    | f32.ceil
+`floor(value: double): double`                  | f64.floor
+`floorf(value: float): float`                   | f32.floor
+`sqrt(value: double): double`                   | f64.sqrt
+`sqrtf(value: float): float`                    | f32.sqrt
+`trunc(value: double): double`                  | f64.trunc
+`truncf(value: float): float`                   | f32.trunc
+`nearest(value: double): double`                | f64.nearest
+`nearestf(value: float): float`                 | f32.nearest
+`min(left: double, right: double): double`      | f64.min
+`minf(left: float, right: float): float`        | f32.min
+`max(left: double, right: double): double`      | f64.max
+`maxf(left: float, right: float): float`        | f32.max
+`copysign(left: double, right: double): double` | f64.max
+`copysignf(left: float, right: float): float`   | f32.max
 
 Type coercion requires an explicit cast where precision is lost respectively is implicit where precision is maintained. For example, to cast a `double` to an `int`:
 

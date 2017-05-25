@@ -1,5 +1,7 @@
 /// <reference path="../assembly.d.ts" />
 
+// TODO: binaryen's optimizer seems to keep / eliminate random things here
+
 class MyClass {
   instanceFunctionVoid(): void {
   }
@@ -16,27 +18,27 @@ class MyClass {
   }
 }
 
-function dropPrefix(a: int): void {
+export function dropPrefix(a: int): void {
   ++a;
   --a;
   +a;
   -a;
 }
 
-function dontDropPrefix(a: int): int {
+export function dontDropPrefix(a: int): int {
   return ++a;
 }
 
-function dropPostfix(a: int): void {
+export function dropPostfix(a: int): void {
   a++;
   a--;
 }
 
-function dontDropPostfix(a: int): int {
+export function dontDropPostfix(a: int): int {
   return a++;
 }
 
-function dropBinary(a: int, b: int): void {
+export function dropBinary(a: int, b: int): void {
   a + b;
   a - b;
   a * b;
@@ -56,6 +58,6 @@ function dropBinary(a: int, b: int): void {
   a >> b;
 }
 
-function dontDropBinary(a: int, b: int): int {
+export function dontDropBinary(a: int, b: int): int {
   return a + b;
 }
