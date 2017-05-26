@@ -70,6 +70,10 @@ function isStatic(node: ts.Node): boolean {
   return (node.modifierFlagsCache & ts.ModifierFlags.Static) !== 0
 }
 
+function isConst(node: ts.Node): boolean {
+  return (node.flags & ts.NodeFlags.Const) !== 0;
+}
+
 // Rule #1: This is a compiler, not an optimizer. Makes life a lot easier.
 
 export class Compiler {
@@ -82,6 +86,7 @@ export class Compiler {
   module: WasmModule;
   signatures: { [key: string]: WasmSignature } = {};
   constants: { [key: string]: WasmConstant } = {};
+  globalInitializers: WasmExpression[] = [];
   profiler = new Profiler();
   currentFunction: WasmFunction;
   currentLocals: { [key: string]: WasmVariable };
@@ -188,7 +193,7 @@ export class Compiler {
             break;
 
           case ts.SyntaxKind.VariableStatement:
-            compiler.initializeVariable(<ts.VariableStatement>statement);
+            compiler.initializeGlobal(<ts.VariableStatement>statement);
             break;
 
           case ts.SyntaxKind.FunctionDeclaration:
@@ -213,8 +218,42 @@ export class Compiler {
     }
   }
 
-  initializeVariable(node: ts.VariableStatement): void {
+  initializeGlobal(node: ts.VariableStatement): void {
+
     // TODO: it seems that binaryen.js does not support globals, yet
+
+    for (let i = 0, k = node.declarationList.declarations.length; i < k; ++i) {
+      const declaration = node.declarationList.declarations[i];
+      const initializerNode = declaration.initializer;
+
+      if (declaration.type) {
+        const type = this.resolveType(declaration.type);
+        if (type) {
+
+          const initializerNode = declaration.initializer;
+
+          if (isConst(node.declarationList)) {
+
+            switch (initializerNode.kind) {
+              case ts.SyntaxKind.FirstLiteralToken:
+                // TODO
+                break;
+            }
+
+          } else {
+            this.globalInitializers.push(this.maybeConvertValue(initializerNode, this.compileExpression(initializerNode, type), (<any>initializerNode).wasmType, type, false));
+            // at this point we'd have a dynamic initializer but no place to put it. so, what about 'start' instead of enforcing constant initializers?
+          }
+
+          this.error(node, "Global variables are not supported yet");
+
+        } else {
+          this.error(declaration.type, "Unresolvable type");
+        }
+      } else {
+        this.error(declaration, "Global variable declaration requires a type");
+      }
+    }
   }
 
   private _initializeFunction(node: ts.FunctionDeclaration | ts.MethodDeclaration, parent?: ts.ClassDeclaration): void {
@@ -528,7 +567,7 @@ export class Compiler {
         const ifNode = <ts.IfStatement>node;
 
         return op.if(
-          this.convertValue(ifNode.expression, this.compileExpression(ifNode.expression, intType), (<any>ifNode.expression).wasmType, intType, true),
+          this.maybeConvertValue(ifNode.expression, this.compileExpression(ifNode.expression, intType), (<any>ifNode.expression).wasmType, intType, true),
           this.compileStatement(ifNode.thenStatement, onVariable),
           ifNode.elseStatement ? this.compileStatement(ifNode.elseStatement, onVariable) : undefined
         );
@@ -567,7 +606,7 @@ export class Compiler {
         const label = this.currentBreakLabel;
 
         const context = op.loop("break$" + label, op.block("continue$" + label, [
-          op.break("break$" + label, op.i32.eqz(this.convertValue(whileNode.expression, this.compileExpression(whileNode.expression, intType), (<any>whileNode.expression).wasmType, intType, true))),
+          op.break("break$" + label, op.i32.eqz(this.maybeConvertValue(whileNode.expression, this.compileExpression(whileNode.expression, intType), (<any>whileNode.expression).wasmType, intType, true))),
           this.compileStatement(whileNode.statement, onVariable)
         ]));
 
@@ -584,7 +623,7 @@ export class Compiler {
 
         const context = op.loop("break$" + label, op.block("continue$" + label, [
           this.compileStatement(doNode.statement, onVariable),
-          op.break("break$" + label, op.i32.eqz(this.convertValue(doNode.expression, this.compileExpression(doNode.expression, intType), (<any>doNode.expression).wasmType, intType, true)))
+          op.break("break$" + label, op.i32.eqz(this.maybeConvertValue(doNode.expression, this.compileExpression(doNode.expression, intType), (<any>doNode.expression).wasmType, intType, true)))
         ]));
 
         this.leaveBreakContext();
@@ -638,7 +677,7 @@ export class Compiler {
           const returnExpr = <ts.Expression>returnNode.expression;
 
           return op.return(
-            this.convertValue(
+            this.maybeConvertValue(
               returnExpr,
               this.compileExpression(returnExpr, this.currentFunction.returnType),
               <WasmType>(<any>returnExpr).wasmType,
@@ -666,6 +705,90 @@ export class Compiler {
     return type.toBinaryenOne(this.module, this.uintptrType);
   }
 
+  compileLiteral(node: ts.LiteralExpression, contextualType: WasmType): WasmExpression {
+    const op = this.module;
+
+    let literalText = node.text;
+
+    switch (literalText) {
+
+      case "true":
+        (<any>node).wasmType = boolType;
+        return contextualType.isLong ? op.i64.const(1, 0) : op.i32.const(1);
+
+      case "false":
+        (<any>node).wasmType = boolType;
+        return contextualType.isLong ? op.i64.const(0, 0) : op.i32.const(0);
+
+      case "null":
+        (<any>node).wasmType = this.uintptrType;
+        return this.uintptrSize === 4 ? op.i32.const(0) : op.i64.const(0, 0);
+
+    }
+
+    if (contextualType.isAnyFloat) {
+
+      let floatValue: number;
+
+      if (/^(?![eE])[0-9]*(?:\.[0-9]*)?(?:[eE][+-]?[0-9]+)?$/.test(literalText)) {
+        floatValue = parseFloat(literalText);
+      } else {
+        floatValue = 0;
+        this.error(node, "Float literal expected", literalText);
+      }
+
+      (<any>node).wasmType = contextualType;
+      return contextualType === floatType ? op.f32.const(floatValue) : op.f64.const(floatValue);
+
+    } else if (contextualType.isAnyInteger) {
+
+      let intValue: number;
+      let intRadix: number;
+
+      if (/^(?:0|[1-9][0-9]*)$/.test(literalText)) {
+        intValue = parseInt(literalText, intRadix = 10);
+      } else if (/^0[xX][0-9A-Fa-f]+$/.test(literalText)) {
+        intValue = parseInt(literalText = literalText.substring(2), intRadix = 16);
+      } else {
+        intValue = 0; intRadix = 10; literalText = "0";
+        this.error(node, "Integer literal expected", literalText);
+      }
+
+      (<any>node).wasmType = contextualType;
+
+      switch (contextualType) {
+
+        case sbyteType:
+        case shortType:
+          return op.i32.const(((intValue >>> 0) << contextualType.shift32) >> contextualType.shift32);
+
+        case byteType:
+        case ushortType:
+        case intType:
+        case uintType:
+        case uintptrType32:
+          return op.i32.const(intValue & contextualType.mask32);
+
+        case boolType:
+          return op.i32.const(intValue ? 1 : 0);
+
+        case longType:
+        case ulongType:
+        case uintptrType64:
+          const long = Long.fromString(literalText, !contextualType.isSigned, intRadix);
+          return op.i64.const(long.low, long.high);
+      }
+
+    } else {
+
+      this.error(node, "Unsupported literal", literalText);
+
+      (<any>node).wasmType = contextualType;
+      return op.unreachable();
+
+    }
+  }
+
   compileExpression(node: ts.Expression, contextualType: WasmType): WasmExpression {
     const op = this.module;
     // remember to always set 'wasmType' on 'node' here
@@ -690,7 +813,7 @@ export class Compiler {
 
         (<any>node).wasmType = asType;
 
-        return this.convertValue(node, this.compileExpression(asNode.expression, contextualType), <WasmType>(<any>asNode.expression).wasmType, asType, true);
+        return this.maybeConvertValue(node, this.compileExpression(asNode.expression, contextualType), <WasmType>(<any>asNode.expression).wasmType, asType, true);
       }
 
       case ts.SyntaxKind.BinaryExpression:
@@ -716,9 +839,9 @@ export class Compiler {
 
         // compile again with contextual result type so that literals are properly coerced
         if (leftType !== resultType)
-          leftExpr = this.convertValue(binaryNode.left, this.compileExpression(binaryNode.left, resultType), leftType, resultType, false);
+          leftExpr = this.maybeConvertValue(binaryNode.left, this.compileExpression(binaryNode.left, resultType), leftType, resultType, false);
         if (rightType !== resultType)
-          rightExpr = this.convertValue(binaryNode.right, this.compileExpression(binaryNode.right, resultType), rightType, resultType, false);
+          rightExpr = this.maybeConvertValue(binaryNode.right, this.compileExpression(binaryNode.right, resultType), rightType, resultType, false);
 
         const cat = this.categoryOf(resultType);
 
@@ -889,7 +1012,7 @@ export class Compiler {
               return op.i64.sub(op.i64.const(0, 0), unaryExpr);
 
             else
-              return this.convertValue(node, op.i32.sub(op.i32.const(0), unaryExpr), intType, operandType, true);
+              return this.maybeConvertValue(node, op.i32.sub(op.i32.const(0), unaryExpr), intType, operandType, true);
           }
 
           case ts.SyntaxKind.TildeToken:
@@ -907,12 +1030,12 @@ export class Compiler {
             } else if (contextualType.isLong) { // TODO: is the following correct / doesn't generate useless ops?
 
               (<any>node).wasmType = contextualType;
-              return op.i64.xor(this.convertValue(unaryNode.operand, unaryExpr, operandType, contextualType, true), op.i64.const(-1, -1));
+              return op.i64.xor(this.maybeConvertValue(unaryNode.operand, unaryExpr, operandType, contextualType, true), op.i64.const(-1, -1));
 
             } else {
 
               (<any>node).wasmType = intType;
-              return op.i32.xor(this.convertValue(unaryNode.operand, unaryExpr, operandType, intType, true), op.i32.const(-1));
+              return op.i32.xor(this.maybeConvertValue(unaryNode.operand, unaryExpr, operandType, intType, true), op.i32.const(-1));
 
             }
           }
@@ -938,7 +1061,7 @@ export class Compiler {
                 );
 
                 (<any>node).wasmType = local.type;
-                return this.convertValue(unaryNode, op.teeLocal(local.index, calculate), intType, local.type, true);
+                return this.maybeConvertValue(unaryNode, op.teeLocal(local.index, calculate), intType, local.type, true);
               }
             }
           }
@@ -979,7 +1102,7 @@ export class Compiler {
                 );
 
                 if (local.type.isByte || local.type.isShort)
-                  calculate = this.convertValue(unaryNode, calculate, intType, local.type, true);
+                  calculate = this.maybeConvertValue(unaryNode, calculate, intType, local.type, true);
 
                 return (isIncrement ? cat.sub : cat.add).call(cat, op.teeLocal(local.index, calculate), one);
               }
@@ -992,76 +1115,7 @@ export class Compiler {
       }
 
       case ts.SyntaxKind.FirstLiteralToken:
-      {
-        let literalText = (<ts.LiteralExpression>node).text;
-        let integerRadix: number;
-
-        switch (literalText) {
-
-          case "true":
-            literalText = "1";
-            break;
-
-          case "false":
-          case "null":
-            literalText = "0";
-            break;
-        }
-
-        if (/^(?:0|[1-9][0-9]*)$/.test(literalText)) {
-
-          integerRadix = 10;
-
-        } else if (/^0[xX][0-9A-Fa-f]+$/.test(literalText)) {
-
-          integerRadix = 16;
-          literalText = literalText.substring(2);
-
-        } else if (/^(?![eE])[0-9]*(?:\.[0-9]*)?(?:[eE][+-]?[0-9]+)?$/.test(literalText)) {
-
-          if (!contextualType.isAnyFloat) { // explicit float in non-float context must be converted
-            (<any>node).wasmType = doubleType;
-            return op.f64.const(parseFloat(literalText));
-          }
-
-        } else {
-
-          this.error(node, "Unsupported literal", literalText);
-          literalText = "0";
-          integerRadix = 10;
-        }
-
-        (<any>node).wasmType = contextualType;
-
-        switch (contextualType) {
-
-          case floatType:
-            return op.f32.const(parseFloat(literalText));
-
-          case doubleType:
-            return op.f64.const(parseFloat(literalText));
-
-          case sbyteType:
-          case shortType:
-            return op.i32.const(((parseInt(literalText, integerRadix) >>> 0) << contextualType.shift32) >> contextualType.shift32);
-
-          case byteType:
-          case ushortType:
-          case intType:
-          case uintType:
-          case uintptrType32:
-            return op.i32.const(parseInt(literalText, integerRadix) & ((contextualType.size << 8) - 1));
-
-          case longType:
-          case ulongType:
-          case uintptrType64:
-            const long = Long.fromString(literalText, contextualType === ulongType, integerRadix);
-            return op.i64.const(long.low, long.high);
-
-          case boolType:
-            return op.i32.const(parseInt(literalText, integerRadix) !== 0 ? 1 : 0);
-        }
-      }
+        return this.compileLiteral(<ts.LiteralExpression>node, contextualType);
 
       case ts.SyntaxKind.Identifier:
       {
@@ -1262,7 +1316,7 @@ export class Compiler {
     }
   }
 
-  convertValue(node: ts.Node, expr: WasmExpression, fromType: WasmType, toType: WasmType, explicit: boolean): WasmExpression {
+  maybeConvertValue(node: ts.Node, expr: WasmExpression, fromType: WasmType, toType: WasmType, explicit: boolean): WasmExpression {
     if (fromType.kind === toType.kind)
       return expr;
 
@@ -1285,19 +1339,15 @@ export class Compiler {
 
         case byteType:
         case ushortType:
-        case boolType:
-          return this.convertValue(node, op.i32.trunc_u.f32(expr), intType, toType, explicit);
-
         case uintType:
         case uintptrType32:
-          return op.i32.trunc_u.f32(expr);
+        case boolType:
+          return this.maybeConvertValue(node, op.i32.trunc_u.f32(expr), intType, toType, explicit);
 
         case sbyteType:
         case shortType:
-          return this.convertValue(node, op.i32.trunc_s.f32(expr), intType, toType, explicit);
-
         case intType:
-          return op.i32.trunc_s.f32(expr);
+          return this.maybeConvertValue(node, op.i32.trunc_s.f32(expr), intType, toType, explicit);
 
         case ulongType:
         case uintptrType64:
@@ -1321,19 +1371,15 @@ export class Compiler {
 
         case byteType:
         case ushortType:
-        case boolType:
-          return this.convertValue(node, op.i32.trunc_u.f64(expr), intType, toType, explicit);
-
         case uintType:
         case uintptrType32:
-          return op.i32.trunc_u.f64(expr);
+        case boolType:
+          return this.maybeConvertValue(node, op.i32.trunc_u.f64(expr), intType, toType, explicit);
 
         case sbyteType:
         case shortType:
-          return this.convertValue(node, op.i32.trunc_s.f64(expr), intType, toType, explicit);
-
         case intType:
-          return op.i32.trunc_s.f64(expr);
+          return this.maybeConvertValue(node, op.i32.trunc_s.f64(expr), intType, toType, explicit);
 
         case ulongType:
         case uintptrType64:
@@ -1431,7 +1477,7 @@ export class Compiler {
 
     if (!explicit) illegalImplicitConversion();
 
-    if (toType.isSigned) {
+    if (toType.isSigned) { // sign-extend
 
       return op.i32.shl(
         op.i32.shr_s(
@@ -1441,7 +1487,7 @@ export class Compiler {
         op.i32.const(toType.shift32)
       );
 
-    } else {
+    } else { // mask
 
       return op.i32.and(
         expr,
