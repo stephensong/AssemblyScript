@@ -43,7 +43,7 @@ export function formatDiagnostics(diagnostics: ts.Diagnostic[], host?: ts.Format
     if (diagnostic.file) {
       const { line, character } = ts.getLineAndCharacterOfPosition(diagnostic.file, diagnostic.start);
       const fileName = diagnostic.file.fileName;
-      const relativeFileName = ts.convertToRelativePath(fileName, host.getCurrentDirectory(), fileName => host.getCanonicalFileName(fileName));
+      const relativeFileName = ts.convertToRelativePath(fileName, host.getCurrentDirectory(), relFileName => host.getCanonicalFileName(relFileName));
       output += `${relativeFileName}(${line + 1},${character + 1}): `;
     }
 
@@ -99,11 +99,11 @@ export function formatDiagnosticsWithColorAndContext(diagnostics: ts.Diagnostic[
 
           output += lineContent.slice(0, firstLineChar).replace(/\S/g, " ");
           output += lineContent.slice(firstLineChar, lastCharForLine).replace(/./g, "~");
-        }
-        else if (i === lastLine) {
+
+        } else if (i === lastLine) {
           output += lineContent.slice(0, lastLineChar).replace(/./g, "~");
-        }
-        else {
+
+        } else {
           // Squiggle the entire line.
           output += lineContent.replace(/./g, "~");
         }
@@ -136,7 +136,7 @@ export function createDiagnosticForNode(node: ts.Node, category: ts.DiagnosticCa
 }
 
 export function printDiagnostic(diagnostic: ts.Diagnostic): void {
-  if (diagnostic.category == ts.DiagnosticCategory.Message)
+  if (diagnostic.category === ts.DiagnosticCategory.Message)
     process.stderr.write(formatDiagnostics([ diagnostic ]));
   else
     process.stderr.write(formatDiagnosticsWithColorAndContext([ diagnostic ]) + "\n");

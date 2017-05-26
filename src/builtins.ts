@@ -22,6 +22,7 @@ type WasmExpressionPair = [ WasmExpression, WasmExpression ];
 
 export function rotl(compiler: Compiler, node: TSExpressionPair, expr: WasmExpressionPair): WasmExpression {
   if ((<any>node[0]).wasmType === (<any>node[1]).wasmType) {
+
     switch ((<any>node).wasmType) {
 
       case intType:

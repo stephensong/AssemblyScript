@@ -28,7 +28,7 @@ export function compileCall(compiler: Compiler, node: ts.CallExpression, context
   if ((wasmFunction.flags & WasmFunctionFlags.instance) !== 0)
     argumentExpressions[i++] = op.getLocal(0, wasmFunction.parameterTypes[0].toBinaryenType(compiler.uintptrType));
 
-  for (let k = argumentExpressions.length; i < k; ++i)
+  for (const k = argumentExpressions.length; i < k; ++i)
     argumentExpressions[i] = compiler.compileExpression(node.arguments[i], wasmFunction.parameterTypes[i]);
 
   if (i < argumentExpressions.length) { // TODO: pull default value initializers from declaration

@@ -51,7 +51,7 @@ export class WasmType {
     if (this.isByte || this.isShort) {
       this.shift32 = 32 - (size << 3);
       this.mask32 =  ~0 >>> this.shift32;
-    } else if (this.kind == WasmTypeKind.bool) {
+    } else if (this.kind === WasmTypeKind.bool) {
       this.mask32 = 1;
       this.shift32 = 31;
     }
@@ -135,10 +135,10 @@ export class WasmType {
   }
 
   withUnderlyingType(underlyingType: WasmType): WasmType {
-    if (underlyingType == null)
+    if (underlyingType === null)
       throw Error("underlying type must be specified");
 
-    if (this.kind != WasmTypeKind.uintptr)
+    if (this.kind !== WasmTypeKind.uintptr)
       throw Error("only pointers can have an underlying type");
 
     const type = new WasmType(this.kind, this.size);
@@ -168,7 +168,7 @@ export class WasmType {
         return "F";
 
       case WasmTypeKind.uintptr:
-        return uintptrType.size == 4 ? "i" : "I";
+        return uintptrType.size === 4 ? "i" : "I";
 
       case WasmTypeKind.void:
         return "v";
@@ -199,7 +199,7 @@ export class WasmType {
         return binaryen.f64;
 
       case WasmTypeKind.uintptr:
-        return uintptrType.size == 4 ? binaryen.i32 : binaryen.i64;
+        return uintptrType.size === 4 ? binaryen.i32 : binaryen.i64;
 
       case WasmTypeKind.void:
         return binaryen.none;
@@ -230,13 +230,13 @@ export class WasmType {
         return module.f64;
 
       case WasmTypeKind.uintptr:
-        return uintptrTyoe.size == 4 ? module.i32 : module.i64;
+        return uintptrTyoe.size === 4 ? module.i32 : module.i64;
 
     }
     throw Error("unexpected type");
   }
 
-  toBinaryenZero(module: binaryen.Module, uintptrTyoe: WasmType): binaryen.I32Expression | binaryen.I64Expression | binaryen.F32Expression | binaryen.F64Expression {
+  toBinaryenZero(module: binaryen.Module, uintptrType: WasmType): binaryen.I32Expression | binaryen.I64Expression | binaryen.F32Expression | binaryen.F64Expression {
     switch (this.kind) {
 
       case WasmTypeKind.byte:
@@ -258,7 +258,7 @@ export class WasmType {
         return module.f64.const(0);
 
       case WasmTypeKind.uintptr:
-        return uintptrTyoe.size == 4 ? module.i32.const(0) : module.i64.const(0, 0);
+        return uintptrType.size === 4 ? module.i32.const(0) : module.i64.const(0, 0);
 
     }
     throw Error("unexpected type");
@@ -286,7 +286,7 @@ export class WasmType {
         return module.f64.const(1);
 
       case WasmTypeKind.uintptr:
-        return uintptrTyoe.size == 4 ? module.i32.const(1) : module.i64.const(1, 0);
+        return uintptrTyoe.size === 4 ? module.i32.const(1) : module.i64.const(1, 0);
 
     }
     throw Error("unexpected type");
@@ -306,25 +306,25 @@ export enum WasmFunctionFlags {
 }
 
 export interface WasmFunction {
-  name: string,
-  flags: WasmFunctionFlags,
-  parameterTypes: WasmType[],
-  returnType: WasmType,
-  locals: WasmVariable[],
-  signature: binaryen.Signature,
-  signatureId: string
+  name: string;
+  flags: WasmFunctionFlags;
+  parameterTypes: WasmType[];
+  returnType: WasmType;
+  locals: WasmVariable[];
+  signature: binaryen.Signature;
+  signatureId: string;
 }
 
 export interface WasmVariable {
-  name: string,
-  index: number,
-  type: WasmType
+  name: string;
+  index: number;
+  type: WasmType;
 }
 
 export interface WasmConstant {
-  name: string,
-  type: WasmType,
-  value: any
+  name: string;
+  type: WasmType;
+  value: any;
 }
 
 export interface WasmField {
@@ -334,6 +334,6 @@ export interface WasmField {
 }
 
 export interface WasmClass {
-  fields: WasmField[]
-  constructor: WasmFunction
+  fields: WasmField[];
+  constructor: WasmFunction;
 }

@@ -18,8 +18,8 @@ export function compilePostfixUnary(compiler: Compiler, node: ts.PostfixUnaryExp
 
   (<any>node).wasmType = (<any>node.operand).wasmType;
 
-  if (node.operand.kind === ts.SyntaxKind.Identifier)
-  {
+  if (node.operand.kind === ts.SyntaxKind.Identifier) {
+
     const local = compiler.currentLocals[(<ts.Identifier>node.operand).text];
     if (local) {
 

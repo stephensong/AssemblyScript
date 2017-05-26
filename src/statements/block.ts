@@ -11,7 +11,7 @@ export function compileBlock(compiler: Compiler, node: ts.Block, onVariable: (no
 
   const statements: WasmStatement[] = new Array(node.statements.length);
   let i = 0;
-  for (let k = statements.length; i < k; ++i)
+  for (const k = statements.length; i < k; ++i)
     statements[i] = compiler.compileStatement(node.statements[i], onVariable);
 
   if (i === 0)

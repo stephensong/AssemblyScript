@@ -80,7 +80,7 @@ export class Compiler {
 
   static compile(filename: string): WasmModule {
 
-    let program = ts.createProgram([ __dirname + "/../assembly.d.ts", filename ], {
+    const program = ts.createProgram([ __dirname + "/../assembly.d.ts", filename ], {
       target: ts.ScriptTarget.Latest,
       module: ts.ModuleKind.None,
       noLib: true,
@@ -88,7 +88,7 @@ export class Compiler {
       types: []
     });
 
-    let compiler = new Compiler(program);
+    const compiler = new Compiler(program);
 
     // bail out if there were 'pre emit' errors
     let diagnostics = ts.getPreEmitDiagnostics(compiler.program);
@@ -163,7 +163,8 @@ export class Compiler {
   initialize(): void {
     const compiler = this;
 
-    this.module.setMemory(256, MEM_MAX_32, "memory", []); // TODO: it seem that binaryen.js doesn't support importing memory yet
+    // TODO: it seem that binaryen.js doesn't support importing memory yet
+    this.module.setMemory(256, MEM_MAX_32, "memory", []);
 
     const sourceFiles = this.program.getSourceFiles();
     for (let i = 0, k = sourceFiles.length, file; i < k; ++i) {
@@ -171,8 +172,8 @@ export class Compiler {
       if ((file = sourceFiles[i]).isDeclarationFile)
         continue;
 
-      for (let i = 0, k = file.statements.length, statement; i < k; ++i) {
-        switch ((statement = file.statements[i]).kind) {
+      for (let j = 0, l = file.statements.length, statement; j < l; ++j) {
+        switch ((statement = file.statements[j]).kind) {
 
           case ts.SyntaxKind.ImportDeclaration: // already handled
             break;
@@ -215,8 +216,6 @@ export class Compiler {
         const type = this.resolveType(declaration.type);
         if (type) {
 
-          const initializerNode = declaration.initializer;
-
           if (isConst(node.declarationList)) {
 
             switch (initializerNode.kind) {
@@ -226,8 +225,16 @@ export class Compiler {
             }
 
           } else {
-            this.globalInitializers.push(this.maybeConvertValue(initializerNode, this.compileExpression(initializerNode, type), (<any>initializerNode).wasmType, type, false));
-            // at this point we'd have a dynamic initializer but no place to put it. so, what about 'start' instead of enforcing constant initializers?
+            this.globalInitializers.push(
+              this.maybeConvertValue(
+                initializerNode,
+                this.compileExpression(initializerNode, type),
+                (<any>initializerNode).wasmType, type, false
+              )
+            );
+
+            // at this point we'd have a dynamic initializer but no place to put it.
+            // so, what about 'start' instead of enforcing constant initializers?
           }
 
           this.error(node, "Global variables are not supported yet");
@@ -287,16 +294,16 @@ export class Compiler {
     }
 
     for (let i = 0, k = node.parameters.length; i < k; ++i) {
-      const name = node.parameters[i].symbol.name;
-      const type = this.resolveType(<ts.TypeNode>node.parameters[i].type);
+      const parameterName = node.parameters[i].symbol.name;
+      const parameterType = this.resolveType(<ts.TypeNode>node.parameters[i].type);
 
-      parameterTypes[index] = type;
-      signatureTypes[index] = type.toBinaryenType(this.uintptrType);
-      signatureIdentifiers[index] = type.toSignatureIdentifier(this.uintptrType);
+      parameterTypes[index] = parameterType;
+      signatureTypes[index] = parameterType.toBinaryenType(this.uintptrType);
+      signatureIdentifiers[index] = parameterType.toSignatureIdentifier(this.uintptrType);
       locals[index] = {
-        name: name,
+        name: parameterName,
         index: index,
-        type: type
+        type: parameterType
       };
 
       ++index;
@@ -306,8 +313,10 @@ export class Compiler {
 
     const signatureId = signatureIdentifiers.join("");
     let signature = this.signatures[signatureId];
-    if (!signature)
-      signature = this.signatures[signatureId] = this.module.addFunctionType(signatureId, returnType.toBinaryenType(this.uintptrType), signatureTypes);
+    if (!signature) {
+      signature = this.module.addFunctionType(signatureId, returnType.toBinaryenType(this.uintptrType), signatureTypes);
+      this.signatures[signatureId] = signature;
+    }
 
     if (isExport(node) && node.getSourceFile() === this.entryFile)
       flags |= WasmFunctionFlags.export;
@@ -434,13 +443,13 @@ export class Compiler {
 
     body.length = bodyIndex;
 
-    function onVariable(node: ts.VariableDeclaration): number {
-      const name = node.name.getText();
-      const type = (<any>node).wasmType;
+    function onVariable(variableNode: ts.VariableDeclaration): number {
+      const name = variableNode.name.getText();
+      const type = <WasmType>(<any>variableNode).wasmType;
 
       if (compiler.currentLocals[name]) {
 
-        compiler.error(node, "Local variable shadows another variable of the same name in a parent scope", name);
+        compiler.error(variableNode, "Local variable shadows another variable of the same name in a parent scope", name);
 
       } else {
 
@@ -451,7 +460,7 @@ export class Compiler {
         };
       }
 
-      additionalLocals.push(type.toBinaryenType());
+      additionalLocals.push(type.toBinaryenType(this.uintptrType));
 
       return localIndex++;
     }
@@ -467,7 +476,7 @@ export class Compiler {
       let moduleName: string;
       let baseName: string;
 
-      var idx = name.indexOf("$");
+      const idx = name.indexOf("$");
       if (idx > 0) {
         moduleName = name.substring(0, idx);
         baseName = name.substring(idx + 1);
@@ -714,11 +723,11 @@ export class Compiler {
     if (fromType.kind === toType.kind)
       return expr;
 
-    const _this = this;
+    const compiler = this;
     const op = this.module;
 
     function illegalImplicitConversion() {
-      _this.error(node, "Cannot convert from '" + fromType + "' to '" + toType + "' without a cast");
+      compiler.error(node, "Cannot convert from '" + fromType + "' to '" + toType + "' without a cast");
       explicit = true; // report this only once for the topmost node
     }
 
@@ -895,7 +904,7 @@ export class Compiler {
     const text = type.getText();
 
     switch (text) {
-      case "byte":return byteType;
+      case "byte": return byteType;
       case "sbyte": return sbyteType;
       case "short": return shortType;
       case "ushort": return ushortType;
@@ -910,17 +919,17 @@ export class Compiler {
       case "void": if (acceptVoid) return voidType;
     }
 
-    if (type.kind == ts.SyntaxKind.TypeReference) {
-      var reference = <ts.TypeReferenceNode>type;
+    if (type.kind === ts.SyntaxKind.TypeReference) {
+      const referenceNode = <ts.TypeReferenceNode>type;
 
-      switch (reference.typeName.getText()) {
+      switch (referenceNode.typeName.getText()) {
 
         case "Ptr":
-          if (reference.typeArguments.length !== 1)
+          if (referenceNode.typeArguments.length !== 1)
             throw Error("illegal number of type parameters on Ptr<T>");
-          if (reference.typeArguments[0].kind !== ts.SyntaxKind.TypeReference)
+          if (referenceNode.typeArguments[0].kind !== ts.SyntaxKind.TypeReference)
             throw Error("unsupported type parameter on Ptr<T>");
-          return this.uintptrType.withUnderlyingType(this.resolveType(<ts.TypeReferenceNode>reference.typeArguments[0]));
+          return this.uintptrType.withUnderlyingType(this.resolveType(<ts.TypeReferenceNode>referenceNode.typeArguments[0]));
 
       }
     }
