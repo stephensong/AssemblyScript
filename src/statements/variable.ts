@@ -1,16 +1,9 @@
-import {
-  Compiler
-} from "../compiler";
+import { Compiler } from "../compiler";
+import { binaryen } from "../wasm";
 
-import {
-  WasmType,
-  WasmExpression,
-  WasmStatement
-} from "../wasm";
-
-export function compileVariable(compiler: Compiler, node: ts.VariableStatement, onVariable: (node: ts.VariableDeclaration) => number): WasmStatement {
+export function compileVariable(compiler: Compiler, node: ts.VariableStatement, onVariable: (node: ts.VariableDeclaration) => number): binaryen.Statement {
   const op = compiler.module;
-  const initializers: WasmExpression[] = [];
+  const initializers: binaryen.Expression[] = [];
 
   for (let i = 0, k = node.declarationList.declarations.length; i < k; ++i) {
     const declaration = node.declarationList.declarations[i];

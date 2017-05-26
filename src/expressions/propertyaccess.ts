@@ -1,30 +1,10 @@
-import {
-  Compiler
-} from "../compiler";
-
-import {
-  byteType,
-  sbyteType,
-  shortType,
-  ushortType,
-  intType,
-  uintType,
-  uintptrType32,
-  longType,
-  ulongType,
-  uintptrType64,
-  floatType,
-  doubleType
-} from "../types";
-
-import {
-  WasmType,
-  WasmExpression
-} from "../wasm";
-
+import { Compiler } from "../compiler";
+import { byteType, sbyteType, shortType, ushortType, intType, uintType, uintptrType32, longType, ulongType, uintptrType64, floatType, doubleType } from "../types";
+import { binaryen } from "../wasm";
+import * as wasm from "../wasm";
 import * as Long from "long";
 
-export function compilePropertyAccess(compiler: Compiler, node: ts.PropertyAccessExpression, contextualType: WasmType): WasmExpression {
+export function compilePropertyAccess(compiler: Compiler, node: ts.PropertyAccessExpression, contextualType: wasm.Type): binaryen.Expression {
   const op = compiler.module;
 
   // TODO: This currently only supports accessing constants in the form identifier.identifier (i.e. enum values)

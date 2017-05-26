@@ -1,20 +1,12 @@
-import {
-  Compiler
-} from "../compiler";
+import { Compiler } from "../compiler";
+import { intType } from "../types";
+import { binaryen } from "../wasm";
+import * as wasm from "../wasm";
 
-import {
-  intType
-} from "../types";
-
-import {
-  WasmExpression,
-  WasmType
-} from "../wasm";
-
-export function compilePostfixUnary(compiler: Compiler, node: ts.PostfixUnaryExpression, contextualType: WasmType): WasmExpression {
+export function compilePostfixUnary(compiler: Compiler, node: ts.PostfixUnaryExpression, contextualType: wasm.Type): binaryen.Expression {
   const op = compiler.module;
   const operand = compiler.compileExpression(node.operand, contextualType);
-  const operandType = <WasmType>(<any>node.operand).wasmType;
+  const operandType = <wasm.Type>(<any>node.operand).wasmType;
 
   (<any>node).wasmType = (<any>node.operand).wasmType;
 

@@ -1,26 +1,11 @@
-import {
-  Compiler
-} from "./compiler";
+import { Compiler } from "./compiler";
+import { binaryen } from "./wasm";
+import { intType, uintType, longType, ulongType, uintptrType32, uintptrType64, floatType, doubleType } from "./types";
 
-import {
-  WasmExpression
-} from "./wasm";
+type TypeScriptExpressionPair = [ ts.Expression, ts.Expression ];
+type BinaryenExpressionPair = [ binaryen.Expression, binaryen.Expression ];
 
-import {
-  intType,
-  uintType,
-  longType,
-  ulongType,
-  uintptrType32,
-  uintptrType64,
-  floatType,
-  doubleType
-} from "./types";
-
-type TSExpressionPair = [ ts.Expression, ts.Expression ];
-type WasmExpressionPair = [ WasmExpression, WasmExpression ];
-
-export function rotl(compiler: Compiler, node: TSExpressionPair, expr: WasmExpressionPair): WasmExpression {
+export function rotl(compiler: Compiler, node: TypeScriptExpressionPair, expr: BinaryenExpressionPair): binaryen.Expression {
   if ((<any>node[0]).wasmType === (<any>node[1]).wasmType) {
 
     switch ((<any>node).wasmType) {
@@ -39,7 +24,7 @@ export function rotl(compiler: Compiler, node: TSExpressionPair, expr: WasmExpre
   throw Error("unsupported operation");
 }
 
-export function rotr(compiler: Compiler, node: TSExpressionPair, expr: WasmExpressionPair): WasmExpression {
+export function rotr(compiler: Compiler, node: TypeScriptExpressionPair, expr: BinaryenExpressionPair): binaryen.Expression {
   if ((<any>node[0]).wasmType === (<any>node[1]).wasmType) {
     switch ((<any>node).wasmType) {
 
@@ -57,7 +42,7 @@ export function rotr(compiler: Compiler, node: TSExpressionPair, expr: WasmExpre
   throw Error("unsupported operation");
 }
 
-export function clz(compiler: Compiler, node: ts.Expression, expr: WasmExpression): WasmExpression {
+export function clz(compiler: Compiler, node: ts.Expression, expr: binaryen.Expression): binaryen.Expression {
   switch ((<any>node).wasmType) {
 
     case intType:
@@ -73,7 +58,7 @@ export function clz(compiler: Compiler, node: ts.Expression, expr: WasmExpressio
   throw Error("unsupported operation");
 }
 
-export function ctz(compiler: Compiler, node: ts.Expression, expr: WasmExpression): WasmExpression {
+export function ctz(compiler: Compiler, node: ts.Expression, expr: binaryen.Expression): binaryen.Expression {
   switch ((<any>node).wasmType) {
 
     case intType:
@@ -89,7 +74,7 @@ export function ctz(compiler: Compiler, node: ts.Expression, expr: WasmExpressio
   throw Error("unsupported operation");
 }
 
-export function popcnt(compiler: Compiler, node: ts.Expression, expr: WasmExpression): WasmExpression {
+export function popcnt(compiler: Compiler, node: ts.Expression, expr: binaryen.Expression): binaryen.Expression {
   switch ((<any>node).wasmType) {
 
     case intType:
@@ -105,7 +90,7 @@ export function popcnt(compiler: Compiler, node: ts.Expression, expr: WasmExpres
   throw Error("unsupported operation");
 }
 
-export function abs(compiler: Compiler, node: ts.Expression, expr: WasmExpression): WasmExpression {
+export function abs(compiler: Compiler, node: ts.Expression, expr: binaryen.Expression): binaryen.Expression {
   switch ((<any>node).wasmType) {
 
     case floatType:
@@ -117,7 +102,7 @@ export function abs(compiler: Compiler, node: ts.Expression, expr: WasmExpressio
   throw Error("unsupported operation");
 }
 
-export function ceil(compiler: Compiler, node: ts.Expression, expr: WasmExpression): WasmExpression {
+export function ceil(compiler: Compiler, node: ts.Expression, expr: binaryen.Expression): binaryen.Expression {
   switch ((<any>node).wasmType) {
 
     case floatType:
@@ -129,7 +114,7 @@ export function ceil(compiler: Compiler, node: ts.Expression, expr: WasmExpressi
   throw Error("unsupported operation");
 }
 
-export function floor(compiler: Compiler, node: ts.Expression, expr: WasmExpression): WasmExpression {
+export function floor(compiler: Compiler, node: ts.Expression, expr: binaryen.Expression): binaryen.Expression {
   switch ((<any>node).wasmType) {
 
     case floatType:
@@ -141,7 +126,7 @@ export function floor(compiler: Compiler, node: ts.Expression, expr: WasmExpress
   throw Error("unsupported operation");
 }
 
-export function sqrt(compiler: Compiler, node: ts.Expression, expr: WasmExpression): WasmExpression {
+export function sqrt(compiler: Compiler, node: ts.Expression, expr: binaryen.Expression): binaryen.Expression {
   switch ((<any>node).wasmType) {
 
     case floatType:
@@ -153,7 +138,7 @@ export function sqrt(compiler: Compiler, node: ts.Expression, expr: WasmExpressi
   throw Error("unsupported operation");
 }
 
-export function trunc(compiler: Compiler, node: ts.Expression, expr: WasmExpression): WasmExpression {
+export function trunc(compiler: Compiler, node: ts.Expression, expr: binaryen.Expression): binaryen.Expression {
   switch ((<any>node).wasmType) {
 
     case floatType:
@@ -165,7 +150,7 @@ export function trunc(compiler: Compiler, node: ts.Expression, expr: WasmExpress
   throw Error("unsupported operation");
 }
 
-export function nearest(compiler: Compiler, node: ts.Expression, expr: WasmExpression): WasmExpression {
+export function nearest(compiler: Compiler, node: ts.Expression, expr: binaryen.Expression): binaryen.Expression {
   switch ((<any>node).wasmType) {
 
     case floatType:
@@ -177,7 +162,7 @@ export function nearest(compiler: Compiler, node: ts.Expression, expr: WasmExpre
   throw Error("unsupported operation");
 }
 
-export function min(compiler: Compiler, node: TSExpressionPair, expr: WasmExpressionPair): WasmExpression {
+export function min(compiler: Compiler, node: TypeScriptExpressionPair, expr: BinaryenExpressionPair): binaryen.Expression {
   if ((<any>node[0]).wasmType === (<any>node[1]).wasmType) {
     switch ((<any>node[0]).wasmType) {
 
@@ -191,7 +176,7 @@ export function min(compiler: Compiler, node: TSExpressionPair, expr: WasmExpres
   throw Error("unsupported operation");
 }
 
-export function max(compiler: Compiler, node: TSExpressionPair, expr: WasmExpressionPair): WasmExpression {
+export function max(compiler: Compiler, node: TypeScriptExpressionPair, expr: BinaryenExpressionPair): binaryen.Expression {
   if ((<any>node[0]).wasmType === (<any>node[1]).wasmType) {
     switch ((<any>node[0]).wasmType) {
 
@@ -205,7 +190,7 @@ export function max(compiler: Compiler, node: TSExpressionPair, expr: WasmExpres
   throw Error("unsupported operation");
 }
 
-export function copysign(compiler: Compiler, node: TSExpressionPair, expr: WasmExpressionPair): WasmExpression {
+export function copysign(compiler: Compiler, node: TypeScriptExpressionPair, expr: BinaryenExpressionPair): binaryen.Expression {
   if ((<any>node[0]).wasmType === (<any>node[1]).wasmType) {
     switch ((<any>node[0]).wasmType) {
 

@@ -1,26 +1,17 @@
-import {
-  Compiler
-} from "../compiler";
+import { Compiler } from "../compiler";
+import { binaryen } from "../wasm";
+import * as wasm from "../wasm";
 
-import {
-  WasmType,
-  WasmExpression,
-  WasmI32Operations,
-  WasmI64Operations,
-  WasmF32Operations,
-  WasmF64Operations
-} from "../wasm";
-
-export function compileBinary(compiler: Compiler, node: ts.BinaryExpression, contextualType: WasmType): WasmExpression {
+export function compileBinary(compiler: Compiler, node: ts.BinaryExpression, contextualType: wasm.Type): binaryen.Expression {
   const op = compiler.module;
 
   let left  = compiler.compileExpression(node.left, contextualType);
   let right = compiler.compileExpression(node.right, contextualType);
 
-  const leftType  = <WasmType>(<any>node.left).wasmType;
-  const rightType = <WasmType>(<any>node.right).wasmType;
+  const leftType  = <wasm.Type>(<any>node.left).wasmType;
+  const rightType = <wasm.Type>(<any>node.right).wasmType;
 
-  let resultType: WasmType;
+  let resultType: wasm.Type;
 
   if (leftType.isAnyFloat) {
 
@@ -44,7 +35,7 @@ export function compileBinary(compiler: Compiler, node: ts.BinaryExpression, con
 
   if (resultType.isAnyFloat) {
 
-    const cat = <WasmF32Operations | WasmF64Operations>compiler.categoryOf(resultType);
+    const cat = <binaryen.F32Operations | binaryen.F64Operations>compiler.categoryOf(resultType);
 
     switch (node.operatorToken.kind) {
 
@@ -82,7 +73,7 @@ export function compileBinary(compiler: Compiler, node: ts.BinaryExpression, con
 
   } else if (resultType.isAnyInteger) {
 
-    const cat = <WasmI32Operations | WasmI64Operations>compiler.categoryOf(resultType);
+    const cat = <binaryen.I32Operations | binaryen.I64Operations>compiler.categoryOf(resultType);
 
     switch (node.operatorToken.kind) {
 

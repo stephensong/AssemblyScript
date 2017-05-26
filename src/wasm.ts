@@ -1,26 +1,8 @@
 import * as binaryen from "../lib/binaryen";
 
-export {
-  Module as WasmModule,
-  Signature as WasmSignature,
-  Statement as WasmStatement,
-  Expression as WasmExpression,
+export { binaryen };
 
-  Type as BinaryenType,
-  Function as BinaryenFunction,
-
-  I32Expression as WasmI32Expression,
-  I64Expression as WasmI64Expression,
-  F32Expression as WasmF32Expression,
-  F64Expression as WasmF64Expression,
-
-  I32Operations as WasmI32Operations,
-  I64Operations as WasmI64Operations,
-  F32Operations as WasmF32Operations,
-  F64Operations as WasmF64Operations
-} from "../lib/binaryen";
-
-export enum WasmTypeKind {
+export enum TypeKind {
   byte,
   sbyte,
   short,
@@ -36,14 +18,14 @@ export enum WasmTypeKind {
   void
 }
 
-export class WasmType {
-  kind: WasmTypeKind;
+export class Type {
+  kind: TypeKind;
   size: number;
-  underlyingType: WasmType;
+  underlyingType: Type;
   shift32: number;
   mask32: number;
 
-  constructor(kind: WasmTypeKind, size: number, underlyingType: WasmType = null) {
+  constructor(kind: TypeKind, size: number, underlyingType: Type = null) {
     this.kind = kind;
     this.size = size;
     this.underlyingType = underlyingType;
@@ -51,7 +33,7 @@ export class WasmType {
     if (this.isByte || this.isShort) {
       this.shift32 = 32 - (size << 3);
       this.mask32 =  ~0 >>> this.shift32;
-    } else if (this.kind === WasmTypeKind.bool) {
+    } else if (this.kind === TypeKind.bool) {
       this.mask32 = 1;
       this.shift32 = 31;
     }
@@ -59,16 +41,16 @@ export class WasmType {
 
   get isAnyInteger(): boolean {
     switch (this.kind) {
-      case WasmTypeKind.byte:
-      case WasmTypeKind.sbyte:
-      case WasmTypeKind.short:
-      case WasmTypeKind.ushort:
-      case WasmTypeKind.int:
-      case WasmTypeKind.uint:
-      case WasmTypeKind.long:
-      case WasmTypeKind.ulong:
-      case WasmTypeKind.bool:
-      case WasmTypeKind.uintptr:
+      case TypeKind.byte:
+      case TypeKind.sbyte:
+      case TypeKind.short:
+      case TypeKind.ushort:
+      case TypeKind.int:
+      case TypeKind.uint:
+      case TypeKind.long:
+      case TypeKind.ulong:
+      case TypeKind.bool:
+      case TypeKind.uintptr:
         return true;
     }
     return false;
@@ -76,8 +58,8 @@ export class WasmType {
 
   get isAnyFloat(): boolean {
     switch (this.kind) {
-      case WasmTypeKind.float:
-      case WasmTypeKind.double:
+      case TypeKind.float:
+      case TypeKind.double:
         return true;
     }
     return false;
@@ -85,10 +67,10 @@ export class WasmType {
 
   get isSigned(): boolean {
     switch (this.kind) {
-      case WasmTypeKind.sbyte:
-      case WasmTypeKind.short:
-      case WasmTypeKind.int:
-      case WasmTypeKind.long:
+      case TypeKind.sbyte:
+      case TypeKind.short:
+      case TypeKind.int:
+      case TypeKind.long:
         return true;
     }
     return false;
@@ -96,8 +78,8 @@ export class WasmType {
 
   get isByte(): boolean {
     switch (this.kind) {
-      case WasmTypeKind.byte:
-      case WasmTypeKind.sbyte:
+      case TypeKind.byte:
+      case TypeKind.sbyte:
         return true;
     }
     return false;
@@ -105,8 +87,8 @@ export class WasmType {
 
   get isShort(): boolean {
     switch (this.kind) {
-      case WasmTypeKind.short:
-      case WasmTypeKind.ushort:
+      case TypeKind.short:
+      case TypeKind.ushort:
         return true;
     }
     return false;
@@ -114,10 +96,10 @@ export class WasmType {
 
   get isInt(): boolean {
     switch (this.kind) {
-      case WasmTypeKind.int:
-      case WasmTypeKind.uint:
+      case TypeKind.int:
+      case TypeKind.uint:
         return true;
-      case WasmTypeKind.uintptr:
+      case TypeKind.uintptr:
         return this.size === 4;
     }
     return false;
@@ -125,167 +107,167 @@ export class WasmType {
 
   get isLong(): boolean {
     switch (this.kind) {
-      case WasmTypeKind.long:
-      case WasmTypeKind.ulong:
+      case TypeKind.long:
+      case TypeKind.ulong:
         return true;
-      case WasmTypeKind.uintptr:
+      case TypeKind.uintptr:
         return this.size === 8;
     }
     return false;
   }
 
-  withUnderlyingType(underlyingType: WasmType): WasmType {
+  withUnderlyingType(underlyingType: Type): Type {
     if (underlyingType === null)
       throw Error("underlying type must be specified");
 
-    if (this.kind !== WasmTypeKind.uintptr)
+    if (this.kind !== TypeKind.uintptr)
       throw Error("only pointers can have an underlying type");
 
-    const type = new WasmType(this.kind, this.size);
+    const type = new Type(this.kind, this.size);
     type.underlyingType = underlyingType;
     return type;
   }
 
-  toSignatureIdentifier(uintptrType: WasmType): string {
+  toSignatureIdentifier(uintptrType: Type): string {
     switch (this.kind) {
 
-      case WasmTypeKind.byte:
-      case WasmTypeKind.short:
-      case WasmTypeKind.ushort:
-      case WasmTypeKind.int:
-      case WasmTypeKind.uint:
-      case WasmTypeKind.bool:
+      case TypeKind.byte:
+      case TypeKind.short:
+      case TypeKind.ushort:
+      case TypeKind.int:
+      case TypeKind.uint:
+      case TypeKind.bool:
         return "i";
 
-      case WasmTypeKind.long:
-      case WasmTypeKind.ulong:
+      case TypeKind.long:
+      case TypeKind.ulong:
         return "I";
 
-      case WasmTypeKind.float:
+      case TypeKind.float:
         return "f";
 
-      case WasmTypeKind.double:
+      case TypeKind.double:
         return "F";
 
-      case WasmTypeKind.uintptr:
+      case TypeKind.uintptr:
         return uintptrType.size === 4 ? "i" : "I";
 
-      case WasmTypeKind.void:
+      case TypeKind.void:
         return "v";
 
     }
     throw Error("unexpected type");
   }
 
-  toBinaryenType(uintptrType: WasmType): binaryen.Type {
+  toBinaryenType(uintptrType: Type): binaryen.Type {
     switch (this.kind) {
 
-      case WasmTypeKind.byte:
-      case WasmTypeKind.short:
-      case WasmTypeKind.ushort:
-      case WasmTypeKind.int:
-      case WasmTypeKind.uint:
-      case WasmTypeKind.bool:
+      case TypeKind.byte:
+      case TypeKind.short:
+      case TypeKind.ushort:
+      case TypeKind.int:
+      case TypeKind.uint:
+      case TypeKind.bool:
         return binaryen.i32;
 
-      case WasmTypeKind.long:
-      case WasmTypeKind.ulong:
+      case TypeKind.long:
+      case TypeKind.ulong:
         return binaryen.i64;
 
-      case WasmTypeKind.float:
+      case TypeKind.float:
         return binaryen.f32;
 
-      case WasmTypeKind.double:
+      case TypeKind.double:
         return binaryen.f64;
 
-      case WasmTypeKind.uintptr:
+      case TypeKind.uintptr:
         return uintptrType.size === 4 ? binaryen.i32 : binaryen.i64;
 
-      case WasmTypeKind.void:
+      case TypeKind.void:
         return binaryen.none;
 
     }
     throw Error("unexpected type");
   }
 
-  toBinaryenCategory(module: binaryen.Module, uintptrTyoe: WasmType): binaryen.I32Operations | binaryen.I64Operations | binaryen.F32Operations | binaryen.F64Operations {
+  toBinaryenCategory(module: binaryen.Module, uintptrTyoe: Type): binaryen.I32Operations | binaryen.I64Operations | binaryen.F32Operations | binaryen.F64Operations {
     switch (this.kind) {
 
-      case WasmTypeKind.byte:
-      case WasmTypeKind.short:
-      case WasmTypeKind.ushort:
-      case WasmTypeKind.int:
-      case WasmTypeKind.uint:
-      case WasmTypeKind.bool:
+      case TypeKind.byte:
+      case TypeKind.short:
+      case TypeKind.ushort:
+      case TypeKind.int:
+      case TypeKind.uint:
+      case TypeKind.bool:
         return module.i32;
 
-      case WasmTypeKind.long:
-      case WasmTypeKind.ulong:
+      case TypeKind.long:
+      case TypeKind.ulong:
         return module.i64;
 
-      case WasmTypeKind.float:
+      case TypeKind.float:
         return module.f32;
 
-      case WasmTypeKind.double:
+      case TypeKind.double:
         return module.f64;
 
-      case WasmTypeKind.uintptr:
+      case TypeKind.uintptr:
         return uintptrTyoe.size === 4 ? module.i32 : module.i64;
 
     }
     throw Error("unexpected type");
   }
 
-  toBinaryenZero(module: binaryen.Module, uintptrType: WasmType): binaryen.I32Expression | binaryen.I64Expression | binaryen.F32Expression | binaryen.F64Expression {
+  toBinaryenZero(module: binaryen.Module, uintptrType: Type): binaryen.I32Expression | binaryen.I64Expression | binaryen.F32Expression | binaryen.F64Expression {
     switch (this.kind) {
 
-      case WasmTypeKind.byte:
-      case WasmTypeKind.short:
-      case WasmTypeKind.ushort:
-      case WasmTypeKind.int:
-      case WasmTypeKind.uint:
-      case WasmTypeKind.bool:
+      case TypeKind.byte:
+      case TypeKind.short:
+      case TypeKind.ushort:
+      case TypeKind.int:
+      case TypeKind.uint:
+      case TypeKind.bool:
         return module.i32.const(0);
 
-      case WasmTypeKind.long:
-      case WasmTypeKind.ulong:
+      case TypeKind.long:
+      case TypeKind.ulong:
         return module.i64.const(0, 0);
 
-      case WasmTypeKind.float:
+      case TypeKind.float:
         return module.f32.const(0);
 
-      case WasmTypeKind.double:
+      case TypeKind.double:
         return module.f64.const(0);
 
-      case WasmTypeKind.uintptr:
+      case TypeKind.uintptr:
         return uintptrType.size === 4 ? module.i32.const(0) : module.i64.const(0, 0);
 
     }
     throw Error("unexpected type");
   }
 
-  toBinaryenOne(module: binaryen.Module, uintptrTyoe: WasmType): binaryen.I32Expression | binaryen.I64Expression | binaryen.F32Expression | binaryen.F64Expression {
+  toBinaryenOne(module: binaryen.Module, uintptrTyoe: Type): binaryen.I32Expression | binaryen.I64Expression | binaryen.F32Expression | binaryen.F64Expression {
     switch (this.kind) {
 
-      case WasmTypeKind.byte:
-      case WasmTypeKind.short:
-      case WasmTypeKind.ushort:
-      case WasmTypeKind.int:
-      case WasmTypeKind.uint:
-      case WasmTypeKind.bool:
+      case TypeKind.byte:
+      case TypeKind.short:
+      case TypeKind.ushort:
+      case TypeKind.int:
+      case TypeKind.uint:
+      case TypeKind.bool:
         return module.i32.const(1);
 
-      case WasmTypeKind.long:
-      case WasmTypeKind.ulong:
+      case TypeKind.long:
+      case TypeKind.ulong:
         return module.i64.const(1, 0);
 
-      case WasmTypeKind.float:
+      case TypeKind.float:
         return module.f32.const(1);
 
-      case WasmTypeKind.double:
+      case TypeKind.double:
         return module.f64.const(1);
 
-      case WasmTypeKind.uintptr:
+      case TypeKind.uintptr:
         return uintptrTyoe.size === 4 ? module.i32.const(1) : module.i64.const(1, 0);
 
     }
@@ -293,11 +275,11 @@ export class WasmType {
   }
 
   toString(): string {
-    return WasmTypeKind[this.kind];
+    return TypeKind[this.kind];
   }
 }
 
-export enum WasmFunctionFlags {
+export enum FunctionFlags {
   none        = 0,
   import      = 1 << 0,
   export      = 1 << 1,
@@ -305,35 +287,35 @@ export enum WasmFunctionFlags {
   constructor = 1 << 3
 }
 
-export interface WasmFunction {
+export interface Function {
   name: string;
-  flags: WasmFunctionFlags;
-  parameterTypes: WasmType[];
-  returnType: WasmType;
-  locals: WasmVariable[];
+  flags: FunctionFlags;
+  parameterTypes: Type[];
+  returnType: Type;
+  locals: Variable[];
   signature: binaryen.Signature;
   signatureId: string;
 }
 
-export interface WasmVariable {
+export interface Variable {
   name: string;
   index: number;
-  type: WasmType;
+  type: Type;
 }
 
-export interface WasmConstant {
+export interface Constant {
   name: string;
-  type: WasmType;
+  type: Type;
   value: any;
 }
 
-export interface WasmField {
+export interface Field {
   name: string;
   offset: number;
   size: number;
 }
 
-export interface WasmClass {
-  fields: WasmField[];
-  constructor: WasmFunction;
+export interface Class {
+  fields: Field[];
+  constructor: Function;
 }

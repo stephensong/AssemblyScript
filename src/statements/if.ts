@@ -1,17 +1,8 @@
-import {
-  Compiler
-} from "../compiler";
+import { Compiler } from "../compiler";
+import { intType } from "../types";
+import { binaryen } from "../wasm";
 
-import {
-  intType
-} from "../types";
-
-import {
-  WasmType,
-  WasmStatement
-} from "../wasm";
-
-export function compileIf(compiler: Compiler, node: ts.IfStatement, onVariable: (node: ts.VariableDeclaration) => number): WasmStatement {
+export function compileIf(compiler: Compiler, node: ts.IfStatement, onVariable: (node: ts.VariableDeclaration) => number): binaryen.Statement {
   const op = compiler.module;
 
   const condition = compiler.maybeConvertValue(node.expression, compiler.compileExpression(node.expression, intType), (<any>node.expression).wasmType, intType, true);

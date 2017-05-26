@@ -1,17 +1,9 @@
-import {
-  Compiler
-} from "../compiler";
+import { Compiler } from "../compiler";
+import { intType } from "../types";
+import { binaryen } from "../wasm";
+import * as wasm from "../wasm";
 
-import {
-  intType
-} from "../types";
-
-import {
-  WasmType,
-  WasmExpression
-} from "../wasm";
-
-export function compileConditional(compiler: Compiler, node: ts.ConditionalExpression, contextualType: WasmType): WasmExpression {
+export function compileConditional(compiler: Compiler, node: ts.ConditionalExpression, contextualType: wasm.Type): binaryen.Expression {
   const op = compiler.module;
 
   const condition = compiler.maybeConvertValue(

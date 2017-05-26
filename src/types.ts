@@ -1,19 +1,16 @@
-import {
-  WasmTypeKind,
-  WasmType
-} from "./wasm";
+import * as wasm from "./wasm";
 
-export const byteType      = new WasmType(WasmTypeKind.byte   , 1);
-export const sbyteType     = new WasmType(WasmTypeKind.sbyte  , 1);
-export const shortType     = new WasmType(WasmTypeKind.short  , 2);
-export const ushortType    = new WasmType(WasmTypeKind.ushort , 2);
-export const intType       = new WasmType(WasmTypeKind.int    , 4);
-export const uintType      = new WasmType(WasmTypeKind.uint   , 4);
-export const longType      = new WasmType(WasmTypeKind.long   , 8);
-export const ulongType     = new WasmType(WasmTypeKind.ulong  , 8);
-export const boolType      = new WasmType(WasmTypeKind.bool   , 4);
-export const floatType     = new WasmType(WasmTypeKind.float  , 4);
-export const doubleType    = new WasmType(WasmTypeKind.double , 8);
-export const uintptrType32 = new WasmType(WasmTypeKind.uintptr, 4);
-export const uintptrType64 = new WasmType(WasmTypeKind.uintptr, 8);
-export const voidType      = new WasmType(WasmTypeKind.void   , 0);
+export const byteType      = new wasm.Type(wasm.TypeKind.byte   , 1);
+export const sbyteType     = new wasm.Type(wasm.TypeKind.sbyte  , 1);
+export const shortType     = new wasm.Type(wasm.TypeKind.short  , 2);
+export const ushortType    = new wasm.Type(wasm.TypeKind.ushort , 2);
+export const intType       = new wasm.Type(wasm.TypeKind.int    , 4);
+export const uintType      = new wasm.Type(wasm.TypeKind.uint   , 4);
+export const longType      = new wasm.Type(wasm.TypeKind.long   , 8);
+export const ulongType     = new wasm.Type(wasm.TypeKind.ulong  , 8);
+export const boolType      = new wasm.Type(wasm.TypeKind.bool   , 4);
+export const floatType     = new wasm.Type(wasm.TypeKind.float  , 4);
+export const doubleType    = new wasm.Type(wasm.TypeKind.double , 8);
+export const uintptrType32 = new wasm.Type(wasm.TypeKind.uintptr, 4);
+export const uintptrType64 = new wasm.Type(wasm.TypeKind.uintptr, 8);
+export const voidType      = new wasm.Type(wasm.TypeKind.void   , 0);

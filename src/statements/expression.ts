@@ -1,16 +1,8 @@
-import {
-  Compiler
-} from "../compiler";
+import { Compiler } from "../compiler";
+import { voidType } from "../types";
+import { binaryen } from "../wasm";
 
-import {
-  voidType
-} from "../types";
-
-import {
-  WasmStatement
-} from "../wasm";
-
-export function compileExpressionStatement(compiler: Compiler, node: ts.ExpressionStatement): WasmStatement {
+export function compileExpressionStatement(compiler: Compiler, node: ts.ExpressionStatement): binaryen.Statement {
   const op = compiler.module;
   const expressionNode = node.expression;
   const expression = compiler.compileExpression(expressionNode, voidType);

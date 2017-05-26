@@ -1,17 +1,9 @@
-import {
-  Compiler
-} from "../compiler";
+import { Compiler } from "../compiler";
+import { voidType } from "../types";
+import { binaryen } from "../wasm";
+import * as wasm from "../wasm";
 
-import {
-  voidType
-} from "../types";
-
-import {
-  WasmType,
-  WasmStatement
-} from "../wasm";
-
-export function compileReturn(compiler: Compiler, node: ts.ReturnStatement): WasmStatement {
+export function compileReturn(compiler: Compiler, node: ts.ReturnStatement): binaryen.Statement {
   const op = compiler.module;
 
   if (compiler.currentFunction.returnType === voidType) {
@@ -31,7 +23,7 @@ export function compileReturn(compiler: Compiler, node: ts.ReturnStatement): Was
         compiler.maybeConvertValue(
           expression,
           compiler.compileExpression(expression, compiler.currentFunction.returnType),
-          <WasmType>(<any>expression).wasmType,
+          <wasm.Type>(<any>expression).wasmType,
           compiler.currentFunction.returnType,
           false
         )

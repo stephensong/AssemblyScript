@@ -20,7 +20,8 @@
     "member-access": [ true, "no-public" ],
     "member-ordering": [ false ],
     "interface-name": [ false ],
-    "arrow-parens": false
+    "arrow-parens": false,
+    "ban-types": false
   },
   "rulesDirectory": []
 }

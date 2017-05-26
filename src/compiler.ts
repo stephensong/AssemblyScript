@@ -1,61 +1,13 @@
 import "byots";
 import * as Long from "long";
-
-import { Profiler } from "./profiler";
 import * as builtins from "./builtins";
-
-import {
-  createDiagnosticForNode,
-  printDiagnostic
-} from "./diagnostics";
-
-import {
-  WasmModule,
-  WasmSignature,
-  WasmStatement,
-  WasmExpression,
-  WasmType,
-  WasmFunctionFlags,
-  WasmFunction,
-  WasmVariable,
-  WasmConstant,
-  WasmI32Expression,
-  WasmI64Expression,
-  WasmF32Expression,
-  WasmF64Expression,
-  WasmI32Operations,
-  WasmI64Operations,
-  WasmF32Operations,
-  WasmF64Operations,
-  BinaryenType,
-  BinaryenFunction
-} from "./wasm";
-
-import {
-  byteType,
-  sbyteType,
-  shortType,
-  ushortType,
-  intType,
-  uintType,
-  longType,
-  ulongType,
-  boolType,
-  floatType,
-  doubleType,
-  uintptrType32,
-  uintptrType64,
-  voidType
-} from "./types";
-
-import {
-  isImport,
-  isExport,
-  isConst,
-  isStatic
-} from "./util";
-
+import * as wasm from "./wasm";
 import * as ast from "./ast";
+import { binaryen } from "./wasm";
+import { Profiler } from "./profiler";
+import { createDiagnosticForNode, printDiagnostic } from "./diagnostics";
+import { byteType, sbyteType, shortType, ushortType, intType, uintType, longType, ulongType, boolType, floatType, doubleType, uintptrType32, uintptrType64, voidType } from "./types";
+import { isImport, isExport, isConst, isStatic } from "./util";
 
 const MEM_MAX_32 = (1 << 16) - 1; // 65535 (pageSize) * 65535 (n) ^= 4GB
 
@@ -67,18 +19,18 @@ export class Compiler {
   entryFile: ts.SourceFile;
   diagnostics: ts.DiagnosticCollection;
   uintptrSize: number;
-  uintptrType: WasmType;
-  module: WasmModule;
-  signatures: { [key: string]: WasmSignature } = {};
-  constants: { [key: string]: WasmConstant } = {};
-  globalInitializers: WasmExpression[] = [];
+  uintptrType: wasm.Type;
+  module: binaryen.Module;
+  signatures: { [key: string]: binaryen.Signature } = {};
+  constants: { [key: string]: wasm.Constant } = {};
+  globalInitializers: binaryen.Expression[] = [];
   profiler = new Profiler();
-  currentFunction: WasmFunction;
-  currentLocals: { [key: string]: WasmVariable };
+  currentFunction: wasm.Function;
+  currentLocals: { [key: string]: wasm.Variable };
   currentBreakContextNumber = 0;
   currentBreakContextDepth = 0;
 
-  static compile(filename: string): WasmModule {
+  static compile(filename: string): binaryen.Module {
 
     const program = ts.createProgram([ __dirname + "/../assembly.d.ts", filename ], {
       target: ts.ScriptTarget.Latest,
@@ -128,7 +80,7 @@ export class Compiler {
     this.program = program;
     this.checker = program.getDiagnosticsProducingTypeChecker();
     this.diagnostics = ts.createDiagnosticCollection();
-    this.module = new WasmModule();
+    this.module = new binaryen.Module();
     this.uintptrSize = uintptrSize;
     this.uintptrType = uintptrSize === 4 ? uintptrType32 : uintptrType64;
 
@@ -255,10 +207,10 @@ export class Compiler {
     if (node.typeParameters && node.typeParameters.length !== 0)
       this.error(node.typeParameters[0], "Type parameters are not supported yet");
 
-    let parameterTypes: WasmType[];
+    let parameterTypes: wasm.Type[];
     let signatureIdentifiers: string[]; // including return type
-    let signatureTypes: BinaryenType[]; // excluding return type
-    let locals: WasmVariable[];
+    let signatureTypes: binaryen.Type[]; // excluding return type
+    let locals: wasm.Variable[];
     let index = 0;
     let flags = 0;
 
@@ -280,7 +232,7 @@ export class Compiler {
         type: thisType
       };
 
-      flags |= WasmFunctionFlags.instance;
+      flags |= wasm.FunctionFlags.instance;
 
       index = 1;
 
@@ -319,12 +271,12 @@ export class Compiler {
     }
 
     if (isExport(node) && node.getSourceFile() === this.entryFile)
-      flags |= WasmFunctionFlags.export;
+      flags |= wasm.FunctionFlags.export;
 
     if (isImport(node))
-      flags |= WasmFunctionFlags.import;
+      flags |= wasm.FunctionFlags.import;
 
-    (<any>node).wasmFunction = <WasmFunction>{
+    (<any>node).wasmFunction = <wasm.Function>{
       name: parent ? parent.symbol.name + "$" + name : name,
       flags: flags,
       parameterTypes: parameterTypes,
@@ -415,10 +367,10 @@ export class Compiler {
     // TODO
   }
 
-  private _compileFunction(node: ts.FunctionDeclaration | ts.MethodDeclaration): BinaryenFunction {
-    const wasmFunction: WasmFunction = (<any>node).wasmFunction;
-    const body: WasmStatement[] = new Array(node.body.statements.length);
-    const additionalLocals: BinaryenType[] = [];
+  private _compileFunction(node: ts.FunctionDeclaration | ts.MethodDeclaration): binaryen.Function {
+    const wasmFunction: wasm.Function = (<any>node).wasmFunction;
+    const body: binaryen.Statement[] = new Array(node.body.statements.length);
+    const additionalLocals: binaryen.Type[] = [];
     const compiler = this;
 
     this.currentFunction = wasmFunction;
@@ -445,7 +397,7 @@ export class Compiler {
 
     function onVariable(variableNode: ts.VariableDeclaration): number {
       const name = variableNode.name.getText();
-      const type = <WasmType>(<any>variableNode).wasmType;
+      const type = <wasm.Type>(<any>variableNode).wasmType;
 
       if (compiler.currentLocals[name]) {
 
@@ -469,10 +421,10 @@ export class Compiler {
   }
 
   compileFunction(node: ts.FunctionDeclaration): void {
-    const wasmFunction = <WasmFunction>(<any>node).wasmFunction;
+    const wasmFunction = <wasm.Function>(<any>node).wasmFunction;
     const name = node.symbol.name;
 
-    if ((wasmFunction.flags & WasmFunctionFlags.import) !== 0) {
+    if ((wasmFunction.flags & wasm.FunctionFlags.import) !== 0) {
       let moduleName: string;
       let baseName: string;
 
@@ -530,7 +482,7 @@ export class Compiler {
     return this.currentBreakContextNumber + "." + this.currentBreakContextDepth;
   }
 
-  compileStatement(node: ts.Statement, onVariable: (node: ts.VariableDeclaration) => number): WasmStatement {
+  compileStatement(node: ts.Statement, onVariable: (node: ts.VariableDeclaration) => number): binaryen.Statement {
     const op = this.module;
 
     switch (node.kind) {
@@ -568,19 +520,19 @@ export class Compiler {
     }
   }
 
-  categoryOf(type: WasmType): WasmI32Operations | WasmI64Operations | WasmF32Operations | WasmF64Operations {
+  categoryOf(type: wasm.Type): binaryen.I32Operations | binaryen.I64Operations | binaryen.F32Operations | binaryen.F64Operations {
     return type.toBinaryenCategory(this.module, this.uintptrType);
   }
 
-  zeroOf(type: WasmType): WasmI32Expression | WasmI64Expression | WasmF32Expression | WasmF64Expression {
+  zeroOf(type: wasm.Type): binaryen.I32Expression | binaryen.I64Expression | binaryen.F32Expression | binaryen.F64Expression {
     return type.toBinaryenZero(this.module, this.uintptrType);
   }
 
-  oneOf(type: WasmType): WasmI32Expression | WasmI64Expression | WasmF32Expression | WasmF64Expression {
+  oneOf(type: wasm.Type): binaryen.I32Expression | binaryen.I64Expression | binaryen.F32Expression | binaryen.F64Expression {
     return type.toBinaryenOne(this.module, this.uintptrType);
   }
 
-  compileLiteral(node: ts.LiteralExpression, contextualType: WasmType): WasmExpression {
+  compileLiteral(node: ts.LiteralExpression, contextualType: wasm.Type): binaryen.Expression {
     const op = this.module;
 
     let literalText = node.text;
@@ -665,7 +617,7 @@ export class Compiler {
     return op.unreachable();
   }
 
-  compileExpression(node: ts.Expression, contextualType: WasmType): WasmExpression {
+  compileExpression(node: ts.Expression, contextualType: wasm.Type): binaryen.Expression {
     const op = this.module;
 
     switch (node.kind) {
@@ -719,7 +671,7 @@ export class Compiler {
     return op.unreachable();
   }
 
-  maybeConvertValue(node: ts.Node, expr: WasmExpression, fromType: WasmType, toType: WasmType, explicit: boolean): WasmExpression {
+  maybeConvertValue(node: ts.Node, expr: binaryen.Expression, fromType: wasm.Type, toType: wasm.Type, explicit: boolean): binaryen.Expression {
     if (fromType.kind === toType.kind)
       return expr;
 
@@ -900,7 +852,7 @@ export class Compiler {
     }
   }
 
-  resolveType(type: ts.TypeNode, acceptVoid: boolean = false): WasmType {
+  resolveType(type: ts.TypeNode, acceptVoid: boolean = false): wasm.Type {
     const text = type.getText();
 
     switch (text) {

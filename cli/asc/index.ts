@@ -1,4 +1,4 @@
-/// <reference path="./require-json.d.ts" />
+import "./require-json";
 
 import { Compiler } from "../../src/compiler";
 import * as fs from "fs";
@@ -7,10 +7,10 @@ import * as pkg from "../../package.json";
 
 const argv = minimist(process.argv.slice(2), {
   alias: {
-    "out": [ "o", "outFile" ],
-    "validate": [ "v" ],
-    "optimize": [ "O" ],
-    "text": [ "t" ]
+    out: [ "o", "outFile" ],
+    validate: [ "v" ],
+    optimize: [ "O" ],
+    text: [ "t" ]
   },
   string: [ "out" ],
   boolean: [ "text", "optimize", "validate" ]
@@ -20,7 +20,7 @@ const files = argv._;
 
 if (files.length !== 1) {
   process.stderr.write([
-    "Version " + (<any>pkg)["version"],
+    "Version " + (<any>pkg).version,
     "Syntax: asc [options] [entryFile]",
     "",
     "Options:",
@@ -34,6 +34,7 @@ if (files.length !== 1) {
 }
 
 const wasmModule = Compiler.compile(files[0]);
+
 if (!wasmModule)
   process.exit(1);
 
@@ -46,7 +47,7 @@ if (argv.optimize)
 if (argv.out && /\.wast$/.test(argv.out))
   argv.text = true;
 
-let output: any = argv.out ? fs.createWriteStream(argv.out) : process.stdout;
+const output: any = argv.out ? fs.createWriteStream(argv.out) : process.stdout;
 
 if (argv.text)
   output.write(wasmModule.emitText(), "utf8");

@@ -1,12 +1,7 @@
-import {
-  Compiler
-} from "../compiler";
+import { Compiler } from "../compiler";
+import { binaryen } from "../wasm";
 
-import {
-  WasmStatement
-} from "../wasm";
-
-export function compileBreak(compiler: Compiler, isContinue: boolean = false): WasmStatement {
+export function compileBreak(compiler: Compiler, isContinue: boolean = false): binaryen.Statement {
   const op = compiler.module;
 
   return op.break((isContinue ? "continue$" : "break$") + compiler.currentBreakLabel);

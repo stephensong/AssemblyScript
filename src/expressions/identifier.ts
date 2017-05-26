@@ -1,13 +1,8 @@
-import {
-  Compiler
-} from "../compiler";
+import { Compiler } from "../compiler";
+import { binaryen } from "../wasm";
+import * as wasm from "../wasm";
 
-import {
-  WasmType,
-  WasmExpression
-} from "../wasm";
-
-export function compileIdentifier(compiler: Compiler, node: ts.Identifier, contextualType: WasmType): WasmExpression {
+export function compileIdentifier(compiler: Compiler, node: ts.Identifier, contextualType: wasm.Type): binaryen.Expression {
   const op = compiler.module;
   const referencedLocal = compiler.currentLocals[node.text];
 

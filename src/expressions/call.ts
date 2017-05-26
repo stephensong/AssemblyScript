@@ -1,31 +1,21 @@
-import {
-  Compiler
-} from "../compiler";
-
-import {
-  WasmType,
-  WasmExpression,
-  WasmFunctionFlags,
-  WasmFunction
-} from "../wasm";
-
-import {
-  isImport
-} from "../util";
+import { Compiler } from "../compiler";
+import { binaryen } from "../wasm";
+import { isImport } from "../util";
+import * as wasm from "../wasm";
 
 import * as builtins from "../builtins";
 
-export function compileCall(compiler: Compiler, node: ts.CallExpression, contextualType: WasmType): WasmExpression {
+export function compileCall(compiler: Compiler, node: ts.CallExpression, contextualType: wasm.Type): binaryen.Expression {
   const op = compiler.module;
   const declaration = compiler.checker.getResolvedSignature(node).declaration;
-  const wasmFunction = <WasmFunction>(<any>declaration).wasmFunction;
-  const argumentExpressions: WasmExpression[] = new Array(wasmFunction.parameterTypes.length);
+  const wasmFunction = <wasm.Function>(<any>declaration).wasmFunction;
+  const argumentExpressions: binaryen.Expression[] = new Array(wasmFunction.parameterTypes.length);
 
   (<any>node).wasmType = wasmFunction.returnType;
 
   let i = 0;
 
-  if ((wasmFunction.flags & WasmFunctionFlags.instance) !== 0)
+  if ((wasmFunction.flags & wasm.FunctionFlags.instance) !== 0)
     argumentExpressions[i++] = op.getLocal(0, wasmFunction.parameterTypes[0].toBinaryenType(compiler.uintptrType));
 
   for (const k = argumentExpressions.length; i < k; ++i)

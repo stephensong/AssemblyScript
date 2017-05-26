@@ -1,13 +1,7 @@
-import {
-  Compiler
-} from "../compiler";
+import { Compiler } from "../compiler";
+import { binaryen } from "../wasm";
 
-import {
-  WasmType,
-  WasmStatement
-} from "../wasm";
-
-export function compileSwitch(compiler: Compiler, node: ts.SwitchStatement, onVariable: (node: ts.VariableDeclaration) => number): WasmStatement {
+export function compileSwitch(compiler: Compiler, node: ts.SwitchStatement, onVariable: (node: ts.VariableDeclaration) => number): binaryen.Statement {
   const op = compiler.module;
 
   compiler.error(node, "Switch statements are not supported yet");

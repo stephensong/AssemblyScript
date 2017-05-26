@@ -1,18 +1,8 @@
-import {
-  Compiler
-} from "../compiler";
+import { Compiler } from "../compiler";
+import { intType } from "../types";
+import { binaryen } from "../wasm";
 
-import {
-  intType
-} from "../types";
-
-import {
-  WasmType,
-  WasmExpression,
-  WasmStatement
-} from "../wasm";
-
-export function compileDo(compiler: Compiler, node: ts.DoStatement, onVariable: (node: ts.VariableDeclaration) => number): WasmStatement {
+export function compileDo(compiler: Compiler, node: ts.DoStatement, onVariable: (node: ts.VariableDeclaration) => number): binaryen.Statement {
   const op = compiler.module;
 
   compiler.enterBreakContext();
