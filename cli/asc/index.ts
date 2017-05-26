@@ -49,7 +49,7 @@ if (argv.out && /\.wast$/.test(argv.out))
 
 const output: any = argv.out ? fs.createWriteStream(argv.out) : process.stdout;
 
-if (argv.text)
+if (argv.text || output.isTTY)
   output.write(wasmModule.emitText(), "utf8");
 else
   output.write(Buffer.from(wasmModule.emitBinary()));
