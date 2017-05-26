@@ -879,7 +879,7 @@ export class Compiler {
         return this.uintptrType.withUnderlyingType(this.resolveType(<ts.TypeReferenceNode>referenceNode.typeArguments[0]));
     }
 
-    this.error(node, "Unsupported type", text);
+    this.error(type, "Unsupported type", text);
     return voidType;
   }
 }
