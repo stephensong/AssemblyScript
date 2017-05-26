@@ -61,3 +61,7 @@ export function dropBinary(a: int, b: int): void {
 export function dontDropBinary(a: int, b: int): int {
   return a + b;
 }
+
+export function testTernary(a: int, b: int): int {
+  return a > b ? a == b ? 0 : 1 : -1;
+}

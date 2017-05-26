@@ -1158,6 +1158,26 @@ export class Compiler {
 
         }
 
+      case ts.SyntaxKind.ConditionalExpression:
+      {
+        const conditionalNode = <ts.ConditionalExpression>node;
+
+        const conditionExpr = this.convertValue(
+          conditionalNode.condition,
+          this.compileExpression(conditionalNode.condition, intType),
+          (<any>conditionalNode.condition).wasmType,
+          intType,
+          true
+        );
+
+        const ifTrueExpr  = this.compileExpression(conditionalNode.whenTrue, contextualType);
+        const ifFalseExpr = this.compileExpression(conditionalNode.whenFalse, contextualType);
+
+        (<any>node).wasmType = contextualType;
+
+        return op.select(conditionExpr, ifTrueExpr, ifFalseExpr);
+      }
+
       case ts.SyntaxKind.CallExpression:
       {
         const callNode = <ts.CallExpression>node;
