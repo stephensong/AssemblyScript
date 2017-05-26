@@ -10,18 +10,19 @@
     "no-constant-condition": true,
     "no-bitwise": false,
     "no-conditional-assignment": false,
+    "no-reference": false,
     "object-literal-shorthand": false,
     "object-literal-sort-keys": false,
-    "ordered-imports": [ false ],
+    "arrow-parens": false,
+    "ban-types": false,
+    "curly": false,
+    "ordered-imports": false,
+    "max-line-length": false,
+    "member-ordering": false,
+    "interface-name": false,
     "trailing-comma": [ true, { "multiline": "never", "singleline": "never" } ],
     "whitespace": [ true, "check-branch", "check-decl", "check-module", "check-type", "check-preblock" ],
-    "curly": false,
-    "max-line-length": [ false ],
-    "member-access": [ true, "no-public" ],
-    "member-ordering": [ false ],
-    "interface-name": [ false ],
-    "arrow-parens": false,
-    "ban-types": false
+    "member-access": [ true, "no-public" ]
   },
   "rulesDirectory": []
 }

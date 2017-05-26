@@ -1,4 +1,4 @@
-import "./require-json";
+/// <reference path="./require-json.d.ts" />
 
 import { Compiler } from "../../src/compiler";
 import * as fs from "fs";
