@@ -756,6 +756,8 @@ export class Compiler {
 
       (<any>node).wasmType = contextualType;
 
+      console.log("context", intValue);
+
       switch (contextualType) {
 
         case sbyteType:
@@ -764,10 +766,12 @@ export class Compiler {
 
         case byteType:
         case ushortType:
+          return op.i32.const(intValue & contextualType.mask32);
+
         case intType:
         case uintType:
         case uintptrType32:
-          return op.i32.const(intValue & contextualType.mask32);
+          return op.i32.const(intValue);
 
         case boolType:
           return op.i32.const(intValue ? 1 : 0);
@@ -777,16 +781,15 @@ export class Compiler {
         case uintptrType64:
           const long = Long.fromString(literalText, !contextualType.isSigned, intRadix);
           return op.i64.const(long.low, long.high);
+
       }
 
-    } else {
-
-      this.error(node, "Unsupported literal", literalText);
-
-      (<any>node).wasmType = contextualType;
-      return op.unreachable();
-
     }
+
+    this.error(node, "Unsupported literal", literalText);
+
+    (<any>node).wasmType = contextualType;
+    return op.unreachable();
   }
 
   compileExpression(node: ts.Expression, contextualType: WasmType): WasmExpression {
@@ -1011,7 +1014,7 @@ export class Compiler {
             else if (operandType.isLong)
               return op.i64.sub(op.i64.const(0, 0), unaryExpr);
 
-            else
+            else // FIXME: negative constant literals result in sub(const.0, const.value)
               return this.maybeConvertValue(node, op.i32.sub(op.i32.const(0), unaryExpr), intType, operandType, true);
           }
 
