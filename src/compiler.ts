@@ -48,31 +48,16 @@ import {
   voidType
 } from "./types";
 
+import {
+  isImport,
+  isExport,
+  isConst,
+  isStatic
+} from "./util";
+
+import * as compile from "./expressions";
+
 const MEM_MAX_32 = (1 << 16) - 1; // 65535 (pageSize) * 65535 (n) ^= 4GB
-
-function isExport(node: ts.Node): boolean {
-  if (node && node.modifiers)
-    for (let i = 0, k = node.modifiers.length; i < k; ++i)
-      if (node.modifiers[i].kind === ts.SyntaxKind.ExportKeyword)
-        return true;
-  return false;
-}
-
-function isImport(node: ts.Node): boolean {
-  if (node && node.modifiers)
-    for (let i = 0, k = node.modifiers.length; i < k; ++i)
-      if (node.modifiers[i].kind === ts.SyntaxKind.DeclareKeyword)
-        return true;
-  return false;
-}
-
-function isStatic(node: ts.Node): boolean {
-  return (node.modifierFlagsCache & ts.ModifierFlags.Static) !== 0
-}
-
-function isConst(node: ts.Node): boolean {
-  return (node.flags & ts.NodeFlags.Const) !== 0;
-}
 
 // Rule #1: This is a compiler, not an optimizer. Makes life a lot easier.
 
@@ -756,8 +741,6 @@ export class Compiler {
 
       (<any>node).wasmType = contextualType;
 
-      console.log("context", intValue);
-
       switch (contextualType) {
 
         case sbyteType:
@@ -794,549 +777,56 @@ export class Compiler {
 
   compileExpression(node: ts.Expression, contextualType: WasmType): WasmExpression {
     const op = this.module;
-    // remember to always set 'wasmType' on 'node' here
 
     switch (node.kind) {
 
       case ts.SyntaxKind.ParenthesizedExpression:
-      {
-        const parenNode = (<ts.ParenthesizedExpression>node).expression;
-        const parenExpr = this.compileExpression(parenNode, contextualType);
-        const parenType = <WasmType>(<any>parenNode).wasmType;
-
-        (<any>node).wasmType = parenType;
-
-        return parenExpr;
-      }
+        return compile.parenthesized(this, <ts.ParenthesizedExpression>node, contextualType);
 
       case ts.SyntaxKind.AsExpression:
-      {
-        const asNode = <ts.AsExpression>node;
-        const asType = this.resolveType(asNode.type);
-
-        (<any>node).wasmType = asType;
-
-        return this.maybeConvertValue(node, this.compileExpression(asNode.expression, contextualType), <WasmType>(<any>asNode.expression).wasmType, asType, true);
-      }
+        return compile.as(this, <ts.AsExpression>node, contextualType);
 
       case ts.SyntaxKind.BinaryExpression:
-      {
-        const binaryNode = <ts.BinaryExpression>node;
-        let leftExpr  = this.compileExpression(binaryNode.left, contextualType);
-        let rightExpr = this.compileExpression(binaryNode.right, contextualType);
-        const leftType  = <WasmType>(<any>binaryNode.left).wasmType;
-        const rightType = <WasmType>(<any>binaryNode.right).wasmType;
-        let resultType: WasmType;
-
-        if (leftType.isAnyFloat) {
-
-          if (rightType.isAnyFloat)
-            resultType = leftType.size > rightType.size ? leftType : rightType;
-          else
-            resultType = leftType;
-
-        } else if (rightType.isAnyFloat)
-          resultType = rightType;
-        else
-          resultType = leftType.size > rightType.size ? leftType : rightType;
-
-        // compile again with contextual result type so that literals are properly coerced
-        if (leftType !== resultType)
-          leftExpr = this.maybeConvertValue(binaryNode.left, this.compileExpression(binaryNode.left, resultType), leftType, resultType, false);
-        if (rightType !== resultType)
-          rightExpr = this.maybeConvertValue(binaryNode.right, this.compileExpression(binaryNode.right, resultType), rightType, resultType, false);
-
-        const cat = this.categoryOf(resultType);
-
-        (<any>binaryNode).wasmType = resultType;
-
-        if (resultType.isAnyFloat) {
-
-          const cat = <WasmF32Operations | WasmF64Operations>this.categoryOf(resultType);
-
-          switch (binaryNode.operatorToken.kind) {
-
-            case ts.SyntaxKind.PlusToken:
-              return cat.add(leftExpr, rightExpr);
-
-            case ts.SyntaxKind.MinusToken:
-              return cat.sub(leftExpr, rightExpr);
-
-            case ts.SyntaxKind.AsteriskToken:
-              return cat.mul(leftExpr, rightExpr);
-
-            case ts.SyntaxKind.SlashToken:
-              return cat.div(leftExpr, rightExpr);
-
-            case ts.SyntaxKind.EqualsEqualsToken:
-              return cat.eq(leftExpr, rightExpr);
-
-            case ts.SyntaxKind.ExclamationEqualsToken:
-              return cat.ne(leftExpr, rightExpr);
-
-            case ts.SyntaxKind.GreaterThanToken:
-              return cat.gt(leftExpr, rightExpr);
-
-            case ts.SyntaxKind.GreaterThanEqualsToken:
-              return cat.ge(leftExpr, rightExpr);
-
-            case ts.SyntaxKind.LessThanToken:
-              return cat.lt(leftExpr, rightExpr);
-
-            case ts.SyntaxKind.LessThanEqualsToken:
-              return cat.le(leftExpr, rightExpr);
-
-          }
-
-        } else if (resultType.isAnyInteger) {
-
-          const cat = <WasmI32Operations | WasmI64Operations>this.categoryOf(resultType);
-
-          switch (binaryNode.operatorToken.kind) {
-
-            case ts.SyntaxKind.PlusToken:
-              return cat.add(leftExpr, rightExpr);
-
-            case ts.SyntaxKind.MinusToken:
-              return cat.sub(leftExpr, rightExpr);
-
-            case ts.SyntaxKind.AsteriskToken:
-              return cat.mul(leftExpr, rightExpr);
-
-            case ts.SyntaxKind.SlashToken:
-              if (resultType.isSigned)
-                return cat.div_s(leftExpr, rightExpr);
-              else
-                return cat.div_u(leftExpr, rightExpr);
-
-            case ts.SyntaxKind.PercentToken:
-              if (resultType.isSigned)
-                return cat.rem_s(leftExpr, rightExpr);
-              else
-                return cat.rem_u(leftExpr, rightExpr);
-
-            case ts.SyntaxKind.AmpersandToken:
-              return cat.and(leftExpr, rightExpr);
-
-            case ts.SyntaxKind.BarToken:
-              return cat.or(leftExpr, rightExpr);
-
-            case ts.SyntaxKind.CaretToken:
-              return cat.xor(leftExpr, rightExpr);
-
-            case ts.SyntaxKind.LessThanLessThanToken:
-              return cat.shl(leftExpr, rightExpr);
-
-            case ts.SyntaxKind.GreaterThanGreaterThanToken:
-              if (resultType.isSigned)
-                return cat.shr_s(leftExpr, rightExpr);
-              else
-                return cat.shr_u(leftExpr, rightExpr);
-
-            case ts.SyntaxKind.EqualsEqualsToken:
-              return cat.eq(leftExpr, rightExpr);
-
-            case ts.SyntaxKind.ExclamationEqualsToken:
-              return cat.ne(leftExpr, rightExpr);
-
-            case ts.SyntaxKind.GreaterThanToken:
-              if (resultType.isSigned)
-                return cat.gt_s(leftExpr, rightExpr);
-              else
-                return cat.gt_u(leftExpr, rightExpr);
-
-            case ts.SyntaxKind.GreaterThanEqualsToken:
-              if (resultType.isSigned)
-                return cat.ge_s(leftExpr, rightExpr);
-              else
-                return cat.ge_u(leftExpr, rightExpr);
-
-            case ts.SyntaxKind.LessThanToken:
-              if (resultType.isSigned)
-                return cat.lt_s(leftExpr, rightExpr);
-              else
-                return cat.lt_u(leftExpr, rightExpr);
-
-            case ts.SyntaxKind.LessThanEqualsToken:
-              if (resultType.isSigned)
-                return cat.le_s(leftExpr, rightExpr);
-              else
-                return cat.le_u(leftExpr, rightExpr);
-
-          }
-        }
-
-        this.error(binaryNode.operatorToken, "Unsupported binary operator", ts.SyntaxKind[binaryNode.operatorToken.kind]);
-      }
+        return compile.binary(this, <ts.BinaryExpression>node, contextualType);
 
       case ts.SyntaxKind.PrefixUnaryExpression:
-      {
-        const unaryNode = <ts.PrefixUnaryExpression>node;
-        const unaryExpr = this.compileExpression(unaryNode.operand, contextualType);
-        const operandType = <WasmType>(<any>unaryNode.operand).wasmType;
-
-        switch (unaryNode.operator) {
-
-          case ts.SyntaxKind.ExclamationToken:
-          {
-            (<any>node).wasmType = boolType;
-
-            if (operandType === floatType)
-              return op.f32.eq(unaryExpr, op.f32.const(0));
-
-            else if (operandType === doubleType)
-              return op.f64.eq(unaryExpr, op.f64.const(0));
-
-            else if (operandType.isLong)
-              return op.i64.eqz(unaryExpr);
-
-            else
-              return op.i32.eqz(unaryExpr);
-          }
-
-          case ts.SyntaxKind.PlusToken: // noop
-          {
-            (<any>node).wasmType = operandType;
-
-            return unaryExpr;
-          }
-
-          case ts.SyntaxKind.MinusToken:
-          {
-            (<any>node).wasmType = operandType;
-
-            if (operandType === floatType)
-              return op.f32.neg(unaryNode.operand);
-
-            else if (operandType === doubleType)
-              return op.f64.neg(unaryNode.operand);
-
-            else if (operandType.isLong)
-              return op.i64.sub(op.i64.const(0, 0), unaryExpr);
-
-            else // FIXME: negative constant literals result in sub(const.0, const.value)
-              return this.maybeConvertValue(node, op.i32.sub(op.i32.const(0), unaryExpr), intType, operandType, true);
-          }
-
-          case ts.SyntaxKind.TildeToken:
-          {
-            if (operandType.isLong) {
-
-              (<any>node).wasmType = operandType;
-              return op.i64.xor(unaryExpr, op.i64.const(-1, -1));
-
-            } else if (operandType.isInt) {
-
-              (<any>node).wasmType = operandType;
-              return op.i32.xor(unaryExpr, op.i32.const(-1));
-
-            } else if (contextualType.isLong) { // TODO: is the following correct / doesn't generate useless ops?
-
-              (<any>node).wasmType = contextualType;
-              return op.i64.xor(this.maybeConvertValue(unaryNode.operand, unaryExpr, operandType, contextualType, true), op.i64.const(-1, -1));
-
-            } else {
-
-              (<any>node).wasmType = intType;
-              return op.i32.xor(this.maybeConvertValue(unaryNode.operand, unaryExpr, operandType, intType, true), op.i32.const(-1));
-
-            }
-          }
-
-          case ts.SyntaxKind.PlusPlusToken:
-          case ts.SyntaxKind.MinusMinusToken:
-          {
-            if (unaryNode.operand.kind === ts.SyntaxKind.Identifier) {
-
-              const local = this.currentLocals[(<ts.Identifier>unaryNode.operand).text];
-              if (local) {
-
-                const cat = this.categoryOf(local.type);
-                const one = this.oneOf(local.type);
-                const isIncrement = unaryNode.operator === ts.SyntaxKind.PlusPlusToken;
-
-                const calculate = (isIncrement ? cat.add : cat.sub).call(cat,
-                  op.getLocal(
-                    local.index,
-                    local.type.toBinaryenType(this.uintptrType)
-                  ),
-                  one
-                );
-
-                (<any>node).wasmType = local.type;
-                return this.maybeConvertValue(unaryNode, op.teeLocal(local.index, calculate), intType, local.type, true);
-              }
-            }
-          }
-        }
-
-        this.error(unaryNode, "Unsupported unary prefix operation", ts.SyntaxKind[unaryNode.operator]);
-        return unaryExpr;
-      }
+        return compile.prefixunary(this, <ts.PrefixUnaryExpression>node, contextualType);
 
       case ts.SyntaxKind.PostfixUnaryExpression:
-      {
-        const unaryNode = <ts.PostfixUnaryExpression>node;
-        const unaryExpr = this.compileExpression(unaryNode.operand, contextualType);
+        return compile.postfixunary(this, <ts.PostfixUnaryExpression>node, contextualType);
 
-        (<any>unaryNode).wasmType = (<any>unaryNode.operand).wasmType;
+      case ts.SyntaxKind.Identifier:
+        return compile.identifier(this, <ts.Identifier>node, contextualType);
 
-        if (unaryNode.operand.kind === ts.SyntaxKind.Identifier)
-        {
-          const local = this.currentLocals[(<ts.Identifier>unaryNode.operand).text];
+      case ts.SyntaxKind.PropertyAccessExpression:
+        return compile.propertyaccess(this, <ts.PropertyAccessExpression>node, contextualType);
 
-          if (local) {
+      case ts.SyntaxKind.ConditionalExpression:
+        return compile.conditional(this, <ts.ConditionalExpression>node, contextualType);
 
-            switch (unaryNode.operator) {
-
-              case ts.SyntaxKind.PlusPlusToken:
-              case ts.SyntaxKind.MinusMinusToken:
-              {
-                const cat = this.categoryOf(local.type);
-                const one = this.oneOf(local.type);
-                const isIncrement = unaryNode.operator === ts.SyntaxKind.PlusPlusToken;
-
-                let calculate = (isIncrement ? cat.add : cat.sub).call(cat,
-                  op.getLocal(
-                    local.index,
-                    local.type.toBinaryenType(this.uintptrType)
-                  ),
-                  one
-                );
-
-                if (local.type.isByte || local.type.isShort)
-                  calculate = this.maybeConvertValue(unaryNode, calculate, intType, local.type, true);
-
-                return (isIncrement ? cat.sub : cat.add).call(cat, op.teeLocal(local.index, calculate), one);
-              }
-            }
-          }
-        }
-
-        this.error(unaryNode, "Unsupported unary postfix operation");
-        return unaryExpr;
-      }
+      case ts.SyntaxKind.CallExpression:
+        return compile.call(this, <ts.CallExpression>node, contextualType);
 
       case ts.SyntaxKind.FirstLiteralToken:
         return this.compileLiteral(<ts.LiteralExpression>node, contextualType);
 
-      case ts.SyntaxKind.Identifier:
-      {
-        const identNode = <ts.Identifier>node;
-        const referencedLocal = this.currentLocals[identNode.text];
-
-        if (referencedLocal == null) {
-          this.error(node, "Undefined local variable", identNode.text);
-          return op.unreachable();
-        }
-
-        (<any>node).wasmType = referencedLocal.type;
-
-        return op.getLocal(referencedLocal.index, referencedLocal.type.toBinaryenType(this.uintptrType));
-      }
-
-      case ts.SyntaxKind.PropertyAccessExpression:
-      {
-        const accessNode = <ts.PropertyAccessExpression>node;
-
-        if (accessNode.expression.kind === ts.SyntaxKind.Identifier) {
-          const targetName = (<ts.Identifier>accessNode.expression).text;
-
-          if (accessNode.name.kind === ts.SyntaxKind.Identifier) {
-            const propertyName = (<ts.Identifier>accessNode.name).text;
-            const referencedConstant = this.constants[targetName + "$" + propertyName];
-
-            if (referencedConstant) {
-              switch (referencedConstant.type) {
-
-                case byteType:
-                case sbyteType:
-                case shortType:
-                case ushortType:
-                case intType:
-                case uintType:
-                case uintptrType32:
-
-                  (<any>node).wasmType = intType;
-                  return op.i32.const(referencedConstant.value);
-
-                case longType:
-                case ulongType:
-                case uintptrType64:
-
-                  const long = Long.fromValue(referencedConstant.value);
-                  (<any>node).wasmType = longType;
-                  return op.i64.const(long.low, long.high);
-
-                case floatType:
-
-                  (<any>node).wasmType = floatType;
-                  return op.f32.const(referencedConstant.value);
-
-                case doubleType:
-
-                  (<any>node).wasmType = doubleType;
-                  return op.f64.const(referencedConstant.value);
-
-              }
-            }
-          }
-        }
-
-        this.error(node, "Unsupported property access");
-      }
-
       case ts.SyntaxKind.TrueKeyword:
-
-        if (contextualType.isLong) {
-
-          (<any>node).wasmType = longType;
-          return op.i64.const(1, 0);
-
-        } else { // TODO: this should result in an invalid implicit conversion for floats, does it?
-
-          (<any>node).wasmType = intType;
-          return op.i32.const(1);
-
-        }
-
       case ts.SyntaxKind.FalseKeyword:
+
+        (<any>node).wasmType = boolType;
+        return node.kind === ts.SyntaxKind.TrueKeyword
+          ? this.oneOf(boolType)
+          : this.zeroOf(boolType);
+
       case ts.SyntaxKind.NullKeyword:
 
-        if (contextualType.isLong) {
-
-          (<any>node).wasmType = longType;
-          return op.i64.const(0, 0);
-
-        } else { // TODO: see comment above
-
-          (<any>node).wasmType = intType;
-          return op.i32.const(0);
-
-        }
-
-      case ts.SyntaxKind.ConditionalExpression:
-      {
-        const conditionalNode = <ts.ConditionalExpression>node;
-
-        const condition = this.maybeConvertValue(
-          conditionalNode.condition,
-          this.compileExpression(conditionalNode.condition, intType),
-          (<any>conditionalNode.condition).wasmType,
-          intType,
-          true
-        );
-
-        const ifTrueExpr  = this.compileExpression(conditionalNode.whenTrue, contextualType);
-        const ifFalseExpr = this.compileExpression(conditionalNode.whenFalse, contextualType);
-
-        (<any>node).wasmType = contextualType;
-
-        return op.select(condition, ifTrueExpr, ifFalseExpr);
-      }
-
-      case ts.SyntaxKind.CallExpression:
-      {
-        const callNode = <ts.CallExpression>node;
-        const declaration = this.checker.getResolvedSignature(callNode).declaration;
-        const wasmFunction = <WasmFunction>(<any>declaration).wasmFunction;
-        const argumentExpressions: WasmExpression[] = new Array(wasmFunction.parameterTypes.length);
-
-        (<any>node).wasmType = wasmFunction.returnType;
-
-        let i = 0;
-
-        if ((wasmFunction.flags & WasmFunctionFlags.instance) !== 0)
-          argumentExpressions[i++] = op.getLocal(0, wasmFunction.parameterTypes[0].toBinaryenType(this.uintptrType));
-
-        for (let k = argumentExpressions.length; i < k; ++i)
-          argumentExpressions[i] = this.compileExpression(callNode.arguments[i], wasmFunction.parameterTypes[i]);
-
-        if (i < argumentExpressions.length) { // TODO: pull default value initializers from declaration
-
-          this.error(callNode, "Invalid number of arguemnts", "Expected " + declaration.parameters.length + " but saw " + callNode.arguments.length);
-          return op.unreachable();
-
-        }
-
-        if (!isImport(declaration)) { // user function
-
-          return op.call(wasmFunction.name, argumentExpressions, wasmFunction.returnType.toBinaryenType(this.uintptrType));
-
-        } else { // import or builtin
-
-          if (wasmFunction)
-
-            return op.call(wasmFunction.name, argumentExpressions, wasmFunction.returnType.toBinaryenType(this.uintptrType));
-
-          switch (declaration.symbol.name) {
-
-            case "rotl":
-            case "rotll":
-              return builtins.rotl(this, [ callNode.arguments[0], callNode.arguments[1] ], [ argumentExpressions[0], argumentExpressions[1] ]);
-
-            case "rotr":
-            case "rotrl":
-              return builtins.rotr(this, [ callNode.arguments[0], callNode.arguments[1] ], [ argumentExpressions[0], argumentExpressions[1] ]);
-
-            case "clz":
-            case "clzl":
-              return builtins.clz(this, callNode.arguments[0], argumentExpressions[0]);
-
-            case "ctz":
-            case "ctzl":
-              return builtins.ctz(this, callNode.arguments[0], argumentExpressions[0]);
-
-            case "popcnt":
-            case "popcntl":
-              return builtins.popcnt(this, callNode.arguments[0], argumentExpressions[0]);
-
-            case "abs":
-            case "absf":
-              return builtins.abs(this, callNode.arguments[0], argumentExpressions[0]);
-
-            case "ceil":
-            case "ceilf":
-              return builtins.ceil(this, callNode.arguments[0], argumentExpressions[0]);
-
-            case "floor":
-            case "floorf":
-              return builtins.floor(this, callNode.arguments[0], argumentExpressions[0]);
-
-            case "sqrt":
-            case "sqrtf":
-              return builtins.sqrt(this, callNode.arguments[0], argumentExpressions[0]);
-
-            case "trunc":
-            case "truncf":
-              return builtins.trunc(this, callNode.arguments[0], argumentExpressions[0]);
-
-            case "nearest":
-            case "nearestf":
-              return builtins.nearest(this, callNode.arguments[0], argumentExpressions[0]);
-
-            case "min":
-            case "minf":
-              return builtins.min(this, [ callNode.arguments[0], callNode.arguments[1] ], [ argumentExpressions[0], argumentExpressions[1] ]);
-
-            case "max":
-            case "maxf":
-              return builtins.max(this, [ callNode.arguments[0], callNode.arguments[1] ], [ argumentExpressions[0], argumentExpressions[1] ]);
-
-            case "copysign":
-            case "copysignf":
-              return builtins.copysign(this, [ callNode.arguments[0], callNode.arguments[1] ], [ argumentExpressions[0], argumentExpressions[1] ]);
-
-          }
-        }
-
-        this.error(callNode, "Unimplemented function");
-        return op.unreachable();
-      }
-
-      default:
-        this.error(node, "Unsupported expression node", ts.SyntaxKind[node.kind]);
+        (<any>node).wasmType = this.uintptrType;
+        return this.zeroOf(this.uintptrType);
     }
+
+    this.error(node, "Unsupported expression node", ts.SyntaxKind[node.kind]);
+    (<any>node).wasmType = contextualType;
+    return op.unreachable();
   }
 
   maybeConvertValue(node: ts.Node, expr: WasmExpression, fromType: WasmType, toType: WasmType, explicit: boolean): WasmExpression {

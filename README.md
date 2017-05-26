@@ -106,7 +106,7 @@ function example(value: double): int {
 }
 ```
 
-Global WebAssembly imports are `declare`d and WebAssembly exports `export`ed from the entry file (the file specified when calling `asc` or `Compiler.compile`). Aside from that, imports and exports work just like in TypeScript.
+Global WebAssembly imports can be `declare`d anywhere while WebAssembly exports are `export`ed from the entry file (the file specified when calling `asc` or `Compiler.compile`). Aside from that, imports and exports work just like in TypeScript.
 
 ```ts
 // entry.ts
