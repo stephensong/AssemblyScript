@@ -759,6 +759,7 @@ export class Compiler {
 
             case ts.SyntaxKind.LessThanEqualsToken:
               return cat.le(leftExpr, rightExpr);
+              
           }
 
         } else if (resultType.isAnyInteger) {
@@ -1168,7 +1169,7 @@ export class Compiler {
           intType,
           true
         );
-        
+
         let trueExpr  = this.compileExpression(conditionalNode.whenTrue, contextualType);
         let falseExpr = this.compileExpression(conditionalNode.whenFalse, contextualType);
 
