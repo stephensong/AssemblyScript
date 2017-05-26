@@ -1162,7 +1162,7 @@ export class Compiler {
       {
         const conditionalNode = <ts.ConditionalExpression>node;
 
-        let conditionExpr = this.convertValue(
+        const conditionExpr = this.convertValue(
           conditionalNode.condition,
           this.compileExpression(conditionalNode.condition, intType),
           (<any>conditionalNode.condition).wasmType,
@@ -1170,8 +1170,8 @@ export class Compiler {
           true
         );
 
-        let ifTrueExpr  = this.compileExpression(conditionalNode.whenTrue, contextualType);
-        let ifFalseExpr = this.compileExpression(conditionalNode.whenFalse, contextualType);
+        const ifTrueExpr  = this.compileExpression(conditionalNode.whenTrue, contextualType);
+        const ifFalseExpr = this.compileExpression(conditionalNode.whenFalse, contextualType);
 
         (<any>node).wasmType = contextualType;
 
