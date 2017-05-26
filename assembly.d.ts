@@ -96,3 +96,7 @@ declare function max(left: double, right: double): double;
 declare function maxf(left: float, right: float): float;
 declare function copysign(left: double, right: double): double;
 declare function copysignf(left: float, right: float): float;
+declare function reinterpreti(value: float): int;
+declare function reinterpretl(value: double): long;
+declare function reinterpretf(value: int): float;
+declare function reinterpretd(value: long): double;

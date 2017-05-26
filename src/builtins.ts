@@ -203,3 +203,55 @@ export function copysign(compiler: Compiler, node: TypeScriptExpressionPair, exp
   }
   throw Error("unsupported operation");
 }
+
+export function reinterpreti(compiler: Compiler, node: ts.Expression, expr: binaryen.Expression): binaryen.Expression {
+  const op = compiler.module;
+
+  switch ((<any>node).wasmType) {
+
+    case floatType:
+      return op.i32.reinterpret(expr);
+
+  }
+  throw Error("unsupported operation");
+}
+
+export function reinterpretl(compiler: Compiler, node: ts.Expression, expr: binaryen.Expression): binaryen.Expression {
+  const op = compiler.module;
+
+  switch ((<any>node).wasmType) {
+
+    case doubleType:
+      return op.i64.reinterpret(expr);
+
+  }
+  throw Error("unsupported operation");
+}
+
+export function reinterpretf(compiler: Compiler, node: ts.Expression, expr: binaryen.Expression): binaryen.Expression {
+  const op = compiler.module;
+
+  switch ((<any>node).wasmType) {
+
+    case intType:
+    case uintType:
+    case uintptrType32:
+      return op.f32.reinterpret(expr);
+
+  }
+  throw Error("unsupported operation");
+}
+
+export function reinterpretd(compiler: Compiler, node: ts.Expression, expr: binaryen.Expression): binaryen.Expression {
+  const op = compiler.module;
+
+  switch ((<any>node).wasmType) {
+
+    case longType:
+    case ulongType:
+    case uintptrType64:
+      return op.f64.reinterpret(expr);
+
+  }
+  throw Error("unsupported operation");
+}

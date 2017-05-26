@@ -873,19 +873,13 @@ export class Compiler {
 
     if (type.kind === ts.SyntaxKind.TypeReference) {
       const referenceNode = <ts.TypeReferenceNode>type;
+      const referenceName = referenceNode.typeName.getText();
 
-      switch (referenceNode.typeName.getText()) {
-
-        case "Ptr":
-          if (referenceNode.typeArguments.length !== 1)
-            throw Error("illegal number of type parameters on Ptr<T>");
-          if (referenceNode.typeArguments[0].kind !== ts.SyntaxKind.TypeReference)
-            throw Error("unsupported type parameter on Ptr<T>");
-          return this.uintptrType.withUnderlyingType(this.resolveType(<ts.TypeReferenceNode>referenceNode.typeArguments[0]));
-
-      }
+      if (referenceName === "Ptr" && referenceNode.typeArguments.length === 1 && referenceNode.typeArguments[0].kind !== ts.SyntaxKind.TypeReference)
+        return this.uintptrType.withUnderlyingType(this.resolveType(<ts.TypeReferenceNode>referenceNode.typeArguments[0]));
     }
 
-    throw Error("unsupported type: " + text);
+    this.error(node, "Unsupported type", text);
+    return voidType;
   }
 }
