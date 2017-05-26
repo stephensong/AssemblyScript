@@ -1170,12 +1170,12 @@ export class Compiler {
           true
         );
 
-        let trueExpr  = this.compileExpression(conditionalNode.whenTrue, contextualType);
-        let falseExpr = this.compileExpression(conditionalNode.whenFalse, contextualType);
+        let ifTrueExpr  = this.compileExpression(conditionalNode.whenTrue, contextualType);
+        let ifFalseExpr = this.compileExpression(conditionalNode.whenFalse, contextualType);
 
         (<any>node).wasmType = contextualType;
 
-        return op.select(conditionExpr, trueExpr, falseExpr);
+        return op.select(conditionExpr, ifTrueExpr, ifFalseExpr);
       }
 
       case ts.SyntaxKind.CallExpression:
