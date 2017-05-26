@@ -11,7 +11,7 @@ import {
   WasmExpression
 } from "../wasm";
 
-export function compile(compiler: Compiler, node: ts.ConditionalExpression, contextualType: WasmType): WasmExpression {
+export function compileConditional(compiler: Compiler, node: ts.ConditionalExpression, contextualType: WasmType): WasmExpression {
   const op = compiler.module;
 
   const condition = compiler.maybeConvertValue(

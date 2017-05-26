@@ -15,7 +15,7 @@ import {
 
 import * as builtins from "../builtins";
 
-export function compile(compiler: Compiler, node: ts.CallExpression, contextualType: WasmType): WasmExpression {
+export function compileCall(compiler: Compiler, node: ts.CallExpression, contextualType: WasmType): WasmExpression {
   const op = compiler.module;
   const declaration = compiler.checker.getResolvedSignature(node).declaration;
   const wasmFunction = <WasmFunction>(<any>declaration).wasmFunction;

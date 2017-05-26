@@ -1,4 +1,4 @@
-import * as ts from "byots";
+import "byots";
 import * as Long from "long";
 
 import { Profiler } from "./profiler";
@@ -55,7 +55,7 @@ import {
   isStatic
 } from "./util";
 
-import * as compile from "./expressions";
+import * as ast from "./ast";
 
 const MEM_MAX_32 = (1 << 16) - 1; // 65535 (pageSize) * 65535 (n) ^= 4GB
 
@@ -527,151 +527,32 @@ export class Compiler {
     switch (node.kind) {
 
       case ts.SyntaxKind.VariableStatement:
-      {
-        const variableNode = <ts.VariableStatement>node;
-        const initializers: WasmExpression[] = [];
-
-        for (let i = 0, k = variableNode.declarationList.declarations.length; i < k; ++i) {
-          const decl = variableNode.declarationList.declarations[i];
-          const type = this.resolveType(decl.type);
-
-          (<any>decl).wasmType = type;
-
-          const index = onVariable(decl);
-          if (decl.initializer)
-            initializers.push(op.setLocal(index, this.compileExpression(decl.initializer, type)));
-        }
-
-        return initializers.length === 0 ? null
-             : initializers.length === 1 ? initializers[0]
-             : op.block("", initializers); // praise rule #1
-      }
+        return ast.compileVariable(this, <ts.VariableStatement>node, onVariable);
 
       case ts.SyntaxKind.IfStatement:
-      {
-        const ifNode = <ts.IfStatement>node;
+        return ast.compileIf(this, <ts.IfStatement>node, onVariable);
 
-        return op.if(
-          this.maybeConvertValue(ifNode.expression, this.compileExpression(ifNode.expression, intType), (<any>ifNode.expression).wasmType, intType, true),
-          this.compileStatement(ifNode.thenStatement, onVariable),
-          ifNode.elseStatement ? this.compileStatement(ifNode.elseStatement, onVariable) : undefined
-        );
-      }
-
-      // TODO: From a TS perspective, br_table probably isn't unconditionally ideal - is it?
-      /* case ts.SyntaxKind.SwitchStatement:
-      {
-        const stmt = <ts.SwitchStatement>node;
-        const blocks: WasmStatement[] = new Array(stmt.caseBlock.clauses.length);
-        const labels: string[] = new Array(blocks.length);
-        let hasDefault = false;
-        stmt.caseBlock.clauses.forEach((clause, i) => {
-          let label: string;
-          if (clause.kind == ts.SyntaxKind.DefaultClause) {
-            if (hasDefault)
-              this.error(clause, "A switch statement cannot have multiple default branches");
-            hasDefault = true;
-            label = "default";
-          } else {
-            label = "case" + i;
-          }
-          labels[i] = label;
-          blocks[i] = op.block(label, clause.statements.map(stmt => this.compileStatement(stmt)));
-        });
-        return op.block("break", [
-          op.switch(labels, hasDefault ? "default" : "break", this.compileExpression(stmt.expression, intType))
-        ].concat(blocks));
-      } */
+      case ts.SyntaxKind.SwitchStatement:
+        return ast.compileSwitch(this, <ts.SwitchStatement>node, onVariable);
 
       case ts.SyntaxKind.WhileStatement:
-      {
-        const whileNode = <ts.WhileStatement>node;
-
-        this.enterBreakContext();
-        const label = this.currentBreakLabel;
-
-        const context = op.loop("break$" + label, op.block("continue$" + label, [
-          op.break("break$" + label, op.i32.eqz(this.maybeConvertValue(whileNode.expression, this.compileExpression(whileNode.expression, intType), (<any>whileNode.expression).wasmType, intType, true))),
-          this.compileStatement(whileNode.statement, onVariable)
-        ]));
-
-        this.leaveBreakContext();
-        return context;
-      }
+        return ast.compileWhile(this, <ts.WhileStatement>node, onVariable);
 
       case ts.SyntaxKind.DoStatement:
-      {
-        const doNode = <ts.WhileStatement>node;
-
-        this.enterBreakContext();
-        const label = this.currentBreakLabel;
-
-        const context = op.loop("break$" + label, op.block("continue$" + label, [
-          this.compileStatement(doNode.statement, onVariable),
-          op.break("break$" + label, op.i32.eqz(this.maybeConvertValue(doNode.expression, this.compileExpression(doNode.expression, intType), (<any>doNode.expression).wasmType, intType, true)))
-        ]));
-
-        this.leaveBreakContext();
-        return context;
-      }
+        return ast.compileDo(this, <ts.DoStatement>node, onVariable);
 
       case ts.SyntaxKind.Block:
-      {
-        const blockNode = <ts.Block>node;
-        if (blockNode.statements.length === 0)
-          return op.nop();
-        else if (blockNode.statements.length === 1)
-          return this.compileStatement(blockNode.statements[0], onVariable);
-        else {
-          const children: WasmStatement[] = new Array(blockNode.statements.length);
-          for (let i = 0, k = children.length; i < k; ++i)
-            children[i] = this.compileStatement(blockNode.statements[i], onVariable);
-          return op.block("", children);
-        }
-      }
-
-      case ts.SyntaxKind.ContinueStatement:
-        return op.break("continue$" + this.currentBreakLabel);
+        return ast.compileBlock(this, <ts.Block>node, onVariable);
 
       case ts.SyntaxKind.BreakStatement:
-        return op.break("break$" + this.currentBreakLabel);
+      case ts.SyntaxKind.ContinueStatement:
+        return ast.compileBreak(this, node.kind === ts.SyntaxKind.ContinueStatement);
 
       case ts.SyntaxKind.ExpressionStatement:
-      {
-        const expressionNode = (<ts.ExpressionStatement>node).expression;
-        const expr = this.compileExpression(expressionNode, voidType);
-        return (<any>expressionNode).wasmType !== voidType ? op.drop(expr) : expr;
-      }
+        return ast.compileExpressionStatement(this, <ts.ExpressionStatement>node);
 
       case ts.SyntaxKind.ReturnStatement:
-      {
-        const returnNode = <ts.ReturnStatement>node;
-
-        if (this.currentFunction.returnType === voidType) {
-
-          if (returnNode.expression)
-            this.error(returnNode, "A void function cannot return a value", this.currentFunction.name);
-
-          return op.return();
-
-        } else {
-
-          if (!returnNode.expression)
-            this.error(returnNode, "A function with a return type must return a value", this.currentFunction.name);
-
-          const returnExpr = <ts.Expression>returnNode.expression;
-
-          return op.return(
-            this.maybeConvertValue(
-              returnExpr,
-              this.compileExpression(returnExpr, this.currentFunction.returnType),
-              <WasmType>(<any>returnExpr).wasmType,
-              this.currentFunction.returnType,
-              false
-            )
-          );
-        }
-      }
+        return ast.compileReturn(this, <ts.ReturnStatement>node);
 
       default:
         this.error(node, "Unsupported statement node", ts.SyntaxKind[node.kind]);
@@ -781,31 +662,31 @@ export class Compiler {
     switch (node.kind) {
 
       case ts.SyntaxKind.ParenthesizedExpression:
-        return compile.parenthesized(this, <ts.ParenthesizedExpression>node, contextualType);
+        return ast.compileParenthesized(this, <ts.ParenthesizedExpression>node, contextualType);
 
       case ts.SyntaxKind.AsExpression:
-        return compile.as(this, <ts.AsExpression>node, contextualType);
+        return ast.compileAs(this, <ts.AsExpression>node, contextualType);
 
       case ts.SyntaxKind.BinaryExpression:
-        return compile.binary(this, <ts.BinaryExpression>node, contextualType);
+        return ast.compileBinary(this, <ts.BinaryExpression>node, contextualType);
 
       case ts.SyntaxKind.PrefixUnaryExpression:
-        return compile.prefixunary(this, <ts.PrefixUnaryExpression>node, contextualType);
+        return ast.compilePrefixUnary(this, <ts.PrefixUnaryExpression>node, contextualType);
 
       case ts.SyntaxKind.PostfixUnaryExpression:
-        return compile.postfixunary(this, <ts.PostfixUnaryExpression>node, contextualType);
+        return ast.compilePostfixUnary(this, <ts.PostfixUnaryExpression>node, contextualType);
 
       case ts.SyntaxKind.Identifier:
-        return compile.identifier(this, <ts.Identifier>node, contextualType);
+        return ast.compileIdentifier(this, <ts.Identifier>node, contextualType);
 
       case ts.SyntaxKind.PropertyAccessExpression:
-        return compile.propertyaccess(this, <ts.PropertyAccessExpression>node, contextualType);
+        return ast.compilePropertyAccess(this, <ts.PropertyAccessExpression>node, contextualType);
 
       case ts.SyntaxKind.ConditionalExpression:
-        return compile.conditional(this, <ts.ConditionalExpression>node, contextualType);
+        return ast.compileConditional(this, <ts.ConditionalExpression>node, contextualType);
 
       case ts.SyntaxKind.CallExpression:
-        return compile.call(this, <ts.CallExpression>node, contextualType);
+        return ast.compileCall(this, <ts.CallExpression>node, contextualType);
 
       case ts.SyntaxKind.FirstLiteralToken:
         return this.compileLiteral(<ts.LiteralExpression>node, contextualType);

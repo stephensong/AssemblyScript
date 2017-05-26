@@ -11,7 +11,7 @@ import {
   WasmF64Operations
 } from "../wasm";
 
-export function compile(compiler: Compiler, node: ts.BinaryExpression, contextualType: WasmType): WasmExpression {
+export function compileBinary(compiler: Compiler, node: ts.BinaryExpression, contextualType: WasmType): WasmExpression {
   const binaryNode = <ts.BinaryExpression>node;
   let leftExpr  = compiler.compileExpression(binaryNode.left, contextualType);
   let rightExpr = compiler.compileExpression(binaryNode.right, contextualType);

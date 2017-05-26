@@ -1,4 +1,4 @@
-import * as ts from "byots";
+import "byots";
 
 // this is basically copy-pasted from tsc (compiler/program.ts)
 

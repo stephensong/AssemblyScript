@@ -11,7 +11,7 @@ import {
   WasmType
 } from "../wasm";
 
-export function compile(compiler: Compiler, node: ts.PostfixUnaryExpression, contextualType: WasmType): WasmExpression {
+export function compilePostfixUnary(compiler: Compiler, node: ts.PostfixUnaryExpression, contextualType: WasmType): WasmExpression {
   const op = compiler.module;
   const operand = compiler.compileExpression(node.operand, contextualType);
   const operandType = <WasmType>(<any>node.operand).wasmType;

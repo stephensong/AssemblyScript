@@ -1,5 +1,6 @@
-import * as ts from "byots";
-import { Compiler } from "./compiler";
+import {
+  Compiler
+} from "./compiler";
 
 import {
   WasmExpression

@@ -24,7 +24,7 @@ import {
 
 import * as Long from "long";
 
-export function compile(compiler: Compiler, node: ts.PropertyAccessExpression, contextualType: WasmType): WasmExpression {
+export function compilePropertyAccess(compiler: Compiler, node: ts.PropertyAccessExpression, contextualType: WasmType): WasmExpression {
   const op = compiler.module;
 
   if (node.expression.kind === ts.SyntaxKind.Identifier) {

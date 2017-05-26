@@ -7,7 +7,7 @@ import {
   WasmType
 } from "../wasm";
 
-export function compile(compiler: Compiler, node: ts.ParenthesizedExpression, contextualType: WasmType): WasmExpression {
+export function compileParenthesized(compiler: Compiler, node: ts.ParenthesizedExpression, contextualType: WasmType): WasmExpression {
   const expr = compiler.compileExpression(node.expression, contextualType);
   (<any>node).wasmType = (<any>node.expression).wasmType;
   return expr;

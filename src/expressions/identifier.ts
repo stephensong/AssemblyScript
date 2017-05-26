@@ -7,7 +7,7 @@ import {
   WasmExpression
 } from "../wasm";
 
-export function compile(compiler: Compiler, node: ts.Identifier, contextualType: WasmType): WasmExpression {
+export function compileIdentifier(compiler: Compiler, node: ts.Identifier, contextualType: WasmType): WasmExpression {
   const op = compiler.module;
   const referencedLocal = compiler.currentLocals[node.text];
 
