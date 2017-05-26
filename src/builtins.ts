@@ -1,12 +1,13 @@
 import { Compiler } from "./compiler";
-import { binaryen } from "./wasm";
 import { intType, uintType, longType, ulongType, uintptrType32, uintptrType64, floatType, doubleType } from "./types";
+import { binaryen } from "./wasm";
+import * as wasm from "./wasm";
 
 type TypeScriptExpressionPair = [ ts.Expression, ts.Expression ];
 type BinaryenExpressionPair = [ binaryen.Expression, binaryen.Expression ];
 
 export function rotl(compiler: Compiler, node: TypeScriptExpressionPair, expr: BinaryenExpressionPair): binaryen.Expression {
-  if ((<any>node[0]).wasmType === (<any>node[1]).wasmType) {
+  if (<wasm.Type>(<any>node[0]).wasmType === <wasm.Type>(<any>node[1]).wasmType) {
 
     switch ((<any>node).wasmType) {
 
@@ -26,7 +27,7 @@ export function rotl(compiler: Compiler, node: TypeScriptExpressionPair, expr: B
 
 export function rotr(compiler: Compiler, node: TypeScriptExpressionPair, expr: BinaryenExpressionPair): binaryen.Expression {
   if ((<any>node[0]).wasmType === (<any>node[1]).wasmType) {
-    switch ((<any>node).wasmType) {
+    switch (<wasm.Type>(<any>node).wasmType) {
 
       case intType:
       case uintType:
@@ -43,7 +44,7 @@ export function rotr(compiler: Compiler, node: TypeScriptExpressionPair, expr: B
 }
 
 export function clz(compiler: Compiler, node: ts.Expression, expr: binaryen.Expression): binaryen.Expression {
-  switch ((<any>node).wasmType) {
+  switch (<wasm.Type>(<any>node).wasmType) {
 
     case intType:
     case uintType:
@@ -59,7 +60,7 @@ export function clz(compiler: Compiler, node: ts.Expression, expr: binaryen.Expr
 }
 
 export function ctz(compiler: Compiler, node: ts.Expression, expr: binaryen.Expression): binaryen.Expression {
-  switch ((<any>node).wasmType) {
+  switch (<wasm.Type>(<any>node).wasmType) {
 
     case intType:
     case uintType:
@@ -75,7 +76,7 @@ export function ctz(compiler: Compiler, node: ts.Expression, expr: binaryen.Expr
 }
 
 export function popcnt(compiler: Compiler, node: ts.Expression, expr: binaryen.Expression): binaryen.Expression {
-  switch ((<any>node).wasmType) {
+  switch (<wasm.Type>(<any>node).wasmType) {
 
     case intType:
     case uintType:
@@ -91,7 +92,7 @@ export function popcnt(compiler: Compiler, node: ts.Expression, expr: binaryen.E
 }
 
 export function abs(compiler: Compiler, node: ts.Expression, expr: binaryen.Expression): binaryen.Expression {
-  switch ((<any>node).wasmType) {
+  switch (<wasm.Type>(<any>node).wasmType) {
 
     case floatType:
       return compiler.module.f32.abs(expr);
@@ -103,7 +104,7 @@ export function abs(compiler: Compiler, node: ts.Expression, expr: binaryen.Expr
 }
 
 export function ceil(compiler: Compiler, node: ts.Expression, expr: binaryen.Expression): binaryen.Expression {
-  switch ((<any>node).wasmType) {
+  switch (<wasm.Type>(<any>node).wasmType) {
 
     case floatType:
       return compiler.module.f32.ceil(expr);
@@ -115,7 +116,7 @@ export function ceil(compiler: Compiler, node: ts.Expression, expr: binaryen.Exp
 }
 
 export function floor(compiler: Compiler, node: ts.Expression, expr: binaryen.Expression): binaryen.Expression {
-  switch ((<any>node).wasmType) {
+  switch (<wasm.Type>(<any>node).wasmType) {
 
     case floatType:
       return compiler.module.f32.floor(expr);
@@ -127,7 +128,7 @@ export function floor(compiler: Compiler, node: ts.Expression, expr: binaryen.Ex
 }
 
 export function sqrt(compiler: Compiler, node: ts.Expression, expr: binaryen.Expression): binaryen.Expression {
-  switch ((<any>node).wasmType) {
+  switch (<wasm.Type>(<any>node).wasmType) {
 
     case floatType:
       return compiler.module.f32.sqrt(expr);
@@ -139,7 +140,7 @@ export function sqrt(compiler: Compiler, node: ts.Expression, expr: binaryen.Exp
 }
 
 export function trunc(compiler: Compiler, node: ts.Expression, expr: binaryen.Expression): binaryen.Expression {
-  switch ((<any>node).wasmType) {
+  switch (<wasm.Type>(<any>node).wasmType) {
 
     case floatType:
       return compiler.module.f32.trunc(expr);
@@ -151,7 +152,7 @@ export function trunc(compiler: Compiler, node: ts.Expression, expr: binaryen.Ex
 }
 
 export function nearest(compiler: Compiler, node: ts.Expression, expr: binaryen.Expression): binaryen.Expression {
-  switch ((<any>node).wasmType) {
+  switch (<wasm.Type>(<any>node).wasmType) {
 
     case floatType:
       return compiler.module.f32.nearest(expr);
@@ -164,7 +165,7 @@ export function nearest(compiler: Compiler, node: ts.Expression, expr: binaryen.
 
 export function min(compiler: Compiler, node: TypeScriptExpressionPair, expr: BinaryenExpressionPair): binaryen.Expression {
   if ((<any>node[0]).wasmType === (<any>node[1]).wasmType) {
-    switch ((<any>node[0]).wasmType) {
+    switch (<wasm.Type>(<any>node[0]).wasmType) {
 
       case floatType:
         return compiler.module.f32.min(expr[0], expr[1]);
@@ -178,7 +179,7 @@ export function min(compiler: Compiler, node: TypeScriptExpressionPair, expr: Bi
 
 export function max(compiler: Compiler, node: TypeScriptExpressionPair, expr: BinaryenExpressionPair): binaryen.Expression {
   if ((<any>node[0]).wasmType === (<any>node[1]).wasmType) {
-    switch ((<any>node[0]).wasmType) {
+    switch (<wasm.Type>(<any>node[0]).wasmType) {
 
       case floatType:
         return compiler.module.f32.max(expr[0], expr[1]);
@@ -192,7 +193,7 @@ export function max(compiler: Compiler, node: TypeScriptExpressionPair, expr: Bi
 
 export function copysign(compiler: Compiler, node: TypeScriptExpressionPair, expr: BinaryenExpressionPair): binaryen.Expression {
   if ((<any>node[0]).wasmType === (<any>node[1]).wasmType) {
-    switch ((<any>node[0]).wasmType) {
+    switch (<wasm.Type>(<any>node[0]).wasmType) {
 
       case floatType:
         return compiler.module.f32.copysign(expr[0], expr[1]);
@@ -204,53 +205,26 @@ export function copysign(compiler: Compiler, node: TypeScriptExpressionPair, exp
   throw Error("unsupported operation");
 }
 
-export function reinterpreti(compiler: Compiler, node: ts.Expression, expr: binaryen.Expression): binaryen.Expression {
+export function reinterpret(compiler: Compiler, node: ts.Expression, expr: binaryen.Expression): binaryen.Expression {
   const op = compiler.module;
 
-  switch ((<any>node).wasmType) {
-
-    case floatType:
-      return op.i32.reinterpret(expr);
-
-  }
-  throw Error("unsupported operation");
-}
-
-export function reinterpretl(compiler: Compiler, node: ts.Expression, expr: binaryen.Expression): binaryen.Expression {
-  const op = compiler.module;
-
-  switch ((<any>node).wasmType) {
-
-    case doubleType:
-      return op.i64.reinterpret(expr);
-
-  }
-  throw Error("unsupported operation");
-}
-
-export function reinterpretf(compiler: Compiler, node: ts.Expression, expr: binaryen.Expression): binaryen.Expression {
-  const op = compiler.module;
-
-  switch ((<any>node).wasmType) {
+  switch (<wasm.Type>(<any>node).wasmType) {
 
     case intType:
     case uintType:
     case uintptrType32:
       return op.f32.reinterpret(expr);
 
-  }
-  throw Error("unsupported operation");
-}
-
-export function reinterpretd(compiler: Compiler, node: ts.Expression, expr: binaryen.Expression): binaryen.Expression {
-  const op = compiler.module;
-
-  switch ((<any>node).wasmType) {
-
     case longType:
     case ulongType:
     case uintptrType64:
       return op.f64.reinterpret(expr);
+
+    case floatType:
+      return op.i32.reinterpret(expr);
+
+    case doubleType:
+      return op.i64.reinterpret(expr);
 
   }
   throw Error("unsupported operation");

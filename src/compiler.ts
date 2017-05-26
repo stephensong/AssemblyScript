@@ -120,38 +120,41 @@ export class Compiler {
 
     const sourceFiles = this.program.getSourceFiles();
     for (let i = 0, k = sourceFiles.length, file; i < k; ++i) {
-
-      if ((file = sourceFiles[i]).isDeclarationFile)
-        continue;
+      file = sourceFiles[i];
 
       for (let j = 0, l = file.statements.length, statement; j < l; ++j) {
         switch ((statement = file.statements[j]).kind) {
 
           case ts.SyntaxKind.ImportDeclaration: // already handled
-            break;
+            continue;
+
+          case ts.SyntaxKind.TypeAliasDeclaration: // TODO: allowed in assembly.d.ts for now
+          case ts.SyntaxKind.InterfaceDeclaration: //
+            if (file.isDeclarationFile)
+              continue;
+            else
+              break;
 
           case ts.SyntaxKind.VariableStatement:
             compiler.initializeGlobal(<ts.VariableStatement>statement);
-            break;
+            continue;
 
           case ts.SyntaxKind.FunctionDeclaration:
             compiler.initializeFunction(<ts.FunctionDeclaration>statement);
-            break;
+            continue;
 
           case ts.SyntaxKind.ClassDeclaration:
             compiler.initializeClass(<ts.ClassDeclaration>statement);
-            break;
+            continue;
 
           case ts.SyntaxKind.EnumDeclaration:
             compiler.initializeEnum(<ts.EnumDeclaration>statement);
-            break;
+            continue;
 
           case ts.SyntaxKind.EndOfFileToken:
-            break;
-
-          default:
-            throw Error("unsupported top-level node: " + ts.SyntaxKind[statement.kind]);
+            continue;
         }
+        throw Error("unsupported top-level node: " + ts.SyntaxKind[statement.kind]);
       }
     }
   }
@@ -204,7 +207,7 @@ export class Compiler {
     const name = node.symbol.name;
     const returnType = this.resolveType(<ts.TypeNode>node.type, true);
 
-    if (node.typeParameters && node.typeParameters.length !== 0)
+    if (node.typeParameters && node.typeParameters.length !== 0 && !node.getSourceFile().isDeclarationFile) // TODO: allowed in assembly.d.ts for now
       this.error(node.typeParameters[0], "Type parameters are not supported yet");
 
     let parameterTypes: wasm.Type[];

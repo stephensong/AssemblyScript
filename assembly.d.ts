@@ -35,27 +35,16 @@ declare type double = number;
 declare type uintptr = number;
 
 /** A class describing a pointer to a data structure. */
-declare class Ptr<T extends number | object> {
-    public offset: uintptr;
-    public value: T;
+/* declare class Ptr<T extends number | object> {
+    offset: uintptr;
+    value: T;
     constructor(offset: uintptr);
-    public increment(diff: uintptr): this;
-    public decrement(diff: uintptr): this;
-}
+    increment(diff: uintptr): this;
+    decrement(diff: uintptr): this;
+} */
 
 /** Retrieves the byte size of a data structure. */
 declare function sizeof<T>(): uintptr;
-
-declare function sizeof<byte>()   : 1;
-declare function sizeof<sbyte>()  : 1;
-declare function sizeof<short>()  : 2;
-declare function sizeof<ushort>() : 2;
-declare function sizeof<int>()    : 4;
-declare function sizeof<uint>()   : 4;
-declare function sizeof<long>()   : 8;
-declare function sizeof<ulong>()  : 8;
-declare function sizeof<float>()  : 4;
-declare function sizeof<double>() : 8;
 
 // Fillers for TypeScript complaining about missing types with 'nolib'
 interface Array<T> { }
