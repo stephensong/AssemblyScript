@@ -1212,6 +1212,26 @@ export class Compiler {
 
         }
 
+      case ts.SyntaxKind.ConditionalExpression:
+      {
+        const conditionalNode = <ts.ConditionalExpression>node;
+
+        const condition = this.maybeConvertValue(
+          conditionalNode.condition,
+          this.compileExpression(conditionalNode.condition, intType),
+          (<any>conditionalNode.condition).wasmType,
+          intType,
+          true
+        );
+
+        const ifTrueExpr  = this.compileExpression(conditionalNode.whenTrue, contextualType);
+        const ifFalseExpr = this.compileExpression(conditionalNode.whenFalse, contextualType);
+
+        (<any>node).wasmType = contextualType;
+
+        return op.select(condition, ifTrueExpr, ifFalseExpr);
+      }
+
       case ts.SyntaxKind.CallExpression:
       {
         const callNode = <ts.CallExpression>node;
