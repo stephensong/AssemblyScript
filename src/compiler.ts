@@ -759,7 +759,6 @@ export class Compiler {
 
             case ts.SyntaxKind.LessThanEqualsToken:
               return cat.le(leftExpr, rightExpr);
-
           }
 
         } else if (resultType.isAnyInteger) {
@@ -1157,6 +1156,26 @@ export class Compiler {
           return op.i32.const(0);
 
         }
+
+      case ts.SyntaxKind.ConditionalExpression:
+      {
+        const conditionalNode = <ts.ConditionalExpression>node;
+
+        let conditionExpr = this.convertValue(
+          conditionalNode.condition,
+          this.compileExpression(conditionalNode.condition, intType),
+          (<any>conditionalNode.condition).wasmType,
+          intType,
+          true
+        );
+        
+        let trueExpr  = this.compileExpression(conditionalNode.whenTrue, contextualType);
+        let falseExpr = this.compileExpression(conditionalNode.whenFalse, contextualType);
+
+        (<any>node).wasmType = contextualType;
+
+        return op.select(conditionExpr, trueExpr, falseExpr);
+      }
 
       case ts.SyntaxKind.CallExpression:
       {
