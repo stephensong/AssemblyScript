@@ -759,7 +759,7 @@ export class Compiler {
 
             case ts.SyntaxKind.LessThanEqualsToken:
               return cat.le(leftExpr, rightExpr);
-              
+
           }
 
         } else if (resultType.isAnyInteger) {
