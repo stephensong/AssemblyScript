@@ -1,4 +1,5 @@
 import { Compiler } from "../compiler";
+import { intType } from "../types";
 import { binaryen } from "../wasm";
 import * as wasm from "../wasm";
 
@@ -75,78 +76,99 @@ export function compileBinary(compiler: Compiler, node: ts.BinaryExpression, con
 
     const cat = <binaryen.I32Operations | binaryen.I64Operations>compiler.categoryOf(resultType);
 
+    let result: binaryen.Expression;
+
     switch (node.operatorToken.kind) {
 
       case ts.SyntaxKind.PlusToken:
-        return cat.add(left, right);
+        result = cat.add(left, right);
+        break;
 
       case ts.SyntaxKind.MinusToken:
-        return cat.sub(left, right);
+        result = cat.sub(left, right);
+        break;
 
       case ts.SyntaxKind.AsteriskToken:
-        return cat.mul(left, right);
+        result = cat.mul(left, right);
+        break;
 
       case ts.SyntaxKind.SlashToken:
         if (resultType.isSigned)
-          return cat.div_s(left, right);
+          result = cat.div_s(left, right);
         else
-          return cat.div_u(left, right);
+          result = cat.div_u(left, right);
+        break;
 
       case ts.SyntaxKind.PercentToken:
         if (resultType.isSigned)
-          return cat.rem_s(left, right);
+          result = cat.rem_s(left, right);
         else
-          return cat.rem_u(left, right);
+          result = cat.rem_u(left, right);
+        break;
 
       case ts.SyntaxKind.AmpersandToken:
-        return cat.and(left, right);
+        result = cat.and(left, right);
+        break;
 
       case ts.SyntaxKind.BarToken:
-        return cat.or(left, right);
+        result = cat.or(left, right);
+        break;
 
       case ts.SyntaxKind.CaretToken:
-        return cat.xor(left, right);
+        result = cat.xor(left, right);
+        break;
 
       case ts.SyntaxKind.LessThanLessThanToken:
-        return cat.shl(left, right);
+        result = cat.shl(left, right);
+        break;
 
       case ts.SyntaxKind.GreaterThanGreaterThanToken:
         if (resultType.isSigned)
-          return cat.shr_s(left, right);
+          result = cat.shr_s(left, right);
         else
-          return cat.shr_u(left, right);
+          result = cat.shr_u(left, right);
+        break;
 
       case ts.SyntaxKind.EqualsEqualsToken:
-        return cat.eq(left, right);
+        result = cat.eq(left, right);
+        break;
 
       case ts.SyntaxKind.ExclamationEqualsToken:
-        return cat.ne(left, right);
+        result = cat.ne(left, right);
+        break;
 
       case ts.SyntaxKind.GreaterThanToken:
         if (resultType.isSigned)
-          return cat.gt_s(left, right);
+          result = cat.gt_s(left, right);
         else
-          return cat.gt_u(left, right);
+          result = cat.gt_u(left, right);
+        break;
 
       case ts.SyntaxKind.GreaterThanEqualsToken:
         if (resultType.isSigned)
-          return cat.ge_s(left, right);
+          result = cat.ge_s(left, right);
         else
-          return cat.ge_u(left, right);
+          result = cat.ge_u(left, right);
+        break;
 
       case ts.SyntaxKind.LessThanToken:
         if (resultType.isSigned)
-          return cat.lt_s(left, right);
+          result = cat.lt_s(left, right);
         else
-          return cat.lt_u(left, right);
+          result = cat.lt_u(left, right);
+        break;
 
       case ts.SyntaxKind.LessThanEqualsToken:
         if (resultType.isSigned)
-          return cat.le_s(left, right);
+          result = cat.le_s(left, right);
         else
-          return cat.le_u(left, right);
+          result = cat.le_u(left, right);
+        break;
 
     }
+
+    if (result)
+      return compiler.maybeConvertValue(node, result, intType, resultType, true);
   }
 
   compiler.error(node.operatorToken, "Unsupported binary operator", ts.SyntaxKind[node.operatorToken.kind]);
