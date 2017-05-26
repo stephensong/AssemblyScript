@@ -27,6 +27,8 @@ import * as Long from "long";
 export function compilePropertyAccess(compiler: Compiler, node: ts.PropertyAccessExpression, contextualType: WasmType): WasmExpression {
   const op = compiler.module;
 
+  // TODO: This currently only supports accessing constants in the form identifier.identifier (i.e. enum values)
+
   if (node.expression.kind === ts.SyntaxKind.Identifier) {
     const targetName = (<ts.Identifier>node.expression).text;
 
@@ -72,6 +74,7 @@ export function compilePropertyAccess(compiler: Compiler, node: ts.PropertyAcces
   }
 
   compiler.error(node, "Unsupported property access");
+
   (<any>node).wasmType = contextualType;
   return op.unreachable();
 }

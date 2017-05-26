@@ -12,11 +12,14 @@ import {
 } from "../wasm";
 
 export function compileBinary(compiler: Compiler, node: ts.BinaryExpression, contextualType: WasmType): WasmExpression {
-  const binaryNode = <ts.BinaryExpression>node;
-  let leftExpr  = compiler.compileExpression(binaryNode.left, contextualType);
-  let rightExpr = compiler.compileExpression(binaryNode.right, contextualType);
-  const leftType  = <WasmType>(<any>binaryNode.left).wasmType;
-  const rightType = <WasmType>(<any>binaryNode.right).wasmType;
+  const op = compiler.module;
+
+  let left  = compiler.compileExpression(node.left, contextualType);
+  let right = compiler.compileExpression(node.right, contextualType);
+
+  const leftType  = <WasmType>(<any>node.left).wasmType;
+  const rightType = <WasmType>(<any>node.right).wasmType;
+
   let resultType: WasmType;
 
   if (leftType.isAnyFloat) {
@@ -31,51 +34,49 @@ export function compileBinary(compiler: Compiler, node: ts.BinaryExpression, con
   else
     resultType = leftType.size > rightType.size ? leftType : rightType;
 
-  // compile again with contextual result type so that literals are properly coerced
+  // compile again with common contextual type so that literals are properly coerced
   if (leftType !== resultType)
-    leftExpr = compiler.maybeConvertValue(binaryNode.left, compiler.compileExpression(binaryNode.left, resultType), leftType, resultType, false);
+    left = compiler.maybeConvertValue(node.left, compiler.compileExpression(node.left, resultType), leftType, resultType, false);
   if (rightType !== resultType)
-    rightExpr = compiler.maybeConvertValue(binaryNode.right, compiler.compileExpression(binaryNode.right, resultType), rightType, resultType, false);
+    right = compiler.maybeConvertValue(node.right, compiler.compileExpression(node.right, resultType), rightType, resultType, false);
 
-  const cat = compiler.categoryOf(resultType);
-
-  (<any>binaryNode).wasmType = resultType;
+  (<any>node).wasmType = resultType;
 
   if (resultType.isAnyFloat) {
 
     const cat = <WasmF32Operations | WasmF64Operations>compiler.categoryOf(resultType);
 
-    switch (binaryNode.operatorToken.kind) {
+    switch (node.operatorToken.kind) {
 
       case ts.SyntaxKind.PlusToken:
-        return cat.add(leftExpr, rightExpr);
+        return cat.add(left, right);
 
       case ts.SyntaxKind.MinusToken:
-        return cat.sub(leftExpr, rightExpr);
+        return cat.sub(left, right);
 
       case ts.SyntaxKind.AsteriskToken:
-        return cat.mul(leftExpr, rightExpr);
+        return cat.mul(left, right);
 
       case ts.SyntaxKind.SlashToken:
-        return cat.div(leftExpr, rightExpr);
+        return cat.div(left, right);
 
       case ts.SyntaxKind.EqualsEqualsToken:
-        return cat.eq(leftExpr, rightExpr);
+        return cat.eq(left, right);
 
       case ts.SyntaxKind.ExclamationEqualsToken:
-        return cat.ne(leftExpr, rightExpr);
+        return cat.ne(left, right);
 
       case ts.SyntaxKind.GreaterThanToken:
-        return cat.gt(leftExpr, rightExpr);
+        return cat.gt(left, right);
 
       case ts.SyntaxKind.GreaterThanEqualsToken:
-        return cat.ge(leftExpr, rightExpr);
+        return cat.ge(left, right);
 
       case ts.SyntaxKind.LessThanToken:
-        return cat.lt(leftExpr, rightExpr);
+        return cat.lt(left, right);
 
       case ts.SyntaxKind.LessThanEqualsToken:
-        return cat.le(leftExpr, rightExpr);
+        return cat.le(left, right);
 
     }
 
@@ -83,79 +84,80 @@ export function compileBinary(compiler: Compiler, node: ts.BinaryExpression, con
 
     const cat = <WasmI32Operations | WasmI64Operations>compiler.categoryOf(resultType);
 
-    switch (binaryNode.operatorToken.kind) {
+    switch (node.operatorToken.kind) {
 
       case ts.SyntaxKind.PlusToken:
-        return cat.add(leftExpr, rightExpr);
+        return cat.add(left, right);
 
       case ts.SyntaxKind.MinusToken:
-        return cat.sub(leftExpr, rightExpr);
+        return cat.sub(left, right);
 
       case ts.SyntaxKind.AsteriskToken:
-        return cat.mul(leftExpr, rightExpr);
+        return cat.mul(left, right);
 
       case ts.SyntaxKind.SlashToken:
         if (resultType.isSigned)
-          return cat.div_s(leftExpr, rightExpr);
+          return cat.div_s(left, right);
         else
-          return cat.div_u(leftExpr, rightExpr);
+          return cat.div_u(left, right);
 
       case ts.SyntaxKind.PercentToken:
         if (resultType.isSigned)
-          return cat.rem_s(leftExpr, rightExpr);
+          return cat.rem_s(left, right);
         else
-          return cat.rem_u(leftExpr, rightExpr);
+          return cat.rem_u(left, right);
 
       case ts.SyntaxKind.AmpersandToken:
-        return cat.and(leftExpr, rightExpr);
+        return cat.and(left, right);
 
       case ts.SyntaxKind.BarToken:
-        return cat.or(leftExpr, rightExpr);
+        return cat.or(left, right);
 
       case ts.SyntaxKind.CaretToken:
-        return cat.xor(leftExpr, rightExpr);
+        return cat.xor(left, right);
 
       case ts.SyntaxKind.LessThanLessThanToken:
-        return cat.shl(leftExpr, rightExpr);
+        return cat.shl(left, right);
 
       case ts.SyntaxKind.GreaterThanGreaterThanToken:
         if (resultType.isSigned)
-          return cat.shr_s(leftExpr, rightExpr);
+          return cat.shr_s(left, right);
         else
-          return cat.shr_u(leftExpr, rightExpr);
+          return cat.shr_u(left, right);
 
       case ts.SyntaxKind.EqualsEqualsToken:
-        return cat.eq(leftExpr, rightExpr);
+        return cat.eq(left, right);
 
       case ts.SyntaxKind.ExclamationEqualsToken:
-        return cat.ne(leftExpr, rightExpr);
+        return cat.ne(left, right);
 
       case ts.SyntaxKind.GreaterThanToken:
         if (resultType.isSigned)
-          return cat.gt_s(leftExpr, rightExpr);
+          return cat.gt_s(left, right);
         else
-          return cat.gt_u(leftExpr, rightExpr);
+          return cat.gt_u(left, right);
 
       case ts.SyntaxKind.GreaterThanEqualsToken:
         if (resultType.isSigned)
-          return cat.ge_s(leftExpr, rightExpr);
+          return cat.ge_s(left, right);
         else
-          return cat.ge_u(leftExpr, rightExpr);
+          return cat.ge_u(left, right);
 
       case ts.SyntaxKind.LessThanToken:
         if (resultType.isSigned)
-          return cat.lt_s(leftExpr, rightExpr);
+          return cat.lt_s(left, right);
         else
-          return cat.lt_u(leftExpr, rightExpr);
+          return cat.lt_u(left, right);
 
       case ts.SyntaxKind.LessThanEqualsToken:
         if (resultType.isSigned)
-          return cat.le_s(leftExpr, rightExpr);
+          return cat.le_s(left, right);
         else
-          return cat.le_u(leftExpr, rightExpr);
+          return cat.le_u(left, right);
 
     }
   }
 
-  compiler.error(binaryNode.operatorToken, "Unsupported binary operator", ts.SyntaxKind[binaryNode.operatorToken.kind]);
+  compiler.error(node.operatorToken, "Unsupported binary operator", ts.SyntaxKind[node.operatorToken.kind]);
+  return op.unreachable();
 }

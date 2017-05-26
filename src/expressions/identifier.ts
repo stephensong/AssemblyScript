@@ -17,5 +17,7 @@ export function compileIdentifier(compiler: Compiler, node: ts.Identifier, conte
   }
 
   compiler.error(node, "Undefined local variable", node.text);
+
+  (<any>node).wasmType = contextualType;
   return op.unreachable();
 }

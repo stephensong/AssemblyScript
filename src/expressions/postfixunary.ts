@@ -50,5 +50,5 @@ export function compilePostfixUnary(compiler: Compiler, node: ts.PostfixUnaryExp
   }
 
   compiler.error(node, "Unsupported unary postfix operation");
-  return operand;
+  return op.unreachable();
 }

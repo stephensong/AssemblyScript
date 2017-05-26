@@ -16,6 +16,7 @@ import {
 
 export function compilePrefixUnary(compiler: Compiler, node: ts.PrefixUnaryExpression, contextualType: WasmType): WasmExpression {
   const op = compiler.module;
+
   const operand = compiler.compileExpression(node.operand, contextualType);
   const operandType = <WasmType>(<any>node.operand).wasmType;
 
@@ -58,7 +59,7 @@ export function compilePrefixUnary(compiler: Compiler, node: ts.PrefixUnaryExpre
       else if (operandType.isLong)
         return op.i64.sub(op.i64.const(0, 0), operand);
 
-      else // FIXME: negative constant literals result in sub(const.0, const.value)
+      else // FIXME: negated constant literals result in sub(const.0, const.value)
         return compiler.maybeConvertValue(node, op.i32.sub(op.i32.const(0), operand), intType, operandType, true);
     }
 
@@ -115,5 +116,5 @@ export function compilePrefixUnary(compiler: Compiler, node: ts.PrefixUnaryExpre
   }
 
   compiler.error(node, "Unsupported unary prefix operation", ts.SyntaxKind[node.operator]);
-  return operand;
+  return op.unreachable();
 }
