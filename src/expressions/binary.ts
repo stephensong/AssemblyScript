@@ -1,6 +1,7 @@
 import { Compiler } from "../compiler";
 import { intType, voidType } from "../types";
 import { binaryen } from "../wasm";
+import { binaryenCategoryOf } from "../util";
 import * as wasm from "../wasm";
 
 export function compileAssignment(compiler: Compiler, node: ts.BinaryExpression, contextualType: wasm.Type): binaryen.Expression {
@@ -11,7 +12,7 @@ export function compileAssignment(compiler: Compiler, node: ts.BinaryExpression,
     const referencedLocal = compiler.currentLocals[identifier.text];
 
     if (referencedLocal) {
-      const right = compiler.maybeConvertValue(node.right, compiler.compileExpression(node.right, referencedLocal.type), (<any>node.right).wasmType, referencedLocal.type, false)
+      const right = compiler.maybeConvertValue(node.right, compiler.compileExpression(node.right, referencedLocal.type), (<any>node.right).wasmType, referencedLocal.type, false);
 
       if (contextualType === voidType) {
 
@@ -68,7 +69,7 @@ export function compileBinary(compiler: Compiler, node: ts.BinaryExpression, con
 
   if (resultType.isAnyFloat) {
 
-    const cat = <binaryen.F32Operations | binaryen.F64Operations>compiler.categoryOf(resultType);
+    const cat = <binaryen.F32Operations | binaryen.F64Operations>binaryenCategoryOf(resultType, op, compiler.uintptrSize);
 
     switch (node.operatorToken.kind) {
 
@@ -106,7 +107,7 @@ export function compileBinary(compiler: Compiler, node: ts.BinaryExpression, con
 
   } else if (resultType.isAnyInteger) {
 
-    const cat = <binaryen.I32Operations | binaryen.I64Operations>compiler.categoryOf(resultType);
+    const cat = <binaryen.I32Operations | binaryen.I64Operations>binaryenCategoryOf(resultType, op, compiler.uintptrSize);
 
     let result: binaryen.Expression;
 

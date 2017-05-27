@@ -7,7 +7,7 @@ import { binaryen } from "./wasm";
 import { Profiler } from "./profiler";
 import { createDiagnosticForNode, printDiagnostic } from "./diagnostics";
 import { byteType, sbyteType, shortType, ushortType, intType, uintType, longType, ulongType, boolType, floatType, doubleType, uintptrType32, uintptrType64, voidType } from "./types";
-import { isImport, isExport, isConst, isStatic } from "./util";
+import { isImport, isExport, isConst, isStatic, signatureIdentifierOf, binaryenCategoryOf, binaryenTypeOf, binaryenOneOf, binaryenZeroOf } from "./util";
 
 const MEM_MAX_32 = (1 << 16) - 1; // 65535 (pageSize) * 65535 (n) ^= 4GB
 
@@ -222,8 +222,8 @@ export class Compiler {
       const thisType = this.uintptrType; // TODO: underlyingType
 
       parameterTypes[0] = thisType;
-      signatureTypes[0] = thisType.toBinaryenType(this.uintptrType);
-      signatureIdentifiers[0] = thisType.toSignatureIdentifier(this.uintptrType);
+      signatureTypes[0] = binaryenTypeOf(thisType, this.uintptrSize);
+      signatureIdentifiers[0] = signatureIdentifierOf(thisType, this.uintptrSize);
       locals[0] = {
         name: "this",
         index: 0,
@@ -248,8 +248,8 @@ export class Compiler {
       const parameterType = this.resolveType(<ts.TypeNode>node.parameters[i].type);
 
       parameterTypes[index] = parameterType;
-      signatureTypes[index] = parameterType.toBinaryenType(this.uintptrType);
-      signatureIdentifiers[index] = parameterType.toSignatureIdentifier(this.uintptrType);
+      signatureTypes[index] = binaryenTypeOf(parameterType, this.uintptrSize);
+      signatureIdentifiers[index] = signatureIdentifierOf(parameterType, this.uintptrSize);
       locals[index] = {
         name: parameterName,
         index: index,
@@ -259,14 +259,14 @@ export class Compiler {
       ++index;
     }
 
-    signatureIdentifiers[index] = returnType.toSignatureIdentifier(this.uintptrType);
+    signatureIdentifiers[index] = signatureIdentifierOf(returnType, this.uintptrSize);
 
-    const signatureId = signatureIdentifiers.join("");
-    let signature = this.signatures[signatureId];
+    const signatureIdentifier = signatureIdentifiers.join("");
+    let signature = this.signatures[signatureIdentifier];
     if (!signature) {
       // TODO: Create used signatures only (binaryen -O does not handle this)
-      signature = this.module.addFunctionType(signatureId, returnType.toBinaryenType(this.uintptrType), signatureTypes);
-      this.signatures[signatureId] = signature;
+      signature = this.module.addFunctionType(signatureIdentifier, binaryenTypeOf(returnType, this.uintptrSize), signatureTypes);
+      this.signatures[signatureIdentifier] = signature;
     }
 
     if (isExport(node) && node.getSourceFile() === this.entryFile)
@@ -277,12 +277,12 @@ export class Compiler {
 
     (<any>node).wasmFunction = <wasm.Function>{
       name: parent ? parent.symbol.name + "$" + name : name,
-      flags: flags,
-      parameterTypes: parameterTypes,
-      returnType: returnType,
-      locals: locals,
-      signature: signature,
-      signatureId: signatureId
+      flags,
+      parameterTypes,
+      returnType,
+      locals,
+      signature,
+      signatureIdentifier
     };
   }
 
@@ -411,7 +411,7 @@ export class Compiler {
         };
       }
 
-      additionalLocals.push(type.toBinaryenType(compiler.uintptrType));
+      additionalLocals.push(binaryenTypeOf(type, compiler.uintptrSize));
 
       return localIndex++;
     }
@@ -520,18 +520,6 @@ export class Compiler {
       default:
         this.error(node, "Unsupported statement node", ts.SyntaxKind[node.kind]);
     }
-  }
-
-  categoryOf(type: wasm.Type): binaryen.I32Operations | binaryen.I64Operations | binaryen.F32Operations | binaryen.F64Operations {
-    return type.toBinaryenCategory(this.module, this.uintptrType);
-  }
-
-  zeroOf(type: wasm.Type): binaryen.I32Expression | binaryen.I64Expression | binaryen.F32Expression | binaryen.F64Expression {
-    return type.toBinaryenZero(this.module, this.uintptrType);
-  }
-
-  oneOf(type: wasm.Type): binaryen.I32Expression | binaryen.I64Expression | binaryen.F32Expression | binaryen.F64Expression {
-    return type.toBinaryenOne(this.module, this.uintptrType);
   }
 
   compileLiteral(node: ts.LiteralExpression, contextualType: wasm.Type): binaryen.Expression {
@@ -659,13 +647,13 @@ export class Compiler {
 
         (<any>node).wasmType = boolType;
         return node.kind === ts.SyntaxKind.TrueKeyword
-          ? this.oneOf(boolType)
-          : this.zeroOf(boolType);
+          ? binaryenOneOf(boolType, this.module, this.uintptrSize)
+          : binaryenZeroOf(boolType, this.module, this.uintptrSize);
 
       case ts.SyntaxKind.NullKeyword:
 
         (<any>node).wasmType = this.uintptrType;
-        return this.zeroOf(this.uintptrType);
+        return binaryenZeroOf(this.uintptrType, this.module, this.uintptrSize);
     }
 
     this.error(node, "Unsupported expression node", ts.SyntaxKind[node.kind]);

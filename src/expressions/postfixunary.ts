@@ -1,6 +1,7 @@
 import { Compiler } from "../compiler";
 import { intType } from "../types";
 import { binaryen } from "../wasm";
+import { binaryenCategoryOf, binaryenTypeOf, binaryenOneOf } from "../util";
 import * as wasm from "../wasm";
 
 export function compilePostfixUnary(compiler: Compiler, node: ts.PostfixUnaryExpression, contextualType: wasm.Type): binaryen.Expression {
@@ -20,14 +21,14 @@ export function compilePostfixUnary(compiler: Compiler, node: ts.PostfixUnaryExp
         case ts.SyntaxKind.PlusPlusToken:
         case ts.SyntaxKind.MinusMinusToken:
         {
-          const cat = compiler.categoryOf(local.type);
-          const one = compiler.oneOf(local.type);
+          const cat = binaryenCategoryOf(local.type, op, compiler.uintptrSize);
+          const one = binaryenOneOf(local.type, op, compiler.uintptrSize);
           const isIncrement = node.operator === ts.SyntaxKind.PlusPlusToken;
 
           let calculate = (isIncrement ? cat.add : cat.sub).call(cat,
             op.getLocal(
               local.index,
-              local.type.toBinaryenType(compiler.uintptrType)
+              binaryenTypeOf(local.type, compiler.uintptrSize)
             ),
             one
           );

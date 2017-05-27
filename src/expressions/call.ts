@@ -1,6 +1,6 @@
 import { Compiler } from "../compiler";
 import { binaryen } from "../wasm";
-import { isImport } from "../util";
+import { isImport, binaryenTypeOf } from "../util";
 import * as wasm from "../wasm";
 
 import * as builtins from "../builtins";
@@ -8,7 +8,7 @@ import * as builtins from "../builtins";
 export function compileCall(compiler: Compiler, node: ts.CallExpression, contextualType: wasm.Type): binaryen.Expression {
   const op = compiler.module;
   const declaration = compiler.checker.getResolvedSignature(node).declaration;
-  let wasmFunction = <wasm.Function>(<any>declaration).wasmFunction;
+  const wasmFunction = <wasm.Function>(<any>declaration).wasmFunction;
 
   if (!wasmFunction) {
     compiler.error(node, "Unknown function");
@@ -23,7 +23,7 @@ export function compileCall(compiler: Compiler, node: ts.CallExpression, context
   let i = 0;
 
   if ((wasmFunction.flags & wasm.FunctionFlags.instance) !== 0)
-    argumentExpressions[i++] = op.getLocal(0, wasmFunction.parameterTypes[0].toBinaryenType(compiler.uintptrType));
+    argumentExpressions[i++] = op.getLocal(0, binaryenTypeOf(wasmFunction.parameterTypes[0], compiler.uintptrSize));
 
   for (const k = argumentExpressions.length; i < k; ++i)
     argumentExpressions[i] = compiler.maybeConvertValue(node.arguments[i], compiler.compileExpression(node.arguments[i], wasmFunction.parameterTypes[i]), (<any>node.arguments[i]).wasmType, wasmFunction.parameterTypes[i], false);
@@ -37,7 +37,7 @@ export function compileCall(compiler: Compiler, node: ts.CallExpression, context
 
   // user function
   if (!isImport(declaration))
-    return op.call(wasmFunction.name, argumentExpressions, wasmFunction.returnType.toBinaryenType(compiler.uintptrType));
+    return op.call(wasmFunction.name, argumentExpressions, binaryenTypeOf(wasmFunction.returnType, compiler.uintptrSize));
 
   // builtin
   switch (declaration.symbol.name) {
@@ -107,5 +107,5 @@ export function compileCall(compiler: Compiler, node: ts.CallExpression, context
   }
 
   // import
-  return op.call(wasmFunction.name, argumentExpressions, wasmFunction.returnType.toBinaryenType(compiler.uintptrType));
+  return op.call(wasmFunction.name, argumentExpressions, binaryenTypeOf(wasmFunction.returnType, compiler.uintptrSize));
 }
