@@ -1,9 +1,41 @@
 import { Compiler } from "../compiler";
-import { intType } from "../types";
+import { intType, voidType } from "../types";
 import { binaryen } from "../wasm";
 import * as wasm from "../wasm";
 
+export function compileAssignment(compiler: Compiler, node: ts.BinaryExpression, contextualType: wasm.Type): binaryen.Expression {
+  const op = compiler.module;
+
+  if (node.left.kind === ts.SyntaxKind.Identifier) {
+    const identifier = <ts.Identifier>node.left;
+    const referencedLocal = compiler.currentLocals[identifier.text];
+
+    if (referencedLocal) {
+      const right = compiler.maybeConvertValue(node.right, compiler.compileExpression(node.right, referencedLocal.type), (<any>node.right).wasmType, referencedLocal.type, false)
+
+      if (contextualType === voidType) {
+
+        (<any>node).wasmType = voidType;
+        return op.setLocal(referencedLocal.index, right);
+
+      } else {
+
+        (<any>node).wasmType = referencedLocal.type;
+        return op.teeLocal(referencedLocal.index, right);
+      }
+    }
+  }
+
+  compiler.error(node.operatorToken, "Unsupported assignment");
+  (<any>node).wasmType = contextualType;
+  return op.unreachable();
+}
+
 export function compileBinary(compiler: Compiler, node: ts.BinaryExpression, contextualType: wasm.Type): binaryen.Expression {
+
+  if (node.operatorToken.kind === ts.SyntaxKind.FirstAssignment)
+    return compileAssignment(compiler, node, contextualType);
+
   const op = compiler.module;
 
   let left  = compiler.compileExpression(node.left, contextualType);

@@ -415,7 +415,7 @@ export class Compiler {
         };
       }
 
-      additionalLocals.push(type.toBinaryenType(this.uintptrType));
+      additionalLocals.push(type.toBinaryenType(compiler.uintptrType));
 
       return localIndex++;
     }
