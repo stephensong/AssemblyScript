@@ -1,6 +1,6 @@
 import { Compiler } from "../compiler";
+import { isImport, binaryenTypeOf, getWasmType, setWasmType } from "../util";
 import { binaryen } from "../wasm";
-import { isImport, binaryenTypeOf } from "../util";
 import * as wasm from "../wasm";
 
 import * as builtins from "../builtins";
@@ -12,13 +12,13 @@ export function compileCall(compiler: Compiler, node: ts.CallExpression, context
 
   if (!wasmFunction) {
     compiler.error(node, "Unknown function");
-    (<any>node).wasmType = contextualType;
+    setWasmType(node, contextualType);
     return op.unreachable();
   }
 
   const argumentExpressions: binaryen.Expression[] = new Array(wasmFunction.parameterTypes.length);
 
-  (<any>node).wasmType = wasmFunction.returnType;
+  setWasmType(node, wasmFunction.returnType);
 
   let i = 0;
 
@@ -26,7 +26,7 @@ export function compileCall(compiler: Compiler, node: ts.CallExpression, context
     argumentExpressions[i++] = op.getLocal(0, binaryenTypeOf(wasmFunction.parameterTypes[0], compiler.uintptrSize));
 
   for (const k = argumentExpressions.length; i < k; ++i)
-    argumentExpressions[i] = compiler.maybeConvertValue(node.arguments[i], compiler.compileExpression(node.arguments[i], wasmFunction.parameterTypes[i]), (<any>node.arguments[i]).wasmType, wasmFunction.parameterTypes[i], false);
+    argumentExpressions[i] = compiler.maybeConvertValue(node.arguments[i], compiler.compileExpression(node.arguments[i], wasmFunction.parameterTypes[i]), getWasmType(node.arguments[i]), wasmFunction.parameterTypes[i], false);
 
   if (i < argumentExpressions.length) { // TODO: pull default value initializers from declaration
 

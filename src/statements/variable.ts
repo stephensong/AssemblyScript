@@ -1,4 +1,5 @@
 import { Compiler } from "../compiler";
+import { getWasmType, setWasmType } from "../util";
 import { binaryen } from "../wasm";
 
 export function compileVariable(compiler: Compiler, node: ts.VariableStatement, onVariable: (node: ts.VariableDeclaration) => number): binaryen.Statement {
@@ -9,7 +10,7 @@ export function compileVariable(compiler: Compiler, node: ts.VariableStatement, 
     const declaration = node.declarationList.declarations[i];
     const declarationType = compiler.resolveType(declaration.type);
 
-    (<any>declaration).wasmType = declarationType;
+    setWasmType(declaration, declarationType);
 
     const index = onVariable(declaration);
     if (declaration.initializer)

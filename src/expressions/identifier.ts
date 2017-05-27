@@ -1,6 +1,6 @@
 import { Compiler } from "../compiler";
 import { binaryen } from "../wasm";
-import { binaryenTypeOf } from "../util";
+import { binaryenTypeOf, setWasmType } from "../util";
 import * as wasm from "../wasm";
 
 export function compileIdentifier(compiler: Compiler, node: ts.Identifier, contextualType: wasm.Type): binaryen.Expression {
@@ -8,12 +8,12 @@ export function compileIdentifier(compiler: Compiler, node: ts.Identifier, conte
   const referencedLocal = compiler.currentLocals[node.text];
 
   if (referencedLocal) {
-    (<any>node).wasmType = referencedLocal.type;
+    setWasmType(node, referencedLocal.type);
     return op.getLocal(referencedLocal.index, binaryenTypeOf(referencedLocal.type, compiler.uintptrSize));
   }
 
   compiler.error(node, "Undefined local variable", node.text);
 
-  (<any>node).wasmType = contextualType;
+  setWasmType(node, contextualType);
   return op.unreachable();
 }

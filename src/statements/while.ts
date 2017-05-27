@@ -1,5 +1,6 @@
 import { Compiler } from "../compiler";
 import { intType } from "../types";
+import { getWasmType } from "../util";
 import { binaryen } from "../wasm";
 import * as wasm from "../wasm";
 
@@ -11,7 +12,7 @@ export function compileWhile(compiler: Compiler, node: ts.WhileStatement, onVari
 
   const label = compiler.currentBreakLabel;
   const context = op.loop("break$" + label, op.block("continue$" + label, [
-    op.break("break$" + label, op.i32.eqz(compiler.maybeConvertValue(node.expression, compiler.compileExpression(node.expression, intType), <wasm.Type>(<any>node.expression).wasmType, intType, true))),
+    op.break("break$" + label, op.i32.eqz(compiler.maybeConvertValue(node.expression, compiler.compileExpression(node.expression, intType), getWasmType(node.expression), intType, true))),
     statement || op.nop()
   ]));
 

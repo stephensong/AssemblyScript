@@ -2,14 +2,18 @@ import { Compiler } from "./compiler";
 import { intType, uintType, longType, ulongType, uintptrType32, uintptrType64, floatType, doubleType } from "./types";
 import { binaryen } from "./wasm";
 import * as wasm from "./wasm";
+import { getWasmType, setWasmType } from "./util";
 
 type TypeScriptExpressionPair = [ ts.Expression, ts.Expression ];
 type BinaryenExpressionPair = [ binaryen.Expression, binaryen.Expression ];
 
 export function rotl(compiler: Compiler, node: TypeScriptExpressionPair, expr: BinaryenExpressionPair): binaryen.Expression {
-  if (<wasm.Type>(<any>node[0]).wasmType === <wasm.Type>(<any>node[1]).wasmType) {
+  const leftType = getWasmType(node[0]);
+  const rightType = getWasmType(node[1]);
 
-    switch ((<any>node).wasmType) {
+  if (leftType === rightType) {
+
+    switch (leftType) {
 
       case intType:
       case uintType:
@@ -26,8 +30,11 @@ export function rotl(compiler: Compiler, node: TypeScriptExpressionPair, expr: B
 }
 
 export function rotr(compiler: Compiler, node: TypeScriptExpressionPair, expr: BinaryenExpressionPair): binaryen.Expression {
-  if ((<any>node[0]).wasmType === (<any>node[1]).wasmType) {
-    switch (<wasm.Type>(<any>node).wasmType) {
+  const leftType = getWasmType(node[0]);
+  const rightType = getWasmType(node[1]);
+
+  if (leftType === rightType) {
+    switch (leftType) {
 
       case intType:
       case uintType:
@@ -44,7 +51,9 @@ export function rotr(compiler: Compiler, node: TypeScriptExpressionPair, expr: B
 }
 
 export function clz(compiler: Compiler, node: ts.Expression, expr: binaryen.Expression): binaryen.Expression {
-  switch (<wasm.Type>(<any>node).wasmType) {
+  const type = getWasmType(node);
+
+  switch (type) {
 
     case intType:
     case uintType:
@@ -60,7 +69,9 @@ export function clz(compiler: Compiler, node: ts.Expression, expr: binaryen.Expr
 }
 
 export function ctz(compiler: Compiler, node: ts.Expression, expr: binaryen.Expression): binaryen.Expression {
-  switch (<wasm.Type>(<any>node).wasmType) {
+  const type = getWasmType(node);
+
+  switch (type) {
 
     case intType:
     case uintType:
@@ -76,7 +87,9 @@ export function ctz(compiler: Compiler, node: ts.Expression, expr: binaryen.Expr
 }
 
 export function popcnt(compiler: Compiler, node: ts.Expression, expr: binaryen.Expression): binaryen.Expression {
-  switch (<wasm.Type>(<any>node).wasmType) {
+  const type = getWasmType(node);
+
+  switch (type) {
 
     case intType:
     case uintType:
@@ -92,7 +105,9 @@ export function popcnt(compiler: Compiler, node: ts.Expression, expr: binaryen.E
 }
 
 export function abs(compiler: Compiler, node: ts.Expression, expr: binaryen.Expression): binaryen.Expression {
-  switch (<wasm.Type>(<any>node).wasmType) {
+  const type = getWasmType(node);
+
+  switch (type) {
 
     case floatType:
       return compiler.module.f32.abs(expr);
@@ -104,7 +119,9 @@ export function abs(compiler: Compiler, node: ts.Expression, expr: binaryen.Expr
 }
 
 export function ceil(compiler: Compiler, node: ts.Expression, expr: binaryen.Expression): binaryen.Expression {
-  switch (<wasm.Type>(<any>node).wasmType) {
+  const type = getWasmType(node);
+
+  switch (type) {
 
     case floatType:
       return compiler.module.f32.ceil(expr);
@@ -116,7 +133,9 @@ export function ceil(compiler: Compiler, node: ts.Expression, expr: binaryen.Exp
 }
 
 export function floor(compiler: Compiler, node: ts.Expression, expr: binaryen.Expression): binaryen.Expression {
-  switch (<wasm.Type>(<any>node).wasmType) {
+  const type = getWasmType(node);
+
+  switch (type) {
 
     case floatType:
       return compiler.module.f32.floor(expr);
@@ -128,7 +147,9 @@ export function floor(compiler: Compiler, node: ts.Expression, expr: binaryen.Ex
 }
 
 export function sqrt(compiler: Compiler, node: ts.Expression, expr: binaryen.Expression): binaryen.Expression {
-  switch (<wasm.Type>(<any>node).wasmType) {
+  const type = getWasmType(node);
+
+  switch (type) {
 
     case floatType:
       return compiler.module.f32.sqrt(expr);
@@ -140,7 +161,9 @@ export function sqrt(compiler: Compiler, node: ts.Expression, expr: binaryen.Exp
 }
 
 export function trunc(compiler: Compiler, node: ts.Expression, expr: binaryen.Expression): binaryen.Expression {
-  switch (<wasm.Type>(<any>node).wasmType) {
+  const type = getWasmType(node);
+
+  switch (type) {
 
     case floatType:
       return compiler.module.f32.trunc(expr);
@@ -152,7 +175,9 @@ export function trunc(compiler: Compiler, node: ts.Expression, expr: binaryen.Ex
 }
 
 export function nearest(compiler: Compiler, node: ts.Expression, expr: binaryen.Expression): binaryen.Expression {
-  switch (<wasm.Type>(<any>node).wasmType) {
+  const type = getWasmType(node);
+
+  switch (type) {
 
     case floatType:
       return compiler.module.f32.nearest(expr);
@@ -164,8 +189,11 @@ export function nearest(compiler: Compiler, node: ts.Expression, expr: binaryen.
 }
 
 export function min(compiler: Compiler, node: TypeScriptExpressionPair, expr: BinaryenExpressionPair): binaryen.Expression {
-  if ((<any>node[0]).wasmType === (<any>node[1]).wasmType) {
-    switch (<wasm.Type>(<any>node[0]).wasmType) {
+  const leftType = getWasmType(node[0]);
+  const rightType = getWasmType(node[1]);
+
+  if (leftType === rightType) {
+    switch (leftType) {
 
       case floatType:
         return compiler.module.f32.min(expr[0], expr[1]);
@@ -178,8 +206,11 @@ export function min(compiler: Compiler, node: TypeScriptExpressionPair, expr: Bi
 }
 
 export function max(compiler: Compiler, node: TypeScriptExpressionPair, expr: BinaryenExpressionPair): binaryen.Expression {
-  if ((<any>node[0]).wasmType === (<any>node[1]).wasmType) {
-    switch (<wasm.Type>(<any>node[0]).wasmType) {
+  const leftType = getWasmType(node[0]);
+  const rightType = getWasmType(node[1]);
+
+  if (leftType === rightType) {
+    switch (leftType) {
 
       case floatType:
         return compiler.module.f32.max(expr[0], expr[1]);
@@ -192,8 +223,11 @@ export function max(compiler: Compiler, node: TypeScriptExpressionPair, expr: Bi
 }
 
 export function copysign(compiler: Compiler, node: TypeScriptExpressionPair, expr: BinaryenExpressionPair): binaryen.Expression {
-  if ((<any>node[0]).wasmType === (<any>node[1]).wasmType) {
-    switch (<wasm.Type>(<any>node[0]).wasmType) {
+  const leftType = getWasmType(node[0]);
+  const rightType = getWasmType(node[1]);
+
+  if (leftType === rightType) {
+    switch (leftType) {
 
       case floatType:
         return compiler.module.f32.copysign(expr[0], expr[1]);
@@ -207,8 +241,9 @@ export function copysign(compiler: Compiler, node: TypeScriptExpressionPair, exp
 
 export function reinterpret(compiler: Compiler, node: ts.Expression, expr: binaryen.Expression): binaryen.Expression {
   const op = compiler.module;
+  const type = getWasmType(node);
 
-  switch (<wasm.Type>(<any>node).wasmType) {
+  switch (type) {
 
     case intType:
     case uintType:

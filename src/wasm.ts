@@ -15,13 +15,15 @@ export enum TypeKind {
   float,
   double,
   uintptr,
-  void
+  void,
+  struct
 }
 
 export class Type {
   kind: TypeKind;
   size: number;
   underlyingType: Type;
+  structLayout: Type[];
   shift32: number;
   mask32: number;
 

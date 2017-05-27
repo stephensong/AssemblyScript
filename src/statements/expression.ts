@@ -1,5 +1,6 @@
 import { Compiler } from "../compiler";
 import { voidType } from "../types";
+import { getWasmType } from "../util";
 import { binaryen } from "../wasm";
 
 export function compileExpressionStatement(compiler: Compiler, node: ts.ExpressionStatement): binaryen.Statement {
@@ -7,7 +8,7 @@ export function compileExpressionStatement(compiler: Compiler, node: ts.Expressi
   const expressionNode = node.expression;
   const expression = compiler.compileExpression(expressionNode, voidType);
 
-  return (<any>expressionNode).wasmType !== voidType
+  return getWasmType(expressionNode) !== voidType
     ? op.drop(expression)
     : expression;
 }

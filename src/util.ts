@@ -179,3 +179,13 @@ export function arrayTypeOf(type: wasm.Type, uintptrType: wasm.Type) {
   const arrayType = cachedArrayTypes[key];
   return arrayType || (cachedArrayTypes[key] = uintptrType.withUnderlyingType(type));
 }
+
+export function getWasmType(node: ts.Node): wasm.Type {
+  return <wasm.Type>(<any>node).wasmType || null;
+}
+
+export function setWasmType(node: ts.Node, type: wasm.Type): void {
+  if (!type)
+    throw Error("type cannot be null");
+  (<any>node).wasmType = type;
+}

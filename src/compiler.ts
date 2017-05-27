@@ -7,7 +7,7 @@ import { binaryen } from "./wasm";
 import { Profiler } from "./profiler";
 import { createDiagnosticForNode, printDiagnostic } from "./diagnostics";
 import { byteType, sbyteType, shortType, ushortType, intType, uintType, longType, ulongType, boolType, floatType, doubleType, uintptrType32, uintptrType64, voidType } from "./types";
-import { isImport, isExport, isConst, isStatic, signatureIdentifierOf, binaryenCategoryOf, binaryenTypeOf, binaryenOneOf, binaryenZeroOf, arrayTypeOf } from "./util";
+import { isImport, isExport, isConst, isStatic, signatureIdentifierOf, binaryenCategoryOf, binaryenTypeOf, binaryenOneOf, binaryenZeroOf, arrayTypeOf, getWasmType, setWasmType } from "./util";
 
 const MEM_MAX_32 = (1 << 16) - 1; // 65535 (pageSize) * 65535 (n) ^= 4GB
 
@@ -181,7 +181,7 @@ export class Compiler {
               this.maybeConvertValue(
                 initializerNode,
                 this.compileExpression(initializerNode, type),
-                <wasm.Type>(<any>initializerNode).wasmType, type, false
+                getWasmType(initializerNode), type, false
               )
             );
           }
@@ -364,29 +364,26 @@ export class Compiler {
   }
 
   maybeCompileStartFunction(): void {
-    const op = this.module;
-    const startBody: binaryen.Statement[] = [];
-
-    for (let i = 0, k = this.globalInitializers.length; i < k; ++i)
-      startBody.push(op.drop(this.globalInitializers[i])); // TODO: once setGlobal is in, use that instead of drop
-
-    if (this.userStartFunction) {
-      if (startBody.length)
-        startBody.push(op.call("start", [], binaryen.none));
-      else {
+    if (this.globalInitializers.length === 0) {
+      if (this.userStartFunction)
         this.module.setStart(this.userStartFunction);
-        return;
-      }
+      return;
     }
 
-    if (!startBody.length)
-      return;
+    const op = this.module;
+    const body: binaryen.Statement[] = new Array(this.globalInitializers.length + (this.userStartFunction ? 1 : 0));
+
+    let i = 0;
+    for (const k = this.globalInitializers.length; i < k; ++i)
+      body[i] = op.drop(this.globalInitializers[i]);
+    if (this.userStartFunction)
+      body[i] = op.call("start", [], binaryen.none);
 
     let signature = this.signatures["v"];
     if (!signature)
       signature = this.signatures["v"] = this.module.addFunctionType("v", binaryen.none, []);
     this.module.setStart(
-      this.module.addFunction(this.userStartFunction ? "executeGlobalInitializersAndCallStart" : "executeGlobalInitalizers", signature, [], op.block("", startBody))
+      this.module.addFunction(this.userStartFunction ? "executeGlobalInitializersAndCallStart" : "executeGlobalInitalizers", signature, [], op.block("", body))
     );
   }
 
@@ -425,7 +422,7 @@ export class Compiler {
 
     function onVariable(variableNode: ts.VariableDeclaration): number {
       const name = variableNode.name.getText();
-      const type = <wasm.Type>(<any>variableNode).wasmType;
+      const type = getWasmType(variableNode);
 
       if (compiler.currentLocals[name]) {
 
@@ -549,91 +546,6 @@ export class Compiler {
     }
   }
 
-  compileLiteral(node: ts.LiteralExpression, contextualType: wasm.Type): binaryen.Expression {
-    const op = this.module;
-
-    let literalText = node.text;
-
-    switch (literalText) {
-
-      case "true":
-        (<any>node).wasmType = boolType;
-        return contextualType.isLong ? op.i64.const(1, 0) : op.i32.const(1);
-
-      case "false":
-        (<any>node).wasmType = boolType;
-        return contextualType.isLong ? op.i64.const(0, 0) : op.i32.const(0);
-
-      case "null":
-        (<any>node).wasmType = this.uintptrType;
-        return this.uintptrSize === 4 ? op.i32.const(0) : op.i64.const(0, 0);
-
-    }
-
-    if (contextualType.isAnyFloat) {
-
-      let floatValue: number;
-
-      if (/^(?![eE])[0-9]*(?:\.[0-9]*)?(?:[eE][+-]?[0-9]+)?$/.test(literalText)) {
-        floatValue = parseFloat(literalText);
-      } else {
-        floatValue = 0;
-        this.error(node, "Float literal expected", literalText);
-      }
-
-      (<any>node).wasmType = contextualType;
-      return contextualType === floatType ? op.f32.const(floatValue) : op.f64.const(floatValue);
-
-    } else if (contextualType.isAnyInteger) {
-
-      let intValue: number;
-      let intRadix: number;
-
-      if (/^(?:0|[1-9][0-9]*)$/.test(literalText)) {
-        intValue = parseInt(literalText, intRadix = 10);
-      } else if (/^0[xX][0-9A-Fa-f]+$/.test(literalText)) {
-        intValue = parseInt(literalText = literalText.substring(2), intRadix = 16);
-      } else {
-        intValue = 0; intRadix = 10; literalText = "0";
-        this.error(node, "Integer literal expected", literalText);
-      }
-
-      (<any>node).wasmType = contextualType;
-
-      switch (contextualType) {
-
-        case sbyteType:
-        case shortType:
-          return op.i32.const(((intValue >>> 0) << contextualType.shift32) >> contextualType.shift32);
-
-        case byteType:
-        case ushortType:
-          return op.i32.const(intValue & contextualType.mask32);
-
-        case intType:
-        case uintType:
-        case uintptrType32:
-          return op.i32.const(intValue);
-
-        case boolType:
-          return op.i32.const(intValue ? 1 : 0);
-
-        case longType:
-        case ulongType:
-        case uintptrType64:
-          const long = Long.fromString(literalText, !contextualType.isSigned, intRadix);
-          return op.i64.const(long.low, long.high);
-
-      }
-
-    }
-
-    this.error(node, "Unsupported literal", literalText);
-
-    (<any>node).wasmType = contextualType;
-    return op.unreachable();
-  }
-
   compileExpression(node: ts.Expression, contextualType: wasm.Type): binaryen.Expression {
     const op = this.module;
 
@@ -667,24 +579,24 @@ export class Compiler {
         return ast.compileCall(this, <ts.CallExpression>node, contextualType);
 
       case ts.SyntaxKind.FirstLiteralToken:
-        return this.compileLiteral(<ts.LiteralExpression>node, contextualType);
+        return ast.compileLiteral(this, <ts.LiteralExpression>node, contextualType);
 
       case ts.SyntaxKind.TrueKeyword:
       case ts.SyntaxKind.FalseKeyword:
 
-        (<any>node).wasmType = boolType;
+        setWasmType(node, boolType);
         return node.kind === ts.SyntaxKind.TrueKeyword
           ? binaryenOneOf(boolType, this.module, this.uintptrSize)
           : binaryenZeroOf(boolType, this.module, this.uintptrSize);
 
       case ts.SyntaxKind.NullKeyword:
 
-        (<any>node).wasmType = this.uintptrType;
+        setWasmType(node, this.uintptrType);
         return binaryenZeroOf(this.uintptrType, this.module, this.uintptrSize);
     }
 
     this.error(node, "Unsupported expression node", ts.SyntaxKind[node.kind]);
-    (<any>node).wasmType = contextualType;
+    setWasmType(node, contextualType);
     return op.unreachable();
   }
 
@@ -700,7 +612,7 @@ export class Compiler {
       explicit = true; // report this only once for the topmost node
     }
 
-    (<any>node).wasmType = toType;
+    setWasmType(node, toType);
 
     if (fromType === floatType) {
 

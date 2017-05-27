@@ -1,8 +1,9 @@
 import { Compiler } from "../compiler";
+import * as Long from "long";
 import { byteType, sbyteType, shortType, ushortType, intType, uintType, uintptrType32, longType, ulongType, uintptrType64, floatType, doubleType } from "../types";
+import { setWasmType } from "../util";
 import { binaryen } from "../wasm";
 import * as wasm from "../wasm";
-import * as Long from "long";
 
 export function compilePropertyAccess(compiler: Compiler, node: ts.PropertyAccessExpression, contextualType: wasm.Type): binaryen.Expression {
   const op = compiler.module;
@@ -27,7 +28,7 @@ export function compilePropertyAccess(compiler: Compiler, node: ts.PropertyAcces
           case uintType:
           case uintptrType32:
 
-            (<any>node).wasmType = intType;
+            setWasmType(node, intType);
             return op.i32.const(referencedConstant.value);
 
           case longType:
@@ -35,17 +36,17 @@ export function compilePropertyAccess(compiler: Compiler, node: ts.PropertyAcces
           case uintptrType64:
 
             const long = Long.fromValue(referencedConstant.value);
-            (<any>node).wasmType = longType;
+            setWasmType(node, longType);
             return op.i64.const(long.low, long.high);
 
           case floatType:
 
-            (<any>node).wasmType = floatType;
+            setWasmType(node, floatType);
             return op.f32.const(referencedConstant.value);
 
           case doubleType:
 
-            (<any>node).wasmType = doubleType;
+            setWasmType(node, doubleType);
             return op.f64.const(referencedConstant.value);
 
         }
@@ -54,7 +55,6 @@ export function compilePropertyAccess(compiler: Compiler, node: ts.PropertyAcces
   }
 
   compiler.error(node, "Unsupported property access");
-
-  (<any>node).wasmType = contextualType;
+  setWasmType(node, contextualType);
   return op.unreachable();
 }

@@ -1,5 +1,6 @@
 import { Compiler } from "../compiler";
 import { intType, voidType } from "../types";
+import { getWasmType, setWasmType } from "../util";
 import { binaryen } from "../wasm";
 import { binaryenCategoryOf } from "../util";
 import * as wasm from "../wasm";
@@ -12,23 +13,23 @@ export function compileAssignment(compiler: Compiler, node: ts.BinaryExpression,
     const referencedLocal = compiler.currentLocals[identifier.text];
 
     if (referencedLocal) {
-      const right = compiler.maybeConvertValue(node.right, compiler.compileExpression(node.right, referencedLocal.type), (<any>node.right).wasmType, referencedLocal.type, false);
+      const right = compiler.maybeConvertValue(node.right, compiler.compileExpression(node.right, referencedLocal.type), getWasmType(node.right), referencedLocal.type, false);
 
       if (contextualType === voidType) {
 
-        (<any>node).wasmType = voidType;
+        setWasmType(node, voidType);
         return op.setLocal(referencedLocal.index, right);
 
       } else {
 
-        (<any>node).wasmType = referencedLocal.type;
+        setWasmType(node, referencedLocal.type);
         return op.teeLocal(referencedLocal.index, right);
       }
     }
   }
 
   compiler.error(node.operatorToken, "Unsupported assignment");
-  (<any>node).wasmType = contextualType;
+  setWasmType(node, contextualType);
   return op.unreachable();
 }
 
@@ -42,8 +43,8 @@ export function compileBinary(compiler: Compiler, node: ts.BinaryExpression, con
   let left  = compiler.compileExpression(node.left, contextualType);
   let right = compiler.compileExpression(node.right, contextualType);
 
-  const leftType  = <wasm.Type>(<any>node.left).wasmType;
-  const rightType = <wasm.Type>(<any>node.right).wasmType;
+  const leftType  = getWasmType(node.left);
+  const rightType = getWasmType(node.right);
 
   let resultType: wasm.Type;
 
@@ -65,7 +66,7 @@ export function compileBinary(compiler: Compiler, node: ts.BinaryExpression, con
   if (rightType !== resultType)
     right = compiler.maybeConvertValue(node.right, compiler.compileExpression(node.right, resultType), rightType, resultType, false);
 
-  (<any>node).wasmType = resultType;
+  setWasmType(node, resultType);
 
   if (resultType.isAnyFloat) {
 

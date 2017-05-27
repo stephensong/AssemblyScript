@@ -1,5 +1,6 @@
 import { Compiler } from "../compiler";
 import { voidType } from "../types";
+import { getWasmType } from "../util";
 import { binaryen } from "../wasm";
 import * as wasm from "../wasm";
 
@@ -23,7 +24,7 @@ export function compileReturn(compiler: Compiler, node: ts.ReturnStatement): bin
         compiler.maybeConvertValue(
           expression,
           compiler.compileExpression(expression, compiler.currentFunction.returnType),
-          <wasm.Type>(<any>expression).wasmType,
+          getWasmType(expression),
           compiler.currentFunction.returnType,
           false
         )

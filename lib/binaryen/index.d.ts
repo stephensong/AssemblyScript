@@ -190,6 +190,7 @@ declare module binaryen {
 
     addFunctionType(name: string, resultType: Type, paramTypes: Type[]): Signature;
     addFunction(name: string, functionType: Signature, varTypes: Type[], body: Statement): binaryen.Function;
+    // addGlobal(name: string, type: Type, mutable: bool, init: Expression): Expression;
     addImport(internalName: string, externalModuleName: string, externalBaseName: string, functionType?: Signature): void;
     addExport(internalName: string, externalName: string): void;
     setFunctionTable(funcs: number[]): void;
@@ -219,15 +220,15 @@ declare module binaryen {
     getLocal(index: number, type: Type): Expression;
     setLocal(index: number, value: Expression): Statement;
     teeLocal(index: number, value: Expression): Expression;
+    // getGlobal(name: string, type: Type): Expression;
+    // setGlobal(name: string, value: Expression): Expression;
     select(condition: I32Expression, ifTrue: Expression, ifFalse: Expression): Expression;
     drop(value: Expression): Statement;
     return(value?: Expression): Statement;
     nop(): Statement;
+    // growMemory(value: number): Expression;
+    // currentMemory(): Expression;
     unreachable(): Statement;
-
-    // these are currently missing:
-    // grow_memory(value: number): Expression;
-    // current_memory(): Expression;
 
   }
 

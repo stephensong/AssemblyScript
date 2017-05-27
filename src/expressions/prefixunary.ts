@@ -1,4 +1,5 @@
 import { Compiler } from "../compiler";
+import { binaryenTypeOf, binaryenCategoryOf, binaryenOneOf, getWasmType, setWasmType } from "../util";
 import { intType, boolType, floatType, doubleType } from "../types";
 import { binaryen } from "../wasm";
 import * as wasm from "../wasm";
@@ -7,13 +8,13 @@ export function compilePrefixUnary(compiler: Compiler, node: ts.PrefixUnaryExpre
   const op = compiler.module;
 
   const operand = compiler.compileExpression(node.operand, contextualType);
-  const operandType = <wasm.Type>(<any>node.operand).wasmType;
+  const operandType = getWasmType(node.operand);
 
   switch (node.operator) {
 
     case ts.SyntaxKind.ExclamationToken:
     {
-      (<any>node).wasmType = boolType;
+      setWasmType(node, boolType);
 
       if (operandType === floatType)
         return op.f32.eq(operand, op.f32.const(0));
@@ -30,14 +31,13 @@ export function compilePrefixUnary(compiler: Compiler, node: ts.PrefixUnaryExpre
 
     case ts.SyntaxKind.PlusToken: // noop
     {
-      (<any>node).wasmType = operandType;
-
+      setWasmType(node, operandType);
       return operand;
     }
 
     case ts.SyntaxKind.MinusToken:
     {
-      (<any>node).wasmType = operandType;
+      setWasmType(node, operandType);
 
       if (operandType === floatType)
         return op.f32.neg(node.operand);
@@ -56,22 +56,22 @@ export function compilePrefixUnary(compiler: Compiler, node: ts.PrefixUnaryExpre
     {
       if (operandType.isLong) {
 
-        (<any>node).wasmType = operandType;
+        setWasmType(node, operandType);
         return op.i64.xor(operand, op.i64.const(-1, -1));
 
       } else if (operandType.isInt) {
 
-        (<any>node).wasmType = operandType;
+        setWasmType(node, operandType);
         return op.i32.xor(operand, op.i32.const(-1));
 
       } else if (contextualType.isLong) { // TODO: is the following correct / doesn't generate useless ops?
 
-        (<any>node).wasmType = contextualType;
+        setWasmType(node, contextualType);
         return op.i64.xor(compiler.maybeConvertValue(node.operand, operand, operandType, contextualType, true), op.i64.const(-1, -1));
 
       } else {
 
-        (<any>node).wasmType = intType;
+        setWasmType(node, intType);
         return op.i32.xor(compiler.maybeConvertValue(node.operand, operand, operandType, intType, true), op.i32.const(-1));
 
       }
@@ -85,19 +85,19 @@ export function compilePrefixUnary(compiler: Compiler, node: ts.PrefixUnaryExpre
         const local = compiler.currentLocals[(<ts.Identifier>node.operand).text];
         if (local) {
 
-          const cat = compiler.categoryOf(local.type);
-          const one = compiler.oneOf(local.type);
+          const cat = binaryenCategoryOf(local.type, op, compiler.uintptrSize);
+          const one = binaryenOneOf(local.type, op, compiler.uintptrSize);
           const isIncrement = node.operator === ts.SyntaxKind.PlusPlusToken;
 
           const calculate = (isIncrement ? cat.add : cat.sub).call(cat,
             op.getLocal(
               local.index,
-              local.type.toBinaryenType(compiler.uintptrType)
+              binaryenTypeOf(compiler.uintptrType, compiler.uintptrSize)
             ),
             one
           );
 
-          (<any>node).wasmType = local.type;
+          setWasmType(node, local.type);
           return compiler.maybeConvertValue(node, op.teeLocal(local.index, calculate), intType, local.type, true);
         }
       }
