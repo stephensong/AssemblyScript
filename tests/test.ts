@@ -13,3 +13,7 @@ export function typeAlias(a: f64): float {
   let b: f32 = a as float;
   return b;
 }
+
+function start(): void {
+
+}

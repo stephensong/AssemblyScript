@@ -24,6 +24,7 @@ export class Compiler {
   signatures: { [key: string]: binaryen.Signature } = {};
   constants: { [key: string]: wasm.Constant } = {};
   globalInitializers: binaryen.Expression[] = [];
+  userStartFunction: binaryen.Function = null;
   profiler = new Profiler();
   currentFunction: wasm.Function;
   currentLocals: { [key: string]: wasm.Variable };
@@ -175,6 +176,7 @@ export class Compiler {
             }
 
           } else {
+
             this.globalInitializers.push(
               this.maybeConvertValue(
                 initializerNode,
@@ -182,9 +184,6 @@ export class Compiler {
                 (<any>initializerNode).wasmType, type, false
               )
             );
-
-            // at this point we'd have a dynamic initializer but no place to put it.
-            // so, what about 'start' instead of enforcing constant initializers?
           }
 
           this.error(node, "Global variables are not supported yet");
@@ -360,7 +359,37 @@ export class Compiler {
         }
       }
     }
+
+    this.maybeCompileStartFunction();
   }
+
+  maybeCompileStartFunction(): void {
+    const op = this.module;
+    const startBody: binaryen.Statement[] = [];
+
+    for (let i = 0, k = this.globalInitializers.length; i < k; ++i)
+      startBody.push(op.drop(this.globalInitializers[i]));
+
+    if (this.userStartFunction) {
+      if (startBody.length)
+        startBody.push(op.call("start", [], binaryen.none));
+      else {
+        this.module.setStart(this.userStartFunction);
+        return;
+      }
+    }
+
+    if (!startBody.length)
+      return;
+
+    let signature = this.signatures["v"];
+    if (!signature)
+      signature = this.signatures["v"] = this.module.addFunctionType("v", binaryen.none, []);
+    this.module.setStart(
+      this.module.addFunction(this.userStartFunction ? "executeInitializersAndCallStart" : "executeInitalizers", signature, [], startBody)
+    );
+  }
+
 
   compileVariable(node: ts.VariableStatement): void {
     // TODO
@@ -445,11 +474,9 @@ export class Compiler {
     if ((node.modifierFlagsCache & ts.ModifierFlags.Export) !== 0)
       this.module.addExport(name, name);
 
-    if (name === "start") {
+    if (name === "start")
       if (wasmFunction.parameterTypes.length === 0 && wasmFunction.returnType === voidType)
-        this.module.setStart(functionHandle);
-      // else - TODO: should this emit a warning?
-    }
+        this.userStartFunction = functionHandle;
   }
 
   compileClass(node: ts.ClassDeclaration): void {

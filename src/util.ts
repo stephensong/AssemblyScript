@@ -116,7 +116,6 @@ export function binaryenCategoryOf(type: wasm.Type, module: binaryen.Module, uin
   throw Error("unexpected type");
 }
 
-
 export function binaryenZeroOf(type: wasm.Type, module: binaryen.Module, uintptrSize: number): binaryen.I32Expression | binaryen.I64Expression | binaryen.F32Expression | binaryen.F64Expression {
   switch (type.kind) {
 
