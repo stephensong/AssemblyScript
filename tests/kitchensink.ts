@@ -94,3 +94,12 @@ export function castFloatToInt(a: float): int {
 export function castDoubleToLong(a: double): long {
   return reinterpretl(a);
 }
+
+
+type f64 = double;
+
+export function typeAlias(a: f64): float {
+  type f32 = float;
+  let b: f32 = a as float;
+  return b;
+}

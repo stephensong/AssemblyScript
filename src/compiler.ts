@@ -6,7 +6,7 @@ import * as ast from "./ast";
 import { binaryen } from "./wasm";
 import { Profiler } from "./profiler";
 import { createDiagnosticForNode, printDiagnostic } from "./diagnostics";
-import { byteType, sbyteType, shortType, ushortType, intType, uintType, longType, ulongType, boolType, floatType, doubleType, uintptrType32, uintptrType64, voidType } from "./types";
+import { byteType, sbyteType, shortType, ushortType, intType, uintType, longType, ulongType, boolType, floatType, doubleType, uintptrType32, uintptrType64, voidType, arrayTypes } from "./types";
 import { isImport, isExport, isConst, isStatic, signatureIdentifierOf, binaryenCategoryOf, binaryenTypeOf, binaryenOneOf, binaryenZeroOf } from "./util";
 
 const MEM_MAX_32 = (1 << 16) - 1; // 65535 (pageSize) * 65535 (n) ^= 4GB
@@ -181,7 +181,7 @@ export class Compiler {
               this.maybeConvertValue(
                 initializerNode,
                 this.compileExpression(initializerNode, type),
-                (<any>initializerNode).wasmType, type, false
+                <wasm.Type>(<any>initializerNode).wasmType, type, false
               )
             );
           }
@@ -368,7 +368,7 @@ export class Compiler {
     const startBody: binaryen.Statement[] = [];
 
     for (let i = 0, k = this.globalInitializers.length; i < k; ++i)
-      startBody.push(op.drop(this.globalInitializers[i]));
+      startBody.push(op.drop(this.globalInitializers[i])); // TODO: once setGlobal is in, use that instead of drop
 
     if (this.userStartFunction) {
       if (startBody.length)
@@ -386,7 +386,7 @@ export class Compiler {
     if (!signature)
       signature = this.signatures["v"] = this.module.addFunctionType("v", binaryen.none, []);
     this.module.setStart(
-      this.module.addFunction(this.userStartFunction ? "executeInitializersAndCallStart" : "executeInitalizers", signature, [], startBody)
+      this.module.addFunction(this.userStartFunction ? "executeGlobalInitializersAndCallStart" : "executeGlobalInitalizers", signature, [], op.block("", startBody))
     );
   }
 
@@ -903,6 +903,20 @@ export class Compiler {
   }
 
   resolveType(type: ts.TypeNode, acceptVoid: boolean = false): wasm.Type {
+
+    if (type.kind === ts.SyntaxKind.ArrayType) {
+      const arrayNode = <ts.ArrayTypeNode>type;
+      const elementType = this.resolveType(arrayNode.elementType);
+      let arrayType;
+      if (elementType.underlyingType === null) {
+        arrayType = arrayTypes[elementType.kind];
+        if (!arrayType)
+          arrayType = arrayTypes[elementType.kind] = this.uintptrType.withUnderlyingType(elementType);
+      } else {
+        arrayType = this.uintptrType.withUnderlyingType(elementType); // TODO: some way to cache this too
+      }
+      return arrayType;
+    }
 
     switch (type.kind) {
 
