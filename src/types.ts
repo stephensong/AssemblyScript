@@ -14,6 +14,3 @@ export const doubleType    = new wasm.Type(wasm.TypeKind.double , 8);
 export const uintptrType32 = new wasm.Type(wasm.TypeKind.uintptr, 4);
 export const uintptrType64 = new wasm.Type(wasm.TypeKind.uintptr, 8);
 export const voidType      = new wasm.Type(wasm.TypeKind.void   , 0);
-
-// Array types by TypeKind populated on demand in Compiler#resolveType
-export const arrayTypes: { [key: number]: wasm.Type } = {};

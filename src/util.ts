@@ -171,3 +171,11 @@ export function binaryenOneOf(type: wasm.Type, module: binaryen.Module, uintptrS
   }
   throw Error("unexpected type");
 }
+
+const cachedArrayTypes: { [key: string]: wasm.Type } = {};
+
+export function arrayTypeOf(type: wasm.Type, uintptrType: wasm.Type) {
+  const key = type.toString();
+  const arrayType = cachedArrayTypes[key];
+  return arrayType || (cachedArrayTypes[key] = uintptrType.withUnderlyingType(type));
+}

@@ -129,7 +129,8 @@ export class Type {
   }
 
   toString(): string {
-    return TypeKind[this.kind];
+    const str = TypeKind[this.kind];
+    return this.underlyingType === null ? str : str + "." + this.underlyingType.toString();
   }
 }
 
