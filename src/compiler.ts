@@ -82,6 +82,7 @@ export class Compiler {
     this.checker = program.getDiagnosticsProducingTypeChecker();
     this.diagnostics = ts.createDiagnosticCollection();
     this.module = new binaryen.Module();
+    console.log(this.module.currentMemory.toString());
     this.uintptrSize = uintptrSize;
     this.uintptrType = uintptrSize === 4 ? uintptrType32 : uintptrType64;
 
@@ -156,6 +157,7 @@ export class Compiler {
   }
 
   initializeGlobal(node: ts.VariableStatement): void {
+    const op = this.module;
 
     // TODO: it seems that binaryen.js does not support globals, yet
 
@@ -169,24 +171,28 @@ export class Compiler {
 
           if (isConst(node.declarationList)) {
 
-            switch (initializerNode.kind) {
-              case ts.SyntaxKind.FirstLiteralToken:
-                // TODO
-                break;
+            if (initializerNode.kind === ts.SyntaxKind.FirstLiteralToken) {
+              op.addGlobal(declaration.symbol.name, binaryenTypeOf(type, this.uintptrSize), false, ast.compileLiteral(this, <ts.LiteralExpression>initializerNode, type));
+            } else {
+              this.error(node, "Global constants initializers must be literals");
             }
 
           } else {
 
-            this.globalInitializers.push(
-              this.maybeConvertValue(
-                initializerNode,
-                this.compileExpression(initializerNode, type),
-                getWasmType(initializerNode), type, false
-              )
-            );
-          }
+            if (initializerNode.kind === ts.SyntaxKind.FirstLiteralToken) {
+              op.addGlobal(declaration.symbol.name, binaryenTypeOf(type, this.uintptrSize), true, ast.compileLiteral(this, <ts.LiteralExpression>initializerNode, type));
+            } else {
+              op.addGlobal(declaration.symbol.name, binaryenTypeOf(type, this.uintptrSize), true, binaryenZeroOf(type, this.module, this.uintptrSize));
+              this.globalInitializers.push(
+                this.maybeConvertValue(
+                  initializerNode,
+                  this.compileExpression(initializerNode, type),
+                  getWasmType(initializerNode), type, false
+                )
+              );
+            }
 
-          this.error(node, "Global variables are not supported yet");
+          }
 
         } else {
           this.error(declaration.type, "Unresolvable type");

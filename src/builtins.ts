@@ -264,3 +264,18 @@ export function reinterpret(compiler: Compiler, node: ts.Expression, expr: binar
   }
   throw Error("unsupported operation");
 }
+
+export function current_memory(compiler: Compiler): binaryen.Expression {
+  const op = compiler.module;
+  return op.currentMemory();
+}
+
+export function grow_memory(compiler: Compiler, node: ts.Expression, expr: binaryen.Expression): binaryen.Expression {
+  const op = compiler.module;
+  const type = getWasmType(node);
+
+  if (type.isInt)
+    return op.growMemory(expr);
+
+  throw Error("unsupported operation");
+}

@@ -104,6 +104,12 @@ export function compileCall(compiler: Compiler, node: ts.CallExpression, context
     case "reinterpretd":
       return builtins.reinterpret(compiler, node.arguments[0], argumentExpressions[0]);
 
+    case "current_memory":
+      return builtins.current_memory(compiler);
+
+    case "grow_memory":
+      return builtins.grow_memory(compiler, node.arguments[0], argumentExpressions[0]);
+
   }
 
   // import
