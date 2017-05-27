@@ -125,15 +125,10 @@ export class Compiler {
       for (let j = 0, l = file.statements.length, statement; j < l; ++j) {
         switch ((statement = file.statements[j]).kind) {
 
-          case ts.SyntaxKind.ImportDeclaration: // already handled
-            continue;
-
-          case ts.SyntaxKind.TypeAliasDeclaration: // TODO: allowed in assembly.d.ts for now
-          case ts.SyntaxKind.InterfaceDeclaration: //
-            if (file.isDeclarationFile)
-              continue;
-            else
-              break;
+          case ts.SyntaxKind.ImportDeclaration:
+          case ts.SyntaxKind.InterfaceDeclaration:
+          case ts.SyntaxKind.TypeAliasDeclaration:
+            continue; // already handled by TypeScript
 
           case ts.SyntaxKind.VariableStatement:
             compiler.initializeGlobal(<ts.VariableStatement>statement);
@@ -269,6 +264,7 @@ export class Compiler {
     const signatureId = signatureIdentifiers.join("");
     let signature = this.signatures[signatureId];
     if (!signature) {
+      // TODO: Create used signatures only (binaryen -O does not handle this)
       signature = this.module.addFunctionType(signatureId, returnType.toBinaryenType(this.uintptrType), signatureTypes);
       this.signatures[signatureId] = signature;
     }
@@ -489,6 +485,9 @@ export class Compiler {
     const op = this.module;
 
     switch (node.kind) {
+
+      case ts.SyntaxKind.TypeAliasDeclaration:
+        return null; // already handled by TypeScript
 
       case ts.SyntaxKind.VariableStatement:
         return ast.compileVariable(this, <ts.VariableStatement>node, onVariable);
@@ -855,34 +854,79 @@ export class Compiler {
     }
   }
 
+  maybeResolveAlias(symbol: ts.Symbol): ts.Symbol {
+
+    // Exit early (before hitting 'number') if it's a built in type
+    switch (symbol.name) {
+      case "byte":
+      case "sbyte":
+      case "short":
+      case "ushort":
+      case "int":
+      case "uint":
+      case "long":
+      case "ulong":
+      case "bool":
+      case "float":
+      case "double":
+      case "uintptr":
+      case "Ptr":
+        return symbol;
+    }
+
+    // Otherwise follow any aliases to the original type
+    for (let i = 0, k = symbol.declarations.length; i < k; ++i) {
+      const declaration = symbol.declarations[i];
+      if (declaration.kind === ts.SyntaxKind.TypeAliasDeclaration) {
+        const aliasDeclaration = <ts.TypeAliasDeclaration>declaration;
+        if (aliasDeclaration.type.kind === ts.SyntaxKind.TypeReference)
+          return this.maybeResolveAlias(this.checker.getSymbolAtLocation((<ts.TypeReferenceNode>aliasDeclaration.type).typeName));
+      }
+    }
+
+    return symbol;
+  }
+
   resolveType(type: ts.TypeNode, acceptVoid: boolean = false): wasm.Type {
-    const text = type.getText();
 
-    switch (text) {
-      case "byte": return byteType;
-      case "sbyte": return sbyteType;
-      case "short": return shortType;
-      case "ushort": return ushortType;
-      case "int": return intType;
-      case "uint": return uintType;
-      case "long": return longType;
-      case "ulong": return ulongType;
-      case "bool": return boolType;
-      case "float": return floatType;
-      case "double": return doubleType;
-      case "uintptr": return this.uintptrType;
-      case "void": if (acceptVoid) return voidType;
+    switch (type.kind) {
+
+      case ts.SyntaxKind.VoidKeyword:
+        if (!acceptVoid)
+          this.error(type, "Type 'void' is not allowed here");
+        return voidType;
+
+      case ts.SyntaxKind.TypeReference:
+      {
+        const referenceNode = <ts.TypeReferenceNode>type;
+        const symbol = this.maybeResolveAlias(this.checker.getSymbolAtLocation(referenceNode.typeName));
+
+        if (symbol) {
+
+          // Exit early if it's a basic type
+          switch (symbol.name) {
+            case "byte": return byteType;
+            case "sbyte": return sbyteType;
+            case "short": return shortType;
+            case "ushort": return ushortType;
+            case "int": return intType;
+            case "uint": return uintType;
+            case "long": return longType;
+            case "ulong": return ulongType;
+            case "bool": return boolType;
+            case "float": return floatType;
+            case "double": return doubleType;
+            case "uintptr": return this.uintptrType;
+          }
+
+          // TODO
+          // if (referenceName === "Ptr" && referenceNode.typeArguments.length === 1 && referenceNode.typeArguments[0].kind !== ts.SyntaxKind.TypeReference)
+          //   return this.uintptrType.withUnderlyingType(this.resolveType(<ts.TypeReferenceNode>referenceNode.typeArguments[0]));
+        }
+      }
     }
 
-    if (type.kind === ts.SyntaxKind.TypeReference) {
-      const referenceNode = <ts.TypeReferenceNode>type;
-      const referenceName = referenceNode.typeName.getText();
-
-      if (referenceName === "Ptr" && referenceNode.typeArguments.length === 1 && referenceNode.typeArguments[0].kind !== ts.SyntaxKind.TypeReference)
-        return this.uintptrType.withUnderlyingType(this.resolveType(<ts.TypeReferenceNode>referenceNode.typeArguments[0]));
-    }
-
-    this.error(type, "Unsupported type", text);
+    this.error(type, "Unsupported type", type.getText());
     return voidType;
   }
 }
