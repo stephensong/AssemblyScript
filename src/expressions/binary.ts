@@ -10,8 +10,8 @@ export function compileAssignment(compiler: Compiler, node: ts.BinaryExpression,
 
   if (node.left.kind === ts.SyntaxKind.Identifier) {
     const identifier = <ts.Identifier>node.left;
-    const referencedLocal = compiler.currentLocals[identifier.text];
 
+    const referencedLocal = compiler.currentLocals[identifier.text];
     if (referencedLocal) {
       const right = compiler.maybeConvertValue(node.right, compiler.compileExpression(node.right, referencedLocal.type), getWasmType(node.right), referencedLocal.type, false);
 
@@ -24,6 +24,27 @@ export function compileAssignment(compiler: Compiler, node: ts.BinaryExpression,
 
         setWasmType(node, referencedLocal.type);
         return op.teeLocal(referencedLocal.index, right);
+      }
+    }
+
+    const referencedGlobal = compiler.globals[identifier.text];
+    if (referencedGlobal) {
+      const right = compiler.maybeConvertValue(node.right, compiler.compileExpression(node.right, referencedGlobal.type), getWasmType(node.right), referencedGlobal.type, false);
+
+      if (contextualType === voidType) {
+
+        setWasmType(node, voidType);
+        return op.setGlobal(referencedGlobal.name, right);
+
+      } else {
+
+        // TODO: There is no teeGlobal. Something similar might be possible with a typed block that returns the corresponding
+        // getGlobal, but it seems this isn't supported by binaryen.js yet (can't specify block return type).
+
+        setWasmType(node, referencedGlobal.type);
+        compiler.error(identifier, "Using globals within expressions isn't supported yet");
+        return op.unreachable();
+
       }
     }
   }

@@ -24,6 +24,7 @@ export class Compiler {
   signatures: { [key: string]: binaryen.Signature } = {};
   constants: { [key: string]: wasm.Constant } = {};
   globalInitializers: binaryen.Expression[] = [];
+  globals: { [key: string]: wasm.Global } = {};
   userStartFunction: binaryen.Function = null;
   profiler = new Profiler();
   currentFunction: wasm.Function;
@@ -159,30 +160,43 @@ export class Compiler {
   initializeGlobal(node: ts.VariableStatement): void {
     const op = this.module;
 
-    // TODO: it seems that binaryen.js does not support globals, yet
-
     for (let i = 0, k = node.declarationList.declarations.length; i < k; ++i) {
       const declaration = node.declarationList.declarations[i];
       const initializerNode = declaration.initializer;
 
       if (declaration.type) {
         const type = this.resolveType(declaration.type);
+        const name = declaration.symbol.name;
+        const mutable = !isConst(node.declarationList);
+
         if (type) {
 
-          if (isConst(node.declarationList)) {
+          if (initializerNode.kind === ts.SyntaxKind.FirstLiteralToken) {
 
-            if (initializerNode.kind === ts.SyntaxKind.FirstLiteralToken) {
-              op.addGlobal(declaration.symbol.name, binaryenTypeOf(type, this.uintptrSize), false, ast.compileLiteral(this, <ts.LiteralExpression>initializerNode, type));
-            } else {
-              this.error(node, "Global constants initializers must be literals");
-            }
+            op.addGlobal(name, binaryenTypeOf(type, this.uintptrSize), mutable, ast.compileLiteral(this, <ts.LiteralExpression>initializerNode, type));
+
+            this.globals[name] = <wasm.Global>{
+              name,
+              type,
+              mutable
+            };
 
           } else {
 
-            if (initializerNode.kind === ts.SyntaxKind.FirstLiteralToken) {
-              op.addGlobal(declaration.symbol.name, binaryenTypeOf(type, this.uintptrSize), true, ast.compileLiteral(this, <ts.LiteralExpression>initializerNode, type));
+            if (!mutable) {
+
+              this.error(node, "Unsupported global constant initializer");
+
             } else {
-              op.addGlobal(declaration.symbol.name, binaryenTypeOf(type, this.uintptrSize), true, binaryenZeroOf(type, this.module, this.uintptrSize));
+
+              op.addGlobal(name, binaryenTypeOf(type, this.uintptrSize), mutable, binaryenZeroOf(type, this.module, this.uintptrSize));
+
+              this.globals[name] = <wasm.Global>{
+                name,
+                type,
+                mutable
+              };
+
               this.globalInitializers.push(
                 this.maybeConvertValue(
                   initializerNode,

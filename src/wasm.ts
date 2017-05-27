@@ -166,6 +166,12 @@ export interface Constant {
   value: any;
 }
 
+export interface Global {
+  name: string;
+  type: Type;
+  mutable: boolean;
+}
+
 export interface Field {
   name: string;
   offset: number;
