@@ -64,7 +64,7 @@ export function dontDropBinary(a: int, b: int): int {
 
 export function ifFloat(a: float, b: double): void {
   if (a) {}
-  while (a) {}
+  while (a) {};
   do {} while (a);
   if (b) {}
   while (b) {}
@@ -102,4 +102,29 @@ export function typeAlias(a: f64): float {
   type f32 = float;
   let b: f32 = a as float;
   return b;
+}
+
+export function testDo(n: int): int {
+  let i: int = 0;
+  do {
+    i = i + 1;
+  } while (i < n);
+  return i;
+}
+
+export function testWhile(n: int): int {
+  let i: int = 0;
+  while (i < n) {
+    i = i + 1;
+  }
+  return i;
+}
+
+export function empty(): void {
+  while (true);
+}
+
+export function host(a: int): int {
+  let b: int = grow_memory(a);
+  return current_memory();
 }

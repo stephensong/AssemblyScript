@@ -17,7 +17,7 @@ export function compileVariableDeclarationList(compiler: Compiler, node: ts.Vari
       initializers.push(op.setLocal(index, compiler.compileExpression(declaration.initializer, declarationType)));
   }
 
-  return initializers.length === 0 ? null
+  return initializers.length === 0 ? op.nop()
        : initializers.length === 1 ? initializers[0]
        : op.block("", initializers); // praise rule #1
 }

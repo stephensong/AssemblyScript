@@ -6,7 +6,7 @@ import { createDiagnosticForNode, printDiagnostic } from "./diagnostics";
 import * as Long from "long";
 import { Profiler } from "./profiler";
 import { byteType, sbyteType, shortType, ushortType, intType, uintType, longType, ulongType, boolType, floatType, doubleType, uintptrType32, uintptrType64, voidType } from "./types";
-import { isImport, isExport, isConst, isStatic, signatureIdentifierOf, binaryenCategoryOf, binaryenTypeOf, binaryenOneOf, binaryenZeroOf, arrayTypeOf, getWasmType, setWasmType } from "./util";
+import { isImport, isExport, isConst, isStatic, signatureIdentifierOf, binaryenCategoryOf, binaryenTypeOf, binaryenOneOf, binaryenZeroOf, arrayTypeOf, getWasmType, setWasmType, getWasmFunction, setWasmFunction } from "./util";
 import { binaryen } from "./wasm";
 import * as wasm from "./wasm";
 
@@ -226,6 +226,10 @@ export class Compiler {
 
   private _initializeFunction(node: ts.FunctionDeclaration | ts.MethodDeclaration, parent?: ts.ClassDeclaration): void {
     const name = node.symbol.name;
+
+    if (name === "memory" && isExport(node))
+      this.error(node, "Exported function cannot be named 'memory'");
+
     const returnType = this.resolveType(<ts.TypeNode>node.type, true);
 
     if (node.typeParameters && node.typeParameters.length !== 0 && !node.getSourceFile().isDeclarationFile) // TODO: allowed in assembly.d.ts for now
@@ -301,7 +305,7 @@ export class Compiler {
     if (isImport(node))
       flags |= wasm.FunctionFlags.import;
 
-    (<any>node).wasmFunction = <wasm.Function>{
+    setWasmFunction(node, {
       name: parent ? parent.symbol.name + "$" + name : name,
       flags,
       parameterTypes,
@@ -309,7 +313,7 @@ export class Compiler {
       locals,
       signature,
       signatureIdentifier
-    };
+    });
   }
 
   initializeFunction(node: ts.FunctionDeclaration): void {
@@ -411,7 +415,7 @@ export class Compiler {
   }
 
   private _compileFunction(node: ts.FunctionDeclaration | ts.MethodDeclaration): binaryen.Function {
-    const wasmFunction: wasm.Function = (<any>node).wasmFunction;
+    const wasmFunction = getWasmFunction(node);
     const body: binaryen.Statement[] = new Array(node.body.statements.length);
     const additionalLocals: binaryen.Type[] = [];
     const compiler = this;
@@ -460,7 +464,7 @@ export class Compiler {
   }
 
   compileFunction(node: ts.FunctionDeclaration): void {
-    const wasmFunction = <wasm.Function>(<any>node).wasmFunction;
+    const wasmFunction = getWasmFunction(node);
     const name = node.symbol.name;
 
     if ((wasmFunction.flags & wasm.FunctionFlags.import) !== 0) {

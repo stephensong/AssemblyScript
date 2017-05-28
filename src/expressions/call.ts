@@ -8,7 +8,9 @@ import * as builtins from "../builtins";
 export function compileCall(compiler: Compiler, node: ts.CallExpression, contextualType: wasm.Type): binaryen.Expression {
   const op = compiler.module;
   const declaration = compiler.checker.getResolvedSignature(node).declaration;
-  const wasmFunction = <wasm.Function>(<any>declaration).wasmFunction;
+  const wasmFunction = <wasm.Function>(<any>declaration).wasmFunction; // TODO: that doesn't seem correct
+  if (wasmFunction === null)
+    throw Error("it isn't correct");
 
   if (!wasmFunction) {
     compiler.error(node, "Unknown function");

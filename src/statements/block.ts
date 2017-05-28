@@ -10,7 +10,7 @@ export function compileBlock(compiler: Compiler, node: ts.Block, onVariable: (no
     statements[i] = compiler.compileStatement(node.statements[i], onVariable);
 
   if (i === 0)
-    return null;
+    return op.nop();
   if (i === 1)
     return statements[0];
 
