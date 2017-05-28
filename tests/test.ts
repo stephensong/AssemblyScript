@@ -4,7 +4,8 @@ let heapPtr: uintptr = 0;
 
 function allocate(size: uintptr): uintptr {
   let ptr: uintptr = heapPtr;
-  let b: uintptr = heapPtr += size;
+  let b: uintptr;
+  b = (heapPtr += size);
   return ptr;
 }
 

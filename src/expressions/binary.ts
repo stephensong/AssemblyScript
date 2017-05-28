@@ -35,7 +35,7 @@ export function compileAssignment(compiler: Compiler, node: ts.BinaryExpression,
           else
             return op.block("", [
               op.setGlobal((<wasm.Global>referenced).name, right),
-              op.getGlobal((<wasm.Global>referenced).name, referenced.type)
+              op.getGlobal((<wasm.Global>referenced).name, binaryenTypeOf(referenced.type, compiler.uintptrSize))
             ], binaryenTypeOf(referenced.type, compiler.uintptrSize));
 
       }
@@ -82,7 +82,7 @@ export function compileCompoundAssignment(compiler: Compiler, node: ts.BinaryExp
           else
             return op.block("", [
               op.setGlobal((<wasm.Global>referenced).name, calculate),
-              op.getGlobal((<wasm.Global>referenced).name, referenced.type)
+              op.getGlobal((<wasm.Global>referenced).name, binaryenTypeOf(referenced.type, compiler.uintptrSize))
             ], binaryenTypeOf(referenced.type, compiler.uintptrSize));
 
       }
