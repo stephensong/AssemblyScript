@@ -40,11 +40,8 @@ export function compileFor(compiler: Compiler, node: ts.ForStatement, onVariable
     }
   }
 
-  if (node.statement) {
-    const stmt = compiler.compileStatement(node.statement, onVariable);
-    if (stmt)
-      ifTrue.push(stmt);
-  }
+  if (node.statement)
+    ifTrue.push(compiler.compileStatement(node.statement, onVariable));
 
   if (node.incrementor) {
     const expr = compiler.compileExpression(node.incrementor, voidType);

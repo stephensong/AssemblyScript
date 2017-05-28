@@ -20,12 +20,8 @@ export function compileDo(compiler: Compiler, node: ts.DoStatement, onVariable: 
   const loop: binaryen.Statement[] = [];
   const label = compiler.enterBreakContext();
 
-  if (node.statement) {
-    const stmt = compiler.compileStatement(node.statement, onVariable);
-    if (stmt) {
-      loop.push(stmt);
-    }
-  }
+  if (node.statement)
+    loop.push(compiler.compileStatement(node.statement, onVariable));
 
   loop.push(
     op.break("continue$" + label,

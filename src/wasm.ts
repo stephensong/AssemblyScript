@@ -156,8 +156,8 @@ export interface Function {
 
 export interface Variable {
   name: string;
-  index: number;
   type: Type;
+  index: number;
 }
 
 export interface Constant {
@@ -174,11 +174,11 @@ export interface Global {
 
 export interface Field {
   name: string;
+  type: Type;
   offset: number;
-  size: number;
 }
 
 export interface Class {
-  fields: Field[];
+  fields: { [key: string]: Field };
   constructor: Function;
 }

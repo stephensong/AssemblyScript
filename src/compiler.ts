@@ -350,7 +350,7 @@ export class Compiler {
       const name = enumName + "$" + node.members[i].symbol.name;
       const value = this.checker.getConstantValue(member);
 
-      this.constants[name] = {
+      this.constants[name] = <wasm.Constant>{
         name: name,
         type: intType,
         value: value
@@ -431,9 +431,7 @@ export class Compiler {
     }
 
     for (let i = 0, k = node.body.statements.length; i < k; ++i) {
-      const stmt = compiler.compileStatement(node.body.statements[i], onVariable);
-      if (stmt !== null)
-        body[bodyIndex++] = stmt;
+      body[bodyIndex++] = compiler.compileStatement(node.body.statements[i], onVariable);
     }
 
     body.length = bodyIndex;
@@ -528,7 +526,7 @@ export class Compiler {
     switch (node.kind) {
 
       case ts.SyntaxKind.TypeAliasDeclaration:
-        return null; // already handled by TypeScript
+        return op.nop(); // already handled by TypeScript
 
       case ts.SyntaxKind.EmptyStatement:
         return ast.compileEmpty(this, <ts.EmptyStatement>node);
@@ -564,9 +562,10 @@ export class Compiler {
       case ts.SyntaxKind.ReturnStatement:
         return ast.compileReturn(this, <ts.ReturnStatement>node);
 
-      default:
-        this.error(node, "Unsupported statement node", ts.SyntaxKind[node.kind]);
     }
+
+    this.error(node, "Unsupported statement node", ts.SyntaxKind[node.kind]);
+    return op.unreachable();
   }
 
   compileExpression(node: ts.Expression, contextualType: wasm.Type): binaryen.Expression {

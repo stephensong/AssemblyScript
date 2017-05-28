@@ -22,12 +22,8 @@ export function compileWhile(compiler: Compiler, node: ts.WhileStatement, onVari
   const ifTrue: binaryen.Statement[] = [];
   const label = compiler.enterBreakContext();
 
-  if (node.statement) {
-    const stmt = compiler.compileStatement(node.statement, onVariable);
-    if (stmt) {
-      ifTrue.push(stmt);
-    }
-  }
+  if (node.statement)
+    ifTrue.push(compiler.compileStatement(node.statement, onVariable));
 
   ifTrue.push(op.break("continue$" + label));
 

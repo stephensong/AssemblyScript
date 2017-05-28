@@ -102,7 +102,7 @@ Function                                        | OpCode
 `reinterpretf(value: int): float`               | f32.reinterpret/i32
 `reinterpretd(value: long): double`             | f64.reinterpret/i64
 
-Type coercion requires an explicit cast where precision is lost respectively is implicit where precision is maintained. For example, to cast a `double` to an `int`:
+Type coercion requires an explicit cast where precision or signage is lost respectively is implicit where it is maintained. For example, to cast a `double` to an `int`:
 
 ```ts
 function example(value: double): int {

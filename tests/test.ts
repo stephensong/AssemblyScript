@@ -1,5 +1,9 @@
 /// <reference path="../assembly.d.ts" />
 
+enum AnEnum {
+  ONE = 1,
+}
+
 const a: int = 1;
 let b: int = 2;
 
