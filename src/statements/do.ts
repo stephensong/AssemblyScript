@@ -4,6 +4,15 @@ import { getWasmType } from "../util";
 import { binaryen } from "../wasm";
 import * as wasm from "../wasm";
 
+/*
+block {
+  loop $continue {
+    statement
+    goto $continue if condition
+  }
+} $break
+*/
+
 export function compileDo(compiler: Compiler, node: ts.DoStatement, onVariable: (node: ts.VariableDeclaration) => number): binaryen.Statement {
   const op = compiler.module;
 

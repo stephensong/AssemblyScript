@@ -1,7 +1,6 @@
 import "byots";
 
 import * as ast from "./ast";
-import { Builder } from "./builder";
 import * as builtins from "./builtins";
 import { createDiagnosticForNode, printDiagnostic } from "./diagnostics";
 import * as Long from "long";
@@ -96,10 +95,6 @@ export class Compiler {
       this.entryFile = sourceFiles[i];
       break;
     }
-  }
-
-  newBuilder(): Builder {
-    return new Builder(this.module);
   }
 
   info(node: ts.Node, message: string, arg1?: string): void {
