@@ -60,7 +60,7 @@ export function compileCompoundAssignment(compiler: Compiler, node: ts.BinaryExp
 
     if (referenced) {
       const cat = <binaryen.F32Operations | binaryen.F64Operations>binaryenCategoryOf(referenced.type, op, compiler.uintptrSize);
-      const left = compiler.compileExpression(node.right, contextualType);
+      const left = compiler.compileExpression(node.left, contextualType);
       const right = compiler.compileExpression(node.right, contextualType);
       const calculate = (isIncrement ? cat.add : cat.sub).call(cat, left, right);
 
