@@ -530,6 +530,9 @@ export class Compiler {
       case ts.SyntaxKind.TypeAliasDeclaration:
         return null; // already handled by TypeScript
 
+      case ts.SyntaxKind.EmptyStatement:
+        return ast.compileEmpty(this, <ts.EmptyStatement>node);
+
       case ts.SyntaxKind.VariableStatement:
         return ast.compileVariable(this, <ts.VariableStatement>node, onVariable);
 
@@ -553,7 +556,7 @@ export class Compiler {
 
       case ts.SyntaxKind.BreakStatement:
       case ts.SyntaxKind.ContinueStatement:
-        return ast.compileBreak(this, node.kind === ts.SyntaxKind.ContinueStatement);
+        return ast.compileBreak(this, <ts.BreakStatement | ts.ContinueStatement>node);
 
       case ts.SyntaxKind.ExpressionStatement:
         return ast.compileExpressionStatement(this, <ts.ExpressionStatement>node);

@@ -23,3 +23,7 @@ export function testWhile(n: int): int {
   }
   return i;
 }
+
+export function testEmpty(): void {
+  while (true);
+}

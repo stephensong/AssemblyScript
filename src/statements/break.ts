@@ -1,8 +1,7 @@
 import { Compiler } from "../compiler";
 import { binaryen } from "../wasm";
 
-export function compileBreak(compiler: Compiler, isContinue: boolean = false): binaryen.Statement {
+export function compileBreak(compiler: Compiler, node: ts.BreakStatement | ts.ContinueStatement): binaryen.Statement {
   const op = compiler.module;
-
-  return op.break((isContinue ? "continue$" : "break$") + compiler.currentBreakLabel);
+  return op.break((node.kind === ts.SyntaxKind.ContinueStatement ? "continue$" : "break$") + compiler.currentBreakLabel);
 }

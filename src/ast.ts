@@ -2,6 +2,7 @@
 export * from "./statements/block";
 export * from "./statements/break";
 export * from "./statements/do";
+export * from "./statements/empty";
 export * from "./statements/expression";
 export * from "./statements/for";
 export * from "./statements/if";
