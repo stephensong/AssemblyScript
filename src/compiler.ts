@@ -157,6 +157,45 @@ export class Compiler {
     }
   }
 
+  _initializeGlobal(name: string, type: wasm.Type, mutable: boolean, initializerNode: ts.Expression): void {
+    const op = this.module;
+
+    if (initializerNode.kind === ts.SyntaxKind.FirstLiteralToken) {
+
+      op.addGlobal(name, binaryenTypeOf(type, this.uintptrSize), mutable, ast.compileLiteral(this, <ts.LiteralExpression>initializerNode, type));
+      this.globals[name] = new wasm.Global(name, type, mutable);
+
+    } else {
+
+      /* if (initializerNode.kind === ts.SyntaxKind.PropertyAccessExpression) {
+        const value = this.checker.getConstantValue(<ts.PropertyAccessExpression>initializerNode);
+        if (typeof value === 'number') {
+          op.addGlobal(name, binaryenTypeOf(type, this.uintptrSize), mutable, ...);
+        }
+      } */
+
+      if (!mutable) {
+
+        this.error(initializerNode, "Unsupported global constant initializer");
+
+      } else {
+
+        op.addGlobal(name, binaryenTypeOf(type, this.uintptrSize), mutable, binaryenZeroOf(type, this.module, this.uintptrSize));
+        this.globals[name] = new wasm.Global(name, type, mutable);
+
+        this.globalInitializers.push(
+          this.maybeConvertValue(
+            initializerNode,
+            this.compileExpression(initializerNode, type),
+            getWasmType(initializerNode), type, false
+          )
+        );
+
+      }
+
+    }
+  }
+
   initializeGlobal(node: ts.VariableStatement): void {
     const op = this.module;
 
@@ -165,56 +204,12 @@ export class Compiler {
       const initializerNode = declaration.initializer;
 
       if (declaration.type) {
-        const type = this.resolveType(declaration.type);
         const name = declaration.symbol.name;
+        const type = this.resolveType(declaration.type);
         const mutable = !isConst(node.declarationList);
 
         if (type) {
-
-          if (initializerNode.kind === ts.SyntaxKind.FirstLiteralToken) {
-
-            op.addGlobal(name, binaryenTypeOf(type, this.uintptrSize), mutable, ast.compileLiteral(this, <ts.LiteralExpression>initializerNode, type));
-
-            this.globals[name] = <wasm.Global>{
-              name,
-              type,
-              mutable
-            };
-
-          } else {
-
-            /* if (initializerNode.kind === ts.SyntaxKind.PropertyAccessExpression) {
-              const value = this.checker.getConstantValue(<ts.PropertyAccessExpression>initializerNode);
-              if (typeof value === 'number') {
-                op.addGlobal(name, binaryenTypeOf(type, this.uintptrSize), mutable, ...);
-              }
-            } */
-
-            if (!mutable) {
-
-              this.error(node, "Unsupported global constant initializer");
-
-            } else {
-
-              op.addGlobal(name, binaryenTypeOf(type, this.uintptrSize), mutable, binaryenZeroOf(type, this.module, this.uintptrSize));
-
-              this.globals[name] = <wasm.Global>{
-                name,
-                type,
-                mutable
-              };
-
-              this.globalInitializers.push(
-                this.maybeConvertValue(
-                  initializerNode,
-                  this.compileExpression(initializerNode, type),
-                  getWasmType(initializerNode), type, false
-                )
-              );
-            }
-
-          }
-
+          this._initializeGlobal(name, type, mutable, initializerNode);
         } else {
           this.error(declaration.type, "Unresolvable type");
         }
@@ -224,13 +219,14 @@ export class Compiler {
     }
   }
 
-  private _initializeFunction(node: ts.FunctionDeclaration | ts.MethodDeclaration, parent?: ts.ClassDeclaration): void {
+  private _initializeFunction(node: ts.FunctionDeclaration | ts.MethodDeclaration | ts.ConstructorDeclaration, parent?: ts.ClassDeclaration): void {
     const name = node.symbol.name;
+    const isConstructor = node.kind === ts.SyntaxKind.Constructor;
 
     if (name === "memory" && isExport(node))
       this.error(node, "Exported function cannot be named 'memory'");
 
-    const returnType = this.resolveType(<ts.TypeNode>node.type, true);
+    const returnType: wasm.Type = isConstructor ? this.uintptrType : this.resolveType(<ts.TypeNode>node.type, true);
 
     if (node.typeParameters && node.typeParameters.length !== 0 && !node.getSourceFile().isDeclarationFile) // TODO: allowed in assembly.d.ts for now
       this.error(node.typeParameters[0], "Type parameters are not supported yet");
@@ -242,7 +238,7 @@ export class Compiler {
     let index = 0;
     let flags = 0;
 
-    if (parent && !isStatic(<ts.MethodDeclaration>node)) { // add implicit 'this' as the first argument
+    if (parent && !isStatic(<ts.MethodDeclaration>node) && !isConstructor) { // add implicit 'this' as the first argument
 
       parameterTypes = new Array(node.parameters.length + 1);
       signatureTypes = new Array(parameterTypes.length);
@@ -254,11 +250,7 @@ export class Compiler {
       parameterTypes[0] = thisType;
       signatureTypes[0] = binaryenTypeOf(thisType, this.uintptrSize);
       signatureIdentifiers[0] = signatureIdentifierOf(thisType, this.uintptrSize);
-      locals[0] = {
-        name: "this",
-        index: 0,
-        type: thisType
-      };
+      locals[0] = new wasm.Variable("this", thisType, 0);
 
       flags |= wasm.FunctionFlags.instance;
 
@@ -280,11 +272,7 @@ export class Compiler {
       parameterTypes[index] = parameterType;
       signatureTypes[index] = binaryenTypeOf(parameterType, this.uintptrSize);
       signatureIdentifiers[index] = signatureIdentifierOf(parameterType, this.uintptrSize);
-      locals[index] = {
-        name: parameterName,
-        index: index,
-        type: parameterType
-      };
+      locals[index] = new wasm.Variable(parameterName, parameterType, index);
 
       ++index;
     }
@@ -305,15 +293,12 @@ export class Compiler {
     if (isImport(node))
       flags |= wasm.FunctionFlags.import;
 
-    setWasmFunction(node, {
-      name: parent ? parent.symbol.name + "$" + name : name,
-      flags,
-      parameterTypes,
-      returnType,
-      locals,
-      signature,
-      signatureIdentifier
-    });
+    const func = new wasm.Function(parent ? parent.symbol.name + "$" + name : name, flags, parameterTypes, returnType);
+    func.locals = locals;
+    func.signature = signature;
+    func.signatureIdentifier = signatureIdentifier;
+
+    setWasmFunction(node, func);
   }
 
   initializeFunction(node: ts.FunctionDeclaration): void {
@@ -330,6 +315,13 @@ export class Compiler {
       const member = node.members[i];
       switch (member.kind) {
 
+        case ts.SyntaxKind.PropertyDeclaration:
+          break;
+
+        case ts.SyntaxKind.Constructor:
+          this._initializeFunction(<ts.ConstructorDeclaration>member, node);
+          break;
+
         case ts.SyntaxKind.MethodDeclaration:
           if (isExport(member))
             this.error(member, "Class methods cannot be exports");
@@ -341,7 +333,7 @@ export class Compiler {
           break;
 
         default:
-          this.error(member, "Unsupported class member", ts.SyntaxKind[node.kind]);
+          this.error(member, "Unsupported class member", ts.SyntaxKind[member.kind]);
 
       }
     }
@@ -414,7 +406,7 @@ export class Compiler {
     );
   }
 
-  private _compileFunction(node: ts.FunctionDeclaration | ts.MethodDeclaration): binaryen.Function {
+  private _compileFunction(node: ts.FunctionDeclaration | ts.MethodDeclaration | ts.ConstructorDeclaration): binaryen.Function {
     const wasmFunction = getWasmFunction(node);
     const body: binaryen.Statement[] = new Array(node.body.statements.length);
     const additionalLocals: binaryen.Type[] = [];
@@ -449,12 +441,7 @@ export class Compiler {
       while (compiler.currentLocals[name])
         name = originalName + "." + alternative++;
 
-      compiler.currentLocals[name] = {
-        name: name,
-        index: localIndex,
-        type: type
-      };
-
+      compiler.currentLocals[name] = new wasm.Variable(name, type, localIndex);
       additionalLocals.push(binaryenTypeOf(type, compiler.uintptrSize));
 
       return localIndex++;
@@ -498,8 +485,9 @@ export class Compiler {
     for (let i = 0, k = node.members.length, member; i < k; ++i) {
       switch ((member = node.members[i]).kind) {
 
+        case ts.SyntaxKind.Constructor:
         case ts.SyntaxKind.MethodDeclaration:
-          this._compileFunction(<ts.MethodDeclaration>member);
+          this._compileFunction(<ts.MethodDeclaration | ts.ConstructorDeclaration>member);
           break;
 
         // otherwise already reported by initialize
@@ -884,5 +872,22 @@ export class Compiler {
 
     this.error(type, "Unsupported type", type.getText());
     return voidType;
+  }
+
+  resolveIdentifier(name: string): wasm.Variable | wasm.Global | wasm.Constant {
+
+    const referencedLocal = this.currentLocals[name];
+    if (referencedLocal)
+      return referencedLocal;
+
+    const referencedGlobal = this.globals[name];
+    if (referencedGlobal)
+      return referencedGlobal;
+
+    const referencedConstant = this.constants[name];
+    if (referencedConstant)
+      return referencedConstant;
+
+    return null;
   }
 }

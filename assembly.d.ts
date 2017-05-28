@@ -35,12 +35,12 @@ declare type double = number;
 declare type uintptr = number;
 
 /** A class describing a pointer to a data structure. */
-/* declare class Ptr<T extends number | object> {
+/* declare class Ptr<T> {
     offset: uintptr;
     value: T;
     constructor(offset: uintptr);
-    increment(diff: uintptr): this;
-    decrement(diff: uintptr): this;
+    increment(diff: uintptr): Ptr<T>;
+    decrement(diff: uintptr): Ptr<T>;
 } */
 
 /** Retrieves the byte size of a data structure. */

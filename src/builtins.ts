@@ -1,8 +1,8 @@
 import { Compiler } from "./compiler";
 import { intType, uintType, longType, ulongType, uintptrType32, uintptrType64, floatType, doubleType } from "./types";
+import { getWasmType } from "./util";
 import { binaryen } from "./wasm";
 import * as wasm from "./wasm";
-import { getWasmType, setWasmType } from "./util";
 
 type TypeScriptExpressionPair = [ ts.Expression, ts.Expression ];
 type BinaryenExpressionPair = [ binaryen.Expression, binaryen.Expression ];

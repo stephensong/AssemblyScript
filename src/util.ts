@@ -190,11 +190,11 @@ export function setWasmType(node: ts.Node, type: wasm.Type): void {
   (<any>node).wasmType = type;
 }
 
-export function getWasmFunction(node: ts.FunctionDeclaration | ts.MethodDeclaration): wasm.Function {
+export function getWasmFunction(node: ts.FunctionDeclaration | ts.MethodDeclaration | ts.ConstructorDeclaration): wasm.Function {
   return <wasm.Function>(<any>node).wasmFunction || null;
 }
 
-export function setWasmFunction(node: ts.FunctionDeclaration | ts.MethodDeclaration, func: wasm.Function): void {
+export function setWasmFunction(node: ts.FunctionDeclaration | ts.MethodDeclaration | ts.ConstructorDeclaration, func: wasm.Function): void {
   if (!func)
     throw Error("func cannot be null");
   (<any>node).wasmFunction = func;

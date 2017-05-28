@@ -210,7 +210,7 @@ declare module binaryen {
     f32: F32Operations;
     f64: F64Operations;
 
-    block(label: string, children: Statement[]): Statement;
+    block(label: string, children: Statement[], type?: Type): Statement;
     if(condition: I32Expression, ifTrue: Statement, ifFalse?: Statement): Statement;
     loop(label: string, body: Statement): Statement;
     break(label: string, condition?: I32Expression, value?: I32Expression): Statement;

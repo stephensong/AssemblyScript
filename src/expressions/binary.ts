@@ -2,55 +2,95 @@ import { Compiler } from "../compiler";
 import { intType, voidType } from "../types";
 import { getWasmType, setWasmType } from "../util";
 import { binaryen } from "../wasm";
-import { binaryenCategoryOf } from "../util";
+import { binaryenCategoryOf, binaryenTypeOf } from "../util";
 import * as wasm from "../wasm";
 
 export function compileAssignment(compiler: Compiler, node: ts.BinaryExpression, contextualType: wasm.Type): binaryen.Expression {
   const op = compiler.module;
 
-  if (node.left.kind === ts.SyntaxKind.Identifier) {
-    const identifier = <ts.Identifier>node.left;
-
-    const referencedLocal = compiler.currentLocals[identifier.text];
-    if (referencedLocal) {
-      const right = compiler.maybeConvertValue(node.right, compiler.compileExpression(node.right, referencedLocal.type), getWasmType(node.right), referencedLocal.type, false);
-
-      if (contextualType === voidType) {
-
-        setWasmType(node, voidType);
-        return op.setLocal(referencedLocal.index, right);
-
-      } else {
-
-        setWasmType(node, referencedLocal.type);
-        return op.teeLocal(referencedLocal.index, right);
-      }
-    }
-
-    const referencedGlobal = compiler.globals[identifier.text];
-    if (referencedGlobal) {
-      const right = compiler.maybeConvertValue(node.right, compiler.compileExpression(node.right, referencedGlobal.type), getWasmType(node.right), referencedGlobal.type, false);
-
-      if (contextualType === voidType) {
-
-        setWasmType(node, voidType);
-        return op.setGlobal(referencedGlobal.name, right);
-
-      } else {
-
-        // TODO: There is no teeGlobal. Something similar might be possible with a typed block that returns the corresponding
-        // getGlobal, but it seems this isn't supported by binaryen.js yet (can't specify block return type).
-
-        setWasmType(node, referencedGlobal.type);
-        compiler.error(identifier, "Setting globals within expressions isn't supported yet");
-        return op.unreachable();
-
-      }
-    }
-  }
-
-  compiler.error(node.operatorToken, "Unsupported assignment");
   setWasmType(node, contextualType);
+
+  if (node.left.kind === ts.SyntaxKind.Identifier) {
+    const identifierNode = <ts.Identifier>node.left;
+    const referenced = compiler.resolveIdentifier(identifierNode.text);
+
+    if (referenced) {
+      const right = compiler.maybeConvertValue(node.right, compiler.compileExpression(node.right, referenced.type), getWasmType(node.right), referenced.type, false);
+
+      setWasmType(node, contextualType === voidType ? voidType : referenced.type);
+
+      switch (referenced.kind) {
+
+        case wasm.ReflectionObjectKind.Variable:
+
+          if (contextualType === voidType)
+            return op.setLocal((<wasm.Variable>referenced).index, right);
+          else
+            return op.teeLocal((<wasm.Variable>referenced).index, right);
+
+        case wasm.ReflectionObjectKind.Global:
+
+          if (contextualType === voidType)
+            return op.setGlobal((<wasm.Global>referenced).name, right);
+          else
+            return op.block("", [
+              op.setGlobal((<wasm.Global>referenced).name, right),
+              op.getGlobal((<wasm.Global>referenced).name, referenced.type)
+            ], binaryenTypeOf(referenced.type, compiler.uintptrSize));
+
+      }
+
+    }
+
+    compiler.error(node.left, "Unresolvable variable reference");
+  } else
+    compiler.error(node.operatorToken, "Unsupported assignment");
+  return op.unreachable();
+}
+
+export function compileCompoundAssignment(compiler: Compiler, node: ts.BinaryExpression, contextualType: wasm.Type): binaryen.Expression {
+  const op = compiler.module;
+  const isIncrement = node.operatorToken.kind === ts.SyntaxKind.FirstCompoundAssignment;
+
+  setWasmType(node, contextualType);
+
+  if (node.left.kind === ts.SyntaxKind.Identifier) {
+    const identifierNode = <ts.Identifier>node.left;
+    const referenced = compiler.resolveIdentifier(identifierNode.text);
+
+    if (referenced) {
+      const cat = <binaryen.F32Operations | binaryen.F64Operations>binaryenCategoryOf(referenced.type, op, compiler.uintptrSize);
+      const left = compiler.compileExpression(node.right, contextualType);
+      const right = compiler.compileExpression(node.right, contextualType);
+      const calculate = (isIncrement ? cat.add : cat.sub).call(cat, left, right);
+
+      setWasmType(node, contextualType === voidType ? voidType : referenced.type);
+
+      switch (referenced.kind) {
+
+        case wasm.ReflectionObjectKind.Variable:
+
+          if (contextualType === voidType)
+            return op.setLocal((<wasm.Variable>referenced).index, calculate);
+          else
+            return op.teeLocal((<wasm.Variable>referenced).index, calculate);
+
+        case wasm.ReflectionObjectKind.Global:
+
+          if (contextualType === voidType)
+            return op.setGlobal((<wasm.Global>referenced).name, calculate);
+          else
+            return op.block("", [
+              op.setGlobal((<wasm.Global>referenced).name, calculate),
+              op.getGlobal((<wasm.Global>referenced).name, referenced.type)
+            ], binaryenTypeOf(referenced.type, compiler.uintptrSize));
+
+      }
+    }
+
+    compiler.error(node.left, "Unresolvable variable reference");
+  } else
+    compiler.error(node.operatorToken, "Unsupported compound assignment");
   return op.unreachable();
 }
 
@@ -58,6 +98,9 @@ export function compileBinary(compiler: Compiler, node: ts.BinaryExpression, con
 
   if (node.operatorToken.kind === ts.SyntaxKind.FirstAssignment)
     return compileAssignment(compiler, node, contextualType);
+
+  if (node.operatorToken.kind === ts.SyntaxKind.FirstCompoundAssignment || node.operatorToken.kind === ts.SyntaxKind.MinusEqualsToken)
+    return compileCompoundAssignment(compiler, node, contextualType);
 
   const op = compiler.module;
 

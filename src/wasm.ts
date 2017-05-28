@@ -136,6 +136,27 @@ export class Type {
   }
 }
 
+export enum ReflectionObjectKind {
+  Function = 1 << 0,
+  Variable = 1 << 1,
+  Constant = 1 << 2,
+  Global   = 1 << 3,
+  Class    = 1 << 4,
+  Field    = 1 << 5,
+  AnyTyped = Variable | Constant | Global | Field
+}
+
+abstract class ReflectionObject {
+  constructor(public name: string, public kind: ReflectionObjectKind) {
+  }
+}
+
+abstract class TypedReflectionObject extends ReflectionObject {
+  constructor(name: string, kind: ReflectionObjectKind, public type: Type) {
+    super(name, kind);
+  }
+}
+
 export enum FunctionFlags {
   none        = 0,
   import      = 1 << 0,
@@ -144,41 +165,45 @@ export enum FunctionFlags {
   constructor = 1 << 3
 }
 
-export interface Function {
-  name: string;
-  flags: FunctionFlags;
-  parameterTypes: Type[];
-  returnType: Type;
+export class Function extends ReflectionObject {
   locals: Variable[];
   signature: binaryen.Signature;
   signatureIdentifier: string;
+
+  constructor(name: string, public flags: FunctionFlags, public parameterTypes: Type[], public returnType: Type) {
+    super(name, ReflectionObjectKind.Function);
+  }
 }
 
-export interface Variable {
-  name: string;
-  type: Type;
-  index: number;
+export class Variable extends TypedReflectionObject {
+  constructor(name: string, type: Type, public index: number) {
+    super(name, ReflectionObjectKind.Variable, type);
+  }
 }
 
-export interface Constant {
-  name: string;
-  type: Type;
-  value: any;
+export class Constant extends TypedReflectionObject {
+  constructor(name: string, type: Type, public value: any) {
+    super(name, ReflectionObjectKind.Constant, type);
+  }
 }
 
-export interface Global {
-  name: string;
-  type: Type;
-  mutable: boolean;
+export class Global extends TypedReflectionObject {
+  constructor(name: string, type: Type, public mutable: boolean) {
+    super(name, ReflectionObjectKind.Global, type);
+  }
 }
 
-export interface Field {
-  name: string;
-  type: Type;
-  offset: number;
+export class Class extends ReflectionObject {
+  fields: { [key: string]: Field } = {};
+  ctor: Function;
+
+  constructor(name: string) {
+    super(name, ReflectionObjectKind.Class);
+  }
 }
 
-export interface Class {
-  fields: { [key: string]: Field };
-  constructor: Function;
+export class Field extends TypedReflectionObject {
+  constructor(name: string, type: Type, public offset: number) {
+    super(name, ReflectionObjectKind.Field, type);
+  }
 }
