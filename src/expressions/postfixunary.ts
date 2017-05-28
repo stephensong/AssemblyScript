@@ -1,5 +1,5 @@
 import { Compiler } from "../compiler";
-import { intType } from "../types";
+import { intType, voidType } from "../types";
 import { binaryenCategoryOf, binaryenTypeOf, binaryenOneOf, getWasmType, setWasmType } from "../util";
 import { binaryen } from "../wasm";
 import * as wasm from "../wasm";
@@ -8,8 +8,6 @@ export function compilePostfixUnary(compiler: Compiler, node: ts.PostfixUnaryExp
   const op = compiler.module;
   const operand = compiler.compileExpression(node.operand, contextualType);
   const operandType = getWasmType(node.operand);
-
-  setWasmType(node, operandType);
 
   if (node.operand.kind === ts.SyntaxKind.Identifier) {
 
@@ -36,12 +34,19 @@ export function compilePostfixUnary(compiler: Compiler, node: ts.PostfixUnaryExp
           if (local.type.isByte || local.type.isShort)
             calculate = compiler.maybeConvertValue(node, calculate, intType, local.type, true);
 
-          return (isIncrement ? cat.sub : cat.add).call(cat, op.teeLocal(local.index, calculate), one);
+          if (contextualType === voidType) {
+            setWasmType(node, voidType);
+            return op.setLocal(local.index, calculate);
+          } else {
+            setWasmType(node, local.type);
+            return (isIncrement ? cat.sub : cat.add).call(cat, op.teeLocal(local.index, calculate), one);
+          }
         }
       }
     }
   }
 
   compiler.error(node, "Unsupported unary postfix operation");
+  setWasmType(node, contextualType);
   return op.unreachable();
 }

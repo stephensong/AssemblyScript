@@ -1,6 +1,6 @@
 import { Compiler } from "../compiler";
 import { binaryenTypeOf, binaryenCategoryOf, binaryenOneOf, getWasmType, setWasmType } from "../util";
-import { intType, boolType, floatType, doubleType } from "../types";
+import { intType, boolType, floatType, doubleType, voidType } from "../types";
 import { binaryen } from "../wasm";
 import * as wasm from "../wasm";
 
@@ -97,8 +97,13 @@ export function compilePrefixUnary(compiler: Compiler, node: ts.PrefixUnaryExpre
             one
           );
 
-          setWasmType(node, local.type);
-          return compiler.maybeConvertValue(node, op.teeLocal(local.index, calculate), intType, local.type, true);
+          if (contextualType === voidType) {
+            setWasmType(node, voidType);
+            return op.setLocal(local.index, calculate);
+          } else {
+            setWasmType(node, local.type);
+            return compiler.maybeConvertValue(node, op.teeLocal(local.index, calculate), intType, local.type, true);
+          }
         }
       }
     }
