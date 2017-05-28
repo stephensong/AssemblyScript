@@ -1,13 +1,15 @@
 import "byots";
-import * as Long from "long";
-import * as builtins from "./builtins";
-import * as wasm from "./wasm";
+
 import * as ast from "./ast";
-import { binaryen } from "./wasm";
-import { Profiler } from "./profiler";
+import { Builder } from "./builder";
+import * as builtins from "./builtins";
 import { createDiagnosticForNode, printDiagnostic } from "./diagnostics";
+import * as Long from "long";
+import { Profiler } from "./profiler";
 import { byteType, sbyteType, shortType, ushortType, intType, uintType, longType, ulongType, boolType, floatType, doubleType, uintptrType32, uintptrType64, voidType } from "./types";
 import { isImport, isExport, isConst, isStatic, signatureIdentifierOf, binaryenCategoryOf, binaryenTypeOf, binaryenOneOf, binaryenZeroOf, arrayTypeOf, getWasmType, setWasmType } from "./util";
+import { binaryen } from "./wasm";
+import * as wasm from "./wasm";
 
 const MEM_MAX_32 = (1 << 16) - 1; // 65535 (pageSize) * 65535 (n) ^= 4GB
 
@@ -83,7 +85,6 @@ export class Compiler {
     this.checker = program.getDiagnosticsProducingTypeChecker();
     this.diagnostics = ts.createDiagnosticCollection();
     this.module = new binaryen.Module();
-    console.log(this.module.currentMemory.toString());
     this.uintptrSize = uintptrSize;
     this.uintptrType = uintptrSize === 4 ? uintptrType32 : uintptrType64;
 
@@ -95,6 +96,10 @@ export class Compiler {
       this.entryFile = sourceFiles[i];
       break;
     }
+  }
+
+  newBuilder(): Builder {
+    return new Builder(this.module);
   }
 
   info(node: ts.Node, message: string, arg1?: string): void {
@@ -182,6 +187,13 @@ export class Compiler {
             };
 
           } else {
+
+            /* if (initializerNode.kind === ts.SyntaxKind.PropertyAccessExpression) {
+              const value = this.checker.getConstantValue(<ts.PropertyAccessExpression>initializerNode);
+              if (typeof value === 'number') {
+                op.addGlobal(name, binaryenTypeOf(type, this.uintptrSize), mutable, ...);
+              }
+            } */
 
             if (!mutable) {
 
@@ -363,10 +375,6 @@ export class Compiler {
       for (let j = 0, l = statements.length, statement; j < l; ++j) {
         switch ((statement = statements[j]).kind) {
 
-          case ts.SyntaxKind.VariableStatement:
-            this.compileVariable(<ts.VariableStatement>statement);
-            break;
-
           case ts.SyntaxKind.FunctionDeclaration:
             this.compileFunction(<ts.FunctionDeclaration>statement);
             break;
@@ -375,7 +383,7 @@ export class Compiler {
             this.compileClass(<ts.ClassDeclaration>statement);
             break;
 
-          // otherwise already reported by initialize
+          // otherwise already handled or reported by initialize
         }
       }
     }
@@ -399,17 +407,12 @@ export class Compiler {
     if (this.userStartFunction)
       body[i] = op.call("start", [], binaryen.none);
 
-    let signature = this.signatures["v"];
+    let signature = this.signatures.v;
     if (!signature)
-      signature = this.signatures["v"] = this.module.addFunctionType("v", binaryen.none, []);
+      signature = this.signatures.v = this.module.addFunctionType("v", binaryen.none, []);
     this.module.setStart(
       this.module.addFunction(this.userStartFunction ? "executeGlobalInitializersAndCallStart" : "executeGlobalInitalizers", signature, [], op.block("", body))
     );
-  }
-
-
-  compileVariable(node: ts.VariableStatement): void {
-    // TODO
   }
 
   private _compileFunction(node: ts.FunctionDeclaration | ts.MethodDeclaration): binaryen.Function {
@@ -441,21 +444,19 @@ export class Compiler {
     body.length = bodyIndex;
 
     function onVariable(variableNode: ts.VariableDeclaration): number {
-      const name = variableNode.name.getText();
+      const originalName = variableNode.name.getText();
       const type = getWasmType(variableNode);
 
-      if (compiler.currentLocals[name]) {
+      let name = originalName;
+      let alternative: number = 1;
+      while (compiler.currentLocals[name])
+        name = originalName + "." + alternative++;
 
-        compiler.error(variableNode, "Local variable shadows another variable of the same name in a parent scope", name);
-
-      } else {
-
-        compiler.currentLocals[name] = {
-          name: name,
-          index: localIndex,
-          type: type
-        };
-      }
+      compiler.currentLocals[name] = {
+        name: name,
+        index: localIndex,
+        type: type
+      };
 
       additionalLocals.push(binaryenTypeOf(type, compiler.uintptrSize));
 
@@ -509,10 +510,11 @@ export class Compiler {
     }
   }
 
-  enterBreakContext(): void {
+  enterBreakContext(): string {
     if (this.currentBreakContextDepth === 0)
       ++this.currentBreakContextNumber;
     ++this.currentBreakContextDepth;
+    return this.currentBreakLabel;
   }
 
   leaveBreakContext(): void {
@@ -547,6 +549,9 @@ export class Compiler {
 
       case ts.SyntaxKind.DoStatement:
         return ast.compileDo(this, <ts.DoStatement>node, onVariable);
+
+      case ts.SyntaxKind.ForStatement:
+        return ast.compileFor(this, <ts.ForStatement>node, onVariable);
 
       case ts.SyntaxKind.Block:
         return ast.compileBlock(this, <ts.Block>node, onVariable);

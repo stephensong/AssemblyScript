@@ -2,12 +2,12 @@ import { Compiler } from "../compiler";
 import { getWasmType, setWasmType } from "../util";
 import { binaryen } from "../wasm";
 
-export function compileVariable(compiler: Compiler, node: ts.VariableStatement, onVariable: (node: ts.VariableDeclaration) => number): binaryen.Statement {
+export function compileVariableDeclarationList(compiler: Compiler, node: ts.VariableDeclarationList,  onVariable: (node: ts.VariableDeclaration) => number): binaryen.Statement {
   const op = compiler.module;
   const initializers: binaryen.Expression[] = [];
 
-  for (let i = 0, k = node.declarationList.declarations.length; i < k; ++i) {
-    const declaration = node.declarationList.declarations[i];
+  for (let i = 0, k = node.declarations.length; i < k; ++i) {
+    const declaration = node.declarations[i];
     const declarationType = compiler.resolveType(declaration.type);
 
     setWasmType(declaration, declarationType);
@@ -20,4 +20,8 @@ export function compileVariable(compiler: Compiler, node: ts.VariableStatement, 
   return initializers.length === 0 ? null
        : initializers.length === 1 ? initializers[0]
        : op.block("", initializers); // praise rule #1
+}
+
+export function compileVariable(compiler: Compiler, node: ts.VariableStatement, onVariable: (node: ts.VariableDeclaration) => number): binaryen.Statement {
+  return compileVariableDeclarationList(compiler, node.declarationList, onVariable);
 }

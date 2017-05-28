@@ -1,0 +1,9 @@
+<script>
+let exports;
+fetch("fib.wasm")
+  .then(result => result.arrayBuffer())
+  .then(buffer => WebAssembly.instantiate(buffer, {}))
+  .then(result => {
+    exports = result.instance.exports
+  });
+</script>

@@ -42,7 +42,7 @@ export function compileAssignment(compiler: Compiler, node: ts.BinaryExpression,
         // getGlobal, but it seems this isn't supported by binaryen.js yet (can't specify block return type).
 
         setWasmType(node, referencedGlobal.type);
-        compiler.error(identifier, "Using globals within expressions isn't supported yet");
+        compiler.error(identifier, "Setting globals within expressions isn't supported yet");
         return op.unreachable();
 
       }
