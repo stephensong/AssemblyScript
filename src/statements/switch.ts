@@ -1,6 +1,6 @@
 import { Compiler } from "../compiler";
 import { intType, voidType } from "../types";
-import { getWasmType } from "../util";
+import { binaryenTypeOf, getWasmType } from "../util";
 import { binaryen } from "../wasm";
 import * as wasm from "../wasm";
 
@@ -31,12 +31,14 @@ export function compileSwitch(compiler: Compiler, node: ts.SwitchStatement, onVa
 
     type SwitchCase = {
       label: string,
+      index: number,
       statements: binaryen.Statement[],
       expression?: binaryen.Expression
     };
 
     let cases: SwitchCase[] = new Array(node.caseBlock.clauses.length);
     let defaultCase: SwitchCase;
+    const labels: string[] = [];
 
     // scan through cases and also determine default case
     for (let i = 0, k = node.caseBlock.clauses.length; i < k; ++i) {
@@ -47,28 +49,31 @@ export function compileSwitch(compiler: Compiler, node: ts.SwitchStatement, onVa
       if (clause.kind == ts.SyntaxKind.DefaultClause) {
         defaultCase = cases[i] = {
           label: "default$" + label,
+          index: i,
           statements: statements
         };
       } else /* ts.CaseClause */ {
         cases[i] = {
           label:  "case" + i + "$" + label,
+          index: i,
           statements: statements,
           expression: compiler.maybeConvertValue(clause, compiler.compileExpression(clause.expression, intType), getWasmType(clause.expression), intType, true)
         };
+        labels.push(cases[i].label);
       }
     }
 
     // build the condition as a nested select, starting at its tail
-    // TODO: doesn't have to use select for constant sequential conditions (-O doesn't catch this)
+    // TODO: doesn't have to use select for sequential expressions (-O doesn't catch this)
     let condition = op.i32.const(-1);
     for (let i = cases.length - 1; i >= 0; --i)
       if (cases[i] !== defaultCase)
-        condition = op.select(op.i32.eq(op.getLocal(conditionLocalIndex, intType), cases[i].expression), op.i32.const(i), condition);
+        condition = op.select(op.i32.eq(op.getLocal(conditionLocalIndex, binaryenTypeOf(intType, compiler.uintptrSize)), cases[i].expression), op.i32.const(i), condition);
 
     // create the innermost br_table block using the first case's label
     let currentBlock = op.block(cases[0].label, [
       op.setLocal(conditionLocalIndex, switchExpression),
-      op.switch(cases.map(cas => cas.label), defaultCase ? defaultCase.label : undefined, condition)
+      op.switch(labels, defaultCase ? defaultCase.label : "break$" + label, condition)
     ]);
 
     // keep wrapping the last case's block within the current case's block using the next case's label

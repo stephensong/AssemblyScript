@@ -22,8 +22,8 @@ export function testSwitch(a: int): int {
       switch (a) {
         case 0:
           break;
-        default:
-          return 42;
+        /* default:
+          return 42; */
         case 4:
           return 4;
         case 5:
@@ -34,4 +34,15 @@ export function testSwitch(a: int): int {
     case 2:
       return 2;
   }
+}
+
+export function testSwitch2(a: int): int {
+  switch (a) {
+    case 1:
+      return 1;
+    default:
+    case 2:
+      a = 2;
+  }
+  return a;
 }
