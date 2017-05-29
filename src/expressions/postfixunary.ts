@@ -46,7 +46,7 @@ export function compilePostfixUnary(compiler: Compiler, node: ts.PostfixUnaryExp
     }
   }
 
-  compiler.error(node, "Unsupported unary postfix operation");
+  compiler.error(node, "Unsupported unary postfix operator", ts.SyntaxKind[node.operator]);
   setWasmType(node, contextualType);
   return op.unreachable();
 }

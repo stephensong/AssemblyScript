@@ -67,7 +67,7 @@ export function compileFor(compiler: Compiler, node: ts.ForStatement, onVariable
   } else {
 
     if (ifTrue.length === 1) // binaryen errors here
-      compiler.error(node, "Unconditional endless loop");
+      compiler.error(node, "Illegal endless loop");
 
     context.push(
       op.loop("continue$" + label,

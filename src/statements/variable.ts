@@ -16,7 +16,7 @@ export function compileVariableDeclarationList(compiler: Compiler, node: ts.Vari
 
     const index = onVariable(declarationName, declarationType);
     if (declaration.initializer)
-      initializers.push(op.setLocal(index, compiler.compileExpression(declaration.initializer, declarationType)));
+      initializers.push(op.setLocal(index, compiler.maybeConvertValue(declaration.initializer, compiler.compileExpression(declaration.initializer, declarationType), getWasmType(declaration.initializer), declarationType, false)));
   }
 
   return initializers.length === 0 ? op.nop()

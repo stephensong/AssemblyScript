@@ -6,9 +6,9 @@ let currentHeapPtr: uintptr = 0;
 export function allocate_memory(size: uint): uintptr {
   if (size < 1)
     return 0;
-  let currentMemory: uintptr = current_memory();
+  let currentMemory: uintptr = current_memory() << 16;
   if (currentHeapPtr >= currentMemory) {
-    let pages: int = ((currentMemory - currentHeapPtr + size) >> 16) as int;
+    let pages: uint = ((currentMemory - currentHeapPtr + size) >> 16) as uint;
     grow_memory(pages != 0 ? pages : 1);
   }
   const allocationOffset: uintptr = currentHeapPtr;

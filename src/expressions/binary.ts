@@ -121,8 +121,12 @@ export function compileBinary(compiler: Compiler, node: ts.BinaryExpression, con
 
   } else if (rightType.isAnyFloat)
     resultType = rightType;
+  else /* int */ if (leftType.kind === wasm.TypeKind.uintptr && rightType.kind !== wasm.TypeKind.uintptr)
+    resultType = leftType;
+  else if (leftType.kind !== wasm.TypeKind.uintptr && rightType.kind === wasm.TypeKind.uintptr)
+    resultType = rightType;
   else
-    resultType = leftType.size > rightType.size ? leftType : rightType;
+    resultType = leftType.size >= rightType.size ? leftType : rightType;
 
   // compile again with common contextual type so that literals are properly coerced
   if (leftType !== resultType)

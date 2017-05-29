@@ -1,48 +1,6 @@
 /// <reference path="../assembly.d.ts" />
 
-/* let heapPtr: uintptr = 0;
+import { allocate_memory, deallocate_memory } from "../std/allocator";
 
-function allocate(size: uintptr): uintptr {
-  let ptr: uintptr = heapPtr;
-  let b: uintptr;
-  b = (heapPtr += size);
-  return ptr;
-}
-
-function dispose(ptr: uintptr): void {
-} */
-
-export function testSwitch(a: int): int {
-  switch (a) {
-    case 3:
-      return 3;
-    case 1:
-      return 1;
-    default:
-      switch (a) {
-        case 0:
-          break;
-        /* default:
-          return 42; */
-        case 4:
-          return 4;
-        case 5:
-        case 6:
-          return 56;
-      }
-      return 0;
-    case 2:
-      return 2;
-  }
-}
-
-export function testSwitch2(a: int): int {
-  switch (a) {
-    case 1:
-      return 1;
-    default:
-    case 2:
-      a = 2;
-  }
-  return a;
+export function main(): void {
 }

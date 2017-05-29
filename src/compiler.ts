@@ -214,7 +214,7 @@ export class Compiler {
           this.error(declaration.type, "Unresolvable type");
         }
       } else {
-        this.error(declaration, "Global variable declaration requires a type");
+        this.error(declaration.name, "Type expected");
       }
     }
   }
@@ -224,7 +224,7 @@ export class Compiler {
     const isConstructor = node.kind === ts.SyntaxKind.Constructor;
 
     if (name === "memory" && isExport(node))
-      this.error(node, "Exported function cannot be named 'memory'");
+      this.error(node, "Duplicate exported name", "memory");
 
     const returnType: wasm.Type = isConstructor ? this.uintptrType : this.resolveType(<ts.TypeNode>node.type, true);
 
@@ -474,7 +474,7 @@ export class Compiler {
 
     const functionHandle = this._compileFunction(node);
 
-    if ((node.modifierFlagsCache & ts.ModifierFlags.Export) !== 0)
+    if ((wasmFunction.flags & wasm.FunctionFlags.export) !== 0)
       this.module.addExport(name, name);
 
     if (name === "start")
@@ -615,7 +615,7 @@ export class Compiler {
     return op.unreachable();
   }
 
-  maybeConvertValue(node: ts.Node, expr: binaryen.Expression, fromType: wasm.Type, toType: wasm.Type, explicit: boolean): binaryen.Expression {
+  maybeConvertValue(node: ts.Expression, expr: binaryen.Expression, fromType: wasm.Type, toType: wasm.Type, explicit: boolean): binaryen.Expression {
     if (fromType.kind === toType.kind)
       return expr;
 
@@ -623,8 +623,17 @@ export class Compiler {
     const op = this.module;
 
     function illegalImplicitConversion() {
-      compiler.error(node, "Cannot convert from '" + fromType + "' to '" + toType + "' without a cast");
+      compiler.error(node, "Illegal implicit conversion", "'" + fromType + "' to '" + toType + "'");
       explicit = true; // report this only once for the topmost node
+    }
+
+    if (!explicit) {
+
+      if (this.uintptrSize === 4 && fromType.kind === wasm.TypeKind.uintptr && toType.isInt)
+        this.warn(node, "Implicit conversion from 'uintptr' to 'uint' will fail when targeting WASM64");
+
+      if (this.uintptrSize === 8 && fromType.isInt && toType.kind === wasm.TypeKind.uintptr)
+        this.warn(node, "Implicit conversion from 'uint' to 'uintptr' will fail when targeting WASM32");
     }
 
     setWasmType(node, toType);
@@ -648,8 +657,8 @@ export class Compiler {
         case intType:
           return this.maybeConvertValue(node, op.i32.trunc_s.f32(expr), intType, toType, explicit);
 
-        case ulongType:
         case uintptrType64:
+        case ulongType:
           return op.i64.trunc_u.f32(expr);
 
         case longType:
@@ -838,7 +847,7 @@ export class Compiler {
 
       case ts.SyntaxKind.VoidKeyword:
         if (!acceptVoid)
-          this.error(type, "Type 'void' is not allowed here");
+          this.error(type, "Illegal type", "void");
         return voidType;
 
       case ts.SyntaxKind.TypeReference:

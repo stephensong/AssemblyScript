@@ -13,7 +13,7 @@ export function compileCall(compiler: Compiler, node: ts.CallExpression, context
     throw Error("it isn't correct");
 
   if (!wasmFunction) {
-    compiler.error(node, "Unknown function");
+    compiler.error(node, "Unresolvable call target");
     setWasmType(node, contextualType);
     return op.unreachable();
   }
@@ -32,7 +32,7 @@ export function compileCall(compiler: Compiler, node: ts.CallExpression, context
 
   if (i < argumentExpressions.length) { // TODO: pull default value initializers from declaration
 
-    compiler.error(node, "Invalid number of arguemnts", "Expected " + declaration.parameters.length + " but saw " + node.arguments.length);
+    compiler.error(node, "Invalid number of arguments", "Expected " + declaration.parameters.length + " but saw " + node.arguments.length);
     return op.unreachable();
 
   }

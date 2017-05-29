@@ -34,7 +34,7 @@ export function compileLiteral(compiler: Compiler, node: ts.LiteralExpression, c
       floatValue = parseFloat(text);
     } else {
       floatValue = 0;
-      compiler.error(node, "Float literal expected", text);
+      compiler.error(node, "Illegal float literal", text);
     }
 
     setWasmType(node, contextualType);
@@ -51,7 +51,7 @@ export function compileLiteral(compiler: Compiler, node: ts.LiteralExpression, c
       intValue = parseInt(text = text.substring(2), intRadix = 16);
     } else {
       intValue = 0; intRadix = 10; text = "0";
-      compiler.error(node, "Integer literal expected", text);
+      compiler.error(node, "Illegal integer literal", text);
     }
 
     setWasmType(node, contextualType);

@@ -18,7 +18,7 @@ export function compileIdentifier(compiler: Compiler, node: ts.Identifier, conte
     return op.getGlobal(referencedGlobal.name, binaryenTypeOf(referencedGlobal.type, compiler.uintptrSize));
   }
 
-  compiler.error(node, "Undefined variable", node.text);
+  compiler.error(node, "Unresolvable variable reference", node.text);
 
   setWasmType(node, contextualType);
   return op.unreachable();

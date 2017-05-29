@@ -12,7 +12,7 @@ export function compileReturn(compiler: Compiler, node: ts.ReturnStatement): bin
     if (!node.expression)
       return op.return();
 
-    compiler.error(node, "A function without a return type cannot return a value", compiler.currentFunction.name);
+    compiler.error(node, "Function cannot return a value");
 
   } else {
 
@@ -31,7 +31,7 @@ export function compileReturn(compiler: Compiler, node: ts.ReturnStatement): bin
       );
     }
 
-    compiler.error(node, "A function with a return type must return a value", compiler.currentFunction.name);
+    compiler.error(node, "Function must return a value");
   }
 
   return op.unreachable();
