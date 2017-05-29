@@ -18,7 +18,7 @@ block {
 } $break
 */
 
-export function compileFor(compiler: Compiler, node: ts.ForStatement, onVariable: (node: ts.VariableDeclaration) => number): binaryen.Statement {
+export function compileFor(compiler: Compiler, node: ts.ForStatement, onVariable: (name: string, type: wasm.Type) => number): binaryen.Statement {
   const op = compiler.module;
 
   const context: binaryen.Statement[] = [];

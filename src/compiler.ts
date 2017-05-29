@@ -432,9 +432,10 @@ export class Compiler {
 
     body.length = bodyIndex;
 
-    function onVariable(variableNode: ts.VariableDeclaration): number {
+    /*function onVariable(variableNode: ts.VariableDeclaration): number {
       const originalName = variableNode.name.getText();
-      const type = getWasmType(variableNode);
+      const type = getWasmType(variableNode);*/
+    function onVariable(originalName: string, type: wasm.Type) {
 
       let name = originalName;
       let alternative: number = 1;
@@ -512,7 +513,7 @@ export class Compiler {
     return this.currentBreakContextNumber + "." + this.currentBreakContextDepth;
   }
 
-  compileStatement(node: ts.Statement, onVariable: (node: ts.VariableDeclaration) => number): binaryen.Statement {
+  compileStatement(node: ts.Statement, onVariable: (name: string, type: wasm.Type) => number): binaryen.Statement {
     const op = this.module;
 
     switch (node.kind) {

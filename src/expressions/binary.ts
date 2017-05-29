@@ -150,6 +150,8 @@ export function compileBinary(compiler: Compiler, node: ts.BinaryExpression, con
       case ts.SyntaxKind.SlashToken:
         return cat.div(left, right);
 
+      case ts.SyntaxKind.EqualsEqualsEqualsToken:
+        compiler.warn(node.operatorToken, "Assuming '=='");
       case ts.SyntaxKind.EqualsEqualsToken:
         return cat.eq(left, right);
 
@@ -227,6 +229,8 @@ export function compileBinary(compiler: Compiler, node: ts.BinaryExpression, con
           result = cat.shr_u(left, right);
         break;
 
+      case ts.SyntaxKind.EqualsEqualsEqualsToken:
+        compiler.warn(node.operatorToken, "Assuming '=='");
       case ts.SyntaxKind.EqualsEqualsToken:
         result = cat.eq(left, right);
         break;

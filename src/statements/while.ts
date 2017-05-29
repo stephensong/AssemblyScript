@@ -15,7 +15,7 @@ block {
 } $break
 */
 
-export function compileWhile(compiler: Compiler, node: ts.WhileStatement, onVariable: (node: ts.VariableDeclaration) => number): binaryen.Statement {
+export function compileWhile(compiler: Compiler, node: ts.WhileStatement, onVariable: (name: string, type: wasm.Type) => number): binaryen.Statement {
   const op = compiler.module;
 
   const context: binaryen.Statement[] = [];

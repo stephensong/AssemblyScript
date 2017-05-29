@@ -20,7 +20,7 @@
   "scripts": {
     "build:asc": "tsc -p ./cli/asc/tsconfig.json",
     "lint": "tslint -c tslint.json src/**/*.ts cli/**/*.ts",
-    "test": "node bin/asc --text tests/test.ts"
+    "test": "node bin/asc tests/test.ts"
   },
   "devDependencies": {
     "tslint": "^5.3.2",

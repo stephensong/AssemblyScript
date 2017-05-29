@@ -13,7 +13,7 @@ block {
 } $break
 */
 
-export function compileDo(compiler: Compiler, node: ts.DoStatement, onVariable: (node: ts.VariableDeclaration) => number): binaryen.Statement {
+export function compileDo(compiler: Compiler, node: ts.DoStatement, onVariable: (name: string, type: wasm.Type) => number): binaryen.Statement {
   const op = compiler.module;
 
   const context: binaryen.Statement[] = [];
