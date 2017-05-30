@@ -28,15 +28,17 @@
     "long": "^3.2.0",
     "minimist": "^1.2.0",
     "ts-node": "^3.0.4",
-    "typescript": "2.4.0-dev.20170528"
+    "typescript": "^2.4.0-dev.20170528"
   },
   "scripts": {
-    "build:asc": "tsc -p ./cli/asc/tsconfig.json",
+    "build": "tsc -P src && browserify --debug out/compiler.js > out/bundle.js && uglifyjs --compress --mangle --output dist/assemblyscript.min.js --source-map content=inline,url=assemblyscript.min.js.map -- out/bundle.js",
     "lint": "tslint -c tslint.json src/**/*.ts cli/**/*.ts",
     "test": "node bin/asc tests/test.ts"
   },
   "devDependencies": {
+    "browserify": "^14.4.0",
     "tslint": "^5.3.2",
-    "tslint-eslint-rules": "^4.1.1"
+    "tslint-eslint-rules": "^4.1.1",
+    "uglify-js": "^3.0.13"
   }
 }

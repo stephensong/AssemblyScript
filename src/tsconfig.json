@@ -2,9 +2,12 @@
   "extends": "../tsconfig.base.json",
   "compilerOptions": {
     "module": "commonjs",
-    "target": "es5"
+    "target": "es5",
+    "outDir": "../out/",
+    "types": [ "byots", "node", "long" ],
+    "inlineSourceMap": true
   },
-  "files": [
-    "./**/*.ts"
+  "include": [
+    "**/*.ts"
   ]
 }

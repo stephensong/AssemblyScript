@@ -1,5 +1,3 @@
-import "byots";
-
 // this is basically copy-pasted from tsc (compiler/program.ts)
 
 const redForegroundEscapeSequence = "\u001b[91m";

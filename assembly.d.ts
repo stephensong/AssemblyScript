@@ -43,6 +43,16 @@ declare type uintptr = number;
     decrement(diff: uintptr): Ptr<T>;
 } */
 
+// Type aliases
+declare type int8 = sbyte;
+declare type uint8 = byte;
+declare type int16 = short;
+declare type uint16 = ushort;
+declare type int32 = int;
+declare type uint32 = uint;
+declare type int64 = long;
+declare type uint64 = ulong;
+
 /** Retrieves the byte size of a data structure. */
 declare function sizeof<T>(): uintptr;
 

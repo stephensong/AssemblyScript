@@ -1,6 +1,7 @@
 /// <reference path="../assembly.d.ts" />
 
-import { allocate_memory, deallocate_memory } from "../std/allocator";
+import { allocate, deallocate } from "../std/allocator";
 
-export function main(): void {
+export function main(): int32 {
+  return 0;
 }

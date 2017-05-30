@@ -3,7 +3,7 @@
 let currentHeapPtr: uintptr = 0;
 
 // this just allocates more memory...
-export function allocate_memory(size: uint): uintptr {
+export function allocate(size: uint): uintptr {
   if (size < 1)
     return 0;
   let currentMemory: uintptr = current_memory() << 16;
@@ -19,5 +19,5 @@ export function allocate_memory(size: uint): uintptr {
 }
 
 // ...without ever freeing it
-export function deallocate_memory(ptr: uintptr): void {
+export function deallocate(ptr: uintptr): void {
 }

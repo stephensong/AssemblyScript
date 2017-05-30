@@ -1,4 +1,3 @@
-import "byots";
 import { binaryen } from "./wasm";
 import * as wasm from "./wasm";
 
