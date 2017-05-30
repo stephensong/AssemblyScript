@@ -190,7 +190,7 @@ declare module binaryen {
 
     addFunctionType(name: string, resultType: Type, paramTypes: Type[]): Signature;
     addFunction(name: string, functionType: Signature, varTypes: Type[], body: Statement): binaryen.Function;
-    addGlobal(name: string, type: Type, mutable: bool, init: Expression): Expression;
+    addGlobal(name: string, type: Type, mutable: boolean, init?: Expression): Expression;
     addImport(internalName: string, externalModuleName: string, externalBaseName: string, functionType?: Signature): void;
     addExport(internalName: string, externalName: string): void;
     setFunctionTable(funcs: number[]): void;

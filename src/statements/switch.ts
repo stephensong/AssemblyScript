@@ -33,11 +33,11 @@ export function compileSwitch(compiler: Compiler, node: ts.SwitchStatement, onVa
       label: string,
       index: number,
       statements: binaryen.Statement[],
-      expression?: binaryen.Expression
+      expression?: binaryen.I32Expression
     };
 
     let cases: SwitchCase[] = new Array(node.caseBlock.clauses.length);
-    let defaultCase: SwitchCase;
+    let defaultCase: SwitchCase | null = null;
     const labels: string[] = [];
 
     // scan through cases and also determine default case
@@ -57,7 +57,7 @@ export function compileSwitch(compiler: Compiler, node: ts.SwitchStatement, onVa
           label:  "case" + i + "$" + label,
           index: i,
           statements: statements,
-          expression: compiler.maybeConvertValue(clause, compiler.compileExpression(clause.expression, intType), getWasmType(clause.expression), intType, true)
+          expression: compiler.maybeConvertValue(clause.expression, compiler.compileExpression(clause.expression, intType), getWasmType(clause.expression), intType, true)
         };
         labels.push(cases[i].label);
       }
@@ -68,7 +68,7 @@ export function compileSwitch(compiler: Compiler, node: ts.SwitchStatement, onVa
     let condition = op.i32.const(-1);
     for (let i = cases.length - 1; i >= 0; --i)
       if (cases[i] !== defaultCase)
-        condition = op.select(op.i32.eq(op.getLocal(conditionLocalIndex, binaryenTypeOf(intType, compiler.uintptrSize)), cases[i].expression), op.i32.const(i), condition);
+        condition = op.select(op.i32.eq(op.getLocal(conditionLocalIndex, binaryenTypeOf(intType, compiler.uintptrSize)), <binaryen.I32Expression>cases[i].expression), op.i32.const(i), condition);
 
     // create the innermost br_table block using the first case's label
     let currentBlock = op.block(cases[0].label, [

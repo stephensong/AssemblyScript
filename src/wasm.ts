@@ -22,12 +22,12 @@ export enum TypeKind {
 export class Type {
   kind: TypeKind;
   size: number;
-  underlyingType: Type;
-  structLayout: Type[];
-  shift32: number;
-  mask32: number;
+  underlyingType?: Type;
+  structLayout?: Type[];
+  shift32?: number;
+  mask32?: number;
 
-  constructor(kind: TypeKind, size: number, underlyingType: Type = null) {
+  constructor(kind: TypeKind, size: number, underlyingType?: Type) {
     this.kind = kind;
     this.size = size;
     this.underlyingType = underlyingType;
@@ -132,7 +132,7 @@ export class Type {
 
   toString(): string {
     const str = TypeKind[this.kind];
-    return this.underlyingType === null ? str : str + "." + this.underlyingType.toString();
+    return this.underlyingType ? str + "." + this.underlyingType.toString() : str;
   }
 }
 

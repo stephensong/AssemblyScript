@@ -7,7 +7,13 @@ import * as builtins from "../builtins";
 
 export function compileCall(compiler: Compiler, node: ts.CallExpression, contextualType: wasm.Type): binaryen.Expression {
   const op = compiler.module;
-  const declaration = compiler.checker.getResolvedSignature(node).declaration;
+  const signature = compiler.checker.getResolvedSignature(node);
+  if (!signature) {
+    compiler.error(node, "Unresolvable call target");
+    return op.unreachable();
+  }
+
+  const declaration = signature.declaration;
   const wasmFunction = <wasm.Function>(<any>declaration).wasmFunction; // TODO: that doesn't seem correct
   if (wasmFunction === null)
     throw Error("it isn't correct");
@@ -42,7 +48,7 @@ export function compileCall(compiler: Compiler, node: ts.CallExpression, context
     return op.call(wasmFunction.name, argumentExpressions, binaryenTypeOf(wasmFunction.returnType, compiler.uintptrSize));
 
   // builtin
-  switch (declaration.symbol.name) {
+  switch ((<ts.Symbol>declaration.symbol).name) {
 
     case "rotl":
     case "rotll":

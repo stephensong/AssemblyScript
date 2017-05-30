@@ -8,6 +8,7 @@ var tsnodePkg = require("ts-node/package.json");
 
 child_process.spawn("node", [
   path.join("node_modules", "ts-node", path.normalize(tsnodePkg.bin["ts-node"])),
+  "--project", "cli/asc",
   "cli/asc/index.ts"
 ].concat(process.argv.slice(2)), {
   cwd: path.join(__dirname, ".."),

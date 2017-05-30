@@ -35,13 +35,12 @@ export const defaultFormatDiagnosticsHost: ts.FormatDiagnosticsHost = {
   getCanonicalFileName: ts.createGetCanonicalFileName(ts.sys.useCaseSensitiveFileNames)
 };
 
-export function formatDiagnostics(diagnostics: ts.Diagnostic[], host?: ts.FormatDiagnosticsHost): string {
-  if (!host) host = defaultFormatDiagnosticsHost;
+export function formatDiagnostics(diagnostics: ts.Diagnostic[], host: ts.FormatDiagnosticsHost = defaultFormatDiagnosticsHost): string {
   let output = "";
 
   for (const diagnostic of diagnostics) {
     if (diagnostic.file) {
-      const { line, character } = ts.getLineAndCharacterOfPosition(diagnostic.file, diagnostic.start);
+      const { line, character } = ts.getLineAndCharacterOfPosition(diagnostic.file, <number>diagnostic.start);
       const fileName = diagnostic.file.fileName;
       const relativeFileName = ts.convertToRelativePath(fileName, host.getCurrentDirectory(), relFileName => host.getCanonicalFileName(relFileName));
       output += `${relativeFileName}(${line + 1},${character + 1}): `;
@@ -53,12 +52,13 @@ export function formatDiagnostics(diagnostics: ts.Diagnostic[], host?: ts.Format
   return output;
 }
 
-export function formatDiagnosticsWithColorAndContext(diagnostics: ts.Diagnostic[], host?: ts.FormatDiagnosticsHost): string {
-  if (!host) host = defaultFormatDiagnosticsHost;
+export function formatDiagnosticsWithColorAndContext(diagnostics: ts.Diagnostic[], host: ts.FormatDiagnosticsHost = defaultFormatDiagnosticsHost): string {
   let output = "";
   for (const diagnostic of diagnostics) {
     if (diagnostic.file) {
-      const { start, length, file } = diagnostic;
+      const start = <number>diagnostic.start;
+      const length = <number>diagnostic.length;
+      const file = <ts.SourceFile>diagnostic.file;
       const { line: firstLine, character: firstLineChar } = ts.getLineAndCharacterOfPosition(file, start);
       const { line: lastLine, character: lastLineChar } = ts.getLineAndCharacterOfPosition(file, start + length);
       const lastLineInFile = ts.getLineAndCharacterOfPosition(file, file.text.length).line;

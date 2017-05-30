@@ -1,12 +1,9 @@
 import "byots";
-
 import * as ast from "./ast";
-import * as builtins from "./builtins";
 import { createDiagnosticForNode, printDiagnostic } from "./diagnostics";
-import * as Long from "long";
 import { Profiler } from "./profiler";
 import { byteType, sbyteType, shortType, ushortType, intType, uintType, longType, ulongType, boolType, floatType, doubleType, uintptrType32, uintptrType64, voidType } from "./types";
-import { isImport, isExport, isConst, isStatic, signatureIdentifierOf, binaryenCategoryOf, binaryenTypeOf, binaryenOneOf, binaryenZeroOf, arrayTypeOf, getWasmType, setWasmType, getWasmFunction, setWasmFunction } from "./util";
+import { isImport, isExport, isConst, isStatic, signatureIdentifierOf, binaryenTypeOf, binaryenOneOf, binaryenZeroOf, arrayTypeOf, getWasmType, setWasmType, getWasmFunction, setWasmFunction } from "./util";
 import { binaryen } from "./wasm";
 import * as wasm from "./wasm";
 
@@ -26,14 +23,14 @@ export class Compiler {
   constants: { [key: string]: wasm.Constant } = {};
   globalInitializers: binaryen.Expression[] = [];
   globals: { [key: string]: wasm.Global } = {};
-  userStartFunction: binaryen.Function = null;
+  userStartFunction?: binaryen.Function;
   profiler = new Profiler();
   currentFunction: wasm.Function;
   currentLocals: { [key: string]: wasm.Variable };
   currentBreakContextNumber = 0;
   currentBreakContextDepth = 0;
 
-  static compile(filename: string): binaryen.Module {
+  static compile(filename: string): binaryen.Module | null {
 
     const program = ts.createProgram([ __dirname + "/../assembly.d.ts", filename ], {
       target: ts.ScriptTarget.Latest,
@@ -157,8 +154,13 @@ export class Compiler {
     }
   }
 
-  _initializeGlobal(name: string, type: wasm.Type, mutable: boolean, initializerNode: ts.Expression): void {
+  _initializeGlobal(name: string, type: wasm.Type, mutable: boolean, initializerNode?: ts.Expression): void {
     const op = this.module;
+
+    if (!initializerNode) {
+      op.addGlobal(name, binaryenTypeOf(type, this.uintptrSize), mutable);
+      return;
+    }
 
     if (initializerNode.kind === ts.SyntaxKind.FirstLiteralToken) {
 
@@ -197,13 +199,11 @@ export class Compiler {
   }
 
   initializeGlobal(node: ts.VariableStatement): void {
-    const op = this.module;
-
     for (let i = 0, k = node.declarationList.declarations.length; i < k; ++i) {
       const declaration = node.declarationList.declarations[i];
       const initializerNode = declaration.initializer;
 
-      if (declaration.type) {
+      if (declaration.type && declaration.symbol) {
         const name = declaration.symbol.name;
         const type = this.resolveType(declaration.type);
         const mutable = !isConst(node.declarationList);
@@ -220,7 +220,7 @@ export class Compiler {
   }
 
   private _initializeFunction(node: ts.FunctionDeclaration | ts.MethodDeclaration | ts.ConstructorDeclaration, parent?: ts.ClassDeclaration): void {
-    const name = node.symbol.name;
+    const name = (<ts.Symbol>node.symbol).name; // never undefined
     const isConstructor = node.kind === ts.SyntaxKind.Constructor;
 
     if (name === "memory" && isExport(node))
@@ -266,7 +266,7 @@ export class Compiler {
     }
 
     for (let i = 0, k = node.parameters.length; i < k; ++i) {
-      const parameterName = node.parameters[i].symbol.name;
+      const parameterName = (<ts.Symbol>node.parameters[i].symbol).name;
       const parameterType = this.resolveType(<ts.TypeNode>node.parameters[i].type);
 
       parameterTypes[index] = parameterType;
@@ -293,7 +293,7 @@ export class Compiler {
     if (isImport(node))
       flags |= wasm.FunctionFlags.import;
 
-    const func = new wasm.Function(parent ? parent.symbol.name + "$" + name : name, flags, parameterTypes, returnType);
+    const func = new wasm.Function(parent ? (<ts.Symbol>parent.symbol).name + "$" + name : name, flags, parameterTypes, returnType);
     func.locals = locals;
     func.signature = signature;
     func.signatureIdentifier = signatureIdentifier;
@@ -306,7 +306,6 @@ export class Compiler {
   }
 
   initializeClass(node: ts.ClassDeclaration): void {
-    const name = node.symbol.name;
 
     if (node.typeParameters && node.typeParameters.length !== 0)
       this.error(node.typeParameters[0], "Type parameters are not supported yet");
@@ -340,11 +339,11 @@ export class Compiler {
   }
 
   initializeEnum(node: ts.EnumDeclaration): void {
-    const enumName = node.symbol.name;
+    const enumName = (<ts.Symbol>node.symbol).name;
 
-    for (let i = 0, k = node.members.length, member; i < k; ++i) {
-      const name = enumName + "$" + node.members[i].symbol.name;
-      const value = this.checker.getConstantValue(member);
+    for (let i = 0, k = node.members.length; i < k; ++i) {
+      const name = enumName + "$" + (<ts.Symbol>node.members[i].symbol).name;
+      const value = this.checker.getConstantValue(node.members[i]);
 
       this.constants[name] = <wasm.Constant>{
         name: name,
@@ -407,6 +406,9 @@ export class Compiler {
   }
 
   private _compileFunction(node: ts.FunctionDeclaration | ts.MethodDeclaration | ts.ConstructorDeclaration): binaryen.Function {
+    if (!node.body)
+      throw Error("missing body");
+
     const wasmFunction = getWasmFunction(node);
     const body: binaryen.Statement[] = new Array(node.body.statements.length);
     const additionalLocals: binaryen.Type[] = [];
@@ -453,7 +455,7 @@ export class Compiler {
 
   compileFunction(node: ts.FunctionDeclaration): void {
     const wasmFunction = getWasmFunction(node);
-    const name = node.symbol.name;
+    const name = (<ts.Symbol>node.symbol).name;
 
     if ((wasmFunction.flags & wasm.FunctionFlags.import) !== 0) {
       let moduleName: string;
@@ -522,7 +524,7 @@ export class Compiler {
         return op.nop(); // already handled by TypeScript
 
       case ts.SyntaxKind.EmptyStatement:
-        return ast.compileEmpty(this, <ts.EmptyStatement>node);
+        return ast.compileEmpty(this/*, <ts.EmptyStatement>node*/);
 
       case ts.SyntaxKind.VariableStatement:
         return ast.compileVariable(this, <ts.VariableStatement>node, onVariable);
@@ -632,8 +634,8 @@ export class Compiler {
       if (this.uintptrSize === 4 && fromType.kind === wasm.TypeKind.uintptr && toType.isInt)
         this.warn(node, "Implicit conversion from 'uintptr' to 'uint' will fail when targeting WASM64");
 
-      if (this.uintptrSize === 8 && fromType.isInt && toType.kind === wasm.TypeKind.uintptr)
-        this.warn(node, "Implicit conversion from 'uint' to 'uintptr' will fail when targeting WASM32");
+      if (this.uintptrSize === 8 && fromType.isLong && toType.kind === wasm.TypeKind.uintptr)
+        this.warn(node, "Implicit conversion from 'ulong' to 'uintptr' will fail when targeting WASM32");
     }
 
     setWasmType(node, toType);
@@ -790,16 +792,16 @@ export class Compiler {
       return op.i32.shl(
         op.i32.shr_s(
           expr,
-          op.i32.const(toType.shift32)
+          op.i32.const(<number>toType.shift32)
         ),
-        op.i32.const(toType.shift32)
+        op.i32.const(<number>toType.shift32)
       );
 
     } else { // mask
 
       return op.i32.and(
         expr,
-        op.i32.const(toType.mask32)
+        op.i32.const(<number>toType.mask32)
       );
 
     }
@@ -826,14 +828,18 @@ export class Compiler {
     }
 
     // Otherwise follow any aliases to the original type
-    for (let i = 0, k = symbol.declarations.length; i < k; ++i) {
-      const declaration = symbol.declarations[i];
-      if (declaration.kind === ts.SyntaxKind.TypeAliasDeclaration) {
-        const aliasDeclaration = <ts.TypeAliasDeclaration>declaration;
-        if (aliasDeclaration.type.kind === ts.SyntaxKind.TypeReference)
-          return this.maybeResolveAlias(this.checker.getSymbolAtLocation((<ts.TypeReferenceNode>aliasDeclaration.type).typeName));
+    if (symbol.declarations)
+      for (let i = 0, k = symbol.declarations.length; i < k; ++i) {
+        const declaration = symbol.declarations[i];
+        if (declaration.kind === ts.SyntaxKind.TypeAliasDeclaration) {
+          const aliasDeclaration = <ts.TypeAliasDeclaration>declaration;
+          if (aliasDeclaration.type.kind === ts.SyntaxKind.TypeReference) {
+            const symbolAtLocation = this.checker.getSymbolAtLocation((<ts.TypeReferenceNode>aliasDeclaration.type).typeName);
+            if (symbolAtLocation)
+              return this.maybeResolveAlias(symbolAtLocation);
+          }
+        }
       }
-    }
 
     return symbol;
   }
@@ -853,29 +859,31 @@ export class Compiler {
       case ts.SyntaxKind.TypeReference:
       {
         const referenceNode = <ts.TypeReferenceNode>type;
-        const symbol = this.maybeResolveAlias(this.checker.getSymbolAtLocation(referenceNode.typeName));
+        const symbolAtLocation = this.checker.getSymbolAtLocation(referenceNode.typeName);
+        if (symbolAtLocation) {
+          const symbol = this.maybeResolveAlias(symbolAtLocation);
+          if (symbol) {
 
-        if (symbol) {
+            // Exit early if it's a basic type
+            switch (symbol.name) {
+              case "byte": return byteType;
+              case "sbyte": return sbyteType;
+              case "short": return shortType;
+              case "ushort": return ushortType;
+              case "int": return intType;
+              case "uint": return uintType;
+              case "long": return longType;
+              case "ulong": return ulongType;
+              case "bool": return boolType;
+              case "float": return floatType;
+              case "double": return doubleType;
+              case "uintptr": return this.uintptrType;
+            }
 
-          // Exit early if it's a basic type
-          switch (symbol.name) {
-            case "byte": return byteType;
-            case "sbyte": return sbyteType;
-            case "short": return shortType;
-            case "ushort": return ushortType;
-            case "int": return intType;
-            case "uint": return uintType;
-            case "long": return longType;
-            case "ulong": return ulongType;
-            case "bool": return boolType;
-            case "float": return floatType;
-            case "double": return doubleType;
-            case "uintptr": return this.uintptrType;
+            // TODO
+            // if (referenceName === "Ptr" && referenceNode.typeArguments.length === 1 && referenceNode.typeArguments[0].kind !== ts.SyntaxKind.TypeReference)
+            //   return this.uintptrType.withUnderlyingType(this.resolveType(<ts.TypeReferenceNode>referenceNode.typeArguments[0]));
           }
-
-          // TODO
-          // if (referenceName === "Ptr" && referenceNode.typeArguments.length === 1 && referenceNode.typeArguments[0].kind !== ts.SyntaxKind.TypeReference)
-          //   return this.uintptrType.withUnderlyingType(this.resolveType(<ts.TypeReferenceNode>referenceNode.typeArguments[0]));
         }
       }
     }
@@ -884,7 +892,7 @@ export class Compiler {
     return voidType;
   }
 
-  resolveIdentifier(name: string): wasm.Variable | wasm.Global | wasm.Constant {
+  resolveIdentifier(name: string): wasm.Variable | wasm.Global | wasm.Constant | null {
 
     const referencedLocal = this.currentLocals[name];
     if (referencedLocal)

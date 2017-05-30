@@ -180,7 +180,7 @@ export function compileBinary(compiler: Compiler, node: ts.BinaryExpression, con
 
     const cat = <binaryen.I32Operations | binaryen.I64Operations>binaryenCategoryOf(resultType, op, compiler.uintptrSize);
 
-    let result: binaryen.Expression;
+    let result: binaryen.Expression | null = null;
 
     switch (node.operatorToken.kind) {
 

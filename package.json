@@ -4,6 +4,19 @@
   "version": "0.0.1",
   "author": "Daniel Wirtz <dcode+assemblyscript@dcode.io>",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dcodeIO/AssemblyScript.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dcodeIO/AssemblyScript/issues"
+  },
+  "keywords": [
+    "webassembly",
+    "wasm",
+    "typescript",
+    "compiler"
+  ],
   "bin": {
     "asc": "bin/asc"
   },
@@ -11,11 +24,11 @@
     "@types/long": "^3.0.31",
     "@types/minimist": "^1.2.0",
     "@types/node": "^7.0.22",
-    "byots": "^2.4.0-dev.20170519.2.10",
+    "byots": "2.4.0-dev.20170528.2.9",
     "long": "^3.2.0",
     "minimist": "^1.2.0",
     "ts-node": "^3.0.4",
-    "typescript": "^2.4.0-dev.20170523"
+    "typescript": "2.4.0-dev.20170528"
   },
   "scripts": {
     "build:asc": "tsc -p ./cli/asc/tsconfig.json",

@@ -2,7 +2,6 @@ import { Compiler } from "../compiler";
 import { voidType } from "../types";
 import { getWasmType } from "../util";
 import { binaryen } from "../wasm";
-import * as wasm from "../wasm";
 
 export function compileReturn(compiler: Compiler, node: ts.ReturnStatement): binaryen.Statement {
   const op = compiler.module;

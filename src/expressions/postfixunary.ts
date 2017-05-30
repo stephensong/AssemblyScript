@@ -1,13 +1,11 @@
 import { Compiler } from "../compiler";
 import { intType, voidType } from "../types";
-import { binaryenCategoryOf, binaryenTypeOf, binaryenOneOf, getWasmType, setWasmType } from "../util";
+import { binaryenCategoryOf, binaryenTypeOf, binaryenOneOf, setWasmType } from "../util";
 import { binaryen } from "../wasm";
 import * as wasm from "../wasm";
 
 export function compilePostfixUnary(compiler: Compiler, node: ts.PostfixUnaryExpression, contextualType: wasm.Type): binaryen.Expression {
   const op = compiler.module;
-  const operand = compiler.compileExpression(node.operand, contextualType);
-  const operandType = getWasmType(node.operand);
 
   if (node.operand.kind === ts.SyntaxKind.Identifier) {
 

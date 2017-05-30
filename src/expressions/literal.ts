@@ -1,7 +1,7 @@
 import { Compiler } from "../compiler";
 import * as Long from "long";
-import { byteType, sbyteType, shortType, ushortType, intType, uintType, longType, ulongType, uintptrType32, uintptrType64, boolType, floatType, doubleType } from "../types";
-import { getWasmType, setWasmType } from "../util";
+import { byteType, sbyteType, shortType, ushortType, intType, uintType, longType, ulongType, uintptrType32, uintptrType64, boolType, floatType } from "../types";
+import { setWasmType } from "../util";
 import { binaryen } from "../wasm";
 import * as wasm from "../wasm";
 
@@ -60,11 +60,11 @@ export function compileLiteral(compiler: Compiler, node: ts.LiteralExpression, c
 
       case sbyteType:
       case shortType:
-        return op.i32.const(((intValue >>> 0) << contextualType.shift32) >> contextualType.shift32);
+        return op.i32.const(((intValue >>> 0) << <number>contextualType.shift32) >> <number>contextualType.shift32);
 
       case byteType:
       case ushortType:
-        return op.i32.const(intValue & contextualType.mask32);
+        return op.i32.const(intValue & <number>contextualType.mask32);
 
       case intType:
       case uintType:

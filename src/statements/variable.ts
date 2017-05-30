@@ -10,13 +10,17 @@ export function compileVariableDeclarationList(compiler: Compiler, node: ts.Vari
   for (let i = 0, k = node.declarations.length; i < k; ++i) {
     const declaration = node.declarations[i];
     const declarationName = declaration.name.getText();
-    const declarationType = compiler.resolveType(declaration.type);
+    if (declaration.type) {
+      const declarationType = compiler.resolveType(declaration.type);
 
-    setWasmType(declaration, declarationType);
+      setWasmType(declaration, declarationType);
 
-    const index = onVariable(declarationName, declarationType);
-    if (declaration.initializer)
-      initializers.push(op.setLocal(index, compiler.maybeConvertValue(declaration.initializer, compiler.compileExpression(declaration.initializer, declarationType), getWasmType(declaration.initializer), declarationType, false)));
+      const index = onVariable(declarationName, declarationType);
+      if (declaration.initializer)
+        initializers.push(op.setLocal(index, compiler.maybeConvertValue(declaration.initializer, compiler.compileExpression(declaration.initializer, declarationType), getWasmType(declaration.initializer), declarationType, false)));
+    } else {
+      compiler.error(declaration, "Type expected");
+    }
   }
 
   return initializers.length === 0 ? op.nop()

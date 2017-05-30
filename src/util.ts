@@ -19,7 +19,7 @@ export function isImport(node: ts.Node): boolean {
 }
 
 export function isStatic(node: ts.Node): boolean {
-  return (node.modifierFlagsCache & ts.ModifierFlags.Static) !== 0;
+  return (<ts.ModifierFlags>node.modifierFlagsCache & ts.ModifierFlags.Static) !== 0;
 }
 
 export function isConst(node: ts.Node): boolean {
