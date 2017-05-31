@@ -57,7 +57,7 @@ EXPORT void *memset(void *dest, int c, size_t n);
 EXPORT void *memcpy(void *restrict dest, const void *restrict src, size_t n);
 EXPORT void *malloc(size_t);
 EXPORT void free(void *);
-EXPORT void *wasmMoreCore(int);
+EXPORT void *wasmMoreCore(int); // TODO: this is exported for testing purposes only and should be inlined later on
 
 #include "memset.c"
 #include "memcpy.c"

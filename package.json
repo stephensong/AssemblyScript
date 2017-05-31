@@ -32,7 +32,7 @@
     "typescript": "^2.4.0-dev.20170528"
   },
   "scripts": {
-    "build:malloc": "node lib/malloc/build",
+    "build:malloc": "node scripts/build-malloc",
     "build:library": "node scripts/build-library",
     "build:compiler": "tsc -P src",
     "build:bundle": "browserify --debug out/compiler.js > out/bundle.js",
