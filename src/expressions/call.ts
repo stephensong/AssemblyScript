@@ -118,6 +118,15 @@ export function compileCall(compiler: Compiler, node: ts.CallExpression, context
     case "grow_memory":
       return builtins.grow_memory(compiler, node.arguments[0], argumentExpressions[0]);
 
+    case "memset":
+      return op.call("0", argumentExpressions, wasmFunction.returnType);
+    case "memcpy":
+      return op.call("1", argumentExpressions, wasmFunction.returnType);
+    case "malloc":
+      return op.call("2", argumentExpressions, wasmFunction.returnType);
+    case "free":
+      return op.call("3", argumentExpressions, wasmFunction.returnType);
+
   }
 
   // import

@@ -232,6 +232,8 @@ declare module binaryen {
 
   }
 
+  function readBinary(data: Uint8Array): Module;
+
   // These are actually pointers internally
   abstract class Type {}
   abstract class Statement {}

@@ -1,7 +1,8 @@
 import "byots";
 import * as ast from "./ast";
+import * as base64 from "@protobufjs/base64";
 import { createDiagnosticForNode, printDiagnostic } from "./diagnostics";
-import { librarySource } from "./library";
+import { libSource, mallocSource } from "./library";
 import { Profiler } from "./profiler";
 import { byteType, sbyteType, shortType, ushortType, intType, uintType, longType, ulongType, boolType, floatType, doubleType, uintptrType32, uintptrType64, voidType } from "./types";
 import { isImport, isExport, isConst, isStatic, signatureIdentifierOf, binaryenTypeOf, binaryenOneOf, binaryenZeroOf, arrayTypeOf, getWasmType, setWasmType, getWasmFunction, setWasmFunction } from "./util";
@@ -17,6 +18,15 @@ const tsCompilerOptions = <ts.CompilerOptions>{
   experimentalDecorators: true,
   types: []
 };
+
+// Set up malloc once
+const mallocBuffer = new Uint8Array(base64.length(mallocSource));
+base64.decode(mallocSource, mallocBuffer, 0);
+
+interface CompilerOptions {
+  uintptrSize?: number;
+  noLib?: boolean;
+}
 
 // Rule #1: This is a compiler, not an optimizer. Makes life a lot easier.
 
@@ -39,16 +49,16 @@ export class Compiler {
   currentBreakContextNumber = 0;
   currentBreakContextDepth = 0;
 
-  static compileFile(filename: string): binaryen.Module | null {
+  static compileFile(filename: string, options?: CompilerOptions): binaryen.Module | null {
     const program = ts.createProgram([ __dirname + "/../assembly.d.ts", filename ], tsCompilerOptions);
-    return Compiler.compileProgram(program);
+    return Compiler.compileProgram(program, options);
   }
 
-  static compileString(source: string): binaryen.Module | null {
+  static compileString(source: string, options?: CompilerOptions): binaryen.Module | null {
     const sourceFileName = "module.ts";
     const sourceFile = ts.createSourceFile(sourceFileName, source, ts.ScriptTarget.Latest);
     const libraryFileName = "assembly.d.ts";
-    const libraryFile = ts.createSourceFile(libraryFileName, librarySource, ts.ScriptTarget.Latest);
+    const libraryFile = ts.createSourceFile(libraryFileName, libSource, ts.ScriptTarget.Latest);
 
     const program = ts.createProgram([ libraryFileName, sourceFileName ], tsCompilerOptions, <ts.CompilerHost>{
       getSourceFile: (fileName) => fileName === sourceFileName ? sourceFile : fileName === libraryFileName ? libraryFile : undefined,
@@ -57,16 +67,16 @@ export class Compiler {
       getDirectories: () => [ "." ],
       getCanonicalFileName: (fileName) => fileName,
       getNewLine: () => "\n",
-      readFile: (fileName) => fileName === sourceFileName ? source : fileName === libraryFileName ? librarySource : null,
+      readFile: (fileName) => fileName === sourceFileName ? source : fileName === libraryFileName ? libSource : null,
       writeFile: () => undefined,
       useCaseSensitiveFileNames: () => true,
       fileExists: (fileName) => fileName === sourceFileName || fileName === libraryFileName
     });
-    return Compiler.compileProgram(program);
+    return Compiler.compileProgram(program, options);
   }
 
-  static compileProgram(program: ts.Program): binaryen.Module | null {
-    const compiler = new Compiler(program);
+  static compileProgram(program: ts.Program, options?: CompilerOptions): binaryen.Module | null {
+    const compiler = new Compiler(program, options);
 
     // bail out if there were 'pre emit' errors
     let diagnostics = ts.getPreEmitDiagnostics(compiler.program);
@@ -99,16 +109,21 @@ export class Compiler {
     return compiler.module;
   }
 
-  constructor(program: ts.Program, uintptrSize = 4) {
-    if (uintptrSize !== 4 && uintptrSize !== 8)
-      throw Error("unsupported uintptrSize");
+  constructor(program: ts.Program, options?: CompilerOptions) {
+    if (!options)
+      options = {};
+
+    if (options.uintptrSize) {
+      this.uintptrSize = options.uintptrSize | 0;
+      if (this.uintptrSize !== 4 && this.uintptrSize !== 8)
+        throw Error("unsupported uintptrSize");
+    }
 
     this.program = program;
     this.checker = program.getDiagnosticsProducingTypeChecker();
     this.diagnostics = ts.createDiagnosticCollection();
-    this.module = new binaryen.Module();
-    this.uintptrSize = uintptrSize;
-    this.uintptrType = uintptrSize === 4 ? uintptrType32 : uintptrType64;
+    this.module = options.noLib ? new binaryen.Module() : binaryen.readBinary(mallocBuffer);
+    this.uintptrType = this.uintptrSize === 4 ? uintptrType32 : uintptrType64;
 
     // the last non-declaration source file is assumed to be the entry file (TODO: does this work in all cases?)
     const sourceFiles = program.getSourceFiles();

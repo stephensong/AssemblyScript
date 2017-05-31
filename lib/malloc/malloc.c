@@ -45,11 +45,11 @@ static inline void *sbrk(ptrdiff_t increment) {
   return (void *)__builtin_wasm_grow_memory(pages > 1 ? pages : 1);
 }
 
-EXPORT void *memcpy(void *restrict dest, const void *restrict src, size_t n);
 EXPORT void *memset(void *dest, int c, size_t n);
+EXPORT void *memcpy(void *restrict dest, const void *restrict src, size_t n);
 EXPORT void *malloc(size_t);
 EXPORT void free(void *);
 
-#include "memcpy.c"
 #include "memset.c"
+#include "memcpy.c"
 #include "dlmalloc.c"

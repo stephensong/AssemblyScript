@@ -21,6 +21,7 @@
     "asc": "bin/asc"
   },
   "dependencies": {
+    "@protobufjs/base64": "^1.1.1",
     "@types/long": "^3.0.31",
     "@types/minimist": "^1.2.0",
     "@types/node": "^7.0.22",

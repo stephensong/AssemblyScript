@@ -10,10 +10,11 @@ const argv = minimist(process.argv.slice(2), {
     out: [ "o", "outFile" ],
     validate: [ "v" ],
     optimize: [ "O" ],
-    text: [ "t" ]
+    text: [ "t" ],
+    nolib: [ "noLib" ]
   },
   string: [ "out" ],
-  boolean: [ "text", "optimize", "validate" ]
+  boolean: [ "text", "optimize", "validate", "nolib" ]
 });
 
 const files = argv._;
@@ -28,12 +29,13 @@ if (files.length !== 1) {
     " -v, --validate         Validates the module.",
     " -O, --optimize         Runs optimizing binaryen IR passes.",
     " -t, --text             Emits text format instead of a binary.",
+    " --nolib                Excludes statically linked malloc/free.",
     ""
   ].join("\n"));
   process.exit(1);
 }
 
-const wasmModule = Compiler.compileFile(files[0]);
+const wasmModule = Compiler.compileFile(files[0], { noLib: !!argv.noLib });
 
 if (!wasmModule)
   process.exit(1);

@@ -101,3 +101,9 @@ declare function reinterpretf(value: int): float;
 declare function reinterpretd(value: long): double;
 declare function current_memory(): int;
 declare function grow_memory(value: int): int;
+
+// Linked-in standard library
+declare function memset(dest: uintptr, c: int, size: uintptr): uintptr; // $0
+declare function memcpy(dest: uintptr, src: uintptr, size: uintptr): uintptr; // $1
+declare function malloc(size: uintptr): uintptr; // $2
+declare function free(ptr: uintptr): void; // $3
