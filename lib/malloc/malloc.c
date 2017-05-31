@@ -42,17 +42,6 @@ typedef _Addr ptrdiff_t;
 
 #undef _Addr
 
-static void *sbrk(ptrdiff_t increment) {
-  // Convention here is that the initial heap pointer is stored at offset sizeof(uintptr_t) as an
-  // uintptr_t value. We return its value when dlmalloc calls sbrk(0) to determine where to start.
-  if (increment == 0)
-    return (void *)(*(uintptr_t *)(void *)sizeof(uintptr_t));
-  else {
-    int pages = increment >> 16;
-    return (void *)(__builtin_wasm_grow_memory(pages > 1 ? pages : 1) << 16);
-  }
-}
-
 EXPORT void *memset(void *dest, int c, size_t n);
 EXPORT void *memcpy(void *restrict dest, const void *restrict src, size_t n);
 EXPORT void *malloc(size_t);
