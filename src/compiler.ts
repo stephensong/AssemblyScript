@@ -1,6 +1,7 @@
 import "byots";
 import * as ast from "./ast";
 import { createDiagnosticForNode, printDiagnostic } from "./diagnostics";
+import { librarySource } from "./library";
 import { Profiler } from "./profiler";
 import { byteType, sbyteType, shortType, ushortType, intType, uintType, longType, ulongType, boolType, floatType, doubleType, uintptrType32, uintptrType64, voidType } from "./types";
 import { isImport, isExport, isConst, isStatic, signatureIdentifierOf, binaryenTypeOf, binaryenOneOf, binaryenZeroOf, arrayTypeOf, getWasmType, setWasmType, getWasmFunction, setWasmFunction } from "./util";
@@ -8,6 +9,14 @@ import { binaryen } from "./wasm";
 import * as wasm from "./wasm";
 
 const MEM_MAX_32 = (1 << 16) - 1; // 65535 (pageSize) * 65535 (n) ^= 4GB
+
+const tsCompilerOptions = <ts.CompilerOptions>{
+  target: ts.ScriptTarget.Latest,
+  module: ts.ModuleKind.None,
+  noLib: true,
+  experimentalDecorators: true,
+  types: []
+};
 
 // Rule #1: This is a compiler, not an optimizer. Makes life a lot easier.
 
@@ -30,16 +39,33 @@ export class Compiler {
   currentBreakContextNumber = 0;
   currentBreakContextDepth = 0;
 
-  static compile(filename: string): binaryen.Module | null {
+  static compileFile(filename: string): binaryen.Module | null {
+    const program = ts.createProgram([ __dirname + "/../assembly.d.ts", filename ], tsCompilerOptions);
+    return Compiler.compileProgram(program);
+  }
 
-    const program = ts.createProgram([ __dirname + "/../assembly.d.ts", filename ], {
-      target: ts.ScriptTarget.Latest,
-      module: ts.ModuleKind.None,
-      noLib: true,
-      experimentalDecorators: true,
-      types: []
+  static compileString(source: string): binaryen.Module | null {
+    const sourceFileName = "module.ts";
+    const sourceFile = ts.createSourceFile(sourceFileName, source, ts.ScriptTarget.Latest);
+    const libraryFileName = "assembly.d.ts";
+    const libraryFile = ts.createSourceFile(libraryFileName, librarySource, ts.ScriptTarget.Latest);
+
+    const program = ts.createProgram([ libraryFileName, sourceFileName ], tsCompilerOptions, <ts.CompilerHost>{
+      getSourceFile: (fileName) => fileName === sourceFileName ? sourceFile : fileName === libraryFileName ? libraryFile : undefined,
+      getDefaultLibFileName: () => libraryFileName,
+      getCurrentDirectory: () => ".",
+      getDirectories: () => [ "." ],
+      getCanonicalFileName: (fileName) => fileName,
+      getNewLine: () => "\n",
+      readFile: (fileName) => fileName === sourceFileName ? source : fileName === libraryFileName ? librarySource : null,
+      writeFile: () => undefined,
+      useCaseSensitiveFileNames: () => true,
+      fileExists: (fileName) => fileName === sourceFileName || fileName === libraryFileName
     });
+    return Compiler.compileProgram(program);
+  }
 
+  static compileProgram(program: ts.Program): binaryen.Module | null {
     const compiler = new Compiler(program);
 
     // bail out if there were 'pre emit' errors

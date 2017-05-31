@@ -33,7 +33,7 @@ if (files.length !== 1) {
   process.exit(1);
 }
 
-const wasmModule = Compiler.compile(files[0]);
+const wasmModule = Compiler.compileFile(files[0]);
 
 if (!wasmModule)
   process.exit(1);

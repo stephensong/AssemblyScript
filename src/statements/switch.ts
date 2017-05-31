@@ -29,14 +29,14 @@ export function compileSwitch(compiler: Compiler, node: ts.SwitchStatement, onVa
     // create a temporary variable holding the switch expression's result
     const conditionLocalIndex = onVariable("condition$" + label, intType);
 
-    type SwitchCase = {
-      label: string,
-      index: number,
-      statements: binaryen.Statement[],
-      expression?: binaryen.I32Expression
-    };
+    interface SwitchCase {
+      label: string;
+      index: number;
+      statements: binaryen.Statement[];
+      expression?: binaryen.I32Expression;
+    }
 
-    let cases: SwitchCase[] = new Array(node.caseBlock.clauses.length);
+    const cases: SwitchCase[] = new Array(node.caseBlock.clauses.length);
     let defaultCase: SwitchCase | null = null;
     const labels: string[] = [];
 
@@ -46,7 +46,7 @@ export function compileSwitch(compiler: Compiler, node: ts.SwitchStatement, onVa
       const statements: binaryen.Statement[] = new Array(clause.statements.length);
       for (let j = 0, l = clause.statements.length; j < l; ++j)
         statements[j] = compiler.compileStatement(clause.statements[j], onVariable);
-      if (clause.kind == ts.SyntaxKind.DefaultClause) {
+      if (clause.kind === ts.SyntaxKind.DefaultClause) {
         defaultCase = cases[i] = {
           label: "default$" + label,
           index: i,
