@@ -32,6 +32,7 @@
     "typescript": "^2.4.0-dev.20170528"
   },
   "scripts": {
+    "build:malloc": "node lib/malloc/build",
     "build:library": "node scripts/build-library",
     "build:compiler": "tsc -P src",
     "build:bundle": "browserify --debug out/compiler.js > out/bundle.js",
@@ -44,6 +45,7 @@
     "browserify": "^14.4.0",
     "tslint": "^5.3.2",
     "tslint-eslint-rules": "^4.1.1",
-    "uglify-js": "^3.0.13"
+    "uglify-js": "^3.0.13",
+    "webassembly": "^0.10.4"
   }
 }

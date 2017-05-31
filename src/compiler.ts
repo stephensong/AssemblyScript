@@ -2,7 +2,7 @@ import "byots";
 import * as ast from "./ast";
 import * as base64 from "@protobufjs/base64";
 import { createDiagnosticForNode, printDiagnostic } from "./diagnostics";
-import { libSource, mallocSource } from "./library";
+import { libSource, mallocBlob } from "./library";
 import { Profiler } from "./profiler";
 import { byteType, sbyteType, shortType, ushortType, intType, uintType, longType, ulongType, boolType, floatType, doubleType, uintptrType32, uintptrType64, voidType } from "./types";
 import { isImport, isExport, isConst, isStatic, signatureIdentifierOf, binaryenTypeOf, binaryenOneOf, binaryenZeroOf, arrayTypeOf, getWasmType, setWasmType, getWasmFunction, setWasmFunction } from "./util";
@@ -20,8 +20,8 @@ const tsCompilerOptions = <ts.CompilerOptions>{
 };
 
 // Set up malloc once
-const mallocBuffer = new Uint8Array(base64.length(mallocSource));
-base64.decode(mallocSource, mallocBuffer, 0);
+const mallocBuffer = new Uint8Array(base64.length(mallocBlob));
+base64.decode(mallocBlob, mallocBuffer, 0);
 
 interface CompilerOptions {
   uintptrSize?: number;
@@ -117,7 +117,8 @@ export class Compiler {
       this.uintptrSize = options.uintptrSize | 0;
       if (this.uintptrSize !== 4 && this.uintptrSize !== 8)
         throw Error("unsupported uintptrSize");
-    }
+    } else
+      this.uintptrSize = 4;
 
     this.program = program;
     this.checker = program.getDiagnosticsProducingTypeChecker();
@@ -155,9 +156,16 @@ export class Compiler {
 
   initialize(): void {
     const compiler = this;
+    const op = this.module;
 
     // TODO: it seem that binaryen.js doesn't support importing memory yet
-    this.module.setMemory(256, MEM_MAX_32, "memory", []);
+    // Convention here is that the initial heap offset is stored at offset sizeof(uintptr) as an uintptr,
+    // leaving space for NULL at offset 0.
+    const initialHeapOffsetData = new Uint8Array(this.uintptrSize);
+    initialHeapOffsetData[0] = this.uintptrSize + this.uintptrSize;
+    this.module.setMemory(1, MEM_MAX_32, "memory", [
+      { offset: op.i32.const(this.uintptrSize), data: initialHeapOffsetData }
+    ]);
 
     const sourceFiles = this.program.getSourceFiles();
     for (let i = 0, k = sourceFiles.length, file; i < k; ++i) {
@@ -274,7 +282,7 @@ export class Compiler {
 
     let parameterTypes: wasm.Type[];
     let signatureIdentifiers: string[]; // including return type
-    let signatureTypes: binaryen.Type[]; // excluding return type
+    let binaryenSignatureTypes: binaryen.Type[]; // excluding return type
     let locals: wasm.Variable[];
     let index = 0;
     let flags = 0;
@@ -282,14 +290,14 @@ export class Compiler {
     if (parent && !isStatic(<ts.MethodDeclaration>node) && !isConstructor) { // add implicit 'this' as the first argument
 
       parameterTypes = new Array(node.parameters.length + 1);
-      signatureTypes = new Array(parameterTypes.length);
+      binaryenSignatureTypes = new Array(parameterTypes.length);
       signatureIdentifiers = new Array(parameterTypes.length + 1);
       locals = new Array(parameterTypes.length);
 
       const thisType = this.uintptrType; // TODO: underlyingType
 
       parameterTypes[0] = thisType;
-      signatureTypes[0] = binaryenTypeOf(thisType, this.uintptrSize);
+      binaryenSignatureTypes[0] = binaryenTypeOf(thisType, this.uintptrSize);
       signatureIdentifiers[0] = signatureIdentifierOf(thisType, this.uintptrSize);
       locals[0] = new wasm.Variable("this", thisType, 0);
 
@@ -301,7 +309,7 @@ export class Compiler {
 
       parameterTypes = new Array(node.parameters.length);
       signatureIdentifiers = new Array(parameterTypes.length + 1);
-      signatureTypes = new Array(parameterTypes.length);
+      binaryenSignatureTypes = new Array(parameterTypes.length);
       locals = new Array(parameterTypes.length);
       index = 0;
     }
@@ -311,7 +319,7 @@ export class Compiler {
       const parameterType = this.resolveType(<ts.TypeNode>node.parameters[i].type);
 
       parameterTypes[index] = parameterType;
-      signatureTypes[index] = binaryenTypeOf(parameterType, this.uintptrSize);
+      binaryenSignatureTypes[index] = binaryenTypeOf(parameterType, this.uintptrSize);
       signatureIdentifiers[index] = signatureIdentifierOf(parameterType, this.uintptrSize);
       locals[index] = new wasm.Variable(parameterName, parameterType, index);
 
@@ -323,8 +331,11 @@ export class Compiler {
     const signatureIdentifier = signatureIdentifiers.join("");
     let signature = this.signatures[signatureIdentifier];
     if (!signature) {
-      // TODO: Create used signatures only (binaryen -O does not handle this)
-      signature = this.module.addFunctionType(signatureIdentifier, binaryenTypeOf(returnType, this.uintptrSize), signatureTypes);
+      // TODO: binaryen -O does not handle now unused signatures after optimization
+      const binaryenReturnType = binaryenTypeOf(returnType, this.uintptrSize);
+      signature = this.module.getFunctionType(binaryenReturnType, binaryenSignatureTypes);
+      if (!signature)
+        signature = this.module.addFunctionType(signatureIdentifier, binaryenReturnType, binaryenSignatureTypes);
       this.signatures[signatureIdentifier] = signature;
     }
 
@@ -438,9 +449,13 @@ export class Compiler {
     if (this.userStartFunction)
       body[i] = op.call("start", [], binaryen.none);
 
-    let signature = this.signatures.v;
-    if (!signature)
-      signature = this.signatures.v = this.module.addFunctionType("v", binaryen.none, []);
+    const startSignatureIdentifier = "v";
+    let signature = this.signatures[startSignatureIdentifier];
+    if (!signature) {i
+      signature = this.signatures[startSignatureIdentifier] = this.module.getFunctionType(binaryen.none, []);
+      if (!signature)
+        signature = this.signatures[startSignatureIdentifier] = this.module.addFunctionType(startSignatureIdentifier, binaryen.none, []);
+    }
     this.module.setStart(
       this.module.addFunction(this.userStartFunction ? "executeGlobalInitializersAndCallStart" : "executeGlobalInitalizers", signature, [], op.block("", body))
     );

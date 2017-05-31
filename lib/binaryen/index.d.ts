@@ -186,15 +186,21 @@ declare module binaryen {
     ge(left: F64Expression, right: F64Expression): F64Expression;
   }
 
+  interface MemorySegment {
+    offset: I32Expression;
+    data: Uint8Array;
+  }
+
   class Module {
 
     addFunctionType(name: string, resultType: Type, paramTypes: Type[]): Signature;
+    getFunctionType(resultType: Type, paramTypes: Type[]): Signature;
     addFunction(name: string, functionType: Signature, varTypes: Type[], body: Statement): binaryen.Function;
     addGlobal(name: string, type: Type, mutable: boolean, init?: Expression): Expression;
     addImport(internalName: string, externalModuleName: string, externalBaseName: string, functionType?: Signature): void;
     addExport(internalName: string, externalName: string): void;
     setFunctionTable(funcs: number[]): void;
-    setMemory(initial: number, maximum: number, exportName?: string, segments?: number[]): void;
+    setMemory(initial: number, maximum: number, exportName?: string, segments?: MemorySegment[]): void;
     setStart(start: binaryen.Function): void;
 
     emitBinary(): Uint8Array;
