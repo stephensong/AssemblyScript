@@ -3,6 +3,7 @@ import * as ast from "./ast";
 import * as base64 from "@protobufjs/base64";
 import { createDiagnosticForNode, printDiagnostic } from "./diagnostics";
 import { libSource, mallocBlob } from "./library";
+import * as path from "path";
 import { Profiler } from "./profiler";
 import { byteType, sbyteType, shortType, ushortType, intType, uintType, longType, ulongType, boolType, floatType, doubleType, uintptrType32, uintptrType64, voidType } from "./types";
 import { isImport, isExport, isConst, isStatic, signatureIdentifierOf, binaryenTypeOf, binaryenOneOf, binaryenZeroOf, arrayTypeOf, getWasmType, setWasmType, getWasmFunction, setWasmFunction } from "./util";
@@ -51,6 +52,7 @@ export class Compiler {
   currentLocals: { [key: string]: wasm.Variable };
   currentBreakContextNumber = 0;
   currentBreakContextDepth = 0;
+  currentPrefix?: string;
 
   static compileFile(filename: string, options?: CompilerOptions): binaryen.Module | null {
     const program = ts.createProgram([ __dirname + "/../assembly.d.ts", filename ], tsCompilerOptions);
@@ -167,6 +169,10 @@ export class Compiler {
     for (let i = 0, k = sourceFiles.length, file; i < k; ++i) {
       file = sourceFiles[i];
 
+      this.currentPrefix = file === this.entryFile
+        ? undefined
+        : path.relative(path.dirname(this.entryFile.fileName), file.fileName).replace(/[^a-zA-Z0-9\.\/$]/g, "");
+
       for (let j = 0, l = file.statements.length, statement; j < l; ++j) {
         switch ((statement = file.statements[j]).kind) {
 
@@ -204,6 +210,9 @@ export class Compiler {
 
   _initializeGlobal(name: string, type: wasm.Type, mutable: boolean, initializerNode?: ts.Expression): void {
     const op = this.module;
+
+    if (this.currentPrefix)
+      name = this.currentPrefix + "/" + name;
 
     if (!initializerNode) {
       op.addGlobal(name, binaryenTypeOf(type, this.uintptrSize), mutable);
@@ -268,7 +277,8 @@ export class Compiler {
   }
 
   private _initializeFunction(node: ts.FunctionDeclaration | ts.MethodDeclaration | ts.ConstructorDeclaration, parent?: ts.ClassDeclaration): void {
-    const name = (<ts.Symbol>node.symbol).name; // never undefined
+    let name = (<ts.Symbol>node.symbol).name; // never undefined
+
     const isConstructor = node.kind === ts.SyntaxKind.Constructor;
 
     if (name === "memory" && isExport(node))
@@ -344,7 +354,11 @@ export class Compiler {
     if (isImport(node))
       flags |= wasm.FunctionFlags.import;
 
-    const func = new wasm.Function(parent ? (<ts.Symbol>parent.symbol).name + "$" + name : name, flags, parameterTypes, returnType);
+    let internalName = parent ? (<ts.Symbol>parent.symbol).name + "$" + name : name;
+    if (this.currentPrefix)
+      internalName = this.currentPrefix + "/" + internalName;
+
+    const func = new wasm.Function(internalName, flags, parameterTypes, returnType);
     func.locals = locals;
     func.signature = signature;
     func.signatureIdentifier = signatureIdentifier;
@@ -393,7 +407,9 @@ export class Compiler {
     const enumName = (<ts.Symbol>node.symbol).name;
 
     for (let i = 0, k = node.members.length; i < k; ++i) {
-      const name = enumName + "$" + (<ts.Symbol>node.members[i].symbol).name;
+      let name = enumName + "$" + (<ts.Symbol>node.members[i].symbol).name;
+      if (this.currentPrefix)
+        name = this.currentPrefix + "/" + name;
       const value = this.checker.getConstantValue(node.members[i]);
 
       this.constants[name] = <wasm.Constant>{
