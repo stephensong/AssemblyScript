@@ -38,10 +38,28 @@ export function compileCall(compiler: Compiler, node: ts.CallExpression, context
     argumentExpressions[i] = compiler.maybeConvertValue(node.arguments[i], compiler.compileExpression(node.arguments[i], wasmFunction.parameterTypes[i]), getWasmType(node.arguments[i]), wasmFunction.parameterTypes[i], false);
 
   if (i < argumentExpressions.length) { // TODO: pull default value initializers from declaration
-
     compiler.error(node, "Invalid number of arguments", "Expected " + declaration.parameters.length + " but saw " + node.arguments.length);
     return op.unreachable();
+  }
 
+  let typeArguments: wasm.Type[] = [];
+
+  if (declaration.typeParameters) {
+    if (!node.typeArguments || node.typeArguments.length !== declaration.typeParameters.length) {
+      compiler.error(node, "Invalid number of type arguments");
+      return op.unreachable();
+    }
+    i = 0;
+    typeArguments = new Array(node.typeArguments.length);
+    for (const k = declaration.typeParameters.length; i < k; ++i) {
+      const resolvedType = compiler.resolveType(node.typeArguments[i]);
+      if (!resolvedType) {
+        compiler.error(node.typeArguments[i], "Unresolvable type");
+        return op.unreachable();
+      }
+      // TODO: check if type is valid
+      typeArguments[i] = resolvedType;
+    }
   }
 
   // user function
@@ -128,6 +146,8 @@ export function compileCall(compiler: Compiler, node: ts.CallExpression, context
     case "free":
       return op.call(freeInternalName, argumentExpressions, wasmFunction.returnType);
 
+    case "sizeof":
+      return builtins.sizeof(compiler, typeArguments[0]);
   }
 
   // import

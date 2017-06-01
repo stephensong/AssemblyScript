@@ -2,5 +2,8 @@
 
 import { Hello } from "./import";
 
-export function main(): void {
+var aGlobal: int = 1;
+
+export function main(): uintptr {
+  return sizeof<uintptr>();
 }

@@ -14,3 +14,6 @@ export class Hello {
   static anotherStaticVoid(): void {
   }
 }
+
+const aConstGlobalInAnImport: int = 2;
+let aGlobalInAnImport: byte = 3;

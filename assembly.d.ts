@@ -53,9 +53,6 @@ declare type uint32 = uint;
 declare type int64 = long;
 declare type uint64 = ulong;
 
-/** Retrieves the byte size of a data structure. */
-declare function sizeof<T>(): uintptr;
-
 // Fillers for TypeScript complaining about missing types with 'nolib'
 interface Array<T> { }
 interface Boolean { }
@@ -101,6 +98,11 @@ declare function reinterpretf(value: int): float;
 declare function reinterpretd(value: long): double;
 declare function current_memory(): int;
 declare function grow_memory(value: int): int;
+
+declare function sizeof<T>(): uintptr;
+// declare function allocate<T>(): T;
+// declare function allocate<T>(size: uint): T[];
+// declare function deallocate<T>(reference: T): void;
 
 // Linked-in standard library
 declare function memset(dest: uintptr, c: int, size: uintptr): uintptr; // $0

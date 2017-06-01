@@ -39,13 +39,13 @@
     "build:minified": "uglifyjs --compress --mangle --output dist/assemblyscript.min.js --source-map content=inline,url=assemblyscript.min.js.map -- out/bundle.js",
     "build": "npm run build:library && npm run build:compiler && npm run build:bundle && npm run build:minified",
     "lint": "tslint -c tslint.json src/**/*.ts cli/**/*.ts",
-    "test": "node bin/asc --nolib tests/test.ts"
+    "test": "node bin/asc tests/test.ts"
   },
   "devDependencies": {
     "browserify": "^14.4.0",
     "tslint": "^5.3.2",
     "tslint-eslint-rules": "^4.1.1",
     "uglify-js": "^3.0.13",
-    "webassembly": "^0.10.4"
+    "webassembly": "^0.11.0"
   }
 }

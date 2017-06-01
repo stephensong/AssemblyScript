@@ -48,7 +48,7 @@ function load(file) {
   console.log("loading '" + file + "' ...");
   fetch(file)
     .then(result => result.arrayBuffer())
-    .then(buffer => WebAssembly.instantiate(buffer, { env: { memory: memory }}))
+    .then(buffer => WebAssembly.instantiate(buffer, { env: { memory: memory, wasm_debug: function() { console.log(arguments); } }}))
     .then(result => {
       Object.keys(exports = result.instance.exports).forEach(key => {
         if (typeof exports[key] === 'function')

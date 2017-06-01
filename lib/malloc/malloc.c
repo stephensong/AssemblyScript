@@ -26,6 +26,7 @@
 #define MORECORE wasm_morecore
 #define DLMALLOC_EXPORT
 
+// utility
 #define export __attribute__((visibility("default")))
 
 // sizes
@@ -52,6 +53,10 @@ static inline void *wasm_morecore(ptrdiff_t);
 #include "dlmalloc.c"
 
 void *wasm_morecore(ptrdiff_t size) {
+  // this sbrk implementation is conflict-free in that it always allocates new pages for its own
+  // use. in the future, i.e. once we know how memory is structured, this can be optimized to reuse
+  // remaining initial memory.
+
   uintptr_t heapMax = __builtin_wasm_current_memory() << 16;
   if (size > 0) {
     if (size < 65536 || (size & 65535) != 0) // expects a multiple of page size

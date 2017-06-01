@@ -52,7 +52,7 @@ export class Compiler {
   currentLocals: { [key: string]: wasm.Variable };
   currentBreakContextNumber = 0;
   currentBreakContextDepth = 0;
-  currentPrefix?: string;
+  classes: { [key: string]: wasm.Class } = {};
 
   static compileFile(filename: string, options?: CompilerOptions): binaryen.Module | null {
     const program = ts.createProgram([ __dirname + "/../assembly.d.ts", filename ], tsCompilerOptions);
@@ -169,10 +169,6 @@ export class Compiler {
     for (let i = 0, k = sourceFiles.length, file; i < k; ++i) {
       file = sourceFiles[i];
 
-      this.currentPrefix = file === this.entryFile
-        ? undefined
-        : path.relative(path.dirname(this.entryFile.fileName), file.fileName).replace(/[^a-zA-Z0-9\.\/$]/g, "");
-
       for (let j = 0, l = file.statements.length, statement; j < l; ++j) {
         switch ((statement = file.statements[j]).kind) {
 
@@ -211,11 +207,9 @@ export class Compiler {
   _initializeGlobal(name: string, type: wasm.Type, mutable: boolean, initializerNode?: ts.Expression): void {
     const op = this.module;
 
-    if (this.currentPrefix)
-      name = this.currentPrefix + "/" + name;
-
     if (!initializerNode) {
       op.addGlobal(name, binaryenTypeOf(type, this.uintptrSize), mutable);
+      this.globals[name] = new wasm.Global(name, type, mutable);
       return;
     }
 
@@ -233,11 +227,7 @@ export class Compiler {
         }
       } */
 
-      if (!mutable) {
-
-        this.error(initializerNode, "Unsupported global constant initializer");
-
-      } else {
+      if (mutable) {
 
         op.addGlobal(name, binaryenTypeOf(type, this.uintptrSize), mutable, binaryenZeroOf(type, this.module, this.uintptrSize));
         this.globals[name] = new wasm.Global(name, type, mutable);
@@ -250,8 +240,9 @@ export class Compiler {
           )
         );
 
+      } else {
+        this.error(initializerNode, "Unsupported global constant initializer");
       }
-
     }
   }
 
@@ -261,7 +252,7 @@ export class Compiler {
       const initializerNode = declaration.initializer;
 
       if (declaration.type && declaration.symbol) {
-        const name = declaration.symbol.name;
+        const name = this.resolveName(declaration);
         const type = this.resolveType(declaration.type);
         const mutable = !isConst(node.declarationList);
 
@@ -277,8 +268,7 @@ export class Compiler {
   }
 
   private _initializeFunction(node: ts.FunctionDeclaration | ts.MethodDeclaration | ts.ConstructorDeclaration, parent?: ts.ClassDeclaration): void {
-    let name = (<ts.Symbol>node.symbol).name; // never undefined
-
+    const name = this.resolveName(node);
     const isConstructor = node.kind === ts.SyntaxKind.Constructor;
 
     if (name === "memory" && isExport(node))
@@ -286,8 +276,8 @@ export class Compiler {
 
     const returnType: wasm.Type = isConstructor ? this.uintptrType : this.resolveType(<ts.TypeNode>node.type, true);
 
-    if (node.typeParameters && node.typeParameters.length !== 0 && !node.getSourceFile().isDeclarationFile) // TODO: allowed in assembly.d.ts for now
-      this.error(node.typeParameters[0], "Type parameters are not supported yet");
+    // if (node.typeParameters && node.typeParameters.length !== 0)
+    // this.error(node.typeParameters[0], "Type parameters are not supported yet");
 
     let parameterTypes: wasm.Type[];
     let signatureIdentifiers: string[]; // including return type
@@ -354,11 +344,11 @@ export class Compiler {
     if (isImport(node))
       flags |= wasm.FunctionFlags.import;
 
-    let internalName = parent ? (<ts.Symbol>parent.symbol).name + "$" + name : name;
-    if (this.currentPrefix)
-      internalName = this.currentPrefix + "/" + internalName;
+    let internalName = parent
+      ? this.resolveName(parent) + "$" + name
+      : this.resolveName(node);
 
-    const func = new wasm.Function(internalName, flags, parameterTypes, returnType);
+    const func = new wasm.Function(internalName, flags, [], parameterTypes, returnType);
     func.locals = locals;
     func.signature = signature;
     func.signatureIdentifier = signatureIdentifier;
@@ -375,12 +365,35 @@ export class Compiler {
     if (node.typeParameters && node.typeParameters.length !== 0)
       this.error(node.typeParameters[0], "Type parameters are not supported yet");
 
+    let currentOffset = 0;
+
+    let className = this.resolveName(node);
+    var clazz = this.classes[className] = new wasm.Class(className);
+
     for (let i = 0, k = node.members.length; i < k; ++i) {
       const member = node.members[i];
       switch (member.kind) {
 
         case ts.SyntaxKind.PropertyDeclaration:
+        {
+          const propertyNode = <ts.PropertyDeclaration>member;
+          if (!propertyNode.type) {
+            this.error(propertyNode, "Type expected");
+          } else {
+            const name = propertyNode.name.getText();
+            const type = this.resolveType(propertyNode.type, false);
+            if (!type) {
+              this.error(propertyNode.type, "Unresolvable type");
+            } else {
+              clazz.fields[name] = new wasm.Field(name, type, currentOffset);
+              if (type.isLong || type.kind === wasm.TypeKind.double)
+                currentOffset += 8;
+              else
+                currentOffset += 4;
+            }
+          }
           break;
+        }
 
         case ts.SyntaxKind.Constructor:
           this._initializeFunction(<ts.ConstructorDeclaration>member, node);
@@ -404,14 +417,11 @@ export class Compiler {
   }
 
   initializeEnum(node: ts.EnumDeclaration): void {
-    const enumName = (<ts.Symbol>node.symbol).name;
+    const enumName = this.resolveName(node);
 
     for (let i = 0, k = node.members.length; i < k; ++i) {
       let name = enumName + "$" + (<ts.Symbol>node.members[i].symbol).name;
-      if (this.currentPrefix)
-        name = this.currentPrefix + "/" + name;
       const value = this.checker.getConstantValue(node.members[i]);
-
       this.constants[name] = <wasm.Constant>{
         name: name,
         type: intType,
@@ -894,7 +904,7 @@ export class Compiler {
       case "float":
       case "double":
       case "uintptr":
-      case "Ptr":
+      // case "Ptr":
         return symbol;
     }
 
@@ -913,6 +923,16 @@ export class Compiler {
       }
 
     return symbol;
+  }
+
+  resolveName(node: ts.NamedDeclaration) {
+    // this basically prepends the relative path from the entry file to the target file to a declaration's name.
+    // depending on imports structure, this might become rather longish and might have to be changed in the future.
+    let name = node.symbol && node.symbol.name || (<ts.Identifier>node.name).getText();
+    const file = node.getSourceFile();
+    if (file !== this.entryFile)
+      name = path.relative(path.dirname(this.entryFile.fileName), file.fileName).replace(/[^a-zA-Z0-9\.\/$]/g, "") + "/" + name;
+    return name;
   }
 
   resolveType(type: ts.TypeNode, acceptVoid: boolean = false): wasm.Type {

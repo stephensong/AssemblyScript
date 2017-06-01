@@ -2,6 +2,7 @@ import { Compiler } from "./compiler";
 import { intType, uintType, longType, ulongType, uintptrType32, uintptrType64, floatType, doubleType } from "./types";
 import { getWasmType } from "./util";
 import { binaryen } from "./wasm";
+import * as wasm from "./wasm";
 
 type TypeScriptExpressionPair = [ ts.Expression, ts.Expression ];
 type BinaryenExpressionPair = [ binaryen.Expression, binaryen.Expression ];
@@ -277,4 +278,11 @@ export function grow_memory(compiler: Compiler, node: ts.Expression, expr: binar
     return op.growMemory(expr);
 
   throw Error("unsupported operation");
+}
+
+export function sizeof(compiler: Compiler, type: wasm.Type): binaryen.Expression {
+  const op = compiler.module;
+  return compiler.uintptrType === uintptrType32
+    ? op.i32.const(type.size)
+    : op.i64.const(type.size, 0);
 }
