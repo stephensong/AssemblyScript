@@ -53,7 +53,7 @@ static inline void *wasm_morecore(ptrdiff_t);
 #include "dlmalloc.c"
 
 void *wasm_morecore(ptrdiff_t size) {
-  // this sbrk implementation is conflict-free in that it always allocates new pages for its own
+  // this sbrk implementation is conflict-free in that it always allocates new pages for dlmalloc's
   // use. in the future, i.e. once we know how memory is structured, this can be optimized to reuse
   // remaining initial memory.
 
