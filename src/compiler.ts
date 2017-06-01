@@ -23,6 +23,8 @@ const tsCompilerOptions = <ts.CompilerOptions>{
 const mallocBuffer = new Uint8Array(base64.length(mallocBlob));
 base64.decode(mallocBlob, mallocBuffer, 0);
 
+const defaultUintptrSize = 4;
+
 interface CompilerOptions {
   uintptrSize?: number;
   noLib?: boolean;
@@ -35,6 +37,7 @@ export class Compiler {
   checker: ts.TypeChecker;
   entryFile: ts.SourceFile;
   diagnostics: ts.DiagnosticCollection;
+  noLib: boolean;
   uintptrSize: number;
   uintptrType: wasm.Type;
   module: binaryen.Module;
@@ -118,12 +121,13 @@ export class Compiler {
       if (this.uintptrSize !== 4 && this.uintptrSize !== 8)
         throw Error("unsupported uintptrSize");
     } else
-      this.uintptrSize = 4;
+      this.uintptrSize = defaultUintptrSize;
 
+    this.noLib = !!options.noLib;
     this.program = program;
     this.checker = program.getDiagnosticsProducingTypeChecker();
     this.diagnostics = ts.createDiagnosticCollection();
-    this.module = options.noLib ? new binaryen.Module() : binaryen.readBinary(mallocBuffer);
+    this.module = this.noLib ? new binaryen.Module() : binaryen.readBinary(mallocBuffer);
     this.uintptrType = this.uintptrSize === 4 ? uintptrType32 : uintptrType64;
 
     // the last non-declaration source file is assumed to be the entry file (TODO: does this work in all cases?)
@@ -156,16 +160,8 @@ export class Compiler {
 
   initialize(): void {
     const compiler = this;
-    const op = this.module;
 
     // TODO: it seem that binaryen.js doesn't support importing memory yet
-    // Convention here is that the initial heap offset is stored at offset sizeof(uintptr) as an uintptr,
-    // leaving space for NULL at offset 0.
-    const initialHeapOffsetData = new Uint8Array(this.uintptrSize);
-    initialHeapOffsetData[0] = this.uintptrSize + this.uintptrSize;
-    this.module.setMemory(1, MEM_MAX_32, "memory", [
-      { offset: op.i32.const(this.uintptrSize), data: initialHeapOffsetData }
-    ]);
 
     const sourceFiles = this.program.getSourceFiles();
     for (let i = 0, k = sourceFiles.length, file; i < k; ++i) {
@@ -201,6 +197,9 @@ export class Compiler {
         throw Error("unsupported top-level node: " + ts.SyntaxKind[statement.kind]);
       }
     }
+
+    if (this.noLib) // otherwise imported
+      this.module.setMemory(1, MEM_MAX_32, "memory", []);
   }
 
   _initializeGlobal(name: string, type: wasm.Type, mutable: boolean, initializerNode?: ts.Expression): void {

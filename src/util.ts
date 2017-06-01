@@ -198,3 +198,10 @@ export function setWasmFunction(node: ts.FunctionDeclaration | ts.MethodDeclarat
     throw Error("func cannot be null");
   (<any>node).wasmFunction = func;
 }
+
+export function writeIntLE(buffer: Uint8Array, offset: number, value: number): void {
+  buffer[offset    ] =  value        & 0xff;
+  buffer[offset + 1] = (value >>  8) & 0xff;
+  buffer[offset + 2] = (value >> 16) & 0xff;
+  buffer[offset + 3] = (value >> 24) & 0xff;
+}
