@@ -2,7 +2,6 @@ import { Compiler } from "../compiler";
 import { intType, voidType } from "../types";
 import { binaryenTypeOf, getWasmType } from "../util";
 import { binaryen } from "../wasm";
-import * as wasm from "../wasm";
 
 /*
 block {
@@ -19,7 +18,7 @@ block {
 } $break
 */
 
-export function compileSwitch(compiler: Compiler, node: ts.SwitchStatement, onVariable: (name: string, type: wasm.Type) => number): binaryen.Statement {
+export function compileSwitch(compiler: Compiler, node: ts.SwitchStatement): binaryen.Statement {
   const op = compiler.module;
 
   if (node.caseBlock.clauses && node.caseBlock.clauses.length) {
@@ -27,7 +26,7 @@ export function compileSwitch(compiler: Compiler, node: ts.SwitchStatement, onVa
     const label = compiler.enterBreakContext();
 
     // create a temporary variable holding the switch expression's result
-    const conditionLocalIndex = onVariable("condition$" + label, intType);
+    const conditionLocalIndex = compiler.onVariable("condition$" + label, intType);
 
     interface SwitchCase {
       label: string;
@@ -45,7 +44,7 @@ export function compileSwitch(compiler: Compiler, node: ts.SwitchStatement, onVa
       const clause = node.caseBlock.clauses[i];
       const statements: binaryen.Statement[] = new Array(clause.statements.length);
       for (let j = 0, l = clause.statements.length; j < l; ++j)
-        statements[j] = compiler.compileStatement(clause.statements[j], onVariable);
+        statements[j] = compiler.compileStatement(clause.statements[j]);
       if (clause.kind === ts.SyntaxKind.DefaultClause) {
         defaultCase = cases[i] = {
           label: "default$" + label,

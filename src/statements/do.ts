@@ -2,7 +2,6 @@ import { Compiler } from "../compiler";
 import { intType } from "../types";
 import { getWasmType } from "../util";
 import { binaryen } from "../wasm";
-import * as wasm from "../wasm";
 
 /*
 block {
@@ -13,7 +12,7 @@ block {
 } $break
 */
 
-export function compileDo(compiler: Compiler, node: ts.DoStatement, onVariable: (name: string, type: wasm.Type) => number): binaryen.Statement {
+export function compileDo(compiler: Compiler, node: ts.DoStatement): binaryen.Statement {
   const op = compiler.module;
 
   const context: binaryen.Statement[] = [];
@@ -21,7 +20,7 @@ export function compileDo(compiler: Compiler, node: ts.DoStatement, onVariable: 
   const label = compiler.enterBreakContext();
 
   if (node.statement)
-    loop.push(compiler.compileStatement(node.statement, onVariable));
+    loop.push(compiler.compileStatement(node.statement));
 
   loop.push(
     op.break("continue$" + label,

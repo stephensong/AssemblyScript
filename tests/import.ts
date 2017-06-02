@@ -1,4 +1,7 @@
 export class Hello {
+  constructor() {
+  }
+
   world(param: int): int {
     this.anotherVoid();
     Hello.anotherStaticVoid();

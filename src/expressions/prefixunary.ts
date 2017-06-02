@@ -1,5 +1,5 @@
 import { Compiler } from "../compiler";
-import { binaryenTypeOf, binaryenCategoryOf, binaryenOneOf, getWasmType, setWasmType } from "../util";
+import { binaryenTypeOf, binaryenCategoryOf, binaryenValueOf, getWasmType, setWasmType } from "../util";
 import { intType, boolType, floatType, doubleType, voidType } from "../types";
 import { binaryen } from "../wasm";
 import * as wasm from "../wasm";
@@ -86,7 +86,6 @@ export function compilePrefixUnary(compiler: Compiler, node: ts.PrefixUnaryExpre
         if (local) {
 
           const cat = binaryenCategoryOf(local.type, op, compiler.uintptrSize);
-          const one = binaryenOneOf(local.type, op, compiler.uintptrSize);
           const isIncrement = node.operator === ts.SyntaxKind.PlusPlusToken;
 
           const calculate = (isIncrement ? cat.add : cat.sub).call(cat,
@@ -94,7 +93,7 @@ export function compilePrefixUnary(compiler: Compiler, node: ts.PrefixUnaryExpre
               local.index,
               binaryenTypeOf(compiler.uintptrType, compiler.uintptrSize)
             ),
-            one
+            binaryenValueOf(local.type, compiler.module, 1)
           );
 
           if (contextualType === voidType) {

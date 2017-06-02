@@ -7,14 +7,14 @@ declare module binaryen {
   const f64: Type;
 
   interface I32Operations {
-    load(offset: number, align: number, ptr: number): I32Expression;
-    load8_s(offset: number, align: number, ptr: number): I32Expression;
-    load8_u(offset: number, align: number, ptr: number): I32Expression;
-    load16_s(offset: number, align: number, ptr: number): I32Expression;
-    load16_u(offset: number, align: number, ptr: number): I32Expression;
-    store(offset: number, align: number, ptr: number, value: I32Expression): I32Expression;
-    store8(offset: number, align: number, ptr: number, value: I32Expression): I32Expression;
-    store16(offset: number, align: number, ptr: number, value: I32Expression): I32Expression;
+    load(offset: number, align: number, ptr: Expression): I32Expression;
+    load8_s(offset: number, align: number, ptr: Expression): I32Expression;
+    load8_u(offset: number, align: number, ptr: Expression): I32Expression;
+    load16_s(offset: number, align: number, ptr: Expression): I32Expression;
+    load16_u(offset: number, align: number, ptr: Expression): I32Expression;
+    store(offset: number, align: number, ptr: Expression, value: I32Expression): I32Expression;
+    store8(offset: number, align: number, ptr: Expression, value: I32Expression): I32Expression;
+    store16(offset: number, align: number, ptr: Expression, value: I32Expression): I32Expression;
     const(value: number): I32Expression;
     clz(value: I32Expression): I32Expression;
     ctz(value: I32Expression): I32Expression;
@@ -58,17 +58,17 @@ declare module binaryen {
   }
 
   interface I64Operations {
-    load(offset: number, align: number, ptr: number): I64Expression;
-    load8_s(offset: number, align: number, ptr: number): I64Expression;
-    load8_u(offset: number, align: number, ptr: number): I64Expression;
-    load16_s(offset: number, align: number, ptr: number): I64Expression;
-    load16_u(offset: number, align: number, ptr: number): I64Expression;
-    load32_s(offset: number, align: number, ptr: number): I64Expression;
-    load32_u(offset: number, align: number, ptr: number): I64Expression;
-    store(offset: number, align: number, ptr: number, value: I64Expression): I64Expression;
-    store8(offset: number, align: number, ptr: number, value: I64Expression): I64Expression;
-    store16(offset: number, align: number, ptr: number, value: I64Expression): I64Expression;
-    store32(offset: number, align: number, ptr: number, value: I64Expression): I64Expression;
+    load(offset: number, align: number, ptr: Expression): I64Expression;
+    load8_s(offset: number, align: number, ptr: Expression): I64Expression;
+    load8_u(offset: number, align: number, ptr: Expression): I64Expression;
+    load16_s(offset: number, align: number, ptr: Expression): I64Expression;
+    load16_u(offset: number, align: number, ptr: Expression): I64Expression;
+    load32_s(offset: number, align: number, ptr: Expression): I64Expression;
+    load32_u(offset: number, align: number, ptr: Expression): I64Expression;
+    store(offset: number, align: number, ptr: Expression, value: I64Expression): I64Expression;
+    store8(offset: number, align: number, ptr: Expression, value: I64Expression): I64Expression;
+    store16(offset: number, align: number, ptr: Expression, value: I64Expression): I64Expression;
+    store32(offset: number, align: number, ptr: Expression, value: I64Expression): I64Expression;
     const(low: number, high: number): I64Expression;
     clz(value: I64Expression): I64Expression;
     ctz(value: I64Expression): I64Expression;
@@ -113,8 +113,8 @@ declare module binaryen {
   }
 
   interface F32Operations {
-    load(offset: number, align: number, ptr: number): F32Expression;
-    store(offset: number, align: number, ptr: number, value: F32Expression): F32Expression;
+    load(offset: number, align: number, ptr: Expression): F32Expression;
+    store(offset: number, align: number, ptr: Expression, value: F32Expression): F32Expression;
     const(value: number): F32Expression;
     const_bits(value: number): F32Expression;
     neg(value: F32Expression): F32Expression;
@@ -150,8 +150,8 @@ declare module binaryen {
   }
 
   interface F64Operations {
-    load(offset: number, align: number, ptr: number): F64Expression;
-    store(offset: number, align: number, ptr: number, value: F32Expression): F64Expression;
+    load(offset: number, align: number, ptr: Expression): F64Expression;
+    store(offset: number, align: number, ptr: Expression, value: F32Expression): F64Expression;
     const(value: number): F64Expression;
     const_bits(low: number, high: number): F64Expression;
     neg(value: F64Expression): F64Expression;
@@ -196,9 +196,11 @@ declare module binaryen {
     addFunctionType(name: string, resultType: Type, paramTypes: Type[]): Signature;
     getFunctionType(resultType: Type, paramTypes: Type[]): Signature;
     addFunction(name: string, functionType: Signature, varTypes: Type[], body: Statement): binaryen.Function;
-    addGlobal(name: string, type: Type, mutable: boolean, init?: Expression): Expression;
+    addGlobal(name: string, type: Type, mutable: boolean, init: Expression): Expression;
     addImport(internalName: string, externalModuleName: string, externalBaseName: string, functionType?: Signature): void;
+    removeImport(internalName: string): void;
     addExport(internalName: string, externalName: string): void;
+    removeExport(externalName: string): void;
     setFunctionTable(funcs: number[]): void;
     setMemory(initial: number, maximum: number, exportName?: string, segments?: MemorySegment[]): void;
     setStart(start: binaryen.Function): void;

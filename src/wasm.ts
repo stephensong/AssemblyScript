@@ -1,4 +1,6 @@
-export { binaryen } from "./binaryen";
+import * as binaryen from "./binaryen";
+
+export { binaryen };
 export { Class, Field } from "./wasm/class";
 export { Constant } from "./wasm/constant";
 export { FunctionFlags, Function } from "./wasm/function";

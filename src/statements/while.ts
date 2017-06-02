@@ -2,7 +2,6 @@ import { Compiler } from "../compiler";
 import { intType } from "../types";
 import { getWasmType } from "../util";
 import { binaryen } from "../wasm";
-import * as wasm from "../wasm";
 
 /*
 block {
@@ -15,7 +14,7 @@ block {
 } $break
 */
 
-export function compileWhile(compiler: Compiler, node: ts.WhileStatement, onVariable: (name: string, type: wasm.Type) => number): binaryen.Statement {
+export function compileWhile(compiler: Compiler, node: ts.WhileStatement): binaryen.Statement {
   const op = compiler.module;
 
   const context: binaryen.Statement[] = [];
@@ -23,7 +22,7 @@ export function compileWhile(compiler: Compiler, node: ts.WhileStatement, onVari
   const label = compiler.enterBreakContext();
 
   if (node.statement)
-    ifTrue.push(compiler.compileStatement(node.statement, onVariable));
+    ifTrue.push(compiler.compileStatement(node.statement));
 
   ifTrue.push(op.break("continue$" + label));
 

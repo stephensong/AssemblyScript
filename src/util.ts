@@ -1,3 +1,5 @@
+import "byots";
+import * as Long from "long";
 import { binaryen } from "./wasm";
 import * as wasm from "./wasm";
 
@@ -115,58 +117,43 @@ export function binaryenCategoryOf(type: wasm.Type, module: binaryen.Module, uin
   throw Error("unexpected type");
 }
 
-export function binaryenZeroOf(type: wasm.Type, module: binaryen.Module, uintptrSize: number): binaryen.I32Expression | binaryen.I64Expression | binaryen.F32Expression | binaryen.F64Expression {
+export function binaryenValueOf(type: wasm.Type, module: binaryen.Module, value: number | Long) {
+
+  if (type.isLong) {
+    const long = Long.fromValue(value);
+    return module.i64.const(long.low, long.high);
+  } else if (Long.isLong(value))
+    value = Long.fromValue(value).toNumber();
+
+  value = <number>value;
+
   switch (type.kind) {
 
     case wasm.TypeKind.byte:
+      return module.i32.const(value & 0xff);
+
+    case wasm.TypeKind.sbyte:
+      return module.i32.const((value << 24) >> 24);
+
     case wasm.TypeKind.short:
+      return module.i32.const((value << 16) >> 16);
+
     case wasm.TypeKind.ushort:
+      return module.i32.const(value & 0xffff);
+
     case wasm.TypeKind.int:
     case wasm.TypeKind.uint:
-    case wasm.TypeKind.bool:
-      return module.i32.const(0);
+    case wasm.TypeKind.uintptr: // long already handled
+      return module.i32.const(value);
 
-    case wasm.TypeKind.long:
-    case wasm.TypeKind.ulong:
-      return module.i64.const(0, 0);
+    case wasm.TypeKind.bool:
+      return module.i32.const(value ? 1 : 0);
 
     case wasm.TypeKind.float:
-      return module.f32.const(0);
+      return module.f32.const(value);
 
     case wasm.TypeKind.double:
-      return module.f64.const(0);
-
-    case wasm.TypeKind.uintptr:
-      return uintptrSize === 4 ? module.i32.const(0) : module.i64.const(0, 0);
-
-  }
-  throw Error("unexpected type");
-}
-
-export function binaryenOneOf(type: wasm.Type, module: binaryen.Module, uintptrSize: number): binaryen.I32Expression | binaryen.I64Expression | binaryen.F32Expression | binaryen.F64Expression {
-  switch (type.kind) {
-
-    case wasm.TypeKind.byte:
-    case wasm.TypeKind.short:
-    case wasm.TypeKind.ushort:
-    case wasm.TypeKind.int:
-    case wasm.TypeKind.uint:
-    case wasm.TypeKind.bool:
-      return module.i32.const(1);
-
-    case wasm.TypeKind.long:
-    case wasm.TypeKind.ulong:
-      return module.i64.const(1, 0);
-
-    case wasm.TypeKind.float:
-      return module.f32.const(1);
-
-    case wasm.TypeKind.double:
-      return module.f64.const(1);
-
-    case wasm.TypeKind.uintptr:
-      return uintptrSize === 4 ? module.i32.const(1) : module.i64.const(1, 0);
-
+      return module.f64.const(value);
   }
   throw Error("unexpected type");
 }

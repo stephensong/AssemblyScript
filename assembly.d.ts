@@ -54,7 +54,10 @@ declare type int64 = long;
 declare type uint64 = ulong;
 
 // Fillers for TypeScript complaining about missing types with 'nolib'
-interface Array<T> { }
+declare class Array<T> {
+  readonly length: uint;
+  constructor(size: uint);
+}
 interface Boolean { }
 interface Function { }
 interface IArguments { }
@@ -100,6 +103,7 @@ declare function current_memory(): int;
 declare function grow_memory(value: int): int;
 
 declare function sizeof<T>(): uintptr;
+// declare function astype<T>(ptr: uintptr): T;
 // declare function allocate<T>(): T;
 // declare function allocate<T>(size: uint): T[];
 // declare function deallocate<T>(reference: T): void;

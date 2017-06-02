@@ -18,6 +18,7 @@ export * from "./expressions/call";
 export * from "./expressions/conditional";
 export * from "./expressions/identifier";
 export * from "./expressions/literal";
+export * from "./expressions/new";
 export * from "./expressions/parenthesized";
 export * from "./expressions/postfixunary";
 export * from "./expressions/prefixunary";

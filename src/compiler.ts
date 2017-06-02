@@ -6,7 +6,7 @@ import { libSource, mallocBlob } from "./library";
 import * as path from "path";
 import { Profiler } from "./profiler";
 import { byteType, sbyteType, shortType, ushortType, intType, uintType, longType, ulongType, boolType, floatType, doubleType, uintptrType32, uintptrType64, voidType } from "./types";
-import { isImport, isExport, isConst, isStatic, signatureIdentifierOf, binaryenTypeOf, binaryenOneOf, binaryenZeroOf, arrayTypeOf, getWasmType, setWasmType, getWasmFunction, setWasmFunction } from "./util";
+import { isImport, isExport, isConst, isStatic, signatureIdentifierOf, binaryenTypeOf, binaryenValueOf, arrayTypeOf, getWasmType, setWasmType, getWasmFunction, setWasmFunction } from "./util";
 import { binaryen } from "./wasm";
 import * as wasm from "./wasm";
 
@@ -52,6 +52,7 @@ export class Compiler {
   currentLocals: { [key: string]: wasm.Variable };
   currentBreakContextNumber = 0;
   currentBreakContextDepth = 0;
+  onVariable: (originalName: string, type: wasm.Type) => number;
   classes: { [key: string]: wasm.Class } = {};
 
   static compileFile(filename: string, options?: CompilerOptions): binaryen.Module | null {
@@ -200,15 +201,57 @@ export class Compiler {
       }
     }
 
-    if (this.noLib) // otherwise imported
+    if (this.noLib)
       this.module.setMemory(1, MEM_MAX_32, "memory", []);
+    else // memory is imported
+      this.initializeLibrary();
+  }
+
+  initializeLibrary(): void {
+    const op = this.module;
+    const binaryenPtrType = binaryenTypeOf(this.uintptrType, this.uintptrSize);
+
+    // initialize mspace'd malloc on start and remember the mspace within `.msp`:
+    op.addGlobal(".msp", binaryenPtrType, true, binaryenValueOf(this.uintptrType, this.module, 0));
+    this.globalInitializers.push(
+      op.setGlobal(".msp", op.call("mspace_init", [
+        binaryenValueOf(this.uintptrType, this.module, 12) // TODO: change to actual heap start offset
+      ], binaryenPtrType))
+    );
+
+    // now, instead of exposing mspace'd functions to the user ...
+    this.module.removeExport("mspace_init");
+    this.module.removeExport("mspace_malloc");
+    this.module.removeExport("mspace_free");
+
+    // ... wrap each in a non-mspace'd version ...
+    let mallocSignatureIdentifier = this.uintptrSize === 4 ? "ii" : "II";
+    let mallocSignature = this.signatures[mallocSignatureIdentifier];
+    if (!mallocSignature)
+      mallocSignature = this.signatures[mallocSignatureIdentifier] = this.module.getFunctionType(binaryenPtrType, [ binaryenPtrType ]) || this.module.addFunctionType(mallocSignatureIdentifier, binaryenPtrType, [ binaryenPtrType ]);
+    this.module.addFunction("malloc", mallocSignature, [], op.block("", [
+      op.return(
+        op.call("mspace_malloc", [ op.getGlobal(".msp", binaryenPtrType), op.getLocal(0, binaryenPtrType) ], binaryenPtrType)
+      )
+    ]));
+    let freeSignatureIdentifier = this.uintptrSize === 4 ? "iv" : "Iv";
+    let freeSignature = this.signatures[freeSignatureIdentifier];
+    if (!freeSignature)
+      freeSignature = this.signatures[freeSignatureIdentifier] = this.module.getFunctionType(binaryen.none, [ binaryenPtrType ]) || this.module.addFunctionType(freeSignatureIdentifier, binaryen.none, [ binaryenPtrType ]);
+    this.module.addFunction("free", freeSignature, [], op.block("", [
+      op.call("mspace_free", [ op.getGlobal(".msp", binaryenPtrType), op.getLocal(0, binaryenPtrType) ], binaryen.none)
+    ]));
+
+    // ... and expose these for convenience:
+    this.module.addExport("malloc", "malloc");
+    this.module.addExport("free", "free");
   }
 
   _initializeGlobal(name: string, type: wasm.Type, mutable: boolean, initializerNode?: ts.Expression): void {
     const op = this.module;
 
     if (!initializerNode) {
-      op.addGlobal(name, binaryenTypeOf(type, this.uintptrSize), mutable);
+      op.addGlobal(name, binaryenTypeOf(type, this.uintptrSize), mutable, binaryenValueOf(type, this.module, 0));
       this.globals[name] = new wasm.Global(name, type, mutable);
       return;
     }
@@ -229,14 +272,16 @@ export class Compiler {
 
       if (mutable) {
 
-        op.addGlobal(name, binaryenTypeOf(type, this.uintptrSize), mutable, binaryenZeroOf(type, this.module, this.uintptrSize));
+        op.addGlobal(name, binaryenTypeOf(type, this.uintptrSize), mutable, binaryenValueOf(type, this.module, 0));
         this.globals[name] = new wasm.Global(name, type, mutable);
 
         this.globalInitializers.push(
-          this.maybeConvertValue(
-            initializerNode,
-            this.compileExpression(initializerNode, type),
-            getWasmType(initializerNode), type, false
+          op.setGlobal(name,
+            this.maybeConvertValue(
+              initializerNode,
+              this.compileExpression(initializerNode, type),
+              getWasmType(initializerNode), type, false
+            )
           )
         );
 
@@ -268,8 +313,12 @@ export class Compiler {
   }
 
   private _initializeFunction(node: ts.FunctionDeclaration | ts.MethodDeclaration | ts.ConstructorDeclaration, parent?: ts.ClassDeclaration): void {
-    const name = this.resolveName(node);
     const isConstructor = node.kind === ts.SyntaxKind.Constructor;
+    const name = isConstructor
+      ? this.resolveName(<ts.ClassDeclaration>parent)
+      : parent
+        ? this.resolveName(parent) + (isStatic(node) ? "." : "#") + (<ts.Identifier>node.name).getText()
+        : this.resolveName(node);
 
     if (name === "memory" && isExport(node))
       this.error(node, "Duplicate exported name", "memory");
@@ -344,11 +393,7 @@ export class Compiler {
     if (isImport(node))
       flags |= wasm.FunctionFlags.import;
 
-    let internalName = parent
-      ? this.resolveName(parent) + "$" + name
-      : this.resolveName(node);
-
-    const func = new wasm.Function(internalName, flags, [], parameterTypes, returnType);
+    const func = new wasm.Function(name, flags, [], parameterTypes, returnType);
     func.locals = locals;
     func.signature = signature;
     func.signatureIdentifier = signatureIdentifier;
@@ -362,13 +407,13 @@ export class Compiler {
 
   initializeClass(node: ts.ClassDeclaration): void {
 
-    if (node.typeParameters && node.typeParameters.length !== 0)
-      this.error(node.typeParameters[0], "Type parameters are not supported yet");
+    // if (node.typeParameters && node.typeParameters.length !== 0)
+    //  this.error(node.typeParameters[0], "Type parameters are not supported yet");
 
     let currentOffset = 0;
 
-    let className = this.resolveName(node);
-    var clazz = this.classes[className] = new wasm.Class(className);
+    const className = this.resolveName(node);
+    const clazz = this.classes[className] = new wasm.Class(className);
 
     for (let i = 0, k = node.members.length; i < k; ++i) {
       const member = node.members[i];
@@ -420,7 +465,7 @@ export class Compiler {
     const enumName = this.resolveName(node);
 
     for (let i = 0, k = node.members.length; i < k; ++i) {
-      let name = enumName + "$" + (<ts.Symbol>node.members[i].symbol).name;
+      const name = enumName + "." + (<ts.Symbol>node.members[i].symbol).name;
       const value = this.checker.getConstantValue(node.members[i]);
       this.constants[name] = <wasm.Constant>{
         name: name,
@@ -470,13 +515,13 @@ export class Compiler {
 
     let i = 0;
     for (const k = this.globalInitializers.length; i < k; ++i)
-      body[i] = op.drop(this.globalInitializers[i]);
+      body[i] = this.globalInitializers[i]; // setGlobal
     if (this.userStartFunction)
       body[i] = op.call("start", [], binaryen.none);
 
     const startSignatureIdentifier = "v";
     let signature = this.signatures[startSignatureIdentifier];
-    if (!signature) {i
+    if (!signature) {
       signature = this.signatures[startSignatureIdentifier] = this.module.getFunctionType(binaryen.none, []);
       if (!signature)
         signature = this.signatures[startSignatureIdentifier] = this.module.addFunctionType(startSignatureIdentifier, binaryen.none, []);
@@ -509,17 +554,7 @@ export class Compiler {
       ++localIndex;
     }
 
-    for (let i = 0, k = node.body.statements.length; i < k; ++i) {
-      body[bodyIndex++] = compiler.compileStatement(node.body.statements[i], onVariable);
-    }
-
-    body.length = bodyIndex;
-
-    /*function onVariable(variableNode: ts.VariableDeclaration): number {
-      const originalName = variableNode.name.getText();
-      const type = getWasmType(variableNode);*/
-    function onVariable(originalName: string, type: wasm.Type) {
-
+    this.onVariable = function onVariable(originalName: string, type: wasm.Type) {
       let name = originalName;
       let alternative: number = 1;
       while (compiler.currentLocals[name])
@@ -529,7 +564,13 @@ export class Compiler {
       additionalLocals.push(binaryenTypeOf(type, compiler.uintptrSize));
 
       return localIndex++;
+    };
+
+    for (let i = 0, k = node.body.statements.length; i < k; ++i) {
+      body[bodyIndex++] = compiler.compileStatement(node.body.statements[i]);
     }
+
+    body.length = bodyIndex;
 
     return this.module.addFunction(wasmFunction.name, wasmFunction.signature, additionalLocals, this.module.block("", body));
   }
@@ -596,7 +637,7 @@ export class Compiler {
     return this.currentBreakContextNumber + "." + this.currentBreakContextDepth;
   }
 
-  compileStatement(node: ts.Statement, onVariable: (name: string, type: wasm.Type) => number): binaryen.Statement {
+  compileStatement(node: ts.Statement): binaryen.Statement {
     const op = this.module;
 
     switch (node.kind) {
@@ -608,25 +649,25 @@ export class Compiler {
         return ast.compileEmpty(this/*, <ts.EmptyStatement>node*/);
 
       case ts.SyntaxKind.VariableStatement:
-        return ast.compileVariable(this, <ts.VariableStatement>node, onVariable);
+        return ast.compileVariable(this, <ts.VariableStatement>node);
 
       case ts.SyntaxKind.IfStatement:
-        return ast.compileIf(this, <ts.IfStatement>node, onVariable);
+        return ast.compileIf(this, <ts.IfStatement>node);
 
       case ts.SyntaxKind.SwitchStatement:
-        return ast.compileSwitch(this, <ts.SwitchStatement>node, onVariable);
+        return ast.compileSwitch(this, <ts.SwitchStatement>node);
 
       case ts.SyntaxKind.WhileStatement:
-        return ast.compileWhile(this, <ts.WhileStatement>node, onVariable);
+        return ast.compileWhile(this, <ts.WhileStatement>node);
 
       case ts.SyntaxKind.DoStatement:
-        return ast.compileDo(this, <ts.DoStatement>node, onVariable);
+        return ast.compileDo(this, <ts.DoStatement>node);
 
       case ts.SyntaxKind.ForStatement:
-        return ast.compileFor(this, <ts.ForStatement>node, onVariable);
+        return ast.compileFor(this, <ts.ForStatement>node);
 
       case ts.SyntaxKind.Block:
-        return ast.compileBlock(this, <ts.Block>node, onVariable);
+        return ast.compileBlock(this, <ts.Block>node);
 
       case ts.SyntaxKind.BreakStatement:
       case ts.SyntaxKind.ContinueStatement:
@@ -676,6 +717,9 @@ export class Compiler {
       case ts.SyntaxKind.CallExpression:
         return ast.compileCall(this, <ts.CallExpression>node, contextualType);
 
+      case ts.SyntaxKind.NewExpression:
+        return ast.compileNew(this, <ts.NewExpression>node, contextualType);
+
       case ts.SyntaxKind.FirstLiteralToken:
         return ast.compileLiteral(this, <ts.LiteralExpression>node, contextualType);
 
@@ -683,14 +727,12 @@ export class Compiler {
       case ts.SyntaxKind.FalseKeyword:
 
         setWasmType(node, boolType);
-        return node.kind === ts.SyntaxKind.TrueKeyword
-          ? binaryenOneOf(boolType, this.module, this.uintptrSize)
-          : binaryenZeroOf(boolType, this.module, this.uintptrSize);
+        return binaryenValueOf(boolType, this.module, node.kind === ts.SyntaxKind.TrueKeyword ? 1 : 0);
 
       case ts.SyntaxKind.NullKeyword:
 
         setWasmType(node, this.uintptrType);
-        return binaryenZeroOf(this.uintptrType, this.module, this.uintptrSize);
+        return binaryenValueOf(this.uintptrType, this.module, 0);
     }
 
     this.error(node, "Unsupported expression node", ts.SyntaxKind[node.kind]);
@@ -904,7 +946,6 @@ export class Compiler {
       case "float":
       case "double":
       case "uintptr":
-      // case "Ptr":
         return symbol;
     }
 
@@ -971,9 +1012,12 @@ export class Compiler {
               case "uintptr": return this.uintptrType;
             }
 
-            // TODO
-            // if (referenceName === "Ptr" && referenceNode.typeArguments.length === 1 && referenceNode.typeArguments[0].kind !== ts.SyntaxKind.TypeReference)
-            //   return this.uintptrType.withUnderlyingType(this.resolveType(<ts.TypeReferenceNode>referenceNode.typeArguments[0]));
+            // If it is a class reference, return uintptr
+            if (symbol.declarations) {
+              const resolvedName = this.resolveName(symbol.declarations[0]);
+              if (this.classes[resolvedName])
+                return this.uintptrType;
+            }
           }
         }
       }

@@ -28,6 +28,7 @@ util.run(path.join(util.bindir, "clang"), [
 util.run(path.join(util.bindir, "s2wasm"), [
   "build/malloc.s",
   "--initial-memory", "65536",
+  "--global-base", "64",
   "--validate", "wasm",
   "-o", "build/malloc.wast"
 ], { cwd: basedir }))
@@ -37,6 +38,8 @@ util.run(path.join(util.bindir, "s2wasm"), [
 util.run(path.join(util.bindir, "wasm-opt"), [
   "build/malloc.wast",
   "-O",
+  "-g",
+  "--inlining",
   "-o", "build/malloc.wasm"
 ], { cwd: basedir }))
 
@@ -47,24 +50,4 @@ util.run(path.join(util.bindir, "wasm-dis"), [
   "-o", "build/malloc.wast"
 ], { cwd: basedir }))
 
-.then(() => {
-
-  fs.readFile(basedir + "/build/malloc.wast", function(err, contents) {
-    if (err) throw err;
-
-    contents = contents.toString();
-    var re = /^\s*\(export "([^"]+)" \(func \$([^\)]+)\)\)$/mg;
-    var match;
-    var indexes = {};
-    while (match = re.exec(contents)) {
-      indexes[match[1]] = match[2];
-    }
-
-    fs.writeFile(basedir + "/build/malloc.json", JSON.stringify(indexes, null, 2), "utf8", function(err) {
-      if (err) throw err;
-
-      console.log("complete", indexes);
-    });
-  });
-
-});
+.then(() => console.log("complete"));

@@ -2,7 +2,9 @@
 
 #include "arch.h"
 
-export void *memset(void *dest, int c, size_t n);
-export void *memcpy(void *restrict dest, const void *restrict src, size_t n);
-export void *malloc(size_t);
-export void  free(void *);
+export void *memset(void *, int, size_t);
+export void *memcpy(void *, const void *, size_t);
+
+export void *mspace_init(void *);
+export void *mspace_malloc(void *, size_t);
+export void  mspace_free(void *, void *);

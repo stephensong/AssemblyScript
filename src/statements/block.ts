@@ -1,14 +1,13 @@
 import { Compiler } from "../compiler";
 import { binaryen } from "../wasm";
-import * as wasm from "../wasm";
 
-export function compileBlock(compiler: Compiler, node: ts.Block, onVariable: (name: string, type: wasm.Type) => number): binaryen.Statement {
+export function compileBlock(compiler: Compiler, node: ts.Block): binaryen.Statement {
   const op = compiler.module;
 
   const statements: binaryen.Statement[] = new Array(node.statements.length);
   let i = 0;
   for (const k = statements.length; i < k; ++i)
-    statements[i] = compiler.compileStatement(node.statements[i], onVariable);
+    statements[i] = compiler.compileStatement(node.statements[i]);
 
   if (i === 0)
     return op.nop();

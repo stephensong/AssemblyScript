@@ -1,4 +1,4 @@
-import { binaryen } from "../binaryen";
+import * as binaryen from "../binaryen";
 import { ReflectionObjectKind, ReflectionObject } from "./object";
 import { Type } from "./type";
 import { Variable } from "./variable";

@@ -107,10 +107,10 @@ By default (i.e. if the `--nolib` option isn't set), a basic memory management i
 
 Function                                                      | Description
 --------------------------------------------------------------|-------------
-`malloc(size: uintptr): uintptr`                              | Allocates a chunk of memory of the specified size and returns a pointer to the chunk
-`free(ptr: uintptr): void`                                    | Frees a previously allocated chunk of memory by its pointer
-`memcpy(dest: uintptr, src: uintptr, size: uintptr): uintptr` | Copies data from one chunk of memory to another
-`memset(dest: uintptr, c: int, size: uintptr): uintptr`       | Sets a chunk of memory to the provided value `c` (usually used to reset it to all `0`s)
+`malloc(size: uintptr): uintptr`                              | Allocates a chunk of memory of the specified size and returns a pointer to it.
+`free(ptr: uintptr): void`                                    | Frees a previously allocated chunk of memory by its pointer.
+`memcpy(dest: uintptr, src: uintptr, size: uintptr): uintptr` | Copies data from one chunk of memory to another.
+`memset(dest: uintptr, c: int, size: uintptr): uintptr`       | Sets a chunk of memory to the provided value `c` (usually used to reset it to all `0`s).
 
 Type coercion requires an explicit cast where precision or signage is lost respectively is implicit where it is maintained. For example, to cast a `double` to an `int`:
 

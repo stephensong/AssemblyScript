@@ -1,5 +1,4 @@
 import { Compiler } from "../compiler";
-import { mallocInternalName, freeInternalName, memsetInternalName, memcpyInternalName } from "../library";
 import { isImport, binaryenTypeOf, getWasmType, setWasmType } from "../util";
 import { binaryen } from "../wasm";
 import * as wasm from "../wasm";
@@ -138,13 +137,13 @@ export function compileCall(compiler: Compiler, node: ts.CallExpression, context
       return builtins.grow_memory(compiler, node.arguments[0], argumentExpressions[0]);
 
     case "memset":
-      return op.call(memsetInternalName, argumentExpressions, wasmFunction.returnType);
+      return op.call("memset", argumentExpressions, wasmFunction.returnType);
     case "memcpy":
-      return op.call(memcpyInternalName, argumentExpressions, wasmFunction.returnType);
+      return op.call("memcpy", argumentExpressions, wasmFunction.returnType);
     case "malloc":
-      return op.call(mallocInternalName, argumentExpressions, wasmFunction.returnType);
+      return op.call("malloc", argumentExpressions, wasmFunction.returnType);
     case "free":
-      return op.call(freeInternalName, argumentExpressions, wasmFunction.returnType);
+      return op.call("free", argumentExpressions, wasmFunction.returnType);
 
     case "sizeof":
       return builtins.sizeof(compiler, typeArguments[0]);

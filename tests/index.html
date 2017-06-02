@@ -55,6 +55,8 @@ function load(file) {
           console.log("> exports." + key + "(" + exports[key].length + ")");
         else
           console.log("> exports." + key);
+        if (exports.memory)
+          memory = exports.memory;
       });
       console.log("loaded.");
       fetch(file.replace(/\.wasm$/, ".wast"))
