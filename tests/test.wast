@@ -19,7 +19,6 @@
  (type $v (func))
  (global $import.ts/aConstGlobalInAnImport i32 (i32.const 2))
  (global $import.ts/aGlobalInAnImport (mut i32) (i32.const 3))
- (global $aGlobal (mut i32) (i32.const 1))
  (table 0 anyfunc)
  (memory $0 1)
  (export "memory" (memory $0))
@@ -8599,6 +8598,9 @@
      )
     )
    )
+  )
+  (return
+   (i32.const 2)
   )
  )
  (func $import.ts/Hello$import.ts/anotherVoid (type $2) (param $0 i32)

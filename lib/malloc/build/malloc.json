@@ -1,0 +1,6 @@
+{
+  "memset": "0",
+  "memcpy": "1",
+  "malloc": "2",
+  "free": "3"
+}

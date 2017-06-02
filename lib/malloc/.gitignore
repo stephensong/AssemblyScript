@@ -1,4 +1,3 @@
-malloc.json
-malloc.s
-malloc.wasm
-malloc.wast
+build/**
+!build/malloc.json
+!build/malloc.wasm

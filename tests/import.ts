@@ -6,6 +6,7 @@ export class Hello {
     while (a) {
       return a;
     }
+    return 2;
   }
 
   anotherVoid(): void {

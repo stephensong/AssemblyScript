@@ -105,7 +105,7 @@ declare function sizeof<T>(): uintptr;
 // declare function deallocate<T>(reference: T): void;
 
 // Linked-in standard library
-declare function memset(dest: uintptr, c: int, size: uintptr): uintptr; // $0
-declare function memcpy(dest: uintptr, src: uintptr, size: uintptr): uintptr; // $1
-declare function malloc(size: uintptr): uintptr; // $2
-declare function free(ptr: uintptr): void; // $3
+declare function memset(dest: uintptr, c: int, size: uintptr): uintptr;
+declare function memcpy(dest: uintptr, src: uintptr, size: uintptr): uintptr;
+declare function malloc(size: uintptr): uintptr;
+declare function free(ptr: uintptr): void;

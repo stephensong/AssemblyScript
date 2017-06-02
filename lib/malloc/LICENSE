@@ -1,5 +1,6 @@
-dlmalloc is released to the public domain (CC0 1.0 Universal)
+dlmalloc.c is released to the public domain (CC0 1.0 Universal)
 
+memset.c and memcpy.c are part of musl.
 musl as a whole is licensed under the following standard MIT license:
 
 ----------------------------------------------------------------------

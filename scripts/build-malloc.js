@@ -6,40 +6,50 @@ var basedir = path.join(__dirname, "..", "lib", "malloc");
 
 util.run(path.join(util.bindir, "clang"), [
   "malloc.c",
-  "-S",
-  "-O",
-  "--target=wasm32-unknown-unknown",
-  "-nostdinc",
-  "-nostdlib",
-  "-o", "malloc.s"
+  "-E",
+  "-o", "build/malloc.pre.c"
 ], { cwd: basedir })
 
 .then(() =>
 
+util.run(path.join(util.bindir, "clang"), [
+  "malloc.c",
+  "-S",
+  "-O",
+  "-mlittle-endian",
+  "--target=wasm32-unknown-unknown",
+  "-nostdinc",
+  "-nostdlib",
+  "-o", "build/malloc.s"
+], { cwd: basedir }))
+
+.then(() =>
+
 util.run(path.join(util.bindir, "s2wasm"), [
-  "malloc.s",
+  "build/malloc.s",
   "--initial-memory", "65536",
   "--validate", "wasm",
-  "-o", "malloc.wast"
+  "-o", "build/malloc.wast"
 ], { cwd: basedir }))
 
 .then(() =>
 
 util.run(path.join(util.bindir, "wasm-opt"), [
-  "malloc.wast",
+  "build/malloc.wast",
   "-O",
-  "-o", "malloc.wasm"
-], { cwd: basedir })
+  "-o", "build/malloc.wasm"
+], { cwd: basedir }))
 
 .then(() =>
 
 util.run(path.join(util.bindir, "wasm-dis"), [
-  "malloc.wasm",
-  "-o", "malloc.wast"
+  "build/malloc.wasm",
+  "-o", "build/malloc.wast"
 ], { cwd: basedir }))
 
 .then(() => {
-  fs.readFile(basedir + "/malloc.wast", function(err, contents) {
+
+  fs.readFile(basedir + "/build/malloc.wast", function(err, contents) {
     if (err) throw err;
 
     contents = contents.toString();
@@ -50,12 +60,11 @@ util.run(path.join(util.bindir, "wasm-dis"), [
       indexes[match[1]] = match[2];
     }
 
-    fs.writeFile(basedir + "/malloc.json", JSON.stringify(indexes), "utf8", function(err) {
+    fs.writeFile(basedir + "/build/malloc.json", JSON.stringify(indexes, null, 2), "utf8", function(err) {
       if (err) throw err;
 
       console.log("complete", indexes);
     });
   });
-})
 
-);
+});
