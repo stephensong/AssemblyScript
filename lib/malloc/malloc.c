@@ -27,20 +27,32 @@
 #define MALLOC_ALIGNMENT 8
 #define MORECORE_CONTIGUOUS 1
 #define MORECORE_CANNOT_TRIM 1
-#define MORECORE sbrk
+#define MORECORE mspace_more
 #define malloc_getpagesize 65536
 #define DEFAULT_GRANULARITY 65536
 
-static inline void *sbrk(ptrdiff_t);
-
-extern void wasm_debug(int, int);
+static inline void *mspace_more(ptrdiff_t);
 
 #include "memset.c"
 #include "memcpy.c"
 #include "dlmalloc.c"
-#include "sbrk.c"
 
+// initializes the single mspace used by the internal malloc implementation, starting at 'base'
 void *mspace_init(void *base) {
-  wasm_debug(0, (void *)((uintptr_t)__builtin_wasm_current_memory() << 16) - base);
   return create_mspace_with_base(base, (void *)((uintptr_t)__builtin_wasm_current_memory() << 16) - base, 0);
+}
+
+// called by dlmalloc when requesting more memory
+void *mspace_more(ptrdiff_t size) {
+  uintptr_t heapMax = (uintptr_t)__builtin_wasm_current_memory() << 16;
+
+  if (size > 0) {
+
+    if (__builtin_wasm_grow_memory(((size - 1) >> 16) + 1) == 0)
+      return (void *) MFAIL;
+
+  } else if (size < 0)
+    return (void *) MFAIL;
+
+  return (void *) heapMax;
 }

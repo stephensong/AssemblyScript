@@ -225,7 +225,7 @@ export class Compiler {
     this.module.removeExport("mspace_free");
 
     // ... wrap each in a non-mspace'd version ...
-    let mallocSignatureIdentifier = this.uintptrSize === 4 ? "ii" : "II";
+    const mallocSignatureIdentifier = this.uintptrSize === 4 ? "ii" : "II";
     let mallocSignature = this.signatures[mallocSignatureIdentifier];
     if (!mallocSignature)
       mallocSignature = this.signatures[mallocSignatureIdentifier] = this.module.getFunctionType(binaryenPtrType, [ binaryenPtrType ]) || this.module.addFunctionType(mallocSignatureIdentifier, binaryenPtrType, [ binaryenPtrType ]);
@@ -234,7 +234,7 @@ export class Compiler {
         op.call("mspace_malloc", [ op.getGlobal(".msp", binaryenPtrType), op.getLocal(0, binaryenPtrType) ], binaryenPtrType)
       )
     ]));
-    let freeSignatureIdentifier = this.uintptrSize === 4 ? "iv" : "Iv";
+    const freeSignatureIdentifier = this.uintptrSize === 4 ? "iv" : "Iv";
     let freeSignature = this.signatures[freeSignatureIdentifier];
     if (!freeSignature)
       freeSignature = this.signatures[freeSignatureIdentifier] = this.module.getFunctionType(binaryen.none, [ binaryenPtrType ]) || this.module.addFunctionType(freeSignatureIdentifier, binaryen.none, [ binaryenPtrType ]);

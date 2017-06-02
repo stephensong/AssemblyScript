@@ -1,8 +1,8 @@
 (module
- (type $0 (func (param i32 i32)))
- (type $1 (func (param i32 i32 i32) (result i32)))
- (type $2 (func (param i32 i32) (result i32)))
- (type $3 (func (param i32) (result i32)))
+ (type $0 (func (param i32 i32 i32) (result i32)))
+ (type $1 (func (param i32 i32) (result i32)))
+ (type $2 (func (param i32) (result i32)))
+ (type $3 (func (param i32 i32)))
  (type $4 (func (param i32 i32 i32 i32) (result i32)))
  (type $5 (func (param i32 i32 i32 i32 i32) (result i32)))
  (type $6 (func (param i32 i32 i32)))
@@ -19,7 +19,6 @@
  (type $i (func (result i32)))
  (type $iv (func (param i32)))
  (type $v (func))
- (import "env" "wasm_debug" (func $import$0 (param i32 i32)))
  (global $.msp (mut i32) (i32.const 0))
  (table 0 anyfunc)
  (memory $0 1)
@@ -30,7 +29,7 @@
  (export "free" (func $free))
  (export "main" (func $main))
  (start $executeGlobalInitalizers)
- (func $memset (type $1) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $memset (type $0) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (local $3 i32)
   (local $4 i32)
   (local $5 i64)
@@ -315,7 +314,7 @@
   )
   (get_local $0)
  )
- (func $memcpy (type $1) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $memcpy (type $0) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (local $3 i32)
   (local $4 i32)
   (local $5 i32)
@@ -1544,7 +1543,7 @@
   )
   (get_local $0)
  )
- (func $mspace_malloc (type $2) (param $0 i32) (param $1 i32) (result i32)
+ (func $mspace_malloc (type $1) (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
   (local $3 i32)
   (local $4 i32)
@@ -7063,7 +7062,7 @@
    (i32.const 8)
   )
  )
- (func $mspace_free (type $0) (param $0 i32) (param $1 i32)
+ (func $mspace_free (type $3) (param $0 i32) (param $1 i32)
   (local $2 i32)
   (local $3 i32)
   (local $4 i32)
@@ -8750,7 +8749,7 @@
    )
   )
  )
- (func $mspace_init (type $3) (param $0 i32) (result i32)
+ (func $mspace_init (type $2) (param $0 i32) (result i32)
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
@@ -8759,16 +8758,6 @@
   (local $6 i32)
   (local $7 i32)
   (local $8 i32)
-  (call $import$0
-   (i32.const 0)
-   (i32.sub
-    (i32.shl
-     (current_memory)
-     (i32.const 16)
-    )
-    (get_local $0)
-   )
-  )
   (set_local $3
    (get_local $0)
   )
@@ -8833,8 +8822,8 @@
     )
    )
   )
-  (block $label$4
-   (br_if $label$4
+  (block $label$3
+   (br_if $label$3
     (i32.lt_u
      (get_local $4)
      (i32.const 521)
@@ -8843,7 +8832,7 @@
    (set_local $6
     (i32.const 0)
    )
-   (br_if $label$4
+   (br_if $label$3
     (i32.le_u
      (i32.sub
       (i32.const -520)
@@ -8972,7 +8961,7 @@
      (i32.const 4)
     )
    )
-   (loop $label$5
+   (loop $label$4
     (i32.store
      (i32.add
       (tee_local $2
@@ -8997,7 +8986,7 @@
      )
      (get_local $7)
     )
-    (br_if $label$5
+    (br_if $label$4
      (i32.ne
       (tee_local $1
        (i32.add
@@ -9105,7 +9094,7 @@
   )
   (get_local $6)
  )
- (func $malloc (type $3) (param $0 i32) (result i32)
+ (func $malloc (type $2) (param $0 i32) (result i32)
   (call $mspace_malloc
    (get_global $.msp)
    (get_local $0)
