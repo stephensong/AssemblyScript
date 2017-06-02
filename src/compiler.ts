@@ -410,8 +410,6 @@ export class Compiler {
     // if (node.typeParameters && node.typeParameters.length !== 0)
     //  this.error(node.typeParameters[0], "Type parameters are not supported yet");
 
-    let currentOffset = 0;
-
     const className = this.resolveName(node);
     const clazz = this.classes[className] = new wasm.Class(className);
 
@@ -430,11 +428,8 @@ export class Compiler {
             if (!type) {
               this.error(propertyNode.type, "Unresolvable type");
             } else {
-              clazz.fields[name] = new wasm.Field(name, type, currentOffset);
-              if (type.isLong || type.kind === wasm.TypeKind.double)
-                currentOffset += 8;
-              else
-                currentOffset += 4;
+              clazz.fields[name] = new wasm.Field(name, type, clazz.size);
+              clazz.size += type.size;
             }
           }
           break;

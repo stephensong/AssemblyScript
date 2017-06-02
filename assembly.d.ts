@@ -53,18 +53,23 @@ declare type uint32 = uint;
 declare type int64 = long;
 declare type uint64 = ulong;
 
-// Fillers for TypeScript complaining about missing types with 'nolib'
 declare class Array<T> {
   readonly length: uint;
   constructor(size: uint);
 }
+
+declare class String {
+  readonly length: uint;
+  constructor(size: uint);
+}
+
+// Fillers for TypeScript complaining about missing types with 'nolib'
 interface Boolean { }
 interface Function { }
 interface IArguments { }
 interface Number { }
 interface Object { }
 interface RegExp { }
-interface String { }
 
 // Builtins
 declare function rotl(value: int, shift: int): int;

@@ -1,59 +1,88 @@
 import * as binaryen from "../binaryen";
 import { Compiler } from "../compiler";
-import { uintType } from "../types";
+import { ushortType, uintType } from "../types";
 import { binaryenCategoryOf, binaryenTypeOf, binaryenValueOf, getWasmType, setWasmType } from "../util";
 import * as wasm from "../wasm";
-
-export function compileNewArray(compiler: Compiler, node: ts.NewExpression, contextualType: wasm.Type) {
-  const op = compiler.module;
-
-  if (node.arguments && node.arguments.length === 1 && node.typeArguments && node.typeArguments.length === 1) {
-    const sizeArgument = <ts.Expression>node.arguments[0];
-    const sizeExpression = compiler.maybeConvertValue(sizeArgument, compiler.compileExpression(sizeArgument, compiler.uintptrType), getWasmType(sizeArgument), compiler.uintptrType, false);
-    const elementType = compiler.resolveType(<ts.TypeNode>node.typeArguments[0]);
-
-    const cat = binaryenCategoryOf(compiler.uintptrType, compiler.module, compiler.uintptrSize);
-
-    const newsize = compiler.currentLocals[".newsize"] ? compiler.currentLocals[".newsize"].index : compiler.onVariable(".newsize", uintType);
-    const newptr = compiler.currentLocals[".newptr"] ? compiler.currentLocals[".newptr"].index : compiler.onVariable(".newptr", compiler.uintptrType);
-
-    // *(newptr = malloc(4 + elementSize * (newsize = EXPR))) = newsize
-    // return newptr
-
-    return op.block("", [
-      cat.store(
-        0,
-        compiler.uintptrType.size,
-        op.teeLocal(newptr,
-          op.call("malloc", [
-            cat.add(
-              binaryenValueOf(compiler.uintptrType, op, 4),
-              cat.mul(
-                binaryenValueOf(compiler.uintptrType, op, elementType.size),
-                op.teeLocal(newsize, sizeExpression)
-              )
-            )
-          ], binaryenTypeOf(compiler.uintptrType, compiler.uintptrSize))
-        ),
-        op.getLocal(newsize, binaryenTypeOf(uintType, compiler.uintptrSize))
-      ),
-      op.getLocal(newptr, binaryenTypeOf(compiler.uintptrType, compiler.uintptrSize))
-    ], binaryenTypeOf(compiler.uintptrType, compiler.uintptrSize));
-  }
-
-  compiler.error(node, "Unsupported operation");
-  return op.unreachable();
-}
 
 export function compileNew(compiler: Compiler, node: ts.NewExpression, contextualType: wasm.Type): binaryen.Expression {
   const op = compiler.module;
 
   setWasmType(node, compiler.uintptrType);
 
-  if (node.expression.kind === ts.SyntaxKind.Identifier)
-    if ((<ts.Identifier>node.expression).text === "Array")
-      return compileNewArray(compiler, node, contextualType);
+  if (node.expression.kind === ts.SyntaxKind.Identifier) {
+    const identifierNode = <ts.Identifier>node.expression;
 
-  compiler.error(node, "New is not supported yet");
+    // new Array<T>(size)
+    if (identifierNode.text === "Array" && node.arguments && node.arguments.length === 1 && node.typeArguments && node.typeArguments.length === 1)
+      return compileNewArray(compiler, node, compiler.resolveType(node.typeArguments[0]), <ts.Expression>node.arguments[0]);
+
+    // new String(size)
+    if (identifierNode.text === "String" && node.arguments && node.arguments.length === 1 && !node.typeArguments)
+      return compileNewArray(compiler, node, ushortType, <ts.Expression>node.arguments[0]);
+
+    // new Class<?>(...)
+    const symbolAtLocation = compiler.checker.getSymbolAtLocation(identifierNode);
+    if (symbolAtLocation) {
+      const symbol = compiler.maybeResolveAlias(<ts.Symbol>symbolAtLocation);
+      if (symbol.declarations) {
+        const resolvedName = compiler.resolveName(symbol.declarations[0]);
+        const clazz = compiler.classes[resolvedName];
+        if (clazz)
+          return compileNewClass(compiler, node, clazz);
+      }
+    }
+  }
+
+  compiler.error(node, "Unsupported operation");
   return op.unreachable();
 }
+
+export function compileNewClass(compiler: Compiler, node: ts.NewExpression, clazz: wasm.Class): binaryen.Expression {
+  const op = compiler.module;
+  const binaryenPtrType = binaryenTypeOf(compiler.uintptrType, compiler.uintptrSize);
+
+  // return malloc(classSize)
+
+  return op.block("", [
+    op.call("malloc", [
+      binaryenValueOf(compiler.uintptrType, op, clazz.size)
+    ], binaryenPtrType)
+  ], binaryenPtrType);
+
+  // TODO: call constructor, if any
+}
+
+export function compileNewArray(compiler: Compiler, node: ts.NewExpression, elementType: wasm.Type, sizeArgument: ts.Expression) {
+  const op = compiler.module;
+
+  const sizeExpression = compiler.maybeConvertValue(sizeArgument, compiler.compileExpression(sizeArgument, compiler.uintptrType), getWasmType(sizeArgument), compiler.uintptrType, false);
+  const cat = binaryenCategoryOf(compiler.uintptrType, compiler.module, compiler.uintptrSize);
+  const newsize = compiler.currentLocals[".newsize"] ? compiler.currentLocals[".newsize"].index : compiler.onVariable(".newsize", uintType);
+  const newptr = compiler.currentLocals[".newptr"] ? compiler.currentLocals[".newptr"].index : compiler.onVariable(".newptr", compiler.uintptrType);
+  const binaryenPtrType = binaryenTypeOf(compiler.uintptrType, compiler.uintptrSize);
+
+  // *(.newptr = malloc(4 + size * (.newsize = EXPR))) = .newsize
+  // return .newptr
+
+  return op.block("", [
+    cat.store(
+      0,
+      compiler.uintptrType.size,
+      op.teeLocal(newptr,
+        op.call("malloc", [
+          cat.add(
+            binaryenValueOf(compiler.uintptrType, op, 4),
+            cat.mul(
+              binaryenValueOf(compiler.uintptrType, op, elementType.size),
+              op.teeLocal(newsize, sizeExpression)
+            )
+          )
+        ], binaryenPtrType)
+      ),
+      op.getLocal(newsize, binaryenTypeOf(uintType, compiler.uintptrSize))
+    ),
+    op.getLocal(newptr, binaryenPtrType)
+  ], binaryenPtrType);
+}
+
+// TODO: String (an ushort array basically)

@@ -6,7 +6,7 @@ export class Class extends ReflectionObject {
   fields: { [key: string]: Field } = {};
   ctor: Function;
   genericTypes: Type[] = [];
-  size: 0;
+  size: number = 0;
 
   constructor(name: string) {
     super(name, ReflectionObjectKind.Class);

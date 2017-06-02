@@ -24,12 +24,12 @@
     "@protobufjs/base64": "^1.1.1",
     "@types/long": "^3.0.31",
     "@types/minimist": "^1.2.0",
-    "@types/node": "^7.0.22",
-    "byots": "2.4.0-dev.20170528.2.9",
+    "@types/node": "^7.0.26",
+    "byots": "^2.4.0-dev.20170601.2.9",
     "long": "^3.2.0",
     "minimist": "^1.2.0",
     "ts-node": "^3.0.4",
-    "typescript": "^2.4.0-dev.20170528"
+    "typescript": "^2.4.0-dev.20170602"
   },
   "scripts": {
     "build:malloc": "node scripts/build-malloc",
@@ -43,9 +43,9 @@
   },
   "devDependencies": {
     "browserify": "^14.4.0",
-    "tslint": "^5.3.2",
+    "tslint": "^5.4.2",
     "tslint-eslint-rules": "^4.1.1",
-    "uglify-js": "^3.0.13",
+    "uglify-js": "^3.0.15",
     "webassembly": "^0.11.0"
   }
 }
