@@ -1,7 +1,7 @@
+import * as binaryen from "../binaryen";
 import { Compiler } from "../compiler";
 import { intType } from "../types";
 import { getWasmType } from "../util";
-import { binaryen } from "../wasm";
 
 /*
 block {

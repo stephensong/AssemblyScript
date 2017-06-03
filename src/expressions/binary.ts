@@ -1,7 +1,7 @@
+import * as binaryen from "../binaryen";
 import { Compiler } from "../compiler";
 import { intType, voidType } from "../types";
 import { getWasmType, setWasmType } from "../util";
-import { binaryen } from "../wasm";
 import { binaryenCategoryOf, binaryenTypeOf } from "../util";
 import * as wasm from "../wasm";
 
@@ -244,44 +244,37 @@ export function compileAssignmentWithValue(compiler: Compiler, node: ts.BinaryEx
 
   // someVar = expression
   if (node.left.kind === ts.SyntaxKind.Identifier) {
-    const symbol = compiler.checker.getSymbolAtLocation(node.left);
+    const reference = compiler.resolveReference(<ts.Identifier>node.left);
+    if (reference) {
+      switch (reference.kind) {
 
-    if (symbol && symbol.declarations) {
-      const targetName = compiler.resolveName(symbol.declarations[0]);
-      const referenced = compiler.resolveIdentifier(targetName);
+        case wasm.ReflectionObjectKind.Variable:
+        {
+          const variable = <wasm.Variable>reference;
+          const expression = compiler.maybeConvertValue(node.right, value, getWasmType(node.right), variable.type, false);
 
-      if (referenced) {
+          if (contextualType === voidType)
+            return op.setLocal(variable.index, expression);
 
-        switch (referenced.kind) {
-
-          case wasm.ReflectionObjectKind.Variable:
-          {
-            const variable = <wasm.Variable>referenced;
-            const expression = compiler.maybeConvertValue(node.right, value, getWasmType(node.right), variable.type, false);
-
-            if (contextualType === voidType)
-              return op.setLocal(variable.index, expression);
-
-            setWasmType(node, variable.type);
-            return op.teeLocal(variable.index, expression);
-          }
-
-          case wasm.ReflectionObjectKind.Global:
-          {
-            const global = <wasm.Global>referenced;
-            const expression = compiler.maybeConvertValue(node.right, value, getWasmType(node.right), global.type, false)
-
-            if (contextualType === voidType)
-              return op.setGlobal(global.name, expression);
-
-            setWasmType(node, global.type);
-            return op.block("", [ // emulates teeGlobal
-              op.setGlobal(global.name, expression),
-              op.getGlobal(global.name, binaryenTypeOf(global.type, compiler.uintptrSize))
-            ], binaryenTypeOf(global.type, compiler.uintptrSize));
-          }
-
+          setWasmType(node, variable.type);
+          return op.teeLocal(variable.index, expression);
         }
+
+        case wasm.ReflectionObjectKind.Global:
+        {
+          const global = <wasm.Global>reference;
+          const expression = compiler.maybeConvertValue(node.right, value, getWasmType(node.right), global.type, false)
+
+          if (contextualType === voidType)
+            return op.setGlobal(global.name, expression);
+
+          setWasmType(node, global.type);
+          return op.block("", [ // emulates teeGlobal
+            op.setGlobal(global.name, expression),
+            op.getGlobal(global.name, binaryenTypeOf(global.type, compiler.uintptrSize))
+          ], binaryenTypeOf(global.type, compiler.uintptrSize));
+        }
+
       }
     }
   }

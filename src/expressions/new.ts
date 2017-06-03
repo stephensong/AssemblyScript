@@ -12,6 +12,8 @@ export function compileNew(compiler: Compiler, node: ts.NewExpression, contextua
   if (node.expression.kind === ts.SyntaxKind.Identifier) {
     const identifierNode = <ts.Identifier>node.expression;
 
+    // TODO: These are hard-coded but should go through compileNewClass -> compileNewArray eventually
+
     // new Array<T>(size)
     if (identifierNode.text === "Array" && node.arguments && node.arguments.length === 1 && node.typeArguments && node.typeArguments.length === 1)
       return compileNewArray(compiler, node, compiler.resolveType(node.typeArguments[0]), <ts.Expression>node.arguments[0]);
@@ -20,15 +22,14 @@ export function compileNew(compiler: Compiler, node: ts.NewExpression, contextua
     if (identifierNode.text === "String" && node.arguments && node.arguments.length === 1 && !node.typeArguments)
       return compileNewArray(compiler, node, ushortType, <ts.Expression>node.arguments[0]);
 
-    // new Class<?>(...)
-    const symbolAtLocation = compiler.checker.getSymbolAtLocation(identifierNode);
-    if (symbolAtLocation) {
-      const symbol = compiler.maybeResolveAlias(<ts.Symbol>symbolAtLocation);
-      if (symbol.declarations) {
-        const resolvedName = compiler.resolveName(symbol.declarations[0]);
-        const clazz = compiler.classes[resolvedName];
-        if (clazz)
-          return compileNewClass(compiler, node, clazz);
+    const reference = compiler.resolveReference(identifierNode);
+    if (reference) {
+      switch (reference.kind) {
+
+        // new Class<?>(...)
+        case wasm.ReflectionObjectKind.Class:
+          return compileNewClass(compiler, node, <wasm.Class>reference);
+
       }
     }
   }

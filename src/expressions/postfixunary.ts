@@ -1,7 +1,7 @@
+import * as binaryen from "../binaryen";
 import { Compiler } from "../compiler";
 import { intType, voidType } from "../types";
 import { binaryenCategoryOf, binaryenTypeOf, binaryenValueOf, setWasmType } from "../util";
-import { binaryen } from "../wasm";
 import * as wasm from "../wasm";
 
 export function compilePostfixUnary(compiler: Compiler, node: ts.PostfixUnaryExpression, contextualType: wasm.Type): binaryen.Expression {

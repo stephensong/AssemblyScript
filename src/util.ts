@@ -1,6 +1,6 @@
+import * as binaryen from "./binaryen";
 import "byots";
 import * as Long from "long";
-import { binaryen } from "./wasm";
 import * as wasm from "./wasm";
 
 export function isExport(node: ts.Node): boolean {

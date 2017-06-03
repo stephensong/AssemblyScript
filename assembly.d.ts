@@ -58,7 +58,19 @@ declare class Array<T> {
   constructor(size: uint);
 }
 
-declare class String {
+/* declare type Int8Array = Array<sbyte>;
+declare type Uint8Array = Array<byte>;
+declare type Int16Array = Array<short>;
+declare type Uint16Array = Array<ushort>;
+declare type Int32Array = Array<int>;
+declare type Uint32Array = Array<uint>;
+declare type Int64Array = Array<long>;
+declare type Uint64Array = Array<ulong>;
+declare type Float32Array = Array<float>;
+declare type Float64Array = Array<double>;
+declare type Buffer = Array<byte>; */
+
+declare class String extends Array<ushort> {
   readonly length: uint;
   constructor(size: uint);
 }

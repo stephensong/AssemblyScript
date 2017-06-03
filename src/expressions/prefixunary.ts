@@ -1,7 +1,7 @@
+import * as binaryen from "../binaryen";
 import { Compiler } from "../compiler";
 import { binaryenTypeOf, binaryenCategoryOf, binaryenValueOf, getWasmType, setWasmType } from "../util";
 import { intType, boolType, floatType, doubleType, voidType } from "../types";
-import { binaryen } from "../wasm";
 import * as wasm from "../wasm";
 
 export function compilePrefixUnary(compiler: Compiler, node: ts.PrefixUnaryExpression, contextualType: wasm.Type): binaryen.Expression {

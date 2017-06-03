@@ -1,6 +1,6 @@
+import * as binaryen from "../binaryen";
 import { Compiler } from "../compiler";
 import { isImport, binaryenTypeOf, getWasmType, setWasmType } from "../util";
-import { binaryen } from "../wasm";
 import * as wasm from "../wasm";
 
 import * as builtins from "../builtins";

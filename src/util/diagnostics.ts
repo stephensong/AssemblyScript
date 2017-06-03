@@ -11,7 +11,7 @@ const resetEscapeSequence = "\u001b[0m";
 const ellipsis = "...";
 
 if (!ts.sys)
-  ts.sys =browserys;
+  ts.sys = browserys;
 
 function getCategoryFormat(category: ts.DiagnosticCategory): string {
   switch (category) {

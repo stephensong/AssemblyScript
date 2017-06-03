@@ -1,13 +1,13 @@
 import "byots";
 import * as ast from "./ast";
 import * as base64 from "@protobufjs/base64";
+import * as binaryen from "./binaryen";
 import { createDiagnosticForNode, printDiagnostic } from "./util/diagnostics";
 import { libSource, mallocBlob } from "./library";
 import * as path from "path";
 import { Profiler } from "./profiler";
 import { byteType, sbyteType, shortType, ushortType, intType, uintType, longType, ulongType, boolType, floatType, doubleType, uintptrType32, uintptrType64, voidType } from "./types";
 import { isImport, isExport, isConst, isStatic, signatureIdentifierOf, binaryenTypeOf, binaryenValueOf, arrayTypeOf, getWasmType, setWasmType, getWasmFunction, setWasmFunction } from "./util";
-import { binaryen } from "./wasm";
 import * as wasm from "./wasm";
 
 const MEM_MAX_32 = (1 << 16) - 1; // 65535 (pageSize) * 65535 (n) ^= 4GB
@@ -26,12 +26,10 @@ base64.decode(mallocBlob, mallocBuffer, 0);
 
 const defaultUintptrSize = 4;
 
-interface CompilerOptions {
+export interface CompilerOptions {
   uintptrSize?: number;
   noLib?: boolean;
 }
-
-// Rule #1: This is a compiler, not an optimizer. Makes life a lot easier.
 
 export class Compiler {
   program: ts.Program;
@@ -62,8 +60,10 @@ export class Compiler {
   onVariable: (originalName: string, type: wasm.Type) => number;
 
   static compileFile(filename: string, options?: CompilerOptions): binaryen.Module | null {
-    const program = ts.createProgram([ __dirname + "/../assembly.d.ts", filename ], tsCompilerOptions);
-    return Compiler.compileProgram(program, options);
+    return Compiler.compileProgram(
+      ts.createProgram([ __dirname + "/../assembly.d.ts", filename ], tsCompilerOptions),
+      options
+    );
   }
 
   static compileString(source: string, options?: CompilerOptions): binaryen.Module | null {
@@ -167,50 +167,61 @@ export class Compiler {
     printDiagnostic(diagnostic);
   }
 
+  mangleGlobalName(name: string, sourceFile: ts.SourceFile) {
+    // prepends the relative path to imported files
+    if (sourceFile !== this.entryFile) {
+      name = path.relative(
+        path.dirname(path.normalize(this.entryFile.fileName)),
+        path.normalize(sourceFile.fileName)
+      ).replace(/[^a-zA-Z0-9\.\/\\$]/g, "") + path.sep + name;
+    }
+    return name;
+  }
+
   initialize(): void {
-    const compiler = this;
-
-    // TODO: it seem that binaryen.js doesn't support importing memory yet
-
     const sourceFiles = this.program.getSourceFiles();
+
     for (let i = 0, k = sourceFiles.length, file; i < k; ++i) {
       file = sourceFiles[i];
 
       for (let j = 0, l = file.statements.length, statement; j < l; ++j) {
         switch ((statement = file.statements[j]).kind) {
 
+          case ts.SyntaxKind.EndOfFileToken:
           case ts.SyntaxKind.ImportDeclaration:
           case ts.SyntaxKind.InterfaceDeclaration:
           case ts.SyntaxKind.TypeAliasDeclaration:
             continue; // already handled by TypeScript
 
           case ts.SyntaxKind.VariableStatement:
-            compiler.initializeGlobal(<ts.VariableStatement>statement);
+            this.initializeGlobal(<ts.VariableStatement>statement);
             continue;
 
           case ts.SyntaxKind.FunctionDeclaration:
-            compiler.initializeFunction(<ts.FunctionDeclaration>statement);
+            this.initializeFunction(<ts.FunctionDeclaration>statement);
             continue;
 
           case ts.SyntaxKind.ClassDeclaration:
-            compiler.initializeClass(<ts.ClassDeclaration>statement);
+            this.initializeClass(<ts.ClassDeclaration>statement);
             continue;
 
           case ts.SyntaxKind.EnumDeclaration:
-            compiler.initializeEnum(<ts.EnumDeclaration>statement);
+            this.initializeEnum(<ts.EnumDeclaration>statement);
             continue;
 
-          case ts.SyntaxKind.EndOfFileToken:
-            continue;
+          default:
+            this.error(statement, "Unsupported top-level statement", ts.SyntaxKind[statement.kind]);
         }
-        throw Error("unsupported top-level node: " + ts.SyntaxKind[statement.kind]);
       }
     }
 
-    if (this.noLib)
+    if (this.noLib) {
+      // setup empty memory
       this.module.setMemory(1, MEM_MAX_32, "memory", []);
-    else // memory is imported
+    } else {
+      // memory is imported
       this.initializeLibrary();
+    }
   }
 
   initializeLibrary(): void {
@@ -221,11 +232,11 @@ export class Compiler {
     op.addGlobal(".msp", binaryenPtrType, true, binaryenValueOf(this.uintptrType, this.module, 0));
     this.globalInitializers.push(
       op.setGlobal(".msp", op.call("mspace_init", [
-        binaryenValueOf(this.uintptrType, this.module, 12) // TODO: change to actual heap start offset
+        binaryenValueOf(this.uintptrType, this.module, this.uintptrSize * 2) // TODO: change to actual heap start offset
       ], binaryenPtrType))
     );
 
-    // now, instead of exposing mspace'd functions to the user ...
+    // now, instead of exposing mspace'd functions ...
     this.module.removeExport("mspace_init");
     this.module.removeExport("mspace_malloc");
     this.module.removeExport("mspace_free");
@@ -248,38 +259,42 @@ export class Compiler {
       op.call("mspace_free", [ op.getGlobal(".msp", binaryenPtrType), op.getLocal(0, binaryenPtrType) ], binaryen.none)
     ]));
 
-    // ... and expose these for convenience:
+    // ... and expose these to the outside for convenience:
     this.module.addExport("malloc", "malloc");
     this.module.addExport("free", "free");
   }
 
-  _initializeGlobal(name: string, type: wasm.Type, mutable: boolean, initializerNode?: ts.Expression): void {
+  initializeGlobal(node: ts.VariableStatement): void {
+    for (let i = 0, k = node.declarationList.declarations.length; i < k; ++i) {
+      const declaration = node.declarationList.declarations[i];
+      const initializerNode = declaration.initializer;
+
+      if (declaration.type && declaration.symbol) {
+        const name = this.mangleGlobalName(declaration.symbol.name, declaration.getSourceFile());
+        const type = this.resolveType(declaration.type);
+
+        if (type)
+          this.commonInitializeGlobal(name, type, !isConst(node.declarationList), initializerNode);
+        else
+          this.error(declaration.type, "Unresolvable type");
+
+      } else
+        this.error(declaration.name, "Type expected");
+    }
+  }
+
+  commonInitializeGlobal(name: string, type: wasm.Type, mutable: boolean, initializerNode?: ts.Expression): void {
     const op = this.module;
 
-    if (!initializerNode) {
-      op.addGlobal(name, binaryenTypeOf(type, this.uintptrSize), mutable, binaryenValueOf(type, this.module, 0));
-      this.globals[name] = new wasm.Global(name, type, mutable);
-      return;
-    }
+    this.globals[name] = new wasm.Global(name, type, mutable);
 
-    if (initializerNode.kind === ts.SyntaxKind.FirstLiteralToken) {
+    if (initializerNode) {
 
-      op.addGlobal(name, binaryenTypeOf(type, this.uintptrSize), mutable, ast.compileLiteral(this, <ts.LiteralExpression>initializerNode, type));
-      this.globals[name] = new wasm.Global(name, type, mutable);
+      if (initializerNode.kind === ts.SyntaxKind.NumericLiteral) {
+        op.addGlobal(name, binaryenTypeOf(type, this.uintptrSize), mutable, ast.compileLiteral(this, <ts.LiteralExpression>initializerNode, type));
 
-    } else {
-
-      /* if (initializerNode.kind === ts.SyntaxKind.PropertyAccessExpression) {
-        const value = this.checker.getConstantValue(<ts.PropertyAccessExpression>initializerNode);
-        if (typeof value === 'number') {
-          op.addGlobal(name, binaryenTypeOf(type, this.uintptrSize), mutable, ...);
-        }
-      } */
-
-      if (mutable) {
-
+      } else if (mutable) {
         op.addGlobal(name, binaryenTypeOf(type, this.uintptrSize), mutable, binaryenValueOf(type, this.module, 0));
-        this.globals[name] = new wasm.Global(name, type, mutable);
 
         this.globalInitializers.push(
           op.setGlobal(name,
@@ -290,43 +305,23 @@ export class Compiler {
             )
           )
         );
-
-      } else {
+      } else
         this.error(initializerNode, "Unsupported global constant initializer");
-      }
-    }
+
+    } else
+      op.addGlobal(name, binaryenTypeOf(type, this.uintptrSize), mutable, binaryenValueOf(type, this.module, 0));
   }
 
-  initializeGlobal(node: ts.VariableStatement): void {
-    for (let i = 0, k = node.declarationList.declarations.length; i < k; ++i) {
-      const declaration = node.declarationList.declarations[i];
-      const initializerNode = declaration.initializer;
-
-      if (declaration.type && declaration.symbol) {
-        const name = this.resolveName(declaration);
-        const type = this.resolveType(declaration.type);
-        const mutable = !isConst(node.declarationList);
-
-        if (type) {
-          this._initializeGlobal(name, type, mutable, initializerNode);
-        } else {
-          this.error(declaration.type, "Unresolvable type");
-        }
-      } else {
-        this.error(declaration.name, "Type expected");
-      }
-    }
-  }
-
-  private _initializeFunction(node: ts.FunctionDeclaration | ts.MethodDeclaration | ts.ConstructorDeclaration, parent?: ts.ClassDeclaration): void {
+  initializeFunction(node: ts.FunctionDeclaration | ts.MethodDeclaration | ts.ConstructorDeclaration, parent?: ts.ClassDeclaration): void {
     const isConstructor = node.kind === ts.SyntaxKind.Constructor;
-    const name = isConstructor
-      ? this.resolveName(<ts.ClassDeclaration>parent)
-      : parent
-        ? this.resolveName(parent) + (isStatic(node) ? "." : "#") + (<ts.Identifier>node.name).getText()
-        : this.resolveName(node);
+    let name: string;
+    if (parent) {
+      const parentName = this.mangleGlobalName((<ts.Symbol>parent.symbol).name, parent.getSourceFile())
+      name = isConstructor ? parentName : parentName + (isStatic(node) ? "." : "#") + (<ts.Identifier>node.name).getText();
+    } else
+      name = this.mangleGlobalName((<ts.Identifier>node.name).getText(), node.getSourceFile());
 
-    if (name === "memory" && isExport(node))
+    if (name === "memory")
       this.error(node, "Duplicate exported name", "memory");
 
     const returnType: wasm.Type = isConstructor ? this.uintptrType : this.resolveType(<ts.TypeNode>node.type, true);
@@ -407,16 +402,12 @@ export class Compiler {
     setWasmFunction(node, func);
   }
 
-  initializeFunction(node: ts.FunctionDeclaration): void {
-    this._initializeFunction(node);
-  }
-
   initializeClass(node: ts.ClassDeclaration): void {
 
     // if (node.typeParameters && node.typeParameters.length !== 0)
     //  this.error(node.typeParameters[0], "Type parameters are not supported yet");
 
-    const className = this.resolveName(node);
+    const className = this.mangleGlobalName((<ts.Identifier>node.name).getText(), node.getSourceFile());
     const clazz = this.classes[className] = new wasm.Class(className);
 
     for (let i = 0, k = node.members.length; i < k; ++i) {
@@ -442,7 +433,7 @@ export class Compiler {
         }
 
         case ts.SyntaxKind.Constructor:
-          this._initializeFunction(<ts.ConstructorDeclaration>member, node);
+          this.initializeFunction(<ts.ConstructorDeclaration>member, node);
           break;
 
         case ts.SyntaxKind.MethodDeclaration:
@@ -452,7 +443,7 @@ export class Compiler {
           if (isImport(member))
             this.error(member, "Class methods cannot be imports");
 
-          this._initializeFunction(<ts.MethodDeclaration>member, node);
+          this.initializeFunction(<ts.MethodDeclaration>member, node);
           break;
 
         default:
@@ -463,7 +454,8 @@ export class Compiler {
   }
 
   initializeEnum(node: ts.EnumDeclaration): void {
-    const enm = new wasm.Enum(this.resolveName(node));
+    const name = this.mangleGlobalName(node.name.getText(), node.getSourceFile());
+    const enm = new wasm.Enum(name);
     for (let i = 0, k = node.members.length; i < k; ++i)
       enm.addValue(node.members[i].name.getText(), <number>this.checker.getConstantValue(node.members[i]));
   }
@@ -524,7 +516,7 @@ export class Compiler {
     );
   }
 
-  private _compileFunction(node: ts.FunctionDeclaration | ts.MethodDeclaration | ts.ConstructorDeclaration): binaryen.Function {
+  compileFunctionOrMethod(node: ts.FunctionDeclaration | ts.MethodDeclaration | ts.ConstructorDeclaration): binaryen.Function {
     if (!node.body)
       throw Error("missing body");
 
@@ -589,7 +581,7 @@ export class Compiler {
       return;
     }
 
-    const functionHandle = this._compileFunction(node);
+    const functionHandle = this.compileFunctionOrMethod(node);
 
     if ((wasmFunction.flags & wasm.FunctionFlags.export) !== 0)
       this.module.addExport(name, name);
@@ -605,7 +597,7 @@ export class Compiler {
 
         case ts.SyntaxKind.Constructor:
         case ts.SyntaxKind.MethodDeclaration:
-          this._compileFunction(<ts.MethodDeclaration | ts.ConstructorDeclaration>member);
+          this.compileFunctionOrMethod(<ts.MethodDeclaration | ts.ConstructorDeclaration>member);
           break;
 
         // otherwise already reported by initialize
@@ -959,16 +951,6 @@ export class Compiler {
     return symbol;
   }
 
-  resolveName(node: ts.NamedDeclaration) {
-    // this basically prepends the relative path from the entry file to the target file to a declaration's name.
-    // depending on imports structure, this might become rather longish and might have to be changed in the future.
-    let name = node.symbol && node.symbol.name || (<ts.Identifier>node.name).getText();
-    const file = node.getSourceFile();
-    if (file !== this.entryFile)
-      name = path.relative(path.dirname(this.entryFile.fileName), file.fileName).replace(/[^a-zA-Z0-9\.\/$]/g, "") + "/" + name;
-    return name;
-  }
-
   resolveType(type: ts.TypeNode, acceptVoid: boolean = false): wasm.Type {
 
     switch (type.kind) {
@@ -1005,11 +987,14 @@ export class Compiler {
               case "uintptr": return this.uintptrType;
             }
 
-            // If it is a class reference, return uintptr
-            if (symbol.declarations) {
-              const resolvedName = this.resolveName(symbol.declarations[0]);
-              if (this.classes[resolvedName])
-                return this.uintptrType;
+            const reference = this.resolveReference(referenceNode.typeName);
+            if (reference) {
+              switch (reference.kind) {
+
+                case wasm.ReflectionObjectKind.Class:
+                  return this.uintptrType;
+
+              }
             }
           }
         }
@@ -1020,28 +1005,42 @@ export class Compiler {
     return voidType;
   }
 
-  resolveIdentifier(name: string): wasm.Variable | wasm.Constant | wasm.Global | wasm.Enum | wasm.Class | null {
+  resolveReference(node: ts.Identifier | ts.EntityName): wasm.Variable | wasm.Constant | wasm.Global | wasm.Enum | wasm.Class | null {
 
-    const referencedLocal = this.currentLocals[name];
-    if (referencedLocal)
-      return referencedLocal;
+    // Locals including 'this'
+    const localName = node.getText();
+    if (this.currentLocals[localName])
+      return this.currentLocals[localName];
 
-    const referencedConstant = this.constants[name];
-    if (referencedConstant)
-      return referencedConstant;
+    // Globals
+    const symbol = this.checker.getSymbolAtLocation(node);
+    if (symbol && symbol.declarations) { // Determine declaration site
 
-    const referencedGlobal = this.globals[name];
-    if (referencedGlobal)
-      return referencedGlobal;
+      for (let i = 0, k = symbol.declarations.length; i < k; ++i) {
+        const declaration = symbol.declarations[i];
 
-    const referencedEnum = this.enums[name];
-    if (referencedEnum)
-      return referencedEnum;
+        if (declaration.symbol) {
+          const globalName = this.mangleGlobalName(declaration.symbol.name, declaration.getSourceFile());
 
-    const referencedClass = this.classes[name];
-    if (referencedClass)
-      return referencedClass;
+          if (this.constants[globalName])
+            return this.constants[globalName];
 
+          if (this.globals[globalName])
+            return this.globals[globalName];
+
+          if (this.enums[globalName])
+            return this.enums[globalName];
+
+          if (this.classes[globalName])
+            return this.classes[globalName];
+        }
+      }
+    }
     return null;
   }
 }
+
+if (typeof global !== "undefined" && global)
+  (<any>global)["Compiler"] = Compiler;
+if (typeof window !== "undefined" && window)
+  (<any>window)["Compiler"] = Compiler;

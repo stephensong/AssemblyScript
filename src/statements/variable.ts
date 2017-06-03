@@ -1,11 +1,15 @@
+import * as binaryen from "../binaryen";
 import { Compiler } from "../compiler";
 import { getWasmType, setWasmType } from "../util";
-import { binaryen } from "../wasm";
+
+export function compileVariable(compiler: Compiler, node: ts.VariableStatement): binaryen.Statement {
+  return compileVariableDeclarationList(compiler, node.declarationList);
+}
 
 export function compileVariableDeclarationList(compiler: Compiler, node: ts.VariableDeclarationList): binaryen.Statement {
   const op = compiler.module;
-  const initializers: binaryen.Expression[] = [];
 
+  const initializers: binaryen.Expression[] = [];
   for (let i = 0, k = node.declarations.length; i < k; ++i) {
     const declaration = node.declarations[i];
     const declarationName = declaration.name.getText();
@@ -17,16 +21,11 @@ export function compileVariableDeclarationList(compiler: Compiler, node: ts.Vari
       const index = compiler.onVariable(declarationName, declarationType);
       if (declaration.initializer)
         initializers.push(op.setLocal(index, compiler.maybeConvertValue(declaration.initializer, compiler.compileExpression(declaration.initializer, declarationType), getWasmType(declaration.initializer), declarationType, false)));
-    } else {
+    } else
       compiler.error(declaration, "Type expected");
-    }
   }
 
   return initializers.length === 0 ? op.nop()
        : initializers.length === 1 ? initializers[0]
        : op.block("", initializers); // praise rule #1
-}
-
-export function compileVariable(compiler: Compiler, node: ts.VariableStatement): binaryen.Statement {
-  return compileVariableDeclarationList(compiler, node.declarationList);
 }

@@ -1,8 +1,8 @@
+import * as binaryen from "../binaryen";
 import { Compiler } from "../compiler";
 import * as Long from "long";
 import { byteType, sbyteType, shortType, ushortType, intType, uintType, longType, ulongType, uintptrType32, uintptrType64, boolType, floatType } from "../types";
 import { setWasmType } from "../util";
-import { binaryen } from "../wasm";
 import * as wasm from "../wasm";
 
 export function compileLiteral(compiler: Compiler, node: ts.LiteralExpression, contextualType: wasm.Type): binaryen.Expression {
@@ -26,6 +26,8 @@ export function compileLiteral(compiler: Compiler, node: ts.LiteralExpression, c
 
   }
 
+  setWasmType(node, contextualType);
+
   if (contextualType.isAnyFloat) {
 
     let floatValue: number;
@@ -37,7 +39,6 @@ export function compileLiteral(compiler: Compiler, node: ts.LiteralExpression, c
       compiler.error(node, "Illegal float literal", text);
     }
 
-    setWasmType(node, contextualType);
     return contextualType === floatType ? op.f32.const(floatValue) : op.f64.const(floatValue);
 
   } else if (contextualType.isAnyInteger) {
@@ -53,8 +54,6 @@ export function compileLiteral(compiler: Compiler, node: ts.LiteralExpression, c
       intValue = 0; intRadix = 10; text = "0";
       compiler.error(node, "Illegal integer literal", text);
     }
-
-    setWasmType(node, contextualType);
 
     switch (contextualType) {
 
@@ -81,7 +80,6 @@ export function compileLiteral(compiler: Compiler, node: ts.LiteralExpression, c
         return op.i64.const(long.low, long.high);
 
     }
-
   }
 
   compiler.error(node, "Unsupported literal", text);

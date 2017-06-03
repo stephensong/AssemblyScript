@@ -1,5 +1,5 @@
+import * as binaryen from "../binaryen";
 import { Compiler } from "../compiler";
-import { binaryen } from "../wasm";
 
 export function compileBlock(compiler: Compiler, node: ts.Block): binaryen.Statement {
   const op = compiler.module;

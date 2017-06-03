@@ -1,7 +1,7 @@
+import * as binaryen from "../binaryen";
 import { Compiler } from "../compiler";
 import { voidType } from "../types";
 import { getWasmType } from "../util";
-import { binaryen } from "../wasm";
 
 export function compileReturn(compiler: Compiler, node: ts.ReturnStatement): binaryen.Statement {
   const op = compiler.module;
@@ -11,7 +11,7 @@ export function compileReturn(compiler: Compiler, node: ts.ReturnStatement): bin
     if (!node.expression)
       return op.return();
 
-    compiler.error(node, "Function cannot return a value");
+    compiler.error(node, "Function cannot return a value", "Return type is 'void'");
 
   } else {
 

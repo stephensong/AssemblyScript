@@ -1,7 +1,7 @@
+import * as binaryen from "../binaryen";
 import { Compiler } from "../compiler";
 import { intType } from "../types";
 import { getWasmType, setWasmType } from "../util";
-import { binaryen } from "../wasm";
 import * as wasm from "../wasm";
 
 export function compileConditional(compiler: Compiler, node: ts.ConditionalExpression, contextualType: wasm.Type): binaryen.Expression {
