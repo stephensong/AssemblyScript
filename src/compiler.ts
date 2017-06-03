@@ -38,22 +38,28 @@ export class Compiler {
   checker: ts.TypeChecker;
   entryFile: ts.SourceFile;
   diagnostics: ts.DiagnosticCollection;
+  profiler = new Profiler();
   noLib: boolean;
+
   uintptrSize: number;
   uintptrType: wasm.Type;
+
   module: binaryen.Module;
   signatures: { [key: string]: binaryen.Signature } = {};
-  constants: { [key: string]: wasm.Constant } = {};
   globalInitializers: binaryen.Expression[] = [];
-  globals: { [key: string]: wasm.Global } = {};
   userStartFunction?: binaryen.Function;
-  profiler = new Profiler();
+
   currentFunction: wasm.Function;
   currentLocals: { [key: string]: wasm.Variable };
   currentBreakContextNumber = 0;
   currentBreakContextDepth = 0;
-  onVariable: (originalName: string, type: wasm.Type) => number;
+
+  constants: { [key: string]: wasm.Constant } = {};
+  globals: { [key: string]: wasm.Global } = {};
   classes: { [key: string]: wasm.Class } = {};
+  enums: { [key: string]: wasm.Enum } = {};
+
+  onVariable: (originalName: string, type: wasm.Type) => number;
 
   static compileFile(filename: string, options?: CompilerOptions): binaryen.Module | null {
     const program = ts.createProgram([ __dirname + "/../assembly.d.ts", filename ], tsCompilerOptions);
@@ -457,17 +463,9 @@ export class Compiler {
   }
 
   initializeEnum(node: ts.EnumDeclaration): void {
-    const enumName = this.resolveName(node);
-
-    for (let i = 0, k = node.members.length; i < k; ++i) {
-      const name = enumName + "." + (<ts.Symbol>node.members[i].symbol).name;
-      const value = this.checker.getConstantValue(node.members[i]);
-      this.constants[name] = <wasm.Constant>{
-        name: name,
-        type: intType,
-        value: value
-      };
-    }
+    const enm = new wasm.Enum(this.resolveName(node));
+    for (let i = 0, k = node.members.length; i < k; ++i)
+      enm.addValue(node.members[i].name.getText(), <number>this.checker.getConstantValue(node.members[i]));
   }
 
   compile(): void {
@@ -1022,19 +1020,27 @@ export class Compiler {
     return voidType;
   }
 
-  resolveIdentifier(name: string): wasm.Variable | wasm.Global | wasm.Constant | null {
+  resolveIdentifier(name: string): wasm.Variable | wasm.Constant | wasm.Global | wasm.Enum | wasm.Class | null {
 
     const referencedLocal = this.currentLocals[name];
     if (referencedLocal)
       return referencedLocal;
 
+    const referencedConstant = this.constants[name];
+    if (referencedConstant)
+      return referencedConstant;
+
     const referencedGlobal = this.globals[name];
     if (referencedGlobal)
       return referencedGlobal;
 
-    const referencedConstant = this.constants[name];
-    if (referencedConstant)
-      return referencedConstant;
+    const referencedEnum = this.enums[name];
+    if (referencedEnum)
+      return referencedEnum;
+
+    const referencedClass = this.classes[name];
+    if (referencedClass)
+      return referencedClass;
 
     return null;
   }

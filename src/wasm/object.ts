@@ -7,7 +7,8 @@ export enum ReflectionObjectKind {
   Global   = 1 << 3,
   Class    = 1 << 4,
   Field    = 1 << 5,
-  AnyTyped = Variable | Constant | Global | Field
+  Enum     = 1 << 6,
+  AnyTyped = Variable | Constant | Global | Field | Enum
 }
 
 export abstract class ReflectionObject {

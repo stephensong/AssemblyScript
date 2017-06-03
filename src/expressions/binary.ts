@@ -5,103 +5,12 @@ import { binaryen } from "../wasm";
 import { binaryenCategoryOf, binaryenTypeOf } from "../util";
 import * as wasm from "../wasm";
 
-export function compileAssignment(compiler: Compiler, node: ts.BinaryExpression, contextualType: wasm.Type): binaryen.Expression {
-  const op = compiler.module;
-
-  setWasmType(node, contextualType);
-
-  if (node.left.kind === ts.SyntaxKind.Identifier) {
-    const identifierNode = <ts.Identifier>node.left;
-    const referenced = compiler.resolveIdentifier(identifierNode.text);
-
-    if (referenced) {
-      const right = compiler.maybeConvertValue(node.right, compiler.compileExpression(node.right, referenced.type), getWasmType(node.right), referenced.type, false);
-
-      setWasmType(node, contextualType === voidType ? voidType : referenced.type);
-
-      switch (referenced.kind) {
-
-        case wasm.ReflectionObjectKind.Variable:
-
-          if (contextualType === voidType)
-            return op.setLocal((<wasm.Variable>referenced).index, right);
-          else
-            return op.teeLocal((<wasm.Variable>referenced).index, right);
-
-        case wasm.ReflectionObjectKind.Global:
-
-          if (contextualType === voidType)
-            return op.setGlobal((<wasm.Global>referenced).name, right);
-          else
-            return op.block("", [
-              op.setGlobal((<wasm.Global>referenced).name, right),
-              op.getGlobal((<wasm.Global>referenced).name, binaryenTypeOf(referenced.type, compiler.uintptrSize))
-            ], binaryenTypeOf(referenced.type, compiler.uintptrSize));
-
-      }
-
-    }
-
-    compiler.error(node.left, "Unresolvable variable reference");
-  } else
-    compiler.error(node.operatorToken, "Unsupported assignment");
-  return op.unreachable();
-}
-
-export function compileCompoundAssignment(compiler: Compiler, node: ts.BinaryExpression, contextualType: wasm.Type): binaryen.Expression {
-  const op = compiler.module;
-  const isIncrement = node.operatorToken.kind === ts.SyntaxKind.FirstCompoundAssignment;
-
-  setWasmType(node, contextualType);
-
-  if (node.left.kind === ts.SyntaxKind.Identifier) {
-    const identifierNode = <ts.Identifier>node.left;
-    const referenced = compiler.resolveIdentifier(identifierNode.text);
-
-    if (referenced) {
-      const cat = <binaryen.F32Operations | binaryen.F64Operations>binaryenCategoryOf(referenced.type, op, compiler.uintptrSize);
-      const left = compiler.compileExpression(node.left, contextualType);
-      const right = compiler.compileExpression(node.right, contextualType);
-      const calculate = (isIncrement ? cat.add : cat.sub).call(cat, left, right);
-
-      setWasmType(node, contextualType === voidType ? voidType : referenced.type);
-
-      switch (referenced.kind) {
-
-        case wasm.ReflectionObjectKind.Variable:
-
-          if (contextualType === voidType)
-            return op.setLocal((<wasm.Variable>referenced).index, calculate);
-          else
-            return op.teeLocal((<wasm.Variable>referenced).index, calculate);
-
-        case wasm.ReflectionObjectKind.Global:
-
-          if (contextualType === voidType)
-            return op.setGlobal((<wasm.Global>referenced).name, calculate);
-          else
-            return op.block("", [
-              op.setGlobal((<wasm.Global>referenced).name, calculate),
-              op.getGlobal((<wasm.Global>referenced).name, binaryenTypeOf(referenced.type, compiler.uintptrSize))
-            ], binaryenTypeOf(referenced.type, compiler.uintptrSize));
-
-      }
-    }
-
-    compiler.error(node.left, "Unresolvable variable reference");
-  } else
-    compiler.error(node.operatorToken, "Unsupported compound assignment");
-  return op.unreachable();
-}
-
 export function compileBinary(compiler: Compiler, node: ts.BinaryExpression, contextualType: wasm.Type): binaryen.Expression {
 
-  if (node.operatorToken.kind === ts.SyntaxKind.FirstAssignment)
+  if (node.operatorToken.kind === ts.SyntaxKind.EqualsToken)
     return compileAssignment(compiler, node, contextualType);
 
-  if (node.operatorToken.kind === ts.SyntaxKind.FirstCompoundAssignment || node.operatorToken.kind === ts.SyntaxKind.MinusEqualsToken)
-    return compileCompoundAssignment(compiler, node, contextualType);
-
+  const isCompound = node.operatorToken.kind >= ts.SyntaxKind.FirstCompoundAssignment && node.operatorToken.kind <= ts.SyntaxKind.LastCompoundAssignment;
   const op = compiler.module;
 
   let left  = compiler.compileExpression(node.left, contextualType);
@@ -112,23 +21,28 @@ export function compileBinary(compiler: Compiler, node: ts.BinaryExpression, con
 
   let resultType: wasm.Type;
 
-  if (leftType.isAnyFloat) {
-
-    if (rightType.isAnyFloat)
-      resultType = leftType.size > rightType.size ? leftType : rightType;
-    else
-      resultType = leftType;
-
-  } else if (rightType.isAnyFloat)
-    resultType = rightType;
-  else /* int */ if (leftType.kind === wasm.TypeKind.uintptr && rightType.kind !== wasm.TypeKind.uintptr)
+  if (isCompound) {
     resultType = leftType;
-  else if (leftType.kind !== wasm.TypeKind.uintptr && rightType.kind === wasm.TypeKind.uintptr)
-    resultType = rightType;
-  else
-    resultType = leftType.size >= rightType.size ? leftType : rightType;
+  } else {
 
-  // compile again with common contextual type so that literals are properly coerced
+    if (leftType.isAnyFloat) {
+
+      if (rightType.isAnyFloat)
+        resultType = leftType.size > rightType.size ? leftType : rightType;
+      else
+        resultType = leftType;
+
+    } else if (rightType.isAnyFloat)
+      resultType = rightType;
+    else /* int */ if (leftType.kind === wasm.TypeKind.uintptr && rightType.kind !== wasm.TypeKind.uintptr)
+      resultType = leftType;
+    else if (leftType.kind !== wasm.TypeKind.uintptr && rightType.kind === wasm.TypeKind.uintptr)
+      resultType = rightType;
+    else
+      resultType = leftType.size >= rightType.size ? leftType : rightType;
+  }
+
+  // compile again with common contextual type so that literals can be properly coerced
   if (leftType !== resultType)
     left = compiler.maybeConvertValue(node.left, compiler.compileExpression(node.left, resultType), leftType, resultType, false);
   if (rightType !== resultType)
@@ -136,43 +50,66 @@ export function compileBinary(compiler: Compiler, node: ts.BinaryExpression, con
 
   setWasmType(node, resultType);
 
+  let result: binaryen.Expression | null = null;
+
   if (resultType.isAnyFloat) {
 
     const cat = <binaryen.F32Operations | binaryen.F64Operations>binaryenCategoryOf(resultType, op, compiler.uintptrSize);
 
     switch (node.operatorToken.kind) {
 
+      // Arithmetic
       case ts.SyntaxKind.PlusToken:
-        return cat.add(left, right);
+      case ts.SyntaxKind.PlusEqualsToken:
+        result = cat.add(left, right);
+        break;
 
       case ts.SyntaxKind.MinusToken:
-        return cat.sub(left, right);
+      case ts.SyntaxKind.MinusEqualsToken:
+        result = cat.sub(left, right);
+        break;
 
       case ts.SyntaxKind.AsteriskToken:
-        return cat.mul(left, right);
+      case ts.SyntaxKind.AsteriskEqualsToken:
+        result = cat.mul(left, right);
+        break;
 
       case ts.SyntaxKind.SlashToken:
-        return cat.div(left, right);
+      case ts.SyntaxKind.SlashEqualsToken:
+        result = cat.div(left, right);
+        break;
 
+      case ts.SyntaxKind.PercentToken:
+      case ts.SyntaxKind.PercentEqualsToken:
+        // TODO: maybe emulate, not a built-in operation
+        break;
+
+      // Logical
       case ts.SyntaxKind.EqualsEqualsEqualsToken:
         compiler.warn(node.operatorToken, "Assuming '=='");
       case ts.SyntaxKind.EqualsEqualsToken:
-        return cat.eq(left, right);
+        result = cat.eq(left, right);
+        break;
 
       case ts.SyntaxKind.ExclamationEqualsToken:
-        return cat.ne(left, right);
+        result = cat.ne(left, right);
+        break;
 
       case ts.SyntaxKind.GreaterThanToken:
-        return cat.gt(left, right);
+        result = cat.gt(left, right);
+        break;
 
       case ts.SyntaxKind.GreaterThanEqualsToken:
-        return cat.ge(left, right);
+        result = cat.ge(left, right);
+        break;
 
       case ts.SyntaxKind.LessThanToken:
-        return cat.lt(left, right);
+        result = cat.lt(left, right);
+        break;
 
       case ts.SyntaxKind.LessThanEqualsToken:
-        return cat.le(left, right);
+        result = cat.le(left, right);
+        break;
 
     }
 
@@ -180,23 +117,26 @@ export function compileBinary(compiler: Compiler, node: ts.BinaryExpression, con
 
     const cat = <binaryen.I32Operations | binaryen.I64Operations>binaryenCategoryOf(resultType, op, compiler.uintptrSize);
 
-    let result: binaryen.Expression | null = null;
-
     switch (node.operatorToken.kind) {
 
+      // Arithmetic
       case ts.SyntaxKind.PlusToken:
+      case ts.SyntaxKind.PlusEqualsToken:
         result = cat.add(left, right);
         break;
 
       case ts.SyntaxKind.MinusToken:
+      case ts.SyntaxKind.MinusEqualsToken:
         result = cat.sub(left, right);
         break;
 
       case ts.SyntaxKind.AsteriskToken:
+      case ts.SyntaxKind.AsteriskEqualsToken:
         result = cat.mul(left, right);
         break;
 
       case ts.SyntaxKind.SlashToken:
+      case ts.SyntaxKind.SlashEqualsToken:
         if (resultType.isSigned)
           result = cat.div_s(left, right);
         else
@@ -204,6 +144,7 @@ export function compileBinary(compiler: Compiler, node: ts.BinaryExpression, con
         break;
 
       case ts.SyntaxKind.PercentToken:
+      case ts.SyntaxKind.PercentEqualsToken:
         if (resultType.isSigned)
           result = cat.rem_s(left, right);
         else
@@ -211,28 +152,34 @@ export function compileBinary(compiler: Compiler, node: ts.BinaryExpression, con
         break;
 
       case ts.SyntaxKind.AmpersandToken:
+      case ts.SyntaxKind.AmpersandEqualsToken:
         result = cat.and(left, right);
         break;
 
       case ts.SyntaxKind.BarToken:
+      case ts.SyntaxKind.BarEqualsToken:
         result = cat.or(left, right);
         break;
 
       case ts.SyntaxKind.CaretToken:
+      case ts.SyntaxKind.CaretEqualsToken:
         result = cat.xor(left, right);
         break;
 
       case ts.SyntaxKind.LessThanLessThanToken:
+      case ts.SyntaxKind.LessThanLessThanEqualsToken:
         result = cat.shl(left, right);
         break;
 
       case ts.SyntaxKind.GreaterThanGreaterThanToken:
+      case ts.SyntaxKind.GreaterThanGreaterThanEqualsToken:
         if (resultType.isSigned)
           result = cat.shr_s(left, right);
         else
           result = cat.shr_u(left, right);
         break;
 
+      // Logical
       case ts.SyntaxKind.EqualsEqualsEqualsToken:
         compiler.warn(node.operatorToken, "Assuming '=='");
       case ts.SyntaxKind.EqualsEqualsToken:
@@ -274,9 +221,71 @@ export function compileBinary(compiler: Compiler, node: ts.BinaryExpression, con
     }
 
     if (result)
-      return compiler.maybeConvertValue(node, result, intType, resultType, true);
+      result = compiler.maybeConvertValue(node, result, intType, resultType, true);
   }
 
+  if (result)
+    return isCompound
+      ? compileAssignmentWithValue(compiler, node, result, resultType)
+      : result;
+
   compiler.error(node.operatorToken, "Unsupported binary operator", ts.SyntaxKind[node.operatorToken.kind]);
+  return op.unreachable();
+}
+
+export function compileAssignment(compiler: Compiler, node: ts.BinaryExpression, contextualType: wasm.Type): binaryen.Expression {
+  return compileAssignmentWithValue(compiler, node, compiler.compileExpression(node.right, contextualType), getWasmType(node.right));
+}
+
+export function compileAssignmentWithValue(compiler: Compiler, node: ts.BinaryExpression, value: binaryen.Expression, contextualType: wasm.Type): binaryen.Expression {
+  const op = compiler.module;
+
+  setWasmType(node, contextualType);
+
+  // someVar = expression
+  if (node.left.kind === ts.SyntaxKind.Identifier) {
+    const symbol = compiler.checker.getSymbolAtLocation(node.left);
+
+    if (symbol && symbol.declarations) {
+      const targetName = compiler.resolveName(symbol.declarations[0]);
+      const referenced = compiler.resolveIdentifier(targetName);
+
+      if (referenced) {
+
+        switch (referenced.kind) {
+
+          case wasm.ReflectionObjectKind.Variable:
+          {
+            const variable = <wasm.Variable>referenced;
+            const expression = compiler.maybeConvertValue(node.right, value, getWasmType(node.right), variable.type, false);
+
+            if (contextualType === voidType)
+              return op.setLocal(variable.index, expression);
+
+            setWasmType(node, variable.type);
+            return op.teeLocal(variable.index, expression);
+          }
+
+          case wasm.ReflectionObjectKind.Global:
+          {
+            const global = <wasm.Global>referenced;
+            const expression = compiler.maybeConvertValue(node.right, value, getWasmType(node.right), global.type, false)
+
+            if (contextualType === voidType)
+              return op.setGlobal(global.name, expression);
+
+            setWasmType(node, global.type);
+            return op.block("", [ // emulates teeGlobal
+              op.setGlobal(global.name, expression),
+              op.getGlobal(global.name, binaryenTypeOf(global.type, compiler.uintptrSize))
+            ], binaryenTypeOf(global.type, compiler.uintptrSize));
+          }
+
+        }
+      }
+    }
+  }
+
+  compiler.error(node.operatorToken, "Unsupported assignment", ts.SyntaxKind[node.left.kind]);
   return op.unreachable();
 }
