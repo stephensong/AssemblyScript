@@ -1,7 +1,7 @@
 import "byots";
 import * as ast from "./ast";
 import * as base64 from "@protobufjs/base64";
-import { createDiagnosticForNode, printDiagnostic } from "./diagnostics";
+import { createDiagnosticForNode, printDiagnostic } from "./util/diagnostics";
 import { libSource, mallocBlob } from "./library";
 import * as path from "path";
 import { Profiler } from "./profiler";
