@@ -15,7 +15,6 @@ export function compileElementAccess(compiler: Compiler, node: typescript.Elemen
 
     if (reference instanceof reflection.Variable) {
       const variable = <reflection.Variable>reference;
-      console.log(variable.type);
 
       if (variable.type.isArray) {
         const underlyingType = (<reflection.Class>variable.type.underlyingClass).genericTypes[0];

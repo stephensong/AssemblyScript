@@ -33,8 +33,9 @@
 
 static inline void *mspace_more(ptrdiff_t);
 
-#include "memset.c"
+#include "memcmp.c"
 #include "memcpy.c"
+#include "memset.c"
 #include "dlmalloc.c"
 
 // initializes the single mspace used by the internal malloc implementation, starting at 'base'

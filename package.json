@@ -24,12 +24,12 @@
     "@protobufjs/base64": "^1.1.1",
     "@types/long": "^3.0.31",
     "@types/minimist": "^1.2.0",
-    "@types/node": "^7.0.26",
-    "byots": "^2.4.0-dev.20170601.2.9",
+    "@types/node": "^7.0.27",
+    "byots": "^2.4.0-dev.20170603.2.9",
     "long": "^3.2.0",
     "minimist": "^1.2.0",
     "ts-node": "^3.0.4",
-    "typescript": "^2.4.0-dev.20170602"
+    "typescript": "^2.4.0-dev.20170604"
   },
   "scripts": {
     "build:malloc": "node scripts/build-malloc",
