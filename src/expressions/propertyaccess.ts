@@ -1,40 +1,30 @@
-import { Compiler } from "../compiler";
-import { intType } from "../types";
 import * as binaryen from "../binaryen";
-import { setWasmType } from "../util";
-import * as wasm from "../wasm";
+import Compiler from "../compiler";
+import * as reflection from "../reflection";
+import * as typescript from "../typescript";
 
-export function compilePropertyAccess(compiler: Compiler, node: ts.PropertyAccessExpression, contextualType: wasm.Type): binaryen.Expression {
+export function compilePropertyAccess(compiler: Compiler, node: typescript.PropertyAccessExpression, contextualType: reflection.Type): binaryen.Expression {
   const op = compiler.module;
 
-  const propertyName = (<ts.Identifier>node.name).text;
+  const propertyName = (<typescript.Identifier>node.name).text;
 
   // identifier.identifier
-  if (node.expression.kind === ts.SyntaxKind.Identifier) {
-    const reference = compiler.resolveReference(<ts.Identifier>node.expression);
-    if (reference) {
-      switch (reference.kind) {
+  if (node.expression.kind === typescript.SyntaxKind.Identifier) {
+    const reference = compiler.resolveReference(<typescript.Identifier>node.expression);
 
-        case wasm.ReflectionObjectKind.Enum:
-        {
-          setWasmType(node, intType);
-          const value = (<wasm.Enum>reference).getValue(propertyName);
-          if (value)
-            return op.i32.const(value.value | 0);
-          else
-            break;
-        }
+    if (reference instanceof reflection.Enum) {
+      const enm = <reflection.Enum>reference;
+      typescript.setReflectedType(node, reflection.intType);
+      const property = enm.properties[propertyName];
+      if (property.isConstant)
+        return op.i32.const(<number>property.constantValue | 0);
 
-        case wasm.ReflectionObjectKind.Class:
-        {
-          // TODO: static property
-          break;
-        }
-      }
+    } else if (reference instanceof reflection.Class) {
+      // TODO: static property
     }
   }
 
-  compiler.error(node, "Unsupported property access", ts.SyntaxKind[node.expression.kind]);
-  setWasmType(node, contextualType);
+  compiler.error(node, "Unsupported property access", typescript.SyntaxKind[node.expression.kind]);
+  typescript.setReflectedType(node, contextualType);
   return op.unreachable();
 }

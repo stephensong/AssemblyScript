@@ -1,7 +1,8 @@
 import * as binaryen from "../binaryen";
-import { Compiler } from "../compiler";
-import { intType, voidType } from "../types";
-import { getWasmType } from "../util";
+import Compiler from "../compiler";
+import * as reflection from "../reflection";
+import * as typescript from "../typescript";
+
 import { compileVariableDeclarationList } from "./variable";
 
 /*
@@ -17,7 +18,7 @@ block {
 } $break
 */
 
-export function compileFor(compiler: Compiler, node: ts.ForStatement): binaryen.Statement {
+export function compileFor(compiler: Compiler, node: typescript.ForStatement): binaryen.Statement {
   const op = compiler.module;
 
   const context: binaryen.Statement[] = [];
@@ -25,14 +26,14 @@ export function compileFor(compiler: Compiler, node: ts.ForStatement): binaryen.
   const label = compiler.enterBreakContext();
 
   if (node.initializer) {
-    if (node.initializer.kind === ts.SyntaxKind.VariableDeclarationList) {
+    if (node.initializer.kind === typescript.SyntaxKind.VariableDeclarationList) {
 
-      context.push(compileVariableDeclarationList(compiler, <ts.VariableDeclarationList>node.initializer));
+      context.push(compileVariableDeclarationList(compiler, <typescript.VariableDeclarationList>node.initializer));
 
     } else /* ts.Expression */ {
 
-      const expr = compiler.compileExpression(<ts.Expression>node.initializer, voidType);
-      if (getWasmType(node.initializer) === voidType)
+      const expr = compiler.compileExpression(<typescript.Expression>node.initializer, reflection.voidType);
+      if (typescript.getReflectedType(node.initializer) === reflection.voidType)
         context.push(expr);
       else
         context.push(op.drop(expr));
@@ -43,8 +44,8 @@ export function compileFor(compiler: Compiler, node: ts.ForStatement): binaryen.
     ifTrue.push(compiler.compileStatement(node.statement));
 
   if (node.incrementor) {
-    const expr = compiler.compileExpression(node.incrementor, voidType);
-    if (getWasmType(node.incrementor) === voidType)
+    const expr = compiler.compileExpression(node.incrementor, reflection.voidType);
+    if (typescript.getReflectedType(node.incrementor) === reflection.voidType)
       ifTrue.push(expr);
     else
       ifTrue.push(op.drop(expr));
@@ -57,7 +58,7 @@ export function compileFor(compiler: Compiler, node: ts.ForStatement): binaryen.
     context.push(
       op.loop("continue$" + label,
         op.if(
-          compiler.maybeConvertValue(node.condition, compiler.compileExpression(node.condition, intType), getWasmType(node.condition), intType, true),
+          compiler.maybeConvertValue(node.condition, compiler.compileExpression(node.condition, reflection.intType), typescript.getReflectedType(node.condition), reflection.intType, true),
           ifTrue.length === 1 ? ifTrue[0] : op.block("", ifTrue)
         )
       )

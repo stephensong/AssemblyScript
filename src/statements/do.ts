@@ -1,7 +1,7 @@
 import * as binaryen from "../binaryen";
-import { Compiler } from "../compiler";
-import { intType } from "../types";
-import { getWasmType } from "../util";
+import Compiler from "../compiler";
+import * as reflection from "../reflection";
+import * as typescript from "../typescript";
 
 /*
 block {
@@ -12,7 +12,7 @@ block {
 } $break
 */
 
-export function compileDo(compiler: Compiler, node: ts.DoStatement): binaryen.Statement {
+export function compileDo(compiler: Compiler, node: typescript.DoStatement): binaryen.Statement {
   const op = compiler.module;
 
   const context: binaryen.Statement[] = [];
@@ -24,7 +24,7 @@ export function compileDo(compiler: Compiler, node: ts.DoStatement): binaryen.St
 
   loop.push(
     op.break("continue$" + label,
-      compiler.maybeConvertValue(node.expression, compiler.compileExpression(node.expression, intType), getWasmType(node.expression), intType, true)
+      compiler.maybeConvertValue(node.expression, compiler.compileExpression(node.expression, reflection.intType), typescript.getReflectedType(node.expression), reflection.intType, true)
     )
   );
 

@@ -1,7 +1,7 @@
 import * as binaryen from "../binaryen";
-import { Compiler } from "../compiler";
-import { intType, voidType } from "../types";
-import { binaryenTypeOf, getWasmType } from "../util";
+import Compiler from "../compiler";
+import * as reflection from "../reflection";
+import * as typescript from "../typescript";
 
 /*
 block {
@@ -18,15 +18,15 @@ block {
 } $break
 */
 
-export function compileSwitch(compiler: Compiler, node: ts.SwitchStatement): binaryen.Statement {
+export function compileSwitch(compiler: Compiler, node: typescript.SwitchStatement): binaryen.Statement {
   const op = compiler.module;
 
   if (node.caseBlock.clauses && node.caseBlock.clauses.length) {
-    const switchExpression = compiler.maybeConvertValue(node.expression, compiler.compileExpression(node.expression, intType), getWasmType(node.expression), intType, true);
+    const switchExpression = compiler.maybeConvertValue(node.expression, compiler.compileExpression(node.expression, reflection.intType), typescript.getReflectedType(node.expression), reflection.intType, true);
     const label = compiler.enterBreakContext();
 
     // create a temporary variable holding the switch expression's result
-    const conditionLocalIndex = compiler.onVariable("condition$" + label, intType);
+    const conditionLocalIndex = compiler.onVariable("condition$" + label, reflection.intType);
 
     interface SwitchCase {
       label: string;
@@ -45,7 +45,7 @@ export function compileSwitch(compiler: Compiler, node: ts.SwitchStatement): bin
       const statements: binaryen.Statement[] = new Array(clause.statements.length);
       for (let j = 0, l = clause.statements.length; j < l; ++j)
         statements[j] = compiler.compileStatement(clause.statements[j]);
-      if (clause.kind === ts.SyntaxKind.DefaultClause) {
+      if (clause.kind === typescript.SyntaxKind.DefaultClause) {
         defaultCase = cases[i] = {
           label: "default$" + label,
           index: i,
@@ -56,7 +56,7 @@ export function compileSwitch(compiler: Compiler, node: ts.SwitchStatement): bin
           label:  "case" + i + "$" + label,
           index: i,
           statements: statements,
-          expression: compiler.maybeConvertValue(clause.expression, compiler.compileExpression(clause.expression, intType), getWasmType(clause.expression), intType, true)
+          expression: compiler.maybeConvertValue(clause.expression, compiler.compileExpression(clause.expression, reflection.intType), typescript.getReflectedType(clause.expression), reflection.intType, true)
         };
         labels.push(cases[i].label);
       }
@@ -67,7 +67,7 @@ export function compileSwitch(compiler: Compiler, node: ts.SwitchStatement): bin
     let condition = op.i32.const(-1);
     for (let i = cases.length - 1; i >= 0; --i)
       if (cases[i] !== defaultCase)
-        condition = op.select(op.i32.eq(op.getLocal(conditionLocalIndex, binaryenTypeOf(intType, compiler.uintptrSize)), <binaryen.I32Expression>cases[i].expression), op.i32.const(i), condition);
+        condition = op.select(op.i32.eq(op.getLocal(conditionLocalIndex, binaryen.typeOf(reflection.intType, compiler.uintptrSize)), <binaryen.I32Expression>cases[i].expression), op.i32.const(i), condition);
 
     // create the innermost br_table block using the first case's label
     let currentBlock = op.block(cases[0].label, [
@@ -88,8 +88,8 @@ export function compileSwitch(compiler: Compiler, node: ts.SwitchStatement): bin
 
   } else { // just emit the condition for the case that it includes compound assignments (-O eliminates this otherwise)
 
-    const voidCondition = compiler.compileExpression(node.expression, voidType);
-    if (getWasmType(node.expression) === voidType)
+    const voidCondition = compiler.compileExpression(node.expression, reflection.voidType);
+    if (typescript.getReflectedType(node.expression) === reflection.voidType)
       return voidCondition;
     else
       return op.drop(voidCondition);

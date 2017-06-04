@@ -1,25 +1,24 @@
 import * as binaryen from "../binaryen";
-import { Compiler } from "../compiler";
-import { binaryenTypeOf, binaryenCategoryOf, binaryenValueOf, getWasmType, setWasmType } from "../util";
-import { intType, boolType, floatType, doubleType, voidType } from "../types";
-import * as wasm from "../wasm";
+import Compiler from "../compiler";
+import * as reflection from "../reflection";
+import * as typescript from "../typescript";
 
-export function compilePrefixUnary(compiler: Compiler, node: ts.PrefixUnaryExpression, contextualType: wasm.Type): binaryen.Expression {
+export function compilePrefixUnary(compiler: Compiler, node: typescript.PrefixUnaryExpression, contextualType: reflection.Type): binaryen.Expression {
   const op = compiler.module;
 
   const operand = compiler.compileExpression(node.operand, contextualType);
-  const operandType = getWasmType(node.operand);
+  const operandType = typescript.getReflectedType(node.operand);
 
   switch (node.operator) {
 
-    case ts.SyntaxKind.ExclamationToken:
+    case typescript.SyntaxKind.ExclamationToken:
     {
-      setWasmType(node, boolType);
+      typescript.setReflectedType(node, reflection.boolType);
 
-      if (operandType === floatType)
+      if (operandType === reflection.floatType)
         return op.f32.eq(operand, op.f32.const(0));
 
-      else if (operandType === doubleType)
+      else if (operandType === reflection.doubleType)
         return op.f64.eq(operand, op.f64.const(0));
 
       else if (operandType.isLong)
@@ -29,85 +28,85 @@ export function compilePrefixUnary(compiler: Compiler, node: ts.PrefixUnaryExpre
         return op.i32.eqz(operand);
     }
 
-    case ts.SyntaxKind.PlusToken: // noop
+    case typescript.SyntaxKind.PlusToken: // noop
     {
-      setWasmType(node, operandType);
+      typescript.setReflectedType(node, operandType);
       return operand;
     }
 
-    case ts.SyntaxKind.MinusToken:
+    case typescript.SyntaxKind.MinusToken:
     {
-      setWasmType(node, operandType);
+      typescript.setReflectedType(node, operandType);
 
-      if (operandType === floatType)
+      if (operandType === reflection.floatType)
         return op.f32.neg(node.operand);
 
-      else if (operandType === doubleType)
+      else if (operandType === reflection.doubleType)
         return op.f64.neg(node.operand);
 
       else if (operandType.isLong)
         return op.i64.sub(op.i64.const(0, 0), operand);
 
       else // FIXME: negated constant literals result in sub(const.0, const.value)
-        return compiler.maybeConvertValue(node, op.i32.sub(op.i32.const(0), operand), intType, operandType, true);
+        return compiler.maybeConvertValue(node, op.i32.sub(op.i32.const(0), operand), reflection.intType, operandType, true);
     }
 
-    case ts.SyntaxKind.TildeToken:
+    case typescript.SyntaxKind.TildeToken:
     {
       if (operandType.isLong) {
 
-        setWasmType(node, operandType);
+        typescript.setReflectedType(node, operandType);
         return op.i64.xor(operand, op.i64.const(-1, -1));
 
       } else if (operandType.isInt) {
 
-        setWasmType(node, operandType);
+        typescript.setReflectedType(node, operandType);
         return op.i32.xor(operand, op.i32.const(-1));
 
       } else if (contextualType.isLong) { // TODO: is the following correct / doesn't generate useless ops?
 
-        setWasmType(node, contextualType);
+        typescript.setReflectedType(node, contextualType);
         return op.i64.xor(compiler.maybeConvertValue(node.operand, operand, operandType, contextualType, true), op.i64.const(-1, -1));
 
       } else {
 
-        setWasmType(node, intType);
-        return op.i32.xor(compiler.maybeConvertValue(node.operand, operand, operandType, intType, true), op.i32.const(-1));
+        typescript.setReflectedType(node, reflection.intType);
+        return op.i32.xor(compiler.maybeConvertValue(node.operand, operand, operandType, reflection.intType, true), op.i32.const(-1));
 
       }
     }
 
-    case ts.SyntaxKind.PlusPlusToken:
-    case ts.SyntaxKind.MinusMinusToken:
+    case typescript.SyntaxKind.PlusPlusToken:
+    case typescript.SyntaxKind.MinusMinusToken:
     {
-      if (node.operand.kind === ts.SyntaxKind.Identifier) {
+      if (node.operand.kind === typescript.SyntaxKind.Identifier) {
 
-        const local = compiler.currentLocals[(<ts.Identifier>node.operand).text];
+        const local = compiler.currentLocals[(<typescript.Identifier>node.operand).text];
         if (local) {
 
-          const cat = binaryenCategoryOf(local.type, op, compiler.uintptrSize);
-          const isIncrement = node.operator === ts.SyntaxKind.PlusPlusToken;
+          const cat = binaryen.categoryOf(local.type, op, compiler.uintptrSize);
+          const isIncrement = node.operator === typescript.SyntaxKind.PlusPlusToken;
 
           const calculate = (isIncrement ? cat.add : cat.sub).call(cat,
             op.getLocal(
               local.index,
-              binaryenTypeOf(compiler.uintptrType, compiler.uintptrSize)
+              binaryen.typeOf(compiler.uintptrType, compiler.uintptrSize)
             ),
-            binaryenValueOf(local.type, compiler.module, 1)
+            binaryen.valueOf(local.type, compiler.module, 1)
           );
 
-          if (contextualType === voidType) {
-            setWasmType(node, voidType);
+          if (contextualType === reflection.voidType) {
+            typescript.setReflectedType(node, reflection.voidType);
             return op.setLocal(local.index, calculate);
           } else {
-            setWasmType(node, local.type);
-            return compiler.maybeConvertValue(node, op.teeLocal(local.index, calculate), intType, local.type, true);
+            typescript.setReflectedType(node, local.type);
+            return compiler.maybeConvertValue(node, op.teeLocal(local.index, calculate), reflection.intType, local.type, true);
           }
         }
       }
     }
   }
 
-  compiler.error(node, "Unsupported unary prefix operator", ts.SyntaxKind[node.operator]);
+  compiler.error(node, "Unsupported unary prefix operator", typescript.SyntaxKind[node.operator]);
   return op.unreachable();
 }

@@ -53,18 +53,35 @@ declare type uint32 = uint;
 declare type int64 = long;
 declare type uint64 = ulong;
 
-// Fillers for TypeScript complaining about missing types with 'nolib'
 declare class Array<T> {
   readonly length: uint;
   constructor(size: uint);
 }
+
+/* declare type Int8Array = Array<sbyte>;
+declare type Uint8Array = Array<byte>;
+declare type Int16Array = Array<short>;
+declare type Uint16Array = Array<ushort>;
+declare type Int32Array = Array<int>;
+declare type Uint32Array = Array<uint>;
+declare type Int64Array = Array<long>;
+declare type Uint64Array = Array<ulong>;
+declare type Float32Array = Array<float>;
+declare type Float64Array = Array<double>;
+declare type Buffer = Array<byte>; */
+
+declare class String extends Array<ushort> {
+  readonly length: uint;
+  constructor(size: uint);
+}
+
+// Fillers for TypeScript complaining about missing types with 'nolib'
 interface Boolean { }
 interface Function { }
 interface IArguments { }
 interface Number { }
 interface Object { }
 interface RegExp { }
-interface String { }
 
 // Builtins
 declare function rotl(value: int, shift: int): int;

@@ -1,8 +1,11 @@
+import "byots"; // import * as ts from "../typescript";
+
 const sys: ts.System = {
   args: [],
   newLine: "\n",
   useCaseSensitiveFileNames: true,
   write(s: string) {
+    // tslint:disable-next-line
     console.log(s);
   },
   getCurrentDirectory(): string {

@@ -1,5 +1,4 @@
 import * as binaryen from "../binaryen";
-import { ReflectionObjectKind, ReflectionObject } from "./object";
 import { Type } from "./type";
 import { Variable } from "./variable";
 
@@ -11,20 +10,28 @@ export enum FunctionFlags {
   constructor = 1 << 3
 }
 
-export class Function extends ReflectionObject {
+export class Function {
+  name: string;
   flags: FunctionFlags;
-  locals: Variable[];
-  signature: binaryen.Signature;
-  signatureIdentifier: string;
   genericTypes: Type[];
   parameterTypes: Type[];
   returnType: Type;
 
+  // compiler-specific
+  locals: Variable[];
+  signature: binaryen.Signature;
+  signatureIdentifier: string;
+
   constructor(name: string, flags: FunctionFlags, genericTypes: Type[], parameterTypes: Type[], returnType: Type) {
-    super(name, ReflectionObjectKind.Function);
+    this.name = name;
     this.flags = flags;
     this.genericTypes = genericTypes;
     this.parameterTypes = parameterTypes;
     this.returnType = returnType;
   }
+
+  get isImport(): boolean { return (this.flags & FunctionFlags.import) !== 0; }
+  get isExport(): boolean { return (this.flags & FunctionFlags.export) !== 0; }
+  get isInstance(): boolean { return (this.flags & FunctionFlags.instance) !== 0; }
+  get isConstructor(): boolean { return (this.flags & FunctionFlags.constructor) !== 0; }
 }

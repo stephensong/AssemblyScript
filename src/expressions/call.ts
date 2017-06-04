@@ -1,11 +1,10 @@
 import * as binaryen from "../binaryen";
-import { Compiler } from "../compiler";
-import { isImport, binaryenTypeOf, getWasmType, setWasmType } from "../util";
-import * as wasm from "../wasm";
-
 import * as builtins from "../builtins";
+import Compiler from "../compiler";
+import * as reflection from "../reflection";
+import * as typescript from "../typescript";
 
-export function compileCall(compiler: Compiler, node: ts.CallExpression, contextualType: wasm.Type): binaryen.Expression {
+export function compileCall(compiler: Compiler, node: typescript.CallExpression, contextualType: reflection.Type): binaryen.Expression {
   const op = compiler.module;
   const signature = compiler.checker.getResolvedSignature(node);
   if (!signature) {
@@ -14,34 +13,32 @@ export function compileCall(compiler: Compiler, node: ts.CallExpression, context
   }
 
   const declaration = signature.declaration;
-  const wasmFunction = <wasm.Function>(<any>declaration).wasmFunction; // TODO: that doesn't seem correct
-  if (wasmFunction === null)
-    throw Error("it isn't correct");
+  const func = typescript.getReflectedFunction(declaration);
 
-  if (!wasmFunction) {
+  if (!func) {
     compiler.error(node, "Unresolvable call target");
-    setWasmType(node, contextualType);
+    typescript.setReflectedType(node, contextualType);
     return op.unreachable();
   }
 
-  const argumentExpressions: binaryen.Expression[] = new Array(wasmFunction.parameterTypes.length);
+  const argumentExpressions: binaryen.Expression[] = new Array(func.parameterTypes.length);
 
-  setWasmType(node, wasmFunction.returnType);
+  typescript.setReflectedType(node, func.returnType);
 
   let i = 0;
 
-  if ((wasmFunction.flags & wasm.FunctionFlags.instance) !== 0)
-    argumentExpressions[i++] = op.getLocal(0, binaryenTypeOf(wasmFunction.parameterTypes[0], compiler.uintptrSize));
+  if (func.isInstance)
+    argumentExpressions[i++] = op.getLocal(0, binaryen.typeOf(func.parameterTypes[0], compiler.uintptrSize));
 
   for (const k = argumentExpressions.length; i < k; ++i)
-    argumentExpressions[i] = compiler.maybeConvertValue(node.arguments[i], compiler.compileExpression(node.arguments[i], wasmFunction.parameterTypes[i]), getWasmType(node.arguments[i]), wasmFunction.parameterTypes[i], false);
+    argumentExpressions[i] = compiler.maybeConvertValue(node.arguments[i], compiler.compileExpression(node.arguments[i], func.parameterTypes[i]), typescript.getReflectedType(node.arguments[i]), func.parameterTypes[i], false);
 
   if (i < argumentExpressions.length) { // TODO: pull default value initializers from declaration
     compiler.error(node, "Invalid number of arguments", "Expected " + declaration.parameters.length + " but saw " + node.arguments.length);
     return op.unreachable();
   }
 
-  let typeArguments: wasm.Type[] = [];
+  let typeArguments: reflection.Type[] = [];
 
   if (declaration.typeParameters) {
     if (!node.typeArguments || node.typeArguments.length !== declaration.typeParameters.length) {
@@ -62,11 +59,11 @@ export function compileCall(compiler: Compiler, node: ts.CallExpression, context
   }
 
   // user function
-  if (!isImport(declaration))
-    return op.call(wasmFunction.name, argumentExpressions, binaryenTypeOf(wasmFunction.returnType, compiler.uintptrSize));
+  if (!typescript.isImport(declaration))
+    return op.call(func.name, argumentExpressions, binaryen.typeOf(func.returnType, compiler.uintptrSize));
 
   // builtin
-  switch ((<ts.Symbol>declaration.symbol).name) {
+  switch ((<typescript.Symbol>declaration.symbol).name) {
 
     case "rotl":
     case "rotll":
@@ -141,5 +138,5 @@ export function compileCall(compiler: Compiler, node: ts.CallExpression, context
   }
 
   // import
-  return op.call(wasmFunction.name, argumentExpressions, binaryenTypeOf(wasmFunction.returnType, compiler.uintptrSize));
+  return op.call(func.name, argumentExpressions, binaryen.typeOf(func.returnType, compiler.uintptrSize));
 }

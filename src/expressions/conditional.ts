@@ -1,22 +1,21 @@
 import * as binaryen from "../binaryen";
-import { Compiler } from "../compiler";
-import { intType } from "../types";
-import { getWasmType, setWasmType } from "../util";
-import * as wasm from "../wasm";
+import Compiler from "../compiler";
+import * as reflection from "../reflection";
+import * as typescript from "../typescript";
 
-export function compileConditional(compiler: Compiler, node: ts.ConditionalExpression, contextualType: wasm.Type): binaryen.Expression {
+export function compileConditional(compiler: Compiler, node: typescript.ConditionalExpression, contextualType: reflection.Type): binaryen.Expression {
   const op = compiler.module;
 
   const condition = compiler.maybeConvertValue(
     node.condition,
-    compiler.compileExpression(node.condition, intType),
-    getWasmType(node.condition),
-    intType,
+    compiler.compileExpression(node.condition, reflection.intType),
+    typescript.getReflectedType(node.condition),
+    reflection.intType,
     true
   );
   const ifTrue  = compiler.compileExpression(node.whenTrue, contextualType);
   const ifFalse = compiler.compileExpression(node.whenFalse, contextualType);
 
-  setWasmType(node, contextualType);
+  typescript.setReflectedType(node, contextualType);
   return op.select(condition, ifTrue, ifFalse);
 }

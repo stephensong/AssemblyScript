@@ -1,12 +1,12 @@
 import * as binaryen from "../binaryen";
 import { Compiler } from "../compiler";
-import { getWasmType, setWasmType } from "../util";
+import * as typescript from "../typescript";
 
-export function compileVariable(compiler: Compiler, node: ts.VariableStatement): binaryen.Statement {
+export function compileVariable(compiler: Compiler, node: typescript.VariableStatement): binaryen.Statement {
   return compileVariableDeclarationList(compiler, node.declarationList);
 }
 
-export function compileVariableDeclarationList(compiler: Compiler, node: ts.VariableDeclarationList): binaryen.Statement {
+export function compileVariableDeclarationList(compiler: Compiler, node: typescript.VariableDeclarationList): binaryen.Statement {
   const op = compiler.module;
 
   const initializers: binaryen.Expression[] = [];
@@ -16,11 +16,11 @@ export function compileVariableDeclarationList(compiler: Compiler, node: ts.Vari
     if (declaration.type) {
       const declarationType = compiler.resolveType(declaration.type);
 
-      setWasmType(declaration, declarationType);
+      typescript.setReflectedType(declaration, declarationType);
 
       const index = compiler.onVariable(declarationName, declarationType);
       if (declaration.initializer)
-        initializers.push(op.setLocal(index, compiler.maybeConvertValue(declaration.initializer, compiler.compileExpression(declaration.initializer, declarationType), getWasmType(declaration.initializer), declarationType, false)));
+        initializers.push(op.setLocal(index, compiler.maybeConvertValue(declaration.initializer, compiler.compileExpression(declaration.initializer, declarationType), typescript.getReflectedType(declaration.initializer), declarationType, false)));
     } else
       compiler.error(declaration, "Type expected");
   }

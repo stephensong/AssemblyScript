@@ -1,11 +1,11 @@
 import * as binaryen from "../binaryen";
-import { Compiler } from "../compiler";
-import { getWasmType, setWasmType } from "../util";
-import * as wasm from "../wasm";
+import Compiler from "../compiler";
+import * as reflection from "../reflection";
+import * as typescript from "../typescript";
 
-export function compileAs(compiler: Compiler, node: ts.AsExpression, contextualType: wasm.Type): binaryen.Expression {
+export function compileAs(compiler: Compiler, node: typescript.AsExpression, contextualType: reflection.Type): binaryen.Expression {
   const toType = compiler.resolveType(node.type);
 
-  setWasmType(node, toType);
-  return compiler.maybeConvertValue(node, compiler.compileExpression(node.expression, contextualType), getWasmType(node.expression), toType, true);
+  typescript.setReflectedType(node, toType);
+  return compiler.maybeConvertValue(node, compiler.compileExpression(node.expression, contextualType), typescript.getReflectedType(node.expression), toType, true);
 }

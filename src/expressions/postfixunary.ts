@@ -1,42 +1,41 @@
 import * as binaryen from "../binaryen";
-import { Compiler } from "../compiler";
-import { intType, voidType } from "../types";
-import { binaryenCategoryOf, binaryenTypeOf, binaryenValueOf, setWasmType } from "../util";
-import * as wasm from "../wasm";
+import Compiler from "../compiler";
+import * as reflection from "../reflection";
+import * as typescript from "../typescript";
 
-export function compilePostfixUnary(compiler: Compiler, node: ts.PostfixUnaryExpression, contextualType: wasm.Type): binaryen.Expression {
+export function compilePostfixUnary(compiler: Compiler, node: typescript.PostfixUnaryExpression, contextualType: reflection.Type): binaryen.Expression {
   const op = compiler.module;
 
-  if (node.operand.kind === ts.SyntaxKind.Identifier) {
+  if (node.operand.kind === typescript.SyntaxKind.Identifier) {
 
-    const local = compiler.currentLocals[(<ts.Identifier>node.operand).text];
+    const local = compiler.currentLocals[(<typescript.Identifier>node.operand).text];
     if (local) {
 
       switch (node.operator) {
 
-        case ts.SyntaxKind.PlusPlusToken:
-        case ts.SyntaxKind.MinusMinusToken:
+        case typescript.SyntaxKind.PlusPlusToken:
+        case typescript.SyntaxKind.MinusMinusToken:
         {
-          const cat = binaryenCategoryOf(local.type, op, compiler.uintptrSize);
-          const one = binaryenValueOf(local.type, compiler.module, 1);
-          const isIncrement = node.operator === ts.SyntaxKind.PlusPlusToken;
+          const cat = binaryen.categoryOf(local.type, op, compiler.uintptrSize);
+          const one = binaryen.valueOf(local.type, compiler.module, 1);
+          const isIncrement = node.operator === typescript.SyntaxKind.PlusPlusToken;
 
           let calculate = (isIncrement ? cat.add : cat.sub).call(cat,
             op.getLocal(
               local.index,
-              binaryenTypeOf(local.type, compiler.uintptrSize)
+              binaryen.typeOf(local.type, compiler.uintptrSize)
             ),
             one
           );
 
           if (local.type.isByte || local.type.isShort)
-            calculate = compiler.maybeConvertValue(node, calculate, intType, local.type, true);
+            calculate = compiler.maybeConvertValue(node, calculate, reflection.intType, local.type, true);
 
-          if (contextualType === voidType) {
-            setWasmType(node, voidType);
+          if (contextualType === reflection.voidType) {
+            typescript.setReflectedType(node, reflection.voidType);
             return op.setLocal(local.index, calculate);
           } else {
-            setWasmType(node, local.type);
+            typescript.setReflectedType(node, local.type);
             return (isIncrement ? cat.sub : cat.add).call(cat, op.teeLocal(local.index, calculate), one);
           }
         }
@@ -44,7 +43,7 @@ export function compilePostfixUnary(compiler: Compiler, node: ts.PostfixUnaryExp
     }
   }
 
-  compiler.error(node, "Unsupported unary postfix operator", ts.SyntaxKind[node.operator]);
-  setWasmType(node, contextualType);
+  compiler.error(node, "Unsupported unary postfix operator", typescript.SyntaxKind[node.operator]);
+  typescript.setReflectedType(node, contextualType);
   return op.unreachable();
 }

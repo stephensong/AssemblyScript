@@ -1,6 +1,4 @@
-// this is basically copy-pasted from tsc (compiler/program.ts)
-
-import * as browserys from "./browsersys";
+import "byots"; // import * as ts from "../typescript";
 
 const redForegroundEscapeSequence = "\u001b[91m";
 const yellowForegroundEscapeSequence = "\u001b[93m";
@@ -9,9 +7,6 @@ const gutterStyleSequence = "\u001b[100;30m";
 const gutterSeparator = " ";
 const resetEscapeSequence = "\u001b[0m";
 const ellipsis = "...";
-
-if (!ts.sys)
-  ts.sys = browserys;
 
 function getCategoryFormat(category: ts.DiagnosticCategory): string {
   switch (category) {

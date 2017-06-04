@@ -1,12 +1,12 @@
 import * as binaryen from "../binaryen";
-import { Compiler } from "../compiler";
-import { voidType } from "../types";
-import { getWasmType } from "../util";
+import Compiler from "../compiler";
+import * as reflection from "../reflection";
+import * as typescript from "../typescript";
 
-export function compileReturn(compiler: Compiler, node: ts.ReturnStatement): binaryen.Statement {
+export function compileReturn(compiler: Compiler, node: typescript.ReturnStatement): binaryen.Statement {
   const op = compiler.module;
 
-  if (compiler.currentFunction.returnType === voidType) {
+  if (compiler.currentFunction.returnType === reflection.voidType) {
 
     if (!node.expression)
       return op.return();
@@ -17,13 +17,13 @@ export function compileReturn(compiler: Compiler, node: ts.ReturnStatement): bin
 
     if (node.expression) {
 
-      const expression = <ts.Expression>node.expression;
+      const expression = <typescript.Expression>node.expression;
 
       return op.return(
         compiler.maybeConvertValue(
           expression,
           compiler.compileExpression(expression, compiler.currentFunction.returnType),
-          getWasmType(expression),
+          typescript.getReflectedType(expression),
           compiler.currentFunction.returnType,
           false
         )

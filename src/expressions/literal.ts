@@ -1,32 +1,29 @@
 import * as binaryen from "../binaryen";
-import { Compiler } from "../compiler";
+import Compiler from "../compiler";
 import * as Long from "long";
-import { byteType, sbyteType, shortType, ushortType, intType, uintType, longType, ulongType, uintptrType32, uintptrType64, boolType, floatType } from "../types";
-import { setWasmType } from "../util";
-import * as wasm from "../wasm";
+import * as reflection from "../reflection";
+import * as typescript from "../typescript";
 
-export function compileLiteral(compiler: Compiler, node: ts.LiteralExpression, contextualType: wasm.Type): binaryen.Expression {
+export function compileLiteral(compiler: Compiler, node: typescript.LiteralExpression, contextualType: reflection.Type): binaryen.Expression {
   const op = compiler.module;
 
   let text = node.text;
-
   switch (text) {
 
     case "true":
-      setWasmType(node, boolType);
+      typescript.setReflectedType(node, reflection.boolType);
       return contextualType.isLong ? op.i64.const(1, 0) : op.i32.const(1);
 
     case "false":
-      setWasmType(node, boolType);
+      typescript.setReflectedType(node, reflection.boolType);
       return contextualType.isLong ? op.i64.const(0, 0) : op.i32.const(0);
 
     case "null":
-      setWasmType(node, compiler.uintptrType);
+      typescript.setReflectedType(node, compiler.uintptrType);
       return compiler.uintptrSize === 4 ? op.i32.const(0) : op.i64.const(0, 0);
 
   }
-
-  setWasmType(node, contextualType);
+  typescript.setReflectedType(node, contextualType);
 
   if (contextualType.isAnyFloat) {
 
@@ -39,7 +36,9 @@ export function compileLiteral(compiler: Compiler, node: ts.LiteralExpression, c
       compiler.error(node, "Illegal float literal", text);
     }
 
-    return contextualType === floatType ? op.f32.const(floatValue) : op.f64.const(floatValue);
+    return contextualType === reflection.floatType
+      ? op.f32.const(floatValue)
+      : op.f64.const(floatValue);
 
   } else if (contextualType.isAnyInteger) {
 
@@ -57,31 +56,30 @@ export function compileLiteral(compiler: Compiler, node: ts.LiteralExpression, c
 
     switch (contextualType) {
 
-      case sbyteType:
-      case shortType:
+      case reflection.sbyteType:
+      case reflection.shortType:
         return op.i32.const(((intValue >>> 0) << <number>contextualType.shift32) >> <number>contextualType.shift32);
 
-      case byteType:
-      case ushortType:
+      case reflection.byteType:
+      case reflection.ushortType:
         return op.i32.const(intValue & <number>contextualType.mask32);
 
-      case intType:
-      case uintType:
-      case uintptrType32:
+      case reflection.intType:
+      case reflection.uintType:
+      case reflection.uintptrType32:
         return op.i32.const(intValue);
 
-      case boolType:
+      case reflection.boolType:
         return op.i32.const(intValue ? 1 : 0);
 
-      case longType:
-      case ulongType:
-      case uintptrType64:
+      case reflection.longType:
+      case reflection.ulongType:
+      case reflection.uintptrType64:
         const long = Long.fromString(text, !contextualType.isSigned, intRadix);
         return op.i64.const(long.low, long.high);
 
     }
   }
-
-  compiler.error(node, "Unsupported literal", text);
+  compiler.error(node, "Unsupported literal", "'" + text + "' in " + reflection.TypeKind[contextualType.kind] + " context");
   return op.unreachable();
 }

@@ -1,25 +1,23 @@
 import * as binaryen from "../binaryen";
-import { Compiler } from "../compiler";
-import { intType, voidType } from "../types";
-import { getWasmType, setWasmType } from "../util";
-import { binaryenCategoryOf, binaryenTypeOf } from "../util";
-import * as wasm from "../wasm";
+import Compiler from "../compiler";
+import * as reflection from "../reflection";
+import * as typescript from "../typescript";
 
-export function compileBinary(compiler: Compiler, node: ts.BinaryExpression, contextualType: wasm.Type): binaryen.Expression {
+export function compileBinary(compiler: Compiler, node: typescript.BinaryExpression, contextualType: reflection.Type): binaryen.Expression {
 
-  if (node.operatorToken.kind === ts.SyntaxKind.EqualsToken)
+  if (node.operatorToken.kind === typescript.SyntaxKind.EqualsToken)
     return compileAssignment(compiler, node, contextualType);
 
-  const isCompound = node.operatorToken.kind >= ts.SyntaxKind.FirstCompoundAssignment && node.operatorToken.kind <= ts.SyntaxKind.LastCompoundAssignment;
+  const isCompound = node.operatorToken.kind >= typescript.SyntaxKind.FirstCompoundAssignment && node.operatorToken.kind <= typescript.SyntaxKind.LastCompoundAssignment;
   const op = compiler.module;
 
   let left  = compiler.compileExpression(node.left, contextualType);
   let right = compiler.compileExpression(node.right, contextualType);
 
-  const leftType  = getWasmType(node.left);
-  const rightType = getWasmType(node.right);
+  const leftType  = typescript.getReflectedType(node.left);
+  const rightType = typescript.getReflectedType(node.right);
 
-  let resultType: wasm.Type;
+  let resultType: reflection.Type;
 
   if (isCompound) {
     resultType = leftType;
@@ -34,9 +32,9 @@ export function compileBinary(compiler: Compiler, node: ts.BinaryExpression, con
 
     } else if (rightType.isAnyFloat)
       resultType = rightType;
-    else /* int */ if (leftType.kind === wasm.TypeKind.uintptr && rightType.kind !== wasm.TypeKind.uintptr)
+    else /* int */ if (leftType.kind === reflection.TypeKind.uintptr && rightType.kind !== reflection.TypeKind.uintptr)
       resultType = leftType;
-    else if (leftType.kind !== wasm.TypeKind.uintptr && rightType.kind === wasm.TypeKind.uintptr)
+    else if (leftType.kind !== reflection.TypeKind.uintptr && rightType.kind === reflection.TypeKind.uintptr)
       resultType = rightType;
     else
       resultType = leftType.size >= rightType.size ? leftType : rightType;
@@ -48,66 +46,66 @@ export function compileBinary(compiler: Compiler, node: ts.BinaryExpression, con
   if (rightType !== resultType)
     right = compiler.maybeConvertValue(node.right, compiler.compileExpression(node.right, resultType), rightType, resultType, false);
 
-  setWasmType(node, resultType);
+  typescript.setReflectedType(node, resultType);
 
   let result: binaryen.Expression | null = null;
 
   if (resultType.isAnyFloat) {
 
-    const cat = <binaryen.F32Operations | binaryen.F64Operations>binaryenCategoryOf(resultType, op, compiler.uintptrSize);
+    const cat = <binaryen.F32Operations | binaryen.F64Operations>binaryen.categoryOf(resultType, op, compiler.uintptrSize);
 
     switch (node.operatorToken.kind) {
 
       // Arithmetic
-      case ts.SyntaxKind.PlusToken:
-      case ts.SyntaxKind.PlusEqualsToken:
+      case typescript.SyntaxKind.PlusToken:
+      case typescript.SyntaxKind.PlusEqualsToken:
         result = cat.add(left, right);
         break;
 
-      case ts.SyntaxKind.MinusToken:
-      case ts.SyntaxKind.MinusEqualsToken:
+      case typescript.SyntaxKind.MinusToken:
+      case typescript.SyntaxKind.MinusEqualsToken:
         result = cat.sub(left, right);
         break;
 
-      case ts.SyntaxKind.AsteriskToken:
-      case ts.SyntaxKind.AsteriskEqualsToken:
+      case typescript.SyntaxKind.AsteriskToken:
+      case typescript.SyntaxKind.AsteriskEqualsToken:
         result = cat.mul(left, right);
         break;
 
-      case ts.SyntaxKind.SlashToken:
-      case ts.SyntaxKind.SlashEqualsToken:
+      case typescript.SyntaxKind.SlashToken:
+      case typescript.SyntaxKind.SlashEqualsToken:
         result = cat.div(left, right);
         break;
 
-      case ts.SyntaxKind.PercentToken:
-      case ts.SyntaxKind.PercentEqualsToken:
+      case typescript.SyntaxKind.PercentToken:
+      case typescript.SyntaxKind.PercentEqualsToken:
         // TODO: maybe emulate, not a built-in operation
         break;
 
       // Logical
-      case ts.SyntaxKind.EqualsEqualsEqualsToken:
+      case typescript.SyntaxKind.EqualsEqualsEqualsToken:
         compiler.warn(node.operatorToken, "Assuming '=='");
-      case ts.SyntaxKind.EqualsEqualsToken:
+      case typescript.SyntaxKind.EqualsEqualsToken:
         result = cat.eq(left, right);
         break;
 
-      case ts.SyntaxKind.ExclamationEqualsToken:
+      case typescript.SyntaxKind.ExclamationEqualsToken:
         result = cat.ne(left, right);
         break;
 
-      case ts.SyntaxKind.GreaterThanToken:
+      case typescript.SyntaxKind.GreaterThanToken:
         result = cat.gt(left, right);
         break;
 
-      case ts.SyntaxKind.GreaterThanEqualsToken:
+      case typescript.SyntaxKind.GreaterThanEqualsToken:
         result = cat.ge(left, right);
         break;
 
-      case ts.SyntaxKind.LessThanToken:
+      case typescript.SyntaxKind.LessThanToken:
         result = cat.lt(left, right);
         break;
 
-      case ts.SyntaxKind.LessThanEqualsToken:
+      case typescript.SyntaxKind.LessThanEqualsToken:
         result = cat.le(left, right);
         break;
 
@@ -115,64 +113,64 @@ export function compileBinary(compiler: Compiler, node: ts.BinaryExpression, con
 
   } else if (resultType.isAnyInteger) {
 
-    const cat = <binaryen.I32Operations | binaryen.I64Operations>binaryenCategoryOf(resultType, op, compiler.uintptrSize);
+    const cat = <binaryen.I32Operations | binaryen.I64Operations>binaryen.categoryOf(resultType, op, compiler.uintptrSize);
 
     switch (node.operatorToken.kind) {
 
       // Arithmetic
-      case ts.SyntaxKind.PlusToken:
-      case ts.SyntaxKind.PlusEqualsToken:
+      case typescript.SyntaxKind.PlusToken:
+      case typescript.SyntaxKind.PlusEqualsToken:
         result = cat.add(left, right);
         break;
 
-      case ts.SyntaxKind.MinusToken:
-      case ts.SyntaxKind.MinusEqualsToken:
+      case typescript.SyntaxKind.MinusToken:
+      case typescript.SyntaxKind.MinusEqualsToken:
         result = cat.sub(left, right);
         break;
 
-      case ts.SyntaxKind.AsteriskToken:
-      case ts.SyntaxKind.AsteriskEqualsToken:
+      case typescript.SyntaxKind.AsteriskToken:
+      case typescript.SyntaxKind.AsteriskEqualsToken:
         result = cat.mul(left, right);
         break;
 
-      case ts.SyntaxKind.SlashToken:
-      case ts.SyntaxKind.SlashEqualsToken:
+      case typescript.SyntaxKind.SlashToken:
+      case typescript.SyntaxKind.SlashEqualsToken:
         if (resultType.isSigned)
           result = cat.div_s(left, right);
         else
           result = cat.div_u(left, right);
         break;
 
-      case ts.SyntaxKind.PercentToken:
-      case ts.SyntaxKind.PercentEqualsToken:
+      case typescript.SyntaxKind.PercentToken:
+      case typescript.SyntaxKind.PercentEqualsToken:
         if (resultType.isSigned)
           result = cat.rem_s(left, right);
         else
           result = cat.rem_u(left, right);
         break;
 
-      case ts.SyntaxKind.AmpersandToken:
-      case ts.SyntaxKind.AmpersandEqualsToken:
+      case typescript.SyntaxKind.AmpersandToken:
+      case typescript.SyntaxKind.AmpersandEqualsToken:
         result = cat.and(left, right);
         break;
 
-      case ts.SyntaxKind.BarToken:
-      case ts.SyntaxKind.BarEqualsToken:
+      case typescript.SyntaxKind.BarToken:
+      case typescript.SyntaxKind.BarEqualsToken:
         result = cat.or(left, right);
         break;
 
-      case ts.SyntaxKind.CaretToken:
-      case ts.SyntaxKind.CaretEqualsToken:
+      case typescript.SyntaxKind.CaretToken:
+      case typescript.SyntaxKind.CaretEqualsToken:
         result = cat.xor(left, right);
         break;
 
-      case ts.SyntaxKind.LessThanLessThanToken:
-      case ts.SyntaxKind.LessThanLessThanEqualsToken:
+      case typescript.SyntaxKind.LessThanLessThanToken:
+      case typescript.SyntaxKind.LessThanLessThanEqualsToken:
         result = cat.shl(left, right);
         break;
 
-      case ts.SyntaxKind.GreaterThanGreaterThanToken:
-      case ts.SyntaxKind.GreaterThanGreaterThanEqualsToken:
+      case typescript.SyntaxKind.GreaterThanGreaterThanToken:
+      case typescript.SyntaxKind.GreaterThanGreaterThanEqualsToken:
         if (resultType.isSigned)
           result = cat.shr_s(left, right);
         else
@@ -180,38 +178,38 @@ export function compileBinary(compiler: Compiler, node: ts.BinaryExpression, con
         break;
 
       // Logical
-      case ts.SyntaxKind.EqualsEqualsEqualsToken:
+      case typescript.SyntaxKind.EqualsEqualsEqualsToken:
         compiler.warn(node.operatorToken, "Assuming '=='");
-      case ts.SyntaxKind.EqualsEqualsToken:
+      case typescript.SyntaxKind.EqualsEqualsToken:
         result = cat.eq(left, right);
         break;
 
-      case ts.SyntaxKind.ExclamationEqualsToken:
+      case typescript.SyntaxKind.ExclamationEqualsToken:
         result = cat.ne(left, right);
         break;
 
-      case ts.SyntaxKind.GreaterThanToken:
+      case typescript.SyntaxKind.GreaterThanToken:
         if (resultType.isSigned)
           result = cat.gt_s(left, right);
         else
           result = cat.gt_u(left, right);
         break;
 
-      case ts.SyntaxKind.GreaterThanEqualsToken:
+      case typescript.SyntaxKind.GreaterThanEqualsToken:
         if (resultType.isSigned)
           result = cat.ge_s(left, right);
         else
           result = cat.ge_u(left, right);
         break;
 
-      case ts.SyntaxKind.LessThanToken:
+      case typescript.SyntaxKind.LessThanToken:
         if (resultType.isSigned)
           result = cat.lt_s(left, right);
         else
           result = cat.lt_u(left, right);
         break;
 
-      case ts.SyntaxKind.LessThanEqualsToken:
+      case typescript.SyntaxKind.LessThanEqualsToken:
         if (resultType.isSigned)
           result = cat.le_s(left, right);
         else
@@ -221,64 +219,53 @@ export function compileBinary(compiler: Compiler, node: ts.BinaryExpression, con
     }
 
     if (result)
-      result = compiler.maybeConvertValue(node, result, intType, resultType, true);
+      result = compiler.maybeConvertValue(node, result, reflection.intType, resultType, true);
   }
 
   if (result)
     return isCompound
-      ? compileAssignmentWithValue(compiler, node, result, resultType)
+      ? compileAssignmentWithValue(compiler, node, left, result, resultType)
       : result;
 
-  compiler.error(node.operatorToken, "Unsupported binary operator", ts.SyntaxKind[node.operatorToken.kind]);
+  compiler.error(node.operatorToken, "Unsupported binary operator", typescript.SyntaxKind[node.operatorToken.kind]);
   return op.unreachable();
 }
 
-export function compileAssignment(compiler: Compiler, node: ts.BinaryExpression, contextualType: wasm.Type): binaryen.Expression {
-  return compileAssignmentWithValue(compiler, node, compiler.compileExpression(node.right, contextualType), getWasmType(node.right));
+export function compileAssignment(compiler: Compiler, node: typescript.BinaryExpression, contextualType: reflection.Type): binaryen.Expression {
+  return compileAssignmentWithValue(compiler, node, compiler.compileExpression(node.left, contextualType), compiler.compileExpression(node.right, typescript.getReflectedType(node.left)), contextualType);
 }
 
-export function compileAssignmentWithValue(compiler: Compiler, node: ts.BinaryExpression, value: binaryen.Expression, contextualType: wasm.Type): binaryen.Expression {
+export function compileAssignmentWithValue(compiler: Compiler, node: typescript.BinaryExpression, target: binaryen.Expression, value: binaryen.Expression, contextualType: reflection.Type): binaryen.Expression {
   const op = compiler.module;
 
-  setWasmType(node, contextualType);
+  typescript.setReflectedType(node, contextualType);
 
   // someVar = expression
-  if (node.left.kind === ts.SyntaxKind.Identifier) {
-    const reference = compiler.resolveReference(<ts.Identifier>node.left);
+  if (node.left.kind === typescript.SyntaxKind.Identifier) {
+    const reference = compiler.resolveReference(<typescript.Identifier>node.left);
     if (reference) {
-      switch (reference.kind) {
 
-        case wasm.ReflectionObjectKind.Variable:
-        {
-          const variable = <wasm.Variable>reference;
-          const expression = compiler.maybeConvertValue(node.right, value, getWasmType(node.right), variable.type, false);
+      if (reference instanceof reflection.Variable) {
+        const variable = <reflection.Variable>reference;
+        const expression = compiler.maybeConvertValue(node.right, value, typescript.getReflectedType(node.right), variable.type, false);
 
-          if (contextualType === voidType)
-            return op.setLocal(variable.index, expression);
+        if (contextualType === reflection.voidType)
+          return variable.isGlobal
+            ? op.setGlobal(variable.name, expression)
+            : op.setLocal(variable.index, expression);
 
-          setWasmType(node, variable.type);
-          return op.teeLocal(variable.index, expression);
-        }
-
-        case wasm.ReflectionObjectKind.Global:
-        {
-          const global = <wasm.Global>reference;
-          const expression = compiler.maybeConvertValue(node.right, value, getWasmType(node.right), global.type, false)
-
-          if (contextualType === voidType)
-            return op.setGlobal(global.name, expression);
-
-          setWasmType(node, global.type);
-          return op.block("", [ // emulates teeGlobal
-            op.setGlobal(global.name, expression),
-            op.getGlobal(global.name, binaryenTypeOf(global.type, compiler.uintptrSize))
-          ], binaryenTypeOf(global.type, compiler.uintptrSize));
-        }
-
+        typescript.setReflectedType(node, variable.type);
+        return variable.isGlobal
+          ? op.block("", [ // emulates teeGlobal
+              op.setGlobal(variable.name, expression),
+              op.getGlobal(variable.name, binaryen.typeOf(variable.type, compiler.uintptrSize))
+            ], binaryen.typeOf(variable.type, compiler.uintptrSize))
+          : op.teeLocal(variable.index, expression);
       }
+
     }
   }
 
-  compiler.error(node.operatorToken, "Unsupported assignment", ts.SyntaxKind[node.left.kind]);
+  compiler.error(node.operatorToken, "Unsupported assignment", typescript.SyntaxKind[node.left.kind]);
   return op.unreachable();
 }
