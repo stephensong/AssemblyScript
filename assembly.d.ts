@@ -34,15 +34,6 @@ declare type double = number;
 /** A 32-bit unsigned integer when targeting WASM32 respectively a 64-bit unsigned integer when targeting WASM64. */
 declare type uintptr = number;
 
-/** A class describing a pointer to a data structure. */
-/* declare class Ptr<T> {
-    offset: uintptr;
-    value: T;
-    constructor(offset: uintptr);
-    increment(diff: uintptr): Ptr<T>;
-    decrement(diff: uintptr): Ptr<T>;
-} */
-
 // Type aliases
 declare type int8 = sbyte;
 declare type uint8 = byte;

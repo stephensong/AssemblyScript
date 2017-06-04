@@ -63,7 +63,6 @@ Type      | WASM type | Description
 `float`   | f32       | A 32-bit float.
 `double`  | f64       | A 64-bit float.
 `void`    | none      | No return type.
-`Ptr<T>`  | i32 / i64 | A pointer of type `uintptr` with underlying type `T`.
 
 WebAssembly-specific operations are available as built-in functions that translate to the respective opcode directly:
 

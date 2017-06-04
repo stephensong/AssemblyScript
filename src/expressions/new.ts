@@ -38,7 +38,7 @@ export function compileNewClass(compiler: Compiler, node: typescript.NewExpressi
   // return malloc(classSize)
 
   return op.block("", [
-    op.call("malloc", [
+    op.call("malloc", [ // use wrapped malloc here so mspace_malloc can be inlined
       binaryen.valueOf(compiler.uintptrType, op, clazz.size)
     ], binaryenPtrType)
   ], binaryenPtrType);
@@ -63,7 +63,7 @@ export function compileNewArray(compiler: Compiler, node: typescript.NewExpressi
       0,
       compiler.uintptrType.size,
       op.teeLocal(newptr,
-        op.call("malloc", [
+        op.call("malloc", [ // use wrapped malloc here so mspace_malloc can be inlined
           cat.add(
             binaryen.valueOf(compiler.uintptrType, op, 4),
             cat.mul(

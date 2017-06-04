@@ -9,3 +9,5 @@ export class Enum {
     this.properties = {};
   }
 }
+
+export { Enum as default };

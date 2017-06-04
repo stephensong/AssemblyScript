@@ -3,12 +3,12 @@ import * as binaryen from "./binaryen";
 import * as expressions from "./expressions";
 import * as library from "./library";
 import * as path from "path";
-import * as profiler from "./profiler";
+import Profiler from "./profiler";
 import * as reflection from "./reflection";
 import * as statements from "./statements";
 import * as typescript from "./typescript";
 
-const tsCompilerOptions = <typescript.CompilerOptions>{
+const commonTypeScriptCompilerOptions = <typescript.CompilerOptions>{
   target: typescript.ScriptTarget.Latest,
   module: typescript.ModuleKind.None,
   noLib: true,
@@ -16,11 +16,7 @@ const tsCompilerOptions = <typescript.CompilerOptions>{
   types: []
 };
 
-// Set up malloc once
-const mallocBuffer = new Uint8Array(base64.length(library.mallocBlob));
-base64.decode(library.mallocBlob, mallocBuffer, 0);
-
-const defaultUintptrSize = 4;
+let preparedLibraryWasm: Uint8Array;
 
 export interface CompilerOptions {
   uintptrSize?: number;
@@ -31,9 +27,10 @@ export class Compiler {
   program: typescript.Program;
   checker: typescript.TypeChecker;
   entryFile: typescript.SourceFile;
+  libraryFile: typescript.SourceFile;
   diagnostics: typescript.DiagnosticCollection;
-  profiler = new profiler.Profiler();
-  noLib: boolean;
+  profiler = new Profiler();
+  options: CompilerOptions;
 
   uintptrSize: number;
   uintptrType: reflection.Type;
@@ -56,7 +53,7 @@ export class Compiler {
 
   static compileFile(filename: string, options?: CompilerOptions): binaryen.Module | null {
     return Compiler.compileProgram(
-      typescript.createProgram([ __dirname + "/../assembly.d.ts", filename ], tsCompilerOptions),
+      typescript.createProgram([ __dirname + "/../assembly.d.ts", filename ], commonTypeScriptCompilerOptions),
       options
     );
   }
@@ -67,7 +64,7 @@ export class Compiler {
     const libraryFileName = "assembly.d.ts";
     const libraryFile = typescript.createSourceFile(libraryFileName, library.libSource, typescript.ScriptTarget.Latest);
 
-    const program = typescript.createProgram([ libraryFileName, sourceFileName ], tsCompilerOptions, <typescript.CompilerHost>{
+    const program = typescript.createProgram([ libraryFileName, sourceFileName ], commonTypeScriptCompilerOptions, <typescript.CompilerHost>{
       getSourceFile: (fileName) => fileName === sourceFileName ? sourceFile : fileName === libraryFileName ? libraryFile : undefined,
       getDefaultLibFileName: () => libraryFileName,
       getCurrentDirectory: () => ".",
@@ -125,46 +122,55 @@ export class Compiler {
       if (this.uintptrSize !== 4 && this.uintptrSize !== 8)
         throw Error("unsupported uintptrSize");
     } else
-      this.uintptrSize = defaultUintptrSize;
+      this.uintptrSize = 4;
 
-    this.noLib = !!options.noLib;
+    this.options = options || {};
     this.program = program;
     this.checker = program.getDiagnosticsProducingTypeChecker();
     this.diagnostics = typescript.createDiagnosticCollection();
-    this.module = this.noLib ? new binaryen.Module() : binaryen.readBinary(mallocBuffer);
+
+    if (!this.options.noLib && !preparedLibraryWasm) {
+      preparedLibraryWasm = new Uint8Array(base64.length(library.mallocBlob));
+      base64.decode(library.mallocBlob, preparedLibraryWasm, 0);
+    }
+
+    this.module = this.options.noLib ? new binaryen.Module() : binaryen.readBinary(preparedLibraryWasm);
     this.uintptrType = this.uintptrSize === 4 ? reflection.uintptrType32 : reflection.uintptrType64;
 
-    // the last non-declaration source file is assumed to be the entry file (TODO: does this work in all cases?)
     const sourceFiles = program.getSourceFiles();
     for (let i = sourceFiles.length - 1; i >= 0; --i) {
+
+      // the first declaration source file is assumed to be the library file
       if (sourceFiles[i].isDeclarationFile)
-        continue;
-      this.entryFile = sourceFiles[i];
-      break;
+          this.libraryFile = sourceFiles[i];
+
+      // the last non-declaration source file is assumed to be the entry file
+      else if (!this.entryFile)
+        this.entryFile = sourceFiles[i];
     }
   }
 
   info(node: typescript.Node, message: string, arg1?: string): void {
-    const diagnostic = typescript.createDiagnosticForNode(node, typescript.DiagnosticCategory.Message, message, arg1);
+    const diagnostic = typescript.createDiagnosticForNodeEx(node, typescript.DiagnosticCategory.Message, message, arg1);
     this.diagnostics.add(diagnostic);
     typescript.printDiagnostic(diagnostic);
   }
 
   warn(node: typescript.Node, message: string, arg1?: string): void {
-    const diagnostic = typescript.createDiagnosticForNode(node, typescript.DiagnosticCategory.Warning, message, arg1);
+    const diagnostic = typescript.createDiagnosticForNodeEx(node, typescript.DiagnosticCategory.Warning, message, arg1);
     this.diagnostics.add(diagnostic);
     typescript.printDiagnostic(diagnostic);
   }
 
   error(node: typescript.Node, message: string, arg1?: string): void {
-    const diagnostic = typescript.createDiagnosticForNode(node, typescript.DiagnosticCategory.Error, message, arg1);
+    const diagnostic = typescript.createDiagnosticForNodeEx(node, typescript.DiagnosticCategory.Error, message, arg1);
     this.diagnostics.add(diagnostic);
     typescript.printDiagnostic(diagnostic);
   }
 
   mangleGlobalName(name: string, sourceFile: typescript.SourceFile) {
     // prepends the relative path to imported files
-    if (sourceFile !== this.entryFile) {
+    if (sourceFile !== this.entryFile && sourceFile !== this.libraryFile) {
       name = path.relative(
         path.dirname(path.normalize(this.entryFile.fileName)),
         path.normalize(sourceFile.fileName)
@@ -210,7 +216,7 @@ export class Compiler {
       }
     }
 
-    if (this.noLib) {
+    if (this.options.noLib) {
       // setup empty memory
       this.module.setMemory(1, 0xffff, "memory", []);
     } else {
@@ -406,7 +412,19 @@ export class Compiler {
     //  this.error(node.typeParameters[0], "Type parameters are not supported yet");
 
     const className = this.mangleGlobalName((<typescript.Identifier>node.name).getText(), node.getSourceFile());
-    const clazz = this.classes[className] = new reflection.Class(className, this.uintptrType);
+    const genericTypes: reflection.Type[] = [];
+
+    if (node.typeParameters)
+      for (let i = 0, k = node.typeParameters.length; i < k; ++i) {
+        const parameterNode = node.typeParameters[i];
+        const reference = this.resolveReference(parameterNode.name);
+        if (reference instanceof reflection.Class) {
+
+        }
+        // const tsType = this.checker.getTypeAtLocation(parameterNode);
+      }
+
+    const clazz = this.classes[className] = new reflection.Class(className, this.uintptrType, genericTypes);
 
     for (let i = 0, k = node.members.length; i < k; ++i) {
       const member = node.members[i];
@@ -423,7 +441,7 @@ export class Compiler {
             if (!type) {
               this.error(propertyNode.type, "Unresolvable type");
             } else {
-              clazz.properties[name] = new reflection.Property(name, type, reflection.PropertyFlags.none, clazz.size); // todo: constant, static
+              clazz.properties[name] = new reflection.Property(name, type, typescript.isStatic(member) ? reflection.PropertyFlags.none : reflection.PropertyFlags.instance, clazz.size);
               clazz.size += type.size;
             }
           }
@@ -697,6 +715,9 @@ export class Compiler {
 
       case typescript.SyntaxKind.PropertyAccessExpression:
         return expressions.compilePropertyAccess(this, <typescript.PropertyAccessExpression>node, contextualType);
+
+      case typescript.SyntaxKind.ElementAccessExpression:
+        return expressions.compileElementAccess(this, <typescript.ElementAccessExpression>node, contextualType);
 
       case typescript.SyntaxKind.ConditionalExpression:
         return expressions.compileConditional(this, <typescript.ConditionalExpression>node, contextualType);
@@ -1002,7 +1023,7 @@ export class Compiler {
 
     // Locals including 'this'
     const localName = node.getText();
-    if (this.currentLocals[localName])
+    if (this.currentLocals && this.currentLocals[localName])
       return this.currentLocals[localName];
 
     // Globals
@@ -1031,8 +1052,3 @@ export class Compiler {
 }
 
 export { Compiler as default };
-
-if (typeof global !== "undefined" && global)
-  (<any>global).Compiler = Compiler;
-if (typeof window !== "undefined" && window)
-  (<any>window).Compiler = Compiler;

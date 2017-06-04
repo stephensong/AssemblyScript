@@ -19,7 +19,6 @@
  (type $i (func (result i32)))
  (type $iv (func (param i32)))
  (type $v (func))
- (type $ifi (func (param i32 f32) (result i32)))
  (global $.msp (mut i32) (i32.const 0))
  (table 0 anyfunc)
  (memory $0 1)
@@ -29,7 +28,6 @@
  (export "malloc" (func $malloc))
  (export "free" (func $free))
  (export "main" (func $main))
- (export "test" (func $test))
  (start $executeGlobalInitalizers)
  (func $memset (type $0) (param $var$0 i32) (param $var$1 i32) (param $var$2 i32) (result i32)
   (local $var$3 i32)
@@ -9187,7 +9185,7 @@
    (get_local $0)
   )
  )
- (func $main (type $v)
+ (func $main (type $i) (result i32)
   (local $0 i32)
   (local $1 i32)
   (local $2 i32)
@@ -9242,16 +9240,9 @@
     )
    )
   )
- )
- (func $test (type $ifi) (param $0 i32) (param $1 f32) (result i32)
   (return
-   (tee_local $0
-    (i32.rem_s
-     (get_local $0)
-     (i32.trunc_s/f32
-      (get_local $1)
-     )
-    )
+   (i32.load
+    (get_local $0)
    )
   )
  )

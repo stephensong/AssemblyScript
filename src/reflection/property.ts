@@ -23,3 +23,5 @@ export class Property {
   get isConstant(): boolean { return (this.flags & PropertyFlags.constant) !== 0; }
   get isInstance(): boolean { return (this.flags & PropertyFlags.instance) !== 0; }
 }
+
+export { Property as default };

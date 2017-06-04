@@ -35,3 +35,5 @@ export class Function {
   get isInstance(): boolean { return (this.flags & FunctionFlags.instance) !== 0; }
   get isConstructor(): boolean { return (this.flags & FunctionFlags.constructor) !== 0; }
 }
+
+export { Function as default };

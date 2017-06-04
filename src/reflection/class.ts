@@ -8,11 +8,14 @@ export class Class {
   properties: { [key: string]: Property } = {};
   methods: { [key: string]: Function } = {};
   ctor: Function;
-  genericTypes: Type[] = [];
+  genericTypes: Type[];
   size: number = 0;
 
-  constructor(name: string, uintptrType: Type) {
+  constructor(name: string, uintptrType: Type, genericTypes: Type[]) {
     this.name = name;
     this.type = uintptrType.withUnderlyingClass(this);
+    this.genericTypes = genericTypes;
   }
 }
+
+export { Class as default };

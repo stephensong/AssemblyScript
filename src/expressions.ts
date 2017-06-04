@@ -2,6 +2,7 @@ export * from "./expressions/as";
 export * from "./expressions/binary";
 export * from "./expressions/call";
 export * from "./expressions/conditional";
+export * from "./expressions/elementaccess";
 export * from "./expressions/identifier";
 export * from "./expressions/literal";
 export * from "./expressions/new";

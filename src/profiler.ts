@@ -13,3 +13,5 @@ export class Profiler {
     return time[0] + time[1] * (1 / 1000000);
   }
 }
+
+export { Profiler as default };

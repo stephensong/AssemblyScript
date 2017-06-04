@@ -19,12 +19,16 @@ export {
   ContinueStatement,
   DiagnosticCategory,
   DiagnosticCollection,
+  DiagnosticMessage,
   Declaration,
+  Diagnostic,
   DoStatement,
+  ElementAccessExpression,
   EnumDeclaration,
   EntityName,
   ExpressionStatement,
   Expression,
+  FormatDiagnosticsHost,
   ForStatement,
   FunctionDeclaration,
   Identifier,
@@ -33,6 +37,7 @@ export {
   MethodDeclaration,
   ModuleKind,
   NewExpression,
+  NodeFlags,
   Node,
   ParenthesizedExpression,
   PostfixUnaryExpression,
@@ -56,13 +61,20 @@ export {
   SwitchStatement,
   Symbol,
   SyntaxKind,
+  System,
   WhileStatement,
 
   // Global functions
+  getLineAndCharacterOfPosition,
   getPreEmitDiagnostics,
+  getPositionOfLineAndCharacter,
+  convertToRelativePath,
+  createGetCanonicalFileName,
   createDiagnosticCollection,
+  createDiagnosticForNode,
   createProgram,
-  createSourceFile
+  createSourceFile,
+  flattenDiagnosticMessageText
 
 } from "byots";
 
