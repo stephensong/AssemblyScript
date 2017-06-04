@@ -23,6 +23,9 @@ export interface CompilerOptions {
   noLib?: boolean;
 }
 
+/**
+ * AssemblyScript compiler.
+ */
 export class Compiler {
   program: typescript.Program;
   checker: typescript.TypeChecker;
@@ -51,6 +54,12 @@ export class Compiler {
 
   onVariable: (originalName: string, type: reflection.Type) => number;
 
+  /**
+   * Compiles an AssemblyScript file to WebAssembly.
+   * @param filename Entry file name
+   * @param options Compiler options
+   * @returns Compiled module or `null` if compilation failed
+   */
   static compileFile(filename: string, options?: CompilerOptions): binaryen.Module | null {
     return Compiler.compileProgram(
       typescript.createProgram([ __dirname + "/../assembly.d.ts", filename ], commonTypeScriptCompilerOptions),
@@ -58,6 +67,12 @@ export class Compiler {
     );
   }
 
+  /**
+   * Compilers an AssemblyScript string to WebAssembly.
+   * @param source Source string
+   * @param options Compiler options
+   * @returns Compiled module or `null` if compilation failed
+   */
   static compileString(source: string, options?: CompilerOptions): binaryen.Module | null {
     const sourceFileName = "module.ts";
     const sourceFile = typescript.createSourceFile(sourceFileName, source, typescript.ScriptTarget.Latest);
@@ -79,6 +94,12 @@ export class Compiler {
     return Compiler.compileProgram(program, options);
   }
 
+  /**
+   * Compiles a TypeScript program using AssemblyScript syntax to WebAssembly.
+   * @param program Program
+   * @param options Compiler options
+   * @returns Compiled module or `null` if compilation failed
+   */
   static compileProgram(program: typescript.Program, options?: CompilerOptions): binaryen.Module | null {
     const compiler = new Compiler(program, options);
 
@@ -414,15 +435,20 @@ export class Compiler {
     const className = this.mangleGlobalName((<typescript.Identifier>node.name).getText(), node.getSourceFile());
     const genericTypes: reflection.Type[] = [];
 
-    if (node.typeParameters)
+    /* if (node.typeParameters) {
       for (let i = 0, k = node.typeParameters.length; i < k; ++i) {
         const parameterNode = node.typeParameters[i];
+        if (parameterNode.constraint)
+          this.error(parameterNode.constraint, "Parameter constraints are not supported yet");
+
         const reference = this.resolveReference(parameterNode.name);
         if (reference instanceof reflection.Class) {
-
+          console.log(parameterNode);
+        } else {
+          this.error(parameterNode, "Unresolvable type parameter", parameterNode.getText());
         }
-        // const tsType = this.checker.getTypeAtLocation(parameterNode);
       }
+    } */
 
     const clazz = this.classes[className] = new reflection.Class(className, this.uintptrType, genericTypes);
 
@@ -616,8 +642,11 @@ export class Compiler {
       switch ((member = node.members[i]).kind) {
 
         case typescript.SyntaxKind.Constructor:
+          this.compileFunctionOrMethod(<typescript.ConstructorDeclaration>member);
+          break;
+
         case typescript.SyntaxKind.MethodDeclaration:
-          this.compileFunctionOrMethod(<typescript.MethodDeclaration | typescript.ConstructorDeclaration>member);
+          this.compileFunctionOrMethod(<typescript.MethodDeclaration>member);
           break;
 
         // otherwise already reported by initialize

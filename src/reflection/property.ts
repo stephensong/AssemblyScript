@@ -6,22 +6,38 @@ export enum PropertyFlags {
   instance = 1 << 1
 }
 
-export class Property {
+export class PropertyBase {
   name: string;
-  type: Type;
   flags: PropertyFlags;
-  offset: number;
-  constantValue?: number;
+  constantValue?: any;
 
-  constructor(name: string, type: Type, flags: PropertyFlags, offset: number) {
+  constructor(name: string, flags: PropertyFlags) {
     this.name = name;
-    this.type = type;
     this.flags = flags;
-    this.offset = offset;
   }
 
   get isConstant(): boolean { return (this.flags & PropertyFlags.constant) !== 0; }
   get isInstance(): boolean { return (this.flags & PropertyFlags.instance) !== 0; }
 }
 
+export class Property extends PropertyBase {
+  type: Type;
+  offset: number;
+
+  constructor(name: string, type: Type, flags: PropertyFlags, offset: number) {
+    super(name, flags);
+    this.type = type;
+    this.offset = offset;
+  }
+}
+
 export { Property as default };
+
+export class PropertyPrototype extends PropertyBase {
+  typeName: string;
+
+  constructor(name: string, typeName: string, flags: PropertyFlags) {
+    super(name, flags);
+    this.typeName = typeName;
+  }
+}

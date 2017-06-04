@@ -27,7 +27,8 @@ export enum TypeKind {
   double = 11,
   LastFloat = 11,
 
-  void = 12
+  void = 12,
+  template = 13
 }
 
 export class Type {

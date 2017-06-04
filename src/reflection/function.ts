@@ -10,9 +10,22 @@ export enum FunctionFlags {
   constructor = 1 << 3
 }
 
-export class Function {
+export class FunctionBase {
   name: string;
   flags: FunctionFlags;
+
+  constructor(name: string, flags: FunctionFlags) {
+    this.name = name;
+    this.flags = flags;
+  }
+
+  get isImport(): boolean { return (this.flags & FunctionFlags.import) !== 0; }
+  get isExport(): boolean { return (this.flags & FunctionFlags.export) !== 0; }
+  get isInstance(): boolean { return (this.flags & FunctionFlags.instance) !== 0; }
+  get isConstructor(): boolean { return (this.flags & FunctionFlags.constructor) !== 0; }
+}
+
+export class Function extends FunctionBase {
   genericTypes: Type[];
   parameterTypes: Type[];
   returnType: Type;
@@ -23,17 +36,24 @@ export class Function {
   signatureIdentifier: string;
 
   constructor(name: string, flags: FunctionFlags, genericTypes: Type[], parameterTypes: Type[], returnType: Type) {
-    this.name = name;
-    this.flags = flags;
+    super(name, flags);
     this.genericTypes = genericTypes;
     this.parameterTypes = parameterTypes;
     this.returnType = returnType;
   }
-
-  get isImport(): boolean { return (this.flags & FunctionFlags.import) !== 0; }
-  get isExport(): boolean { return (this.flags & FunctionFlags.export) !== 0; }
-  get isInstance(): boolean { return (this.flags & FunctionFlags.instance) !== 0; }
-  get isConstructor(): boolean { return (this.flags & FunctionFlags.constructor) !== 0; }
 }
 
 export { Function as default };
+
+export class FunctionPrototype extends FunctionBase {
+  genericTypeNames: string[];
+  parameterTypeNames: string[];
+  returnTypeName: string;
+
+  constructor(name: string, flags: FunctionFlags, genericTypeNames: string[], parameterTypeNames: string[], returnTypeName: string) {
+    super(name, flags);
+    this.genericTypeNames = genericTypeNames;
+    this.parameterTypeNames = parameterTypeNames;
+    this.returnTypeName = returnTypeName;
+  }
+}

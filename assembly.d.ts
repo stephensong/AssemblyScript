@@ -119,6 +119,6 @@ declare function sizeof<T>(): uintptr;
 // Linked-in standard library
 declare function memset(dest: uintptr, c: int, size: uintptr): uintptr;
 declare function memcpy(dest: uintptr, src: uintptr, size: uintptr): uintptr;
-declare function memcmp(left: uintptr, right: uintptr, size: uintptr): uintptr;
+declare function memcmp(left: uintptr, right: uintptr, size: uintptr): int;
 declare function malloc(size: uintptr): uintptr;
 declare function free(ptr: uintptr): void;

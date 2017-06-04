@@ -1,6 +1,7 @@
-
 // Adopted from yamiez.c
-int memcmp(const void *vl, const void *vr, size_t n) {
+// ref: https://codereview.stackexchange.com/questions/118909/custom-memcmp-function/118950#118950
+int memcmp(const void *vl, const void *vr, size_t n)
+{
   typedef unsigned char byte_type;
   typedef unsigned long word_type;
 
@@ -9,8 +10,8 @@ int memcmp(const void *vl, const void *vr, size_t n) {
 
   const uintptr_t align_mask = word_align - 1;
 
-  const byte_type *buf1 = vl;
-  const byte_type *buf2 = vr;
+  const unsigned char *buf1 = vl;
+  const unsigned char *buf2 = vr;
 
   const uintptr_t addr1 = (uintptr_t) vl;
   const uintptr_t addr2 = (uintptr_t) vr;
