@@ -30,6 +30,7 @@ export {
 
 } from "../lib/binaryen/index.js";
 
+/** Computes a human readable signature identifier of a reflected type. */
 export function identifierOf(type: reflection.Type, uintptrSize: number): string {
   switch (type.kind) {
 
@@ -60,6 +61,7 @@ export function identifierOf(type: reflection.Type, uintptrSize: number): string
   throw Error("unexpected type");
 }
 
+/** Computes the binaryen type of a reflected type. */
 export function typeOf(type: reflection.Type, uintptrSize: number): binaryen.Type {
   switch (type.kind) {
 
@@ -90,6 +92,7 @@ export function typeOf(type: reflection.Type, uintptrSize: number): binaryen.Typ
   throw Error("unexpected type");
 }
 
+/** Computes the binaryen opcode category (i32, i64, f32, f64) of a reflected type. */
 export function categoryOf(type: reflection.Type, module: binaryen.Module, uintptrSize: number): binaryen.I32Operations | binaryen.I64Operations | binaryen.F32Operations | binaryen.F64Operations {
   switch (type.kind) {
 
@@ -117,6 +120,7 @@ export function categoryOf(type: reflection.Type, module: binaryen.Module, uintp
   throw Error("unexpected type");
 }
 
+/** Computes the constant value expression of the specified reflected type. */
 export function valueOf(type: reflection.Type, module: binaryen.Module, value: number | Long) {
   const op = module;
 

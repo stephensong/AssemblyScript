@@ -1,43 +1,23 @@
 import { Type } from "./type";
+import * as typescript from "../typescript";
 
-export enum PropertyFlags {
-  none     = 0,
-  constant = 1 << 0,
-  instance = 1 << 1
-}
-
-export class PropertyBase {
+export class Property {
   name: string;
-  flags: PropertyFlags;
-  constantValue?: any;
-
-  constructor(name: string, flags: PropertyFlags) {
-    this.name = name;
-    this.flags = flags;
-  }
-
-  get isConstant(): boolean { return (this.flags & PropertyFlags.constant) !== 0; }
-  get isInstance(): boolean { return (this.flags & PropertyFlags.instance) !== 0; }
-}
-
-export class Property extends PropertyBase {
+  declaration: typescript.PropertyDeclaration | typescript.EnumMember;
   type: Type;
   offset: number;
+  constantValue?: any;
 
-  constructor(name: string, type: Type, flags: PropertyFlags, offset: number) {
-    super(name, flags);
+  constructor(name: string, declaration: typescript.PropertyDeclaration | typescript.EnumMember, type: Type, offset: number, constantValue?: any) {
+    this.name = name;
+    this.declaration = declaration;
     this.type = type;
     this.offset = offset;
+    this.constantValue = constantValue;
   }
+
+  get isConstant(): boolean { return this.constantValue !== undefined;}
+  get isInstance(): boolean { return this.declaration.kind !== typescript.SyntaxKind.EnumMember && !typescript.isStatic(this.declaration); }
 }
 
 export { Property as default };
-
-export class PropertyPrototype extends PropertyBase {
-  typeName: string;
-
-  constructor(name: string, typeName: string, flags: PropertyFlags) {
-    super(name, flags);
-    this.typeName = typeName;
-  }
-}

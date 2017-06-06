@@ -1,12 +1,14 @@
 import { Property } from "./property";
+import * as typescript from "../typescript";
 
 export class Enum {
   name: string;
+  declaration: typescript.EnumDeclaration;
   properties: { [key: string]: Property };
 
-  constructor(name: string) {
+  constructor(name: string, declaration: typescript.EnumDeclaration) {
     this.name = name;
-    this.properties = {};
+    this.declaration = declaration;
   }
 }
 

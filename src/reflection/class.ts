@@ -1,34 +1,66 @@
-import { Function, FunctionPrototype } from "./function";
-import { Property, PropertyPrototype } from "./property";
+import Compiler from "../compiler";
+import { Function } from "./function";
+import { Property } from "./property";
 import { Type } from "./type";
+import * as typescript from "../typescript";
 
-export class Class {
+export abstract class ClassBase {
   name: string;
-  type: Type;
-  properties: { [key: string]: Property } = {};
-  methods: { [key: string]: Function } = {};
-  ctor: Function;
-  genericTypes: Type[];
-  size: number = 0;
+  declaration: typescript.ClassDeclaration;
 
-  constructor(name: string, uintptrType: Type, genericTypes: Type[]) {
+  constructor(name: string, declaration: typescript.ClassDeclaration) {
     this.name = name;
-    this.type = uintptrType.withUnderlyingClass(this);
-    this.genericTypes = genericTypes;
+    this.declaration = declaration;
   }
 }
 
-export class ClassPrototype {
-  name: string;
-  properties: { [key: string]: PropertyPrototype } = {};
-  methods: { [key: string]: FunctionPrototype } = {};
-  ctor: FunctionPrototype;
-  genericTypeNames: string[];
+/** A class instance with generic parameters resolved. */
+export class Class extends ClassBase {
+  type: Type;
+  typeParametersMap: { [key: string]: Type };
 
-  constructor(name: string, genericTypeNames: string[]) {
-    this.name = name;
-    this.genericTypeNames = genericTypeNames;
+  properties: { [key: string]: Property } = {};
+  methods: { [key: string]: Function } = {};
+  ctor: Function;
+  size: number = 0;
+
+  constructor(name: string, declaration: typescript.ClassDeclaration, uintptrType: Type, typeParametersMap: { [key: string]: Type }) {
+    super(name, declaration);
+    this.type = uintptrType.withUnderlyingClass(this);
+    this.typeParametersMap = typeParametersMap;
   }
 }
 
 export { Class as default };
+
+/** A class template with possibly unresolved generic parameters. */
+export class ClassTemplate extends ClassBase {
+  instances: { [key: string]: Class } = {};
+
+  constructor(name: string, declaration: typescript.ClassDeclaration) {
+    super(name, declaration);
+  }
+
+  get isGeneric(): boolean { return !!(this.declaration.typeParameters && this.declaration.typeParameters.length); }
+
+  resolve(compiler: Compiler, typeArguments: typescript.TypeNode[]): Class {
+    const typeParametersCount = this.declaration.typeParameters && this.declaration.typeParameters.length || 0;
+    if (typeArguments.length !== typeParametersCount)
+      throw Error("type parameter count mismatch")
+
+    const typeParametersMap: { [key: string]: Type } = {};
+    let name = this.name;
+    if (typeParametersCount) {
+      const typeNames: string[] = new Array(typeParametersCount);
+      for (let i = 0; i < typeParametersCount; ++i) {
+        const parameter = (<typescript.NodeArray<typescript.TypeParameterDeclaration>>this.declaration.typeParameters)[i];
+        const type = compiler.resolveType(typeArguments[i]);
+        typeParametersMap[(<ts.Identifier>parameter.name).getText()] = type;
+        typeNames[i] = type.toString();
+      }
+      name += "<" + typeNames.join(",") + ">";
+    }
+
+    return this.instances[name] || (this.instances[name] = new Class(name, this.declaration, compiler.uintptrType, typeParametersMap));
+  }
+}

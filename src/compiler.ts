@@ -8,7 +8,8 @@ import * as reflection from "./reflection";
 import * as statements from "./statements";
 import * as typescript from "./typescript";
 
-const commonTypeScriptCompilerOptions = <typescript.CompilerOptions>{
+// TypeScript compiler options for AssemblyScript compilation.
+const tscOptions = <typescript.CompilerOptions>{
   target: typescript.ScriptTarget.Latest,
   module: typescript.ModuleKind.None,
   noLib: true,
@@ -16,62 +17,75 @@ const commonTypeScriptCompilerOptions = <typescript.CompilerOptions>{
   types: []
 };
 
-let preparedLibraryWasm: Uint8Array;
+// Malloc, free, etc. is present as a base64 encoded blob and prepared once when required.
+let mallocWasm: Uint8Array;
 
+/** AssemblyScript compiler options. */
 export interface CompilerOptions {
+
+  /** Specifies the byte size of a pointer. WASM32 uses `4`, WASM64 uses `8`. */
   uintptrSize?: number;
+
+  /** Specifies whether the standard library (malloc, free, etc.) shall be excluded.*/
   noLib?: boolean;
+
+  /** Specifies that compilation shall be performed in silent mode without writing to stderr. */
+  silent?: boolean;
 }
 
-/**
- * AssemblyScript compiler.
- */
+/** AssemblyScript compiler. */
 export class Compiler {
+  options: CompilerOptions;
+
+  // TypeScript-related
   program: typescript.Program;
   checker: typescript.TypeChecker;
   entryFile: typescript.SourceFile;
   libraryFile: typescript.SourceFile;
   diagnostics: typescript.DiagnosticCollection;
-  profiler = new Profiler();
-  options: CompilerOptions;
 
-  uintptrSize: number;
-  uintptrType: reflection.Type;
-
+  // Binaryen-related
   module: binaryen.Module;
   signatures: { [key: string]: binaryen.Signature } = {};
   globalInitializers: binaryen.Expression[] = [];
   userStartFunction?: binaryen.Function;
 
+  // Codegen
+  profiler = new Profiler();
   currentFunction: reflection.Function;
+
   currentLocals: { [key: string]: reflection.Variable };
   currentBreakContextNumber = 0;
   currentBreakContextDepth = 0;
+  onVariable: (originalName: string, type: reflection.Type) => number;
 
+  // Reflection
+  uintptrType: reflection.Type;
+  functionTemplates: { [key: string]: reflection.FunctionTemplate } = {};
+  classTemplates: { [key: string]: reflection.ClassTemplate } = {};
   globals: { [key: string]: reflection.Variable } = {};
+  functions: { [key: string]: reflection.Function } = {};
   classes: { [key: string]: reflection.Class } = {};
   enums: { [key: string]: reflection.Enum } = {};
-
-  onVariable: (originalName: string, type: reflection.Type) => number;
 
   /**
    * Compiles an AssemblyScript file to WebAssembly.
    * @param filename Entry file name
    * @param options Compiler options
-   * @returns Compiled module or `null` if compilation failed
+   * @returns Compiled module or `null` if compilation failed. In case of failure, diagnostics are stored in {@link Compiler#diagnostics}.
    */
   static compileFile(filename: string, options?: CompilerOptions): binaryen.Module | null {
     return Compiler.compileProgram(
-      typescript.createProgram([ __dirname + "/../assembly.d.ts", filename ], commonTypeScriptCompilerOptions),
+      typescript.createProgram([ __dirname + "/../assembly.d.ts", filename ], tscOptions),
       options
     );
   }
 
   /**
-   * Compilers an AssemblyScript string to WebAssembly.
+   * Compiles an AssemblyScript string to WebAssembly.
    * @param source Source string
    * @param options Compiler options
-   * @returns Compiled module or `null` if compilation failed
+   * @returns Compiled module or `null` if compilation failed. In case of failure, diagnostics are stored in {@link Compiler#diagnostics}.
    */
   static compileString(source: string, options?: CompilerOptions): binaryen.Module | null {
     const sourceFileName = "module.ts";
@@ -79,7 +93,7 @@ export class Compiler {
     const libraryFileName = "assembly.d.ts";
     const libraryFile = typescript.createSourceFile(libraryFileName, library.libSource, typescript.ScriptTarget.Latest);
 
-    const program = typescript.createProgram([ libraryFileName, sourceFileName ], commonTypeScriptCompilerOptions, <typescript.CompilerHost>{
+    const program = typescript.createProgram([ libraryFileName, sourceFileName ], tscOptions, <typescript.CompilerHost>{
       getSourceFile: (fileName) => fileName === sourceFileName ? sourceFile : fileName === libraryFileName ? libraryFile : undefined,
       getDefaultLibFileName: () => libraryFileName,
       getCurrentDirectory: () => ".",
@@ -96,12 +110,13 @@ export class Compiler {
 
   /**
    * Compiles a TypeScript program using AssemblyScript syntax to WebAssembly.
-   * @param program Program
+   * @param program TypeScript program
    * @param options Compiler options
-   * @returns Compiled module or `null` if compilation failed
+   * @returns Compiled module or `null` if compilation failed. In case of failure, diagnostics are stored in {@link Compiler#diagnostics}.
    */
   static compileProgram(program: typescript.Program, options?: CompilerOptions): binaryen.Module | null {
     const compiler = new Compiler(program, options);
+    const silent = !!(options && options.silent);
 
     // bail out if there were 'pre emit' errors
     let diagnostics = typescript.getPreEmitDiagnostics(compiler.program);
@@ -111,9 +126,11 @@ export class Compiler {
         return null;
     }
 
-    compiler.profiler.start("initialize");
+    if (!silent)
+      compiler.profiler.start("initialize");
     compiler.initialize();
-    process.stderr.write("initialization took " + compiler.profiler.end("initialize").toFixed(3) + " ms\n");
+    if (!silent)
+      process.stderr.write("initialization took " + compiler.profiler.end("initialize").toFixed(3) + " ms\n");
 
     // bail out if there were initialization errors
     diagnostics = compiler.diagnostics.getDiagnostics();
@@ -121,9 +138,11 @@ export class Compiler {
       if (diagnostics[i].category === typescript.DiagnosticCategory.Error)
         return null;
 
-    compiler.profiler.start("compile");
+    if (!silent)
+      compiler.profiler.start("compile");
     compiler.compile();
-    process.stderr.write("compilation took " + compiler.profiler.end("compile").toFixed(3) + " ms\n");
+    if (!silent)
+      process.stderr.write("compilation took " + compiler.profiler.end("compile").toFixed(3) + " ms\n");
 
     // bail out if there were compilation errors
     diagnostics = compiler.diagnostics.getDiagnostics();
@@ -134,61 +153,70 @@ export class Compiler {
     return compiler.module;
   }
 
+  /** Gets the configured byte size of a pointer. */
+  get uintptrSize(): number { return this.options.uintptrSize || 4; }
+
+  /**
+   * Constructs a new AssemblyScript compiler.
+   * @param program TypeScript program
+   * @param options Compiler options
+   */
   constructor(program: typescript.Program, options?: CompilerOptions) {
-    if (!options)
-      options = {};
-
-    if (options.uintptrSize) {
-      this.uintptrSize = options.uintptrSize | 0;
-      if (this.uintptrSize !== 4 && this.uintptrSize !== 8)
-        throw Error("unsupported uintptrSize");
-    } else
-      this.uintptrSize = 4;
-
     this.options = options || {};
+
+    if (this.options.uintptrSize && this.options.uintptrSize !== 4 && this.options.uintptrSize !== 8)
+      throw Error("unsupported uintptrSize");
+
     this.program = program;
     this.checker = program.getDiagnosticsProducingTypeChecker();
     this.diagnostics = typescript.createDiagnosticCollection();
 
-    if (!this.options.noLib && !preparedLibraryWasm) {
-      preparedLibraryWasm = new Uint8Array(base64.length(library.mallocBlob));
-      base64.decode(library.mallocBlob, preparedLibraryWasm, 0);
+    if (!this.options.noLib && !mallocWasm) {
+      mallocWasm = new Uint8Array(base64.length(library.mallocBlob));
+      base64.decode(library.mallocBlob, mallocWasm, 0);
     }
 
-    this.module = this.options.noLib ? new binaryen.Module() : binaryen.readBinary(preparedLibraryWasm);
+    this.module = this.options.noLib ? new binaryen.Module() : binaryen.readBinary(mallocWasm);
     this.uintptrType = this.uintptrSize === 4 ? reflection.uintptrType32 : reflection.uintptrType64;
 
     const sourceFiles = program.getSourceFiles();
     for (let i = sourceFiles.length - 1; i >= 0; --i) {
 
-      // the first declaration source file is assumed to be the library file
+      // the first declaration file is assumed to be the library file
       if (sourceFiles[i].isDeclarationFile)
           this.libraryFile = sourceFiles[i];
 
-      // the last non-declaration source file is assumed to be the entry file
+      // the last non-declaration file is assumed to be the entry file
       else if (!this.entryFile)
         this.entryFile = sourceFiles[i];
     }
   }
 
+  /** Adds an informative diagnostic to {@link Compiler#diagnostics} and prints it. */
   info(node: typescript.Node, message: string, arg1?: string): void {
     const diagnostic = typescript.createDiagnosticForNodeEx(node, typescript.DiagnosticCategory.Message, message, arg1);
     this.diagnostics.add(diagnostic);
-    typescript.printDiagnostic(diagnostic);
+    if (!(this.options && this.options.silent))
+      typescript.printDiagnostic(diagnostic);
   }
 
+  /** Adds a warning diagnostic to {@link Compiler#diagnostics} and prints it. */
   warn(node: typescript.Node, message: string, arg1?: string): void {
     const diagnostic = typescript.createDiagnosticForNodeEx(node, typescript.DiagnosticCategory.Warning, message, arg1);
     this.diagnostics.add(diagnostic);
-    typescript.printDiagnostic(diagnostic);
+    if (!(this.options && this.options.silent))
+      typescript.printDiagnostic(diagnostic);
   }
 
+  /** Adds an error diagnostic to {@link Compiler#diagnostics} and prints it. */
   error(node: typescript.Node, message: string, arg1?: string): void {
     const diagnostic = typescript.createDiagnosticForNodeEx(node, typescript.DiagnosticCategory.Error, message, arg1);
     this.diagnostics.add(diagnostic);
-    typescript.printDiagnostic(diagnostic);
+    if (!(this.options && this.options.silent))
+      typescript.printDiagnostic(diagnostic);
   }
 
+  /** Mangles a global name (of a function, a class, ...) for use with binaryen. */
   mangleGlobalName(name: string, sourceFile: typescript.SourceFile) {
     // prepends the relative path to imported files
     if (sourceFile !== this.entryFile && sourceFile !== this.libraryFile) {
@@ -200,6 +228,7 @@ export class Compiler {
     return name;
   }
 
+  /** Scans over the sources and initializes the reflection structure. */
   initialize(): void {
     const sourceFiles = this.program.getSourceFiles();
 
@@ -210,29 +239,30 @@ export class Compiler {
         switch ((statement = file.statements[j]).kind) {
 
           case typescript.SyntaxKind.EndOfFileToken:
-          case typescript.SyntaxKind.ImportDeclaration:
           case typescript.SyntaxKind.InterfaceDeclaration:
           case typescript.SyntaxKind.TypeAliasDeclaration:
-            continue; // already handled by TypeScript
+          case typescript.SyntaxKind.ImportDeclaration:
+            break; // already handled by TypeScript
 
           case typescript.SyntaxKind.VariableStatement:
             this.initializeGlobal(<typescript.VariableStatement>statement);
-            continue;
+            break;
 
           case typescript.SyntaxKind.FunctionDeclaration:
             this.initializeFunction(<typescript.FunctionDeclaration>statement);
-            continue;
+            break;
 
           case typescript.SyntaxKind.ClassDeclaration:
             this.initializeClass(<typescript.ClassDeclaration>statement);
-            continue;
+            break;
 
           case typescript.SyntaxKind.EnumDeclaration:
             this.initializeEnum(<typescript.EnumDeclaration>statement);
-            continue;
+            break;
 
           default:
             this.error(statement, "Unsupported top-level statement", typescript.SyntaxKind[statement.kind]);
+            break;
         }
       }
     }
@@ -296,7 +326,7 @@ export class Compiler {
         const type = this.resolveType(declaration.type);
 
         if (type)
-          this.commonInitializeGlobal(name, type, !typescript.isConst(node.declarationList), initializerNode);
+          this.createGlobal(name, type, !typescript.isConst(node.declarationList), initializerNode);
         else
           this.error(declaration.type, "Unresolvable type");
 
@@ -305,7 +335,7 @@ export class Compiler {
     }
   }
 
-  commonInitializeGlobal(name: string, type: reflection.Type, mutable: boolean, initializerNode?: typescript.Expression): void {
+  createGlobal(name: string, type: reflection.Type, mutable: boolean, initializerNode?: typescript.Expression): void {
     const op = this.module;
     let flags: reflection.VariableFlags = reflection.VariableFlags.global;
     if (!mutable)
@@ -337,121 +367,44 @@ export class Compiler {
       op.addGlobal(name, binaryen.typeOf(type, this.uintptrSize), mutable, binaryen.valueOf(type, this.module, 0));
   }
 
-  initializeFunction(node: typescript.FunctionDeclaration | typescript.MethodDeclaration | typescript.ConstructorDeclaration, parent?: typescript.ClassDeclaration): void {
-    const isConstructor = node.kind === typescript.SyntaxKind.Constructor;
+  initializeFunction(node: typescript.FunctionLikeDeclaration): void {
+    // Determine the function's global name
     let name: string;
-    if (parent) {
-      const parentName = this.mangleGlobalName((<typescript.Symbol>parent.symbol).name, parent.getSourceFile());
-      name = isConstructor ? parentName : parentName + (typescript.isStatic(node) ? "." : "#") + (<typescript.Identifier>node.name).getText();
-    } else
+    if (node.kind === typescript.SyntaxKind.FunctionDeclaration) {
       name = this.mangleGlobalName((<typescript.Identifier>node.name).getText(), node.getSourceFile());
-
-    if (name === "memory")
-      this.error(node, "Duplicate exported name", "memory");
-
-    const returnType: reflection.Type = isConstructor ? this.uintptrType : this.resolveType(<typescript.TypeNode>node.type, true);
-
-    // if (node.typeParameters && node.typeParameters.length !== 0)
-    // this.error(node.typeParameters[0], "Type parameters are not supported yet");
-
-    let parameterTypes: reflection.Type[];
-    let signatureIdentifiers: string[]; // including return type
-    let binaryenSignatureTypes: binaryen.Type[]; // excluding return type
-    let locals: reflection.Variable[];
-    let index = 0;
-    let flags = 0;
-
-    if (parent && !typescript.isStatic(<typescript.MethodDeclaration>node) && !isConstructor) { // add implicit 'this' as the first argument
-
-      parameterTypes = new Array(node.parameters.length + 1);
-      binaryenSignatureTypes = new Array(parameterTypes.length);
-      signatureIdentifiers = new Array(parameterTypes.length + 1);
-      locals = new Array(parameterTypes.length);
-
-      const thisType = this.uintptrType; // TODO: underlyingType
-
-      parameterTypes[0] = thisType;
-      binaryenSignatureTypes[0] = binaryen.typeOf(thisType, this.uintptrSize);
-      signatureIdentifiers[0] = binaryen.identifierOf(thisType, this.uintptrSize);
-      locals[0] = new reflection.Variable("this", thisType, reflection.VariableFlags.none, 0);
-
-      flags |= reflection.FunctionFlags.instance;
-
-      index = 1;
-
     } else {
-
-      parameterTypes = new Array(node.parameters.length);
-      signatureIdentifiers = new Array(parameterTypes.length + 1);
-      binaryenSignatureTypes = new Array(parameterTypes.length);
-      locals = new Array(parameterTypes.length);
-      index = 0;
+      const parentNode = <typescript.ClassDeclaration>node.parent;
+      const parentName = this.mangleGlobalName((<typescript.Identifier>parentNode.name).getText(), parentNode.getSourceFile());
+      if (node.kind === typescript.SyntaxKind.Constructor)
+        name = parentName;
+      else if (typescript.isStatic(node))
+        name = parentName + "." + (<typescript.Identifier>node.name).getText();
+      else
+        name = parentName + "#" + (<typescript.Identifier>node.name).getText();
     }
 
-    for (let i = 0, k = node.parameters.length; i < k; ++i) {
-      const parameterName = (<typescript.Symbol>node.parameters[i].symbol).name;
-      const parameterType = this.resolveType(<typescript.TypeNode>node.parameters[i].type);
+    // Construct the template
+    const template = this.functionTemplates[name] = new reflection.FunctionTemplate(name, node);
+    if (template.isGeneric)
+      return;
 
-      parameterTypes[index] = parameterType;
-      binaryenSignatureTypes[index] = binaryen.typeOf(parameterType, this.uintptrSize);
-      signatureIdentifiers[index] = binaryen.identifierOf(parameterType, this.uintptrSize);
-      locals[index] = new reflection.Variable(parameterName, parameterType, reflection.VariableFlags.none, index);
-
-      ++index;
-    }
-
-    signatureIdentifiers[index] = binaryen.identifierOf(returnType, this.uintptrSize);
-
-    const signatureIdentifier = signatureIdentifiers.join("");
-    let signature = this.signatures[signatureIdentifier];
-    if (!signature) {
-      // TODO: binaryen -O does not handle now unused signatures after optimization
-      const binaryenReturnType = binaryen.typeOf(returnType, this.uintptrSize);
-      signature = this.module.getFunctionType(binaryenReturnType, binaryenSignatureTypes);
-      if (!signature)
-        signature = this.module.addFunctionType(signatureIdentifier, binaryenReturnType, binaryenSignatureTypes);
-      this.signatures[signatureIdentifier] = signature;
-    }
-
-    if (typescript.isExport(node) && node.getSourceFile() === this.entryFile)
-      flags |= reflection.FunctionFlags.export;
-
-    if (typescript.isImport(node))
-      flags |= reflection.FunctionFlags.import;
-
-    const func = new reflection.Function(name, flags, [], parameterTypes, returnType);
-    func.locals = locals;
-    func.signature = signature;
-    func.signatureIdentifier = signatureIdentifier;
-
-    typescript.setReflectedFunction(node, func);
+    // If it's not a generic function, initialize
+    const instance = this.functions[name] = template.resolve(this, []);
+    instance.initialize(this);
+    typescript.setReflectedFunction(node, instance);
   }
 
   initializeClass(node: typescript.ClassDeclaration): void {
+    // Determine the class's global name
+    const name = this.mangleGlobalName((<typescript.Identifier>node.name).getText(), node.getSourceFile());
 
-    // if (node.typeParameters && node.typeParameters.length !== 0)
-    //  this.error(node.typeParameters[0], "Type parameters are not supported yet");
+    // Construct the template
+    const template = this.classTemplates[name] = new reflection.ClassTemplate(name, node);
+    if (template.isGeneric)
+      return;
 
-    const className = this.mangleGlobalName((<typescript.Identifier>node.name).getText(), node.getSourceFile());
-    const genericTypes: reflection.Type[] = [];
-
-    /* if (node.typeParameters) {
-      for (let i = 0, k = node.typeParameters.length; i < k; ++i) {
-        const parameterNode = node.typeParameters[i];
-        if (parameterNode.constraint)
-          this.error(parameterNode.constraint, "Parameter constraints are not supported yet");
-
-        const reference = this.resolveReference(parameterNode.name);
-        if (reference instanceof reflection.Class) {
-          console.log(parameterNode);
-        } else {
-          this.error(parameterNode, "Unresolvable type parameter", parameterNode.getText());
-        }
-      }
-    } */
-
-    const clazz = this.classes[className] = new reflection.Class(className, this.uintptrType, genericTypes);
-
+    // If it's not a generic class, initialize the class and its members
+    const instance = this.classes[name] = template.resolve(this, []);
     for (let i = 0, k = node.members.length; i < k; ++i) {
       const member = node.members[i];
       switch (member.kind) {
@@ -467,42 +420,30 @@ export class Compiler {
             if (!type) {
               this.error(propertyNode.type, "Unresolvable type");
             } else {
-              clazz.properties[name] = new reflection.Property(name, type, typescript.isStatic(member) ? reflection.PropertyFlags.none : reflection.PropertyFlags.instance, clazz.size);
-              clazz.size += type.size;
+              instance.properties[name] = new reflection.Property(name, <ts.PropertyDeclaration>member, type, instance.size);
+              instance.size += type.size;
             }
           }
           break;
         }
 
         case typescript.SyntaxKind.Constructor:
-          this.initializeFunction(<typescript.ConstructorDeclaration>member, node);
-          break;
-
         case typescript.SyntaxKind.MethodDeclaration:
-          if (typescript.isExport(member))
-            this.error(member, "Class methods cannot be exports");
-
-          if (typescript.isImport(member))
-            this.error(member, "Class methods cannot be imports");
-
-          this.initializeFunction(<typescript.MethodDeclaration>member, node);
+          this.initializeFunction(<typescript.ConstructorDeclaration | typescript.MethodDeclaration>member);
           break;
 
         default:
           this.error(member, "Unsupported class member", typescript.SyntaxKind[member.kind]);
-
       }
     }
   }
 
   initializeEnum(node: typescript.EnumDeclaration): void {
     const name = this.mangleGlobalName(node.name.getText(), node.getSourceFile());
-    const enm = new reflection.Enum(name);
+    const instance = new reflection.Enum(name, node);
     for (let i = 0, k = node.members.length; i < k; ++i) {
       const propertyName = node.members[i].name.getText();
-      const property = new reflection.Property(propertyName, reflection.intType, reflection.PropertyFlags.constant, 0);
-      enm.properties[propertyName] = property;
-      property.constantValue = <number>this.checker.getConstantValue(node.members[i]);
+      instance.properties[propertyName] = new reflection.Property(propertyName, node.members[i], reflection.intType, 0, <number>this.checker.getConstantValue(node.members[i]));
     }
   }
 
@@ -603,7 +544,7 @@ export class Compiler {
 
     body.length = bodyIndex;
 
-    return this.module.addFunction(func.name, func.signature, additionalLocals, this.module.block("", body));
+    return this.module.addFunction(func.name, func.binaryenSignature, additionalLocals, this.module.block("", body));
   }
 
   compileFunction(node: typescript.FunctionDeclaration): void {
@@ -623,7 +564,7 @@ export class Compiler {
         baseName = name;
       }
 
-      this.module.addImport(name, moduleName, baseName, func.signature);
+      this.module.addImport(name, moduleName, baseName, func.binaryenSignature);
       return;
     }
 
@@ -633,7 +574,7 @@ export class Compiler {
       this.module.addExport(name, name);
 
     if (name === "start")
-      if (func.parameterTypes.length === 0 && func.returnType === reflection.voidType)
+      if (func.parameters.length === 0 && func.returnType === reflection.voidType)
         this.userStartFunction = functionHandle;
   }
 
@@ -1072,7 +1013,7 @@ export class Compiler {
             return this.enums[globalName];
 
           if (this.classes[globalName])
-            return this.classes[globalName];
+            return <reflection.Class>this.classes[globalName];
         }
       }
     }

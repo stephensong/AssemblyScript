@@ -1,34 +1,27 @@
 import { Class } from "./class";
 
 export enum TypeKind {
-
   FirstInteger = 0,
-
   FirstUnsigned = 0,
   byte = 0,
   ushort = 1,
   uint = 2,
   ulong = 3,
   bool = 4,
-  uintptr = 5,
   LastUnsigned = 5,
-
+  uintptr = 5,
   FirstSigned = 6,
   sbyte = 6,
   short = 7,
   int = 8,
-  long = 9,
   LastSigned = 9,
-
   LastInteger = 9,
-
+  long = 9,
   FirstFloat = 10,
   float = 10,
-  double = 11,
   LastFloat = 11,
-
-  void = 12,
-  template = 13
+  double = 11,
+  void = 12
 }
 
 export class Type {

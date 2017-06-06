@@ -25,11 +25,14 @@ export {
   DoStatement,
   ElementAccessExpression,
   EnumDeclaration,
+  EnumMember,
   EntityName,
   ExpressionStatement,
   Expression,
   FormatDiagnosticsHost,
   ForStatement,
+  FunctionBody,
+  FunctionLikeDeclaration,
   FunctionDeclaration,
   Identifier,
   IfStatement,
@@ -37,8 +40,10 @@ export {
   MethodDeclaration,
   ModuleKind,
   NewExpression,
+  NodeArray,
   NodeFlags,
   Node,
+  ParameterDeclaration,
   ParenthesizedExpression,
   PostfixUnaryExpression,
   PrefixUnaryExpression,
@@ -48,6 +53,7 @@ export {
   TypeAliasDeclaration,
   TypeChecker,
   TypeNode,
+  TypeParameterDeclaration,
   TypeReferenceNode,
   TypeReference,
   Type,
@@ -117,11 +123,11 @@ export function setReflectedType(node: ts.Node, type: reflection.Type): void {
   (<any>node).reflectedType = type;
 }
 
-export function getReflectedFunction(node: ts.FunctionDeclaration | ts.MethodDeclaration | ts.ConstructorDeclaration | ts.SignatureDeclaration): reflection.Function {
+export function getReflectedFunction(node: ts.FunctionLikeDeclaration): reflection.Function {
   return <reflection.Function>(<any>node).reflectedFunction || null;
 }
 
-export function setReflectedFunction(node: ts.FunctionDeclaration | ts.MethodDeclaration | ts.ConstructorDeclaration, func: reflection.Function): void {
+export function setReflectedFunction(node: ts.FunctionLikeDeclaration, func: reflection.Function): void {
   if (!func)
     throw Error("func cannot be null");
   (<any>node).reflectedFunction = func;

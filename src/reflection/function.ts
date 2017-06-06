@@ -1,59 +1,133 @@
 import * as binaryen from "../binaryen";
-import { Type } from "./type";
-import { Variable } from "./variable";
+import Compiler from "../compiler";
+import Type from "./type";
+import { Variable, VariableFlags } from "./variable";
+import * as typescript from "../typescript";
 
-export enum FunctionFlags {
-  none        = 0,
-  import      = 1 << 0,
-  export      = 1 << 1,
-  instance    = 1 << 2,
-  constructor = 1 << 3
-}
-
-export class FunctionBase {
+export abstract class FunctionBase {
   name: string;
-  flags: FunctionFlags;
+  declaration: typescript.FunctionLikeDeclaration;
 
-  constructor(name: string, flags: FunctionFlags) {
+  constructor(name: string, declaration: typescript.FunctionLikeDeclaration) {
     this.name = name;
-    this.flags = flags;
+    this.declaration = declaration;
   }
 
-  get isImport(): boolean { return (this.flags & FunctionFlags.import) !== 0; }
-  get isExport(): boolean { return (this.flags & FunctionFlags.export) !== 0; }
-  get isInstance(): boolean { return (this.flags & FunctionFlags.instance) !== 0; }
-  get isConstructor(): boolean { return (this.flags & FunctionFlags.constructor) !== 0; }
+  get isImport(): boolean { return typescript.isImport(this.declaration); }
+  get isExport(): boolean { return typescript.isExport(this.declaration); }
+  get isInstance(): boolean { return this.declaration.kind === typescript.SyntaxKind.Constructor || this.declaration.kind === typescript.SyntaxKind.MethodDeclaration; }
+  get isConstructor(): boolean { return this.declaration.kind === typescript.SyntaxKind.Constructor; }
 }
 
+export interface FunctionParameter {
+  name: string;
+  type: Type;
+}
+
+/** A function instance with generic parameters resolved. */
 export class Function extends FunctionBase {
-  genericTypes: Type[];
-  parameterTypes: Type[];
+  typeParameters: { [key: string]: Type };
+  parameters: FunctionParameter[];
   returnType: Type;
+  body?: typescript.Block | typescript.Expression;
 
-  // compiler-specific
+  // set on initialization
   locals: Variable[];
-  signature: binaryen.Signature;
-  signatureIdentifier: string;
+  binaryenParameterTypes: binaryen.Type[];
+  binaryenReturnType: binaryen.Type;
+  binaryenSignatureId: string;
+  binaryenSignature: binaryen.Signature;
 
-  constructor(name: string, flags: FunctionFlags, genericTypes: Type[], parameterTypes: Type[], returnType: Type) {
-    super(name, flags);
-    this.genericTypes = genericTypes;
-    this.parameterTypes = parameterTypes;
+  constructor(name: string, declaration: typescript.FunctionLikeDeclaration, typeParameters: { [key: string]: Type }, parameters: FunctionParameter[], returnType: Type, body?: typescript.Block | typescript.Expression) {
+    super(name, declaration);
+    this.typeParameters = typeParameters;
+    this.parameters = parameters;
     this.returnType = returnType;
+    this.body = body;
+  }
+
+  initialize(compiler: Compiler): void {
+    this.binaryenParameterTypes = [];
+    this.locals = [];
+    const ids: string[] = [];
+
+    if (this.isInstance) {
+      this.binaryenParameterTypes.push(binaryen.typeOf(compiler.uintptrType, compiler.uintptrSize));
+      this.locals.push(new Variable("this", compiler.uintptrType, VariableFlags.none, this.locals.length));
+      ids.push(binaryen.identifierOf(compiler.uintptrType, compiler.uintptrSize));
+    }
+
+    for (let i = 0, k = this.parameters.length; i < k; ++i) {
+      this.binaryenParameterTypes.push(binaryen.typeOf(this.parameters[i].type, compiler.uintptrSize));
+      this.locals.push(new Variable(this.parameters[i].name, this.parameters[i].type, VariableFlags.none, this.locals.length));
+      ids.push(binaryen.identifierOf(this.parameters[i].type, compiler.uintptrSize));
+    }
+
+    this.binaryenReturnType = binaryen.typeOf(this.returnType, compiler.uintptrSize);
+    ids.push(binaryen.identifierOf(this.returnType, compiler.uintptrSize));
+
+    this.binaryenSignatureId = ids.join("");
+    this.binaryenSignature = compiler.module.getFunctionType(this.binaryenReturnType, this.binaryenParameterTypes);
+    if (!this.binaryenSignature)
+      this.binaryenSignature = compiler.module.addFunctionType(this.binaryenSignatureId, this.binaryenReturnType, this.binaryenParameterTypes);
+  }
+
+  addLocal(name: string, type: Type): number {
+    const index = this.locals.length;
+    this.locals.push(new Variable(name, type, VariableFlags.none, index));
+    return index;
   }
 }
 
 export { Function as default };
 
-export class FunctionPrototype extends FunctionBase {
-  genericTypeNames: string[];
-  parameterTypeNames: string[];
-  returnTypeName: string;
+/** A function template with possibly unresolved generic parameters. */
+export class FunctionTemplate extends FunctionBase {
+  declaration: typescript.FunctionLikeDeclaration;
+  instances: { [key: string]: Function } = {};
 
-  constructor(name: string, flags: FunctionFlags, genericTypeNames: string[], parameterTypeNames: string[], returnTypeName: string) {
-    super(name, flags);
-    this.genericTypeNames = genericTypeNames;
-    this.parameterTypeNames = parameterTypeNames;
-    this.returnTypeName = returnTypeName;
+  constructor(name: string, declaration: typescript.FunctionLikeDeclaration) {
+    super(name, declaration);
+    this.declaration = declaration;
+  }
+
+  get isGeneric(): boolean { return !!(this.declaration.typeParameters && this.declaration.typeParameters.length); }
+
+  resolve(compiler: Compiler, typeArguments: typescript.TypeNode[]): Function {
+    const typeParametersCount = this.declaration.typeParameters && this.declaration.typeParameters.length || 0;
+    if (typeArguments.length !== typeParametersCount)
+      throw Error("type parameter count mismatch")
+
+    let name = this.name;
+
+    const typeParametersMap: { [key: string]: Type } = {};
+    if (typeParametersCount) {
+      const typeNames: string[] = new Array(typeParametersCount);
+      for (let i = 0; i < typeParametersCount; ++i) {
+        const parameterDeclaration = (<typescript.NodeArray<typescript.TypeParameterDeclaration>>this.declaration.typeParameters)[i];
+        const type = compiler.resolveType(typeArguments[i]);
+        typeParametersMap[(<ts.Identifier>parameterDeclaration.name).getText()] = type;
+        typeNames[i] = type.toString();
+      }
+      name += "<" + typeNames.join(",") + ">";
+    }
+
+    if (this.instances[name])
+      return this.instances[name];
+
+    const parameters: FunctionParameter[] = new Array(this.declaration.parameters.length);
+    for (let i = 0, k = this.declaration.parameters.length; i < k; ++i) {
+      const parameter = this.declaration.parameters[i];
+      parameters[i] = {
+        name: parameter.name.getText(),
+        type: typeParametersMap[parameter.name.getText()] || compiler.resolveType(<ts.TypeNode>parameter.type)
+      };
+    }
+
+    const returnType = this.isConstructor
+      ? compiler.uintptrType
+      : typeParametersMap[(<ts.TypeNode>this.declaration.type).getText()] || compiler.resolveType(<ts.TypeNode>this.declaration.type, true);
+
+    return this.instances[name] = new Function(name, this.declaration, typeParametersMap, parameters, returnType, this.declaration.body);
   }
 }

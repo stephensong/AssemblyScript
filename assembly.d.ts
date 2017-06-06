@@ -111,10 +111,6 @@ declare function current_memory(): int;
 declare function grow_memory(value: int): int;
 
 declare function sizeof<T>(): uintptr;
-// declare function astype<T>(ptr: uintptr): T;
-// declare function allocate<T>(): T;
-// declare function allocate<T>(size: uint): T[];
-// declare function deallocate<T>(reference: T): void;
 
 // Linked-in standard library
 declare function memset(dest: uintptr, c: int, size: uintptr): uintptr;
