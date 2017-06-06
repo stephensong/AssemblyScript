@@ -110,6 +110,7 @@ Function                                                      | Description
 `free(ptr: uintptr): void`                                    | Frees a previously allocated chunk of memory by its pointer.
 `memcpy(dest: uintptr, src: uintptr, size: uintptr): uintptr` | Copies data from one chunk of memory to another.
 `memset(dest: uintptr, c: int, size: uintptr): uintptr`       | Sets a chunk of memory to the provided value `c` (usually used to reset it to all `0`s).
+`memcmp(vl: uintptr, vr: uintptr, n: uintptr): int`           | Compares a chunk of memory to another. Returns `0` if both are equal, otherwise the difference of the first differing bytes (`vl[i] - vr[i]`).
 
 Type coercion requires an explicit cast where precision or signage is lost respectively is implicit where it is maintained. For example, to cast a `double` to an `int`:
 
