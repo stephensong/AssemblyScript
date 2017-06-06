@@ -18,9 +18,9 @@ export function compileVariableDeclarationList(compiler: Compiler, node: typescr
 
       typescript.setReflectedType(declaration, declarationType);
 
-      const index = compiler.onVariable(declarationName, declarationType);
+      const local = compiler.currentFunction.addLocal(declarationName, declarationType);
       if (declaration.initializer)
-        initializers.push(op.setLocal(index, compiler.maybeConvertValue(declaration.initializer, compiler.compileExpression(declaration.initializer, declarationType), typescript.getReflectedType(declaration.initializer), declarationType, false)));
+        initializers.push(op.setLocal(local.index, compiler.maybeConvertValue(declaration.initializer, compiler.compileExpression(declaration.initializer, declarationType), typescript.getReflectedType(declaration.initializer), declarationType, false)));
     } else
       compiler.error(declaration, "Type expected");
   }

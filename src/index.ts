@@ -22,6 +22,6 @@ const assemblyscript = {
 
 export = assemblyscript;
 
-// Fix dependencies exposing themself globally
+// Fix dependencies automatically being exposed globally
 delete (<any>global).Binaryen;
 delete (<any>global).ts;

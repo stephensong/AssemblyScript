@@ -63,7 +63,7 @@ export class Type {
 
   toString(): string {
     const str = TypeKind[this.kind];
-    return this.underlyingClass ? str + "`" + this.underlyingClass.toString() : str;
+    return this.underlyingClass ? this.underlyingClass.name : str;
   }
 }
 

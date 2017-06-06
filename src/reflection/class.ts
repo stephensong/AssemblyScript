@@ -12,6 +12,8 @@ export abstract class ClassBase {
     this.name = name;
     this.declaration = declaration;
   }
+
+  toString(): string { return this.name; }
 }
 
 /** A class instance with generic parameters resolved. */
@@ -28,6 +30,36 @@ export class Class extends ClassBase {
     super(name, declaration);
     this.type = uintptrType.withUnderlyingClass(this);
     this.typeParametersMap = typeParametersMap;
+  }
+
+  initialize(compiler: Compiler): void {
+    for (let i = 0, k = this.declaration.members.length; i < k; ++i) {
+      const member = this.declaration.members[i];
+      switch (member.kind) {
+
+        case typescript.SyntaxKind.PropertyDeclaration:
+          const propertyNode = <typescript.PropertyDeclaration>member;
+          if (propertyNode.type) {
+            const name = propertyNode.name.getText();
+            const type = compiler.resolveType(propertyNode.type);
+            if (type) {
+              this.properties[name] = new Property(name, <ts.PropertyDeclaration>member, type, this.size);
+              this.size += type.size;
+            } else
+              compiler.error(propertyNode.type, "Unresolvable type");
+          } else
+            compiler.error(propertyNode, "Type expected");
+          break;
+
+        case typescript.SyntaxKind.Constructor:
+        case typescript.SyntaxKind.MethodDeclaration:
+          compiler.initializeFunction(<typescript.ConstructorDeclaration | typescript.MethodDeclaration>member);
+          break;
+
+        default:
+          compiler.error(member, "Unsupported class member", typescript.SyntaxKind[member.kind]);
+      }
+    }
   }
 }
 

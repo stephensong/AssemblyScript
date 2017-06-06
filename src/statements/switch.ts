@@ -26,7 +26,7 @@ export function compileSwitch(compiler: Compiler, node: typescript.SwitchStateme
     const label = compiler.enterBreakContext();
 
     // create a temporary variable holding the switch expression's result
-    const conditionLocalIndex = compiler.onVariable("condition$" + label, reflection.intType);
+    const conditionLocal = compiler.currentFunction.addLocal("condition$" + label, reflection.intType);
 
     interface SwitchCase {
       label: string;
@@ -67,11 +67,11 @@ export function compileSwitch(compiler: Compiler, node: typescript.SwitchStateme
     let condition = op.i32.const(-1);
     for (let i = cases.length - 1; i >= 0; --i)
       if (cases[i] !== defaultCase)
-        condition = op.select(op.i32.eq(op.getLocal(conditionLocalIndex, binaryen.typeOf(reflection.intType, compiler.uintptrSize)), <binaryen.I32Expression>cases[i].expression), op.i32.const(i), condition);
+        condition = op.select(op.i32.eq(op.getLocal(conditionLocal.index, binaryen.typeOf(reflection.intType, compiler.uintptrSize)), <binaryen.I32Expression>cases[i].expression), op.i32.const(i), condition);
 
     // create the innermost br_table block using the first case's label
     let currentBlock = op.block(cases[0].label, [
-      op.setLocal(conditionLocalIndex, switchExpression),
+      op.setLocal(conditionLocal.index, switchExpression),
       op.switch(labels, defaultCase ? defaultCase.label : "break$" + label, condition)
     ]);
 

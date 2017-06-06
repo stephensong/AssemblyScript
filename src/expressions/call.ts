@@ -12,26 +12,26 @@ export function compileCall(compiler: Compiler, node: typescript.CallExpression,
     return op.unreachable();
   }
 
-  const declaration = signature.declaration;
-  const func = typescript.getReflectedFunction(declaration);
+  const declaration = <typescript.FunctionLikeDeclaration>signature.declaration; // FunctionLikeDeclaration extends SignatureDeclaration
+  const instance = typescript.getReflectedFunction(declaration);
 
-  if (!func) {
+  if (!instance) { // TODO: compile template if it exists
     compiler.error(node, "Unresolvable call target");
     typescript.setReflectedType(node, contextualType);
     return op.unreachable();
   }
 
-  const argumentExpressions: binaryen.Expression[] = new Array(func.parameterTypes.length);
+  const argumentExpressions: binaryen.Expression[] = new Array(instance.parameters.length);
 
-  typescript.setReflectedType(node, func.returnType);
+  typescript.setReflectedType(node, instance.returnType);
 
   let i = 0;
 
-  if (func.isInstance)
-    argumentExpressions[i++] = op.getLocal(0, binaryen.typeOf(func.parameterTypes[0], compiler.uintptrSize));
+  if (instance.isInstance)
+    argumentExpressions[i++] = op.getLocal(0, binaryen.typeOf(instance.parameters[0].type, compiler.uintptrSize));
 
   for (const k = argumentExpressions.length; i < k; ++i)
-    argumentExpressions[i] = compiler.maybeConvertValue(node.arguments[i], compiler.compileExpression(node.arguments[i], func.parameterTypes[i]), typescript.getReflectedType(node.arguments[i]), func.parameterTypes[i], false);
+    argumentExpressions[i] = compiler.maybeConvertValue(node.arguments[i], compiler.compileExpression(node.arguments[i], instance.parameters[i].type), typescript.getReflectedType(node.arguments[i]), instance.parameters[i].type, false);
 
   if (i < argumentExpressions.length) { // TODO: pull default value initializers from declaration
     compiler.error(node, "Invalid number of arguments", "Expected " + declaration.parameters.length + " but saw " + node.arguments.length);
@@ -60,7 +60,7 @@ export function compileCall(compiler: Compiler, node: typescript.CallExpression,
 
   // user function
   if (!typescript.isImport(declaration))
-    return op.call(func.name, argumentExpressions, binaryen.typeOf(func.returnType, compiler.uintptrSize));
+    return op.call(instance.name, argumentExpressions, binaryen.typeOf(instance.returnType, compiler.uintptrSize));
 
   // builtin
   switch ((<typescript.Symbol>declaration.symbol).name) {
@@ -138,5 +138,5 @@ export function compileCall(compiler: Compiler, node: typescript.CallExpression,
   }
 
   // import
-  return op.call(func.name, argumentExpressions, binaryen.typeOf(func.returnType, compiler.uintptrSize));
+  return op.call(instance.name, argumentExpressions, binaryen.typeOf(instance.returnType, compiler.uintptrSize));
 }

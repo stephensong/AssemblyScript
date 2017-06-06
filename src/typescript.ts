@@ -132,3 +132,13 @@ export function setReflectedFunction(node: ts.FunctionLikeDeclaration, func: ref
     throw Error("func cannot be null");
   (<any>node).reflectedFunction = func;
 }
+
+export function getReflectedClass(node: ts.ClassDeclaration): reflection.Class {
+  return <reflection.Class>(<any>node).reflectedClass || null;
+}
+
+export function setReflectedClass(node: ts.ClassDeclaration, clazz: reflection.Class): void {
+  if (!clazz)
+    throw Error("clazz cannot be null");
+  (<any>node).reflectedClass = clazz;
+}

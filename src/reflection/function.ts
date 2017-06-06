@@ -17,6 +17,8 @@ export abstract class FunctionBase {
   get isExport(): boolean { return typescript.isExport(this.declaration); }
   get isInstance(): boolean { return this.declaration.kind === typescript.SyntaxKind.Constructor || this.declaration.kind === typescript.SyntaxKind.MethodDeclaration; }
   get isConstructor(): boolean { return this.declaration.kind === typescript.SyntaxKind.Constructor; }
+
+  toString(): string { return this.name; }
 }
 
 export interface FunctionParameter {
@@ -33,10 +35,15 @@ export class Function extends FunctionBase {
 
   // set on initialization
   locals: Variable[];
+  localsByName: { [key: string]: Variable };
   binaryenParameterTypes: binaryen.Type[];
   binaryenReturnType: binaryen.Type;
   binaryenSignatureId: string;
   binaryenSignature: binaryen.Signature;
+
+  // used in compilation
+  breakNumber: number = 0;
+  breakDepth: number = 0;
 
   constructor(name: string, declaration: typescript.FunctionLikeDeclaration, typeParameters: { [key: string]: Type }, parameters: FunctionParameter[], returnType: Type, body?: typescript.Block | typescript.Expression) {
     super(name, declaration);
@@ -46,20 +53,27 @@ export class Function extends FunctionBase {
     this.body = body;
   }
 
+  get breakLabel(): string { return this.breakNumber + "." + this.breakDepth; }
+
   initialize(compiler: Compiler): void {
     this.binaryenParameterTypes = [];
     this.locals = [];
+    this.localsByName = {};
     const ids: string[] = [];
 
     if (this.isInstance) {
+      const variable = new Variable("this", compiler.uintptrType, VariableFlags.none, this.locals.length);
       this.binaryenParameterTypes.push(binaryen.typeOf(compiler.uintptrType, compiler.uintptrSize));
-      this.locals.push(new Variable("this", compiler.uintptrType, VariableFlags.none, this.locals.length));
+      this.locals.push(variable);
+      this.localsByName[variable.name] = variable;
       ids.push(binaryen.identifierOf(compiler.uintptrType, compiler.uintptrSize));
     }
 
     for (let i = 0, k = this.parameters.length; i < k; ++i) {
+      const variable = new Variable(this.parameters[i].name, this.parameters[i].type, VariableFlags.none, this.locals.length);
       this.binaryenParameterTypes.push(binaryen.typeOf(this.parameters[i].type, compiler.uintptrSize));
-      this.locals.push(new Variable(this.parameters[i].name, this.parameters[i].type, VariableFlags.none, this.locals.length));
+      this.locals.push(variable);
+      this.localsByName[variable.name] = variable;
       ids.push(binaryen.identifierOf(this.parameters[i].type, compiler.uintptrSize));
     }
 
@@ -72,10 +86,11 @@ export class Function extends FunctionBase {
       this.binaryenSignature = compiler.module.addFunctionType(this.binaryenSignatureId, this.binaryenReturnType, this.binaryenParameterTypes);
   }
 
-  addLocal(name: string, type: Type): number {
-    const index = this.locals.length;
-    this.locals.push(new Variable(name, type, VariableFlags.none, index));
-    return index;
+  addLocal(name: string, type: Type): Variable {
+    const variable = new Variable(name, type, VariableFlags.none, this.locals.length);
+    this.locals.push(variable);
+    this.localsByName[variable.name] = variable;
+    return variable;
   }
 }
 

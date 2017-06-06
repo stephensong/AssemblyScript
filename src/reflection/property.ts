@@ -18,6 +18,8 @@ export class Property {
 
   get isConstant(): boolean { return this.constantValue !== undefined;}
   get isInstance(): boolean { return this.declaration.kind !== typescript.SyntaxKind.EnumMember && !typescript.isStatic(this.declaration); }
+
+  toString(): string { return this.name; }
 }
 
 export { Property as default };

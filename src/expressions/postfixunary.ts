@@ -8,7 +8,7 @@ export function compilePostfixUnary(compiler: Compiler, node: typescript.Postfix
 
   if (node.operand.kind === typescript.SyntaxKind.Identifier) {
 
-    const local = compiler.currentLocals[(<typescript.Identifier>node.operand).text];
+    const local = compiler.currentFunction.localsByName[(<typescript.Identifier>node.operand).text];
     if (local) {
 
       switch (node.operator) {

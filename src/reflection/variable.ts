@@ -23,6 +23,8 @@ export class Variable {
 
   get isConstant(): boolean { return (this.flags & VariableFlags.constant) !== 0; }
   get isGlobal(): boolean { return (this.flags & VariableFlags.global) !== 0; }
+
+  toString(): string { return this.name; }
 }
 
 export { Variable as default };

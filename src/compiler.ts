@@ -54,11 +54,6 @@ export class Compiler {
   profiler = new Profiler();
   currentFunction: reflection.Function;
 
-  currentLocals: { [key: string]: reflection.Variable };
-  currentBreakContextNumber = 0;
-  currentBreakContextDepth = 0;
-  onVariable: (originalName: string, type: reflection.Type) => number;
-
   // Reflection
   uintptrType: reflection.Type;
   functionTemplates: { [key: string]: reflection.FunctionTemplate } = {};
@@ -326,7 +321,7 @@ export class Compiler {
         const type = this.resolveType(declaration.type);
 
         if (type)
-          this.createGlobal(name, type, !typescript.isConst(node.declarationList), initializerNode);
+          this.addGlobal(name, type, !typescript.isConst(node.declarationList), initializerNode);
         else
           this.error(declaration.type, "Unresolvable type");
 
@@ -335,7 +330,7 @@ export class Compiler {
     }
   }
 
-  createGlobal(name: string, type: reflection.Type, mutable: boolean, initializerNode?: typescript.Expression): void {
+  addGlobal(name: string, type: reflection.Type, mutable: boolean, initializerNode?: typescript.Expression): void {
     const op = this.module;
     let flags: reflection.VariableFlags = reflection.VariableFlags.global;
     if (!mutable)
@@ -368,7 +363,6 @@ export class Compiler {
   }
 
   initializeFunction(node: typescript.FunctionLikeDeclaration): void {
-    // Determine the function's global name
     let name: string;
     if (node.kind === typescript.SyntaxKind.FunctionDeclaration) {
       name = this.mangleGlobalName((<typescript.Identifier>node.name).getText(), node.getSourceFile());
@@ -383,7 +377,9 @@ export class Compiler {
         name = parentName + "#" + (<typescript.Identifier>node.name).getText();
     }
 
-    // Construct the template
+    if (this.functionTemplates[name])
+      throw Error("function '" + name + "' has already been initialized");
+
     const template = this.functionTemplates[name] = new reflection.FunctionTemplate(name, node);
     if (template.isGeneric)
       return;
@@ -395,56 +391,29 @@ export class Compiler {
   }
 
   initializeClass(node: typescript.ClassDeclaration): void {
-    // Determine the class's global name
     const name = this.mangleGlobalName((<typescript.Identifier>node.name).getText(), node.getSourceFile());
 
-    // Construct the template
+    if (this.classTemplates[name])
+      throw Error("class '" + name + "' has already been initialized");
+
     const template = this.classTemplates[name] = new reflection.ClassTemplate(name, node);
     if (template.isGeneric)
       return;
 
-    // If it's not a generic class, initialize the class and its members
+    // If it's not a generic class, initialize the class (and its members)
     const instance = this.classes[name] = template.resolve(this, []);
-    for (let i = 0, k = node.members.length; i < k; ++i) {
-      const member = node.members[i];
-      switch (member.kind) {
-
-        case typescript.SyntaxKind.PropertyDeclaration:
-        {
-          const propertyNode = <typescript.PropertyDeclaration>member;
-          if (!propertyNode.type) {
-            this.error(propertyNode, "Type expected");
-          } else {
-            const name = propertyNode.name.getText();
-            const type = this.resolveType(propertyNode.type, false);
-            if (!type) {
-              this.error(propertyNode.type, "Unresolvable type");
-            } else {
-              instance.properties[name] = new reflection.Property(name, <ts.PropertyDeclaration>member, type, instance.size);
-              instance.size += type.size;
-            }
-          }
-          break;
-        }
-
-        case typescript.SyntaxKind.Constructor:
-        case typescript.SyntaxKind.MethodDeclaration:
-          this.initializeFunction(<typescript.ConstructorDeclaration | typescript.MethodDeclaration>member);
-          break;
-
-        default:
-          this.error(member, "Unsupported class member", typescript.SyntaxKind[member.kind]);
-      }
-    }
+    instance.initialize(this);
+    typescript.setReflectedClass(node, instance);
   }
 
   initializeEnum(node: typescript.EnumDeclaration): void {
     const name = this.mangleGlobalName(node.name.getText(), node.getSourceFile());
-    const instance = new reflection.Enum(name, node);
-    for (let i = 0, k = node.members.length; i < k; ++i) {
-      const propertyName = node.members[i].name.getText();
-      instance.properties[propertyName] = new reflection.Property(propertyName, node.members[i], reflection.intType, 0, <number>this.checker.getConstantValue(node.members[i]));
-    }
+
+    if (this.enums[name])
+      throw Error("enum '" + name + "' has already been initialized");
+
+    const instance = this.enums[name] = new reflection.Enum(name, node);
+    instance.initialize(this);
   }
 
   compile(): void {
@@ -460,12 +429,22 @@ export class Compiler {
         switch ((statement = statements[j]).kind) {
 
           case typescript.SyntaxKind.FunctionDeclaration:
-            this.compileFunction(<typescript.FunctionDeclaration>statement);
+          {
+            const declaration = <typescript.FunctionDeclaration>statement;
+            const instance = typescript.getReflectedFunction(declaration);
+            if (instance) // otherwise generic
+              this.compileFunction(instance);
             break;
+          }
 
           case typescript.SyntaxKind.ClassDeclaration:
-            this.compileClass(<typescript.ClassDeclaration>statement);
+          {
+            const declaration = <typescript.ClassDeclaration>statement;
+            const instance = typescript.getReflectedClass(declaration);
+            if (instance) // otherwise generic
+              this.compileClass(instance);
             break;
+          }
 
           // otherwise already handled or reported by initialize
         }
@@ -503,91 +482,67 @@ export class Compiler {
     );
   }
 
-  compileFunctionOrMethod(node: typescript.FunctionDeclaration | typescript.MethodDeclaration | typescript.ConstructorDeclaration): binaryen.Function {
-    if (!node.body)
-      throw Error("missing body");
+  compileFunction(instance: reflection.Function): binaryen.Function | null {
 
-    const func = typescript.getReflectedFunction(node);
-    const body: binaryen.Statement[] = new Array(node.body.statements.length);
-    const additionalLocals: binaryen.Type[] = [];
-    const compiler = this;
-
-    this.currentFunction = func;
-    this.currentBreakContextNumber = 0;
-    this.currentBreakContextDepth = 0;
-    this.currentLocals = {};
-
-    let bodyIndex = 0;
-    let localIndex = 0;
-
-    for (let i = 0, k = func.locals.length; i < k; ++i) { // includes 'this'
-      const local = func.locals[i];
-      this.currentLocals[local.name] = local;
-      ++localIndex;
-    }
-
-    this.onVariable = function onVariable(originalName: string, type: reflection.Type) {
-      let name = originalName;
-      let alternative: number = 1;
-      while (compiler.currentLocals[name])
-        name = originalName + "." + alternative++;
-
-      compiler.currentLocals[name] = new reflection.Variable(name, type, reflection.VariableFlags.none, localIndex);
-      additionalLocals.push(binaryen.typeOf(type, compiler.uintptrSize));
-
-      return localIndex++;
-    };
-
-    for (let i = 0, k = node.body.statements.length; i < k; ++i) {
-      body[bodyIndex++] = compiler.compileStatement(node.body.statements[i]);
-    }
-
-    body.length = bodyIndex;
-
-    return this.module.addFunction(func.name, func.binaryenSignature, additionalLocals, this.module.block("", body));
-  }
-
-  compileFunction(node: typescript.FunctionDeclaration): void {
-    const func = typescript.getReflectedFunction(node);
-    const name = (<typescript.Symbol>node.symbol).name;
-
-    if (func.isImport) {
+    // Handle imports
+    if (instance.isImport) {
       let moduleName: string;
       let baseName: string;
 
-      const idx = name.indexOf("$");
+      const idx = instance.name.indexOf("$");
       if (idx > 0) {
-        moduleName = name.substring(0, idx);
-        baseName = name.substring(idx + 1);
+        moduleName = instance.name.substring(0, idx);
+        baseName = instance.name.substring(idx + 1);
       } else {
         moduleName = "env";
-        baseName = name;
+        baseName = instance.name;
       }
 
-      this.module.addImport(name, moduleName, baseName, func.binaryenSignature);
-      return;
+      this.module.addImport(name, moduleName, baseName, instance.binaryenSignature);
+      return null;
     }
 
-    const functionHandle = this.compileFunctionOrMethod(node);
+    // Otherwise compile
+    if (!instance.body)
+      throw Error("cannot compile a function without a body");
 
-    if (func.isExport)
-      this.module.addExport(name, name);
+    const body: binaryen.Statement[] = [];
+    const previousFunction = this.currentFunction;
+    this.currentFunction = instance;
 
-    if (name === "start")
-      if (func.parameters.length === 0 && func.returnType === reflection.voidType)
-        this.userStartFunction = functionHandle;
+    if (instance.body.kind === ts.SyntaxKind.Block) {
+      const blockNode = <ts.Block>instance.body;
+      for (let i = 0, k = blockNode.statements.length; i < k; ++i) {
+        const statementNode = blockNode.statements[i];
+        body.push(this.compileStatement(statementNode));
+      }
+    } else {
+      const expressionNode = <ts.Expression>instance.body;
+      body.push(this.module.return(
+        this.compileExpression(expressionNode, instance.returnType)
+      ));
+    }
+
+    const binaryenFunction = this.module.addFunction(instance.name, instance.binaryenSignature, instance.binaryenParameterTypes, this.module.block("", body));
+
+    if (instance.isExport)
+      this.module.addExport(instance.name, instance.name);
+
+    if (instance.name === "start" && instance.parameters.length === 0 && instance.returnType === binaryen.none)
+      this.userStartFunction = binaryenFunction;
+
+    this.currentFunction = previousFunction;
+    return binaryenFunction;
   }
 
-  compileClass(node: typescript.ClassDeclaration): void {
-    for (let i = 0, k = node.members.length, member; i < k; ++i) {
-      switch ((member = node.members[i]).kind) {
+  compileClass(instance: reflection.Class): void {
+    for (let i = 0, k = instance.declaration.members.length; i < k; ++i) {
+      const member = instance.declaration.members[i];
+      switch (member.kind) {
 
         case typescript.SyntaxKind.Constructor:
-          this.compileFunctionOrMethod(<typescript.ConstructorDeclaration>member);
-          break;
-
         case typescript.SyntaxKind.MethodDeclaration:
-          this.compileFunctionOrMethod(<typescript.MethodDeclaration>member);
+          this.compileFunction(typescript.getReflectedFunction(<typescript.ConstructorDeclaration>member));
           break;
 
         // otherwise already reported by initialize
@@ -596,21 +551,19 @@ export class Compiler {
   }
 
   enterBreakContext(): string {
-    if (this.currentBreakContextDepth === 0)
-      ++this.currentBreakContextNumber;
-    ++this.currentBreakContextDepth;
-    return this.currentBreakLabel;
+    if (this.currentFunction.breakDepth === 0)
+      ++this.currentFunction.breakNumber;
+    ++this.currentFunction.breakDepth;
+    return this.currentFunction.breakLabel;
   }
 
   leaveBreakContext(): void {
-    if (this.currentBreakContextDepth < 1)
+    if (this.currentFunction.breakDepth < 1)
       throw Error("unbalanced break context");
-    --this.currentBreakContextDepth;
+    --this.currentFunction.breakDepth;
   }
 
-  get currentBreakLabel(): string {
-    return this.currentBreakContextNumber + "." + this.currentBreakContextDepth;
-  }
+  get currentBreakLabel(): string { return this.currentFunction.breakLabel; }
 
   compileStatement(node: typescript.Statement): binaryen.Statement {
     const op = this.module;
@@ -993,8 +946,8 @@ export class Compiler {
 
     // Locals including 'this'
     const localName = node.getText();
-    if (this.currentLocals && this.currentLocals[localName])
-      return this.currentLocals[localName];
+    if (this.currentFunction && this.currentFunction.localsByName[localName])
+      return this.currentFunction.localsByName[localName];
 
     // Globals
     const symbol = this.checker.getSymbolAtLocation(node);

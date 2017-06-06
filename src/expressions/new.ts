@@ -51,8 +51,8 @@ export function compileNewArray(compiler: Compiler, node: typescript.NewExpressi
 
   const sizeExpression = compiler.maybeConvertValue(sizeArgument, compiler.compileExpression(sizeArgument, compiler.uintptrType), typescript.getReflectedType(sizeArgument), compiler.uintptrType, false);
   const cat = binaryen.categoryOf(compiler.uintptrType, compiler.module, compiler.uintptrSize);
-  const newsize = compiler.currentLocals[".newsize"] ? compiler.currentLocals[".newsize"].index : compiler.onVariable(".newsize", reflection.uintType);
-  const newptr = compiler.currentLocals[".newptr"] ? compiler.currentLocals[".newptr"].index : compiler.onVariable(".newptr", compiler.uintptrType);
+  const newsize = compiler.currentFunction.localsByName[".newsize"] || compiler.currentFunction.addLocal(".newsize", reflection.uintType);
+  const newptr = compiler.currentFunction.localsByName[".newptr"] || compiler.currentFunction.addLocal(".newptr", compiler.uintptrType);
   const binaryenPtrType = binaryen.typeOf(compiler.uintptrType, compiler.uintptrSize);
 
   // *(.newptr = malloc(4 + size * (.newsize = EXPR))) = .newsize
@@ -62,20 +62,20 @@ export function compileNewArray(compiler: Compiler, node: typescript.NewExpressi
     cat.store(
       0,
       compiler.uintptrType.size,
-      op.teeLocal(newptr,
+      op.teeLocal(newptr.index,
         op.call("malloc", [ // use wrapped malloc here so mspace_malloc can be inlined
           cat.add(
             binaryen.valueOf(compiler.uintptrType, op, 4),
             cat.mul(
               binaryen.valueOf(compiler.uintptrType, op, elementType.size),
-              op.teeLocal(newsize, sizeExpression)
+              op.teeLocal(newsize.index, sizeExpression)
             )
           )
         ], binaryenPtrType)
       ),
-      op.getLocal(newsize, binaryen.typeOf(reflection.uintType, compiler.uintptrSize))
+      op.getLocal(newsize.index, binaryen.typeOf(reflection.uintType, compiler.uintptrSize))
     ),
-    op.getLocal(newptr, binaryenPtrType)
+    op.getLocal(newptr.index, binaryenPtrType)
   ], binaryenPtrType);
 }
 
