@@ -1,16 +1,18 @@
+
+const now = require("performance-now");
+
 export class Profiler {
-  startTimes: { [key: string]: [number, number] } = {};
+  startTimes: { [key: string]: number } = {};
 
   start(name: string): void {
-    this.startTimes[name] = process.hrtime();
+    this.startTimes[name] = now();
   }
 
   end(name: string): number {
     const start = this.startTimes[name];
     if (!start)
       return 0;
-    const time = process.hrtime(start);
-    return time[0] + time[1] * (1 / 1000000);
+    return now() - start;
   }
 }
 

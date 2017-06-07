@@ -28,6 +28,7 @@
     "byots": "^2.4.0-dev.20170603.2.9",
     "long": "^3.2.0",
     "minimist": "^1.2.0",
+    "performance-now": "^2.1.0",
     "ts-node": "^3.0.4",
     "typescript": "^2.4.0-dev.20170604"
   },
