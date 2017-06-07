@@ -9499,6 +9499,15 @@
     (i32.const 2)
    )
   )
+  (i32.store offset=4
+   (get_local $3)
+   (i32.add
+    (i32.load offset=4
+     (get_local $3)
+    )
+    (i32.const 1)
+   )
+  )
   (return
    (i32.add
     (i32.add

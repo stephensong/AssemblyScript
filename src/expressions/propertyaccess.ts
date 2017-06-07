@@ -47,7 +47,8 @@ export function compilePropertyAccess(compiler: Compiler, node: typescript.Prope
         if (property.isConstant)
           return op.i32.const(<number>property.constantValue | 0); // todo: actual type
         else {
-          // TODO: this'd be a global
+          // const global = compiler.globals[clazz.name + "." + propertyName];
+          // TODO: a static property is a global
         }
       } else {
         compiler.error(node, "No such static property", "'" + propertyName + "' on " + clazz.name);
