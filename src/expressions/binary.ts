@@ -78,7 +78,15 @@ export function compileBinary(compiler: Compiler, node: typescript.BinaryExpress
       } else if (rightType.isAnyFloat)
         resultType = rightType;
       else
-        resultType = leftType.size >= rightType.size ? leftType : rightType;
+        resultType = leftType.size > rightType.size
+          ? leftType
+          : rightType.size > leftType.size
+            ? rightType
+            : leftType.isSigned === rightType.isSigned
+              ? leftType
+              : leftType.isSigned === contextualType.isSigned
+                ? leftType
+                : rightType;
 
       left = compiler.maybeConvertValue(node.left, left, leftType, resultType, false);
       leftType = resultType;
@@ -88,18 +96,49 @@ export function compileBinary(compiler: Compiler, node: typescript.BinaryExpress
       resultType = reflection.boolType;
       break;
 
+    // &, |, ^
+    // prefer long over int and common signage, otherwise select the larger int type with contextual signage
+    case typescript.SyntaxKind.AmpersandToken:
+    case typescript.SyntaxKind.BarToken:
+    case typescript.SyntaxKind.CaretToken:
+      right = compiler.compileExpression(node.right, leftType);
+      rightType = typescript.getReflectedType(node.right);
+      if (leftType.isLong) {
+        if (rightType.isLong) {
+          resultType = leftType.isSigned === rightType.isSigned
+            ? leftType
+            : contextualType.isSigned
+              ? reflection.longType
+              : reflection.ulongType;
+        } else
+          resultType = leftType;
+      } else if (rightType.isLong)
+        resultType = rightType;
+      else
+        resultType = leftType.size > rightType.size
+          ? leftType
+          : rightType.size > leftType.size
+            ? rightType
+            : leftType.isSigned === rightType.isSigned
+              ? leftType
+              : leftType.isSigned === contextualType.isSigned
+                ? leftType
+                : rightType;
+
+      left = compiler.maybeConvertValue(node.left, left, leftType, resultType, false);
+      leftType = resultType;
+      right = compiler.maybeConvertValue(node.right, right, rightType, resultType, false);
+      rightType = resultType;
+      break;
+
     // &&, ||
     // TODO: decide how to handle these
     // case typescript.SyntaxKind.AmpersandAmpersandToken:
     // case typescript.SyntaxKind.BarBarToken:
 
-    // &, |, ^, +=, -=, **=, *=, /=, %=, &=, |=, ^=
-    // prioritize left type, result is left type?
-    //
-    // case typescript.SyntaxKind.AmpersandToken:
-    // case typescript.SyntaxKind.BarToken:
-    // case typescript.SyntaxKind.CaretToken:
-    //
+    // +=, -=, **=, *=, /=, %=, &=, |=, ^=
+    // prioritize left type, result is left type
+    default:
     // case typescript.SyntaxKind.PlusEqualsToken:
     // case typescript.SyntaxKind.MinusEqualsToken:
     // case typescript.SyntaxKind.AsteriskAsteriskEqualsToken:
@@ -109,7 +148,6 @@ export function compileBinary(compiler: Compiler, node: typescript.BinaryExpress
     // case typescript.SyntaxKind.AmpersandEqualsToken:
     // case typescript.SyntaxKind.BarEqualsToken:
     // case typescript.SyntaxKind.CaretEqualsToken:
-    default:
       right = compiler.compileExpression(node.right, leftType);
       rightType = typescript.getReflectedType(node.right);
       resultType = leftType;
@@ -352,7 +390,7 @@ export function compileAssignmentWithValue(compiler: Compiler, node: typescript.
         if (property) {
           const storeOp = compileStore(compiler, accessNode, property.type,
             op.getLocal(0, binaryen.typeOf(compiler.uintptrType, compiler.uintptrSize)), // ^= this
-            compiler.maybeConvertValue(node.right, compiler.compileExpression(node.right, property.type), typescript.getReflectedType(node.right), property.type, false),
+            compiler.maybeConvertValue(node.right, value, typescript.getReflectedType(node.right), property.type, false),
             property.offset
           );
 
@@ -402,7 +440,7 @@ export function compileAssignmentWithValue(compiler: Compiler, node: typescript.
           if (property && property.isInstance) {
             const storeOp = compileStore(compiler, accessNode, property.type,
               op.getLocal(variable.index, binaryen.typeOf(compiler.uintptrType, compiler.uintptrSize)), // ^= this
-              compiler.maybeConvertValue(node.right, compiler.compileExpression(node.right, property.type), typescript.getReflectedType(node.right), property.type, false),
+              compiler.maybeConvertValue(node.right, value, typescript.getReflectedType(node.right), property.type, false),
               property.offset
             );
 

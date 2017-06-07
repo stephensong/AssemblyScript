@@ -568,10 +568,12 @@ export class Compiler {
 
         case typescript.SyntaxKind.Constructor:
         case typescript.SyntaxKind.MethodDeclaration:
-          const instance = typescript.getReflectedFunction(<typescript.ConstructorDeclaration | typescript.MethodDeclaration>member);
-          if (instance) // otherwise generic
-            this.compileFunction(instance);
+        {
+          const functionInstance = typescript.getReflectedFunction(<typescript.ConstructorDeclaration | typescript.MethodDeclaration>member);
+          if (functionInstance) // otherwise generic
+            this.compileFunction(functionInstance);
           break;
+        }
 
         // otherwise already reported by initialize
       }

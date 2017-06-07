@@ -56,6 +56,19 @@ export class Class extends ClassBase {
         case typescript.SyntaxKind.Constructor:
         {
           const constructorNode = <typescript.ConstructorDeclaration>member;
+          for (let j = 0, l = constructorNode.parameters.length; j < l; ++j) {
+            const parameterNode = constructorNode.parameters[j];
+            if (parameterNode.modifiers && parameterNode.modifiers.length) {
+              const name = parameterNode.name.getText();
+              const type = compiler.resolveType(<typescript.TypeNode>parameterNode.type);
+              if (type) {
+                this.properties[name] = new Property(name, /* works, somehow: */ <typescript.PropertyDeclaration>member, type, this.size);
+                this.size += type.size;
+              } else {
+                compiler.error(parameterNode, "Unresolvable type");
+              }
+            }
+          }
           compiler.initializeFunction(constructorNode);
           this.ctor = typescript.getReflectedFunction(constructorNode);
           break;
