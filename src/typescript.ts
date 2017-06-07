@@ -84,62 +84,62 @@ export {
 
 } from "byots";
 
-import * as ts from 'byots'
+import * as typescript from 'byots'
 
 // Polyfill 'sys' in browsers
 import * as browsersys from "./typescript/browsersys";
-export const sys = ts.sys || browsersys;
+export const sys = typescript.sys || browsersys;
 
 export * from "./typescript/diagnostics";
 
-export function isExport(node: ts.Node): boolean {
+export function isExport(node: typescript.Node): boolean {
   if (node && node.modifiers)
     for (let i = 0, k = node.modifiers.length; i < k; ++i)
-      if (node.modifiers[i].kind === ts.SyntaxKind.ExportKeyword)
+      if (node.modifiers[i].kind === typescript.SyntaxKind.ExportKeyword)
         return true;
   return false;
 }
 
-export function isImport(node: ts.Node): boolean {
+export function isImport(node: typescript.Node): boolean {
   if (node && node.modifiers)
     for (let i = 0, k = node.modifiers.length; i < k; ++i)
-      if (node.modifiers[i].kind === ts.SyntaxKind.DeclareKeyword)
+      if (node.modifiers[i].kind === typescript.SyntaxKind.DeclareKeyword)
         return true;
   return false;
 }
 
-export function isStatic(node: ts.Node): boolean {
-  return (<ts.ModifierFlags>node.modifierFlagsCache & ts.ModifierFlags.Static) !== 0;
+export function isStatic(node: typescript.Node): boolean {
+  return (<typescript.ModifierFlags>node.modifierFlagsCache & typescript.ModifierFlags.Static) !== 0;
 }
 
-export function isConst(node: ts.Node): boolean {
-  return (node.flags & ts.NodeFlags.Const) !== 0;
+export function isConst(node: typescript.Node): boolean {
+  return (node.flags & typescript.NodeFlags.Const) !== 0;
 }
 
-export function getReflectedType(node: ts.Node): reflection.Type {
+export function getReflectedType(node: typescript.Node): reflection.Type {
   return <reflection.Type>(<any>node).reflectedType || null;
 }
 
-export function setReflectedType(node: ts.Node, type: reflection.Type): void {
+export function setReflectedType(node: typescript.Node, type: reflection.Type): void {
   if (!type) throw Error("type cannot be null");
   (<any>node).reflectedType = type;
 }
 
-export function getReflectedFunction(node: ts.FunctionLikeDeclaration): reflection.Function {
+export function getReflectedFunction(node: typescript.FunctionLikeDeclaration): reflection.Function {
   return <reflection.Function>(<any>node).reflectedFunction || null;
 }
 
-export function setReflectedFunction(node: ts.FunctionLikeDeclaration, func: reflection.Function): void {
+export function setReflectedFunction(node: typescript.FunctionLikeDeclaration, func: reflection.Function): void {
   if (!func)
     throw Error("func cannot be null");
   (<any>node).reflectedFunction = func;
 }
 
-export function getReflectedClass(node: ts.ClassDeclaration): reflection.Class {
+export function getReflectedClass(node: typescript.ClassDeclaration): reflection.Class {
   return <reflection.Class>(<any>node).reflectedClass || null;
 }
 
-export function setReflectedClass(node: ts.ClassDeclaration, clazz: reflection.Class): void {
+export function setReflectedClass(node: typescript.ClassDeclaration, clazz: reflection.Class): void {
   if (!clazz)
     throw Error("clazz cannot be null");
   (<any>node).reflectedClass = clazz;

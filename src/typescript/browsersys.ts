@@ -1,6 +1,6 @@
-import * as ts from "../typescript";
+import * as typescript from "../typescript";
 
-const sys: ts.System = {
+const sys: typescript.System = {
   args: [],
   newLine: "\n",
   useCaseSensitiveFileNames: true,

@@ -1,11 +1,12 @@
 import * as binaryen from "../binaryen";
 import Compiler from "../compiler";
+import * as typescript from "../typescript";
 
-export function compileBreak(compiler: Compiler, node: ts.BreakStatement | ts.ContinueStatement): binaryen.Statement {
+export function compileBreak(compiler: Compiler, node: typescript.BreakStatement | typescript.ContinueStatement): binaryen.Statement {
   const op = compiler.module;
 
   return op.break(
-    (node.kind === ts.SyntaxKind.ContinueStatement
+    (node.kind === typescript.SyntaxKind.ContinueStatement
       ? "continue$"
       : "break$"
     ) + compiler.currentBreakLabel

@@ -59,14 +59,14 @@ Type      | WASM type | Description
 `long`    | i64       | A 64-bit signed integer.
 `ulong`   | i64       | A 64-bit unsigned integer.
 `bool`    | i32       | A 1-bit unsigned integer.
-`uintptr` | i32 / i64 | A 32-bit unsigned integer when targeting WASM32 respectively a 64-bit unsigned integer when targeting WASM64.
+`uintptr` | i32 / i64 | A 32-bit unsigned integer when targeting WASM32.<br />A 64-bit unsigned integer when targeting WASM64.
 `float`   | f32       | A 32-bit float.
 `double`  | f64       | A 64-bit float.
 `void`    | none      | No return type.
 
 WebAssembly-specific operations are available as built-in functions that translate to the respective opcode directly:
 
-Function                                        | OpCode
+Function                                        | Opcode
 ------------------------------------------------|----------
 `rotl(value: int, shift: int): int`             | i32.rotl
 `rotll(value: long, shift: long): long`         | i64.rotl
@@ -101,16 +101,15 @@ Function                                        | OpCode
 `reinterpretf(value: int): float`               | f32.reinterpret/i32
 `reinterpretd(value: long): double`             | f64.reinterpret/i64
 
-By default (i.e. if the `--nolib` option isn't set), a basic memory management implementation based on
-[dlmalloc](http://g.oswego.edu/dl/html/malloc.html) and [musl](http://www.musl-libc.org/) is linked:
+By default (i.e. if the `--nolib` option isn't set), standard memory management routines based on [dlmalloc](http://g.oswego.edu/dl/html/malloc.html) and [musl](http://www.musl-libc.org/) will be linked statically and exported to the embedder:
 
-Function                                                      | Description
---------------------------------------------------------------|-------------
-`malloc(size: uintptr): uintptr`                              | Allocates a chunk of memory of the specified size and returns a pointer to it.
-`free(ptr: uintptr): void`                                    | Frees a previously allocated chunk of memory by its pointer.
-`memcpy(dest: uintptr, src: uintptr, size: uintptr): uintptr` | Copies data from one chunk of memory to another.
-`memset(dest: uintptr, c: int, size: uintptr): uintptr`       | Sets a chunk of memory to the provided value `c` (usually used to reset it to all `0`s).
-`memcmp(vl: uintptr, vr: uintptr, n: uintptr): int`           | Compares a chunk of memory to another. Returns `0` if both are equal, otherwise the difference of the first differing bytes (`vl[i] - vr[i]`).
+* `malloc(size: uintptr): uintptr`<br />Allocates a chunk of memory of the specified size and returns a pointer to it.
+* `free(ptr: uintptr): void`<br />Frees a previously allocated chunk of memory by its pointer.
+* `memcpy(dest: uintptr, src: uintptr, size: uintptr): uintptr`<br />Copies data from one chunk of memory to another.
+* `memset(dest: uintptr, c: int, size: uintptr): uintptr`<br />Sets a chunk of memory to the provided value `c` (usually used to reset it to all `0`s).
+* `memcmp(vl: uintptr, vr: uintptr, n: uintptr): int`<br />Compares a chunk of memory to another. Returns `0` if both are equal, otherwise the difference of the first differing byte value (`vl[i] - vr[i]`).
+
+Linking in malloc and friends adds about 11kb to a module. Once WebAssembly exposes the garbage collector natively, there'll be other options as well.
 
 Type coercion requires an explicit cast where precision or signage is lost respectively is implicit where it is maintained. For example, to cast a `double` to an `int`:
 

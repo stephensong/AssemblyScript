@@ -121,7 +121,7 @@ export class FunctionTemplate extends FunctionBase {
       for (let i = 0; i < typeParametersCount; ++i) {
         const parameterDeclaration = (<typescript.NodeArray<typescript.TypeParameterDeclaration>>this.declaration.typeParameters)[i];
         const type = compiler.resolveType(typeArguments[i]);
-        typeParametersMap[(<ts.Identifier>parameterDeclaration.name).getText()] = type;
+        typeParametersMap[(<typescript.Identifier>parameterDeclaration.name).getText()] = type;
         typeNames[i] = type.toString();
       }
       name += "<" + typeNames.join(",") + ">";
@@ -135,13 +135,13 @@ export class FunctionTemplate extends FunctionBase {
       const parameter = this.declaration.parameters[i];
       parameters[i] = {
         name: parameter.name.getText(),
-        type: typeParametersMap[parameter.name.getText()] || compiler.resolveType(<ts.TypeNode>parameter.type)
+        type: typeParametersMap[parameter.name.getText()] || compiler.resolveType(<typescript.TypeNode>parameter.type)
       };
     }
 
     const returnType = this.isConstructor
       ? compiler.uintptrType
-      : typeParametersMap[(<ts.TypeNode>this.declaration.type).getText()] || compiler.resolveType(<ts.TypeNode>this.declaration.type, true);
+      : typeParametersMap[(<typescript.TypeNode>this.declaration.type).getText()] || compiler.resolveType(<typescript.TypeNode>this.declaration.type, true);
 
     return this.instances[name] = new Function(name, this.declaration, typeParametersMap, parameters, returnType, this.declaration.body);
   }

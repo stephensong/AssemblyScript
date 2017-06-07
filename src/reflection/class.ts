@@ -43,7 +43,7 @@ export class Class extends ClassBase {
             const name = propertyNode.name.getText();
             const type = compiler.resolveType(propertyNode.type);
             if (type) {
-              this.properties[name] = new Property(name, <ts.PropertyDeclaration>member, type, this.size);
+              this.properties[name] = new Property(name, <typescript.PropertyDeclaration>member, type, this.size);
               this.size += type.size;
             } else
               compiler.error(propertyNode.type, "Unresolvable type");
@@ -87,7 +87,7 @@ export class ClassTemplate extends ClassBase {
       for (let i = 0; i < typeParametersCount; ++i) {
         const parameter = (<typescript.NodeArray<typescript.TypeParameterDeclaration>>this.declaration.typeParameters)[i];
         const type = compiler.resolveType(typeArguments[i]);
-        typeParametersMap[(<ts.Identifier>parameter.name).getText()] = type;
+        typeParametersMap[(<typescript.Identifier>parameter.name).getText()] = type;
         typeNames[i] = type.toString();
       }
       name += "<" + typeNames.join(",") + ">";

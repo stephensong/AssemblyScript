@@ -30,7 +30,7 @@ export function compileFor(compiler: Compiler, node: typescript.ForStatement): b
 
       context.push(compileVariableDeclarationList(compiler, <typescript.VariableDeclarationList>node.initializer));
 
-    } else /* ts.Expression */ {
+    } else /* typescript.Expression */ {
 
       const expr = compiler.compileExpression(<typescript.Expression>node.initializer, reflection.voidType);
       if (typescript.getReflectedType(node.initializer) === reflection.voidType)

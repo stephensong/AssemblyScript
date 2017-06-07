@@ -51,7 +51,7 @@ export function compileSwitch(compiler: Compiler, node: typescript.SwitchStateme
           index: i,
           statements: statements
         };
-      } else /* ts.CaseClause */ {
+      } else /* typescript.CaseClause */ {
         cases[i] = {
           label:  "case" + i + "$" + label,
           index: i,

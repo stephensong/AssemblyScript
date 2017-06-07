@@ -1,7 +1,8 @@
 import * as binaryen from "../binaryen";
 import Compiler from "../compiler";
+import * as typescript from "../typescript";
 
-export function compileBlock(compiler: Compiler, node: ts.Block): binaryen.Statement {
+export function compileBlock(compiler: Compiler, node: typescript.Block): binaryen.Statement {
   const op = compiler.module;
 
   const statements: binaryen.Statement[] = new Array(node.statements.length);
