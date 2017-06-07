@@ -23,7 +23,7 @@ export class Class extends ClassBase {
 
   properties: { [key: string]: Property } = {};
   methods: { [key: string]: Function } = {};
-  ctor: Function;
+  ctor?: Function;
   size: number = 0;
 
   constructor(name: string, declaration: typescript.ClassDeclaration, uintptrType: Type, typeParametersMap: { [key: string]: Type }) {
@@ -38,6 +38,7 @@ export class Class extends ClassBase {
       switch (member.kind) {
 
         case typescript.SyntaxKind.PropertyDeclaration:
+        {
           const propertyNode = <typescript.PropertyDeclaration>member;
           if (propertyNode.type) {
             const name = propertyNode.name.getText();
@@ -50,10 +51,18 @@ export class Class extends ClassBase {
           } else
             compiler.error(propertyNode, "Type expected");
           break;
+        }
 
         case typescript.SyntaxKind.Constructor:
+        {
+          const constructorNode = <typescript.ConstructorDeclaration>member;
+          compiler.initializeFunction(constructorNode);
+          this.ctor = typescript.getReflectedFunction(constructorNode);
+          break;
+        }
+
         case typescript.SyntaxKind.MethodDeclaration:
-          compiler.initializeFunction(<typescript.ConstructorDeclaration | typescript.MethodDeclaration>member);
+          // initialized on demand once the class has been resolved and type information is known
           break;
 
         default:

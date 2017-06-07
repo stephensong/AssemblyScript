@@ -29,7 +29,7 @@
  (export "malloc" (func $malloc))
  (export "free" (func $free))
  (export "main" (func $main))
- (start $executeGlobalInitalizers)
+ (start $.executeGlobalInitalizers)
  (func $memcmp (type $0) (param $var$0 i32) (param $var$1 i32) (param $var$2 i32) (result i32)
   (local $var$3 i32)
   (local $var$4 i32)
@@ -9449,12 +9449,55 @@
    (get_local $0)
   )
  )
- (func $main (type $i) (result i32)
+ (func $SomeClass (type $0) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (return
-   (i32.const 0)
+   (get_local $0)
   )
  )
- (func $executeGlobalInitalizers (type $v)
+ (func $main (type $i) (result i32)
+  (local $0 i32)
+  (local $1 i32)
+  (local $2 i32)
+  (local $3 i32)
+  (set_local $0
+   (block i32
+    (i32.store
+     (tee_local $2
+      (call $malloc
+       (i32.add
+        (i32.const 4)
+        (i32.mul
+         (i32.const 4)
+         (tee_local $1
+          (i32.const 10)
+         )
+        )
+       )
+      )
+     )
+     (get_local $1)
+    )
+    (get_local $2)
+   )
+  )
+  (set_local $3
+   (call $SomeClass
+    (block i32
+     (call $malloc
+      (i32.const 8)
+     )
+    )
+    (i32.const 1)
+    (i32.const 2)
+   )
+  )
+  (return
+   (i32.load
+    (get_local $0)
+   )
+  )
+ )
+ (func $.executeGlobalInitalizers (type $v)
   (set_global $.msp
    (call $mspace_init
     (i32.const 8)

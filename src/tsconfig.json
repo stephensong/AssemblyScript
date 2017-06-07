@@ -5,7 +5,8 @@
     "target": "es5",
     "outDir": "../out/",
     "types": [ "byots", "node", "long" ],
-    "inlineSourceMap": true
+    "inlineSourceMap": true,
+    "noLib": false
   },
   "include": [
     "**/*.ts"

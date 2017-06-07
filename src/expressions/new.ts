@@ -22,8 +22,15 @@ export function compileNew(compiler: Compiler, node: typescript.NewExpression, c
       return compileNewArray(compiler, node, reflection.ushortType, <typescript.Expression>node.arguments[0]);
 
     const reference = compiler.resolveReference(identifierNode);
-    if (reference instanceof reflection.Class) {
+
+    if (reference instanceof reflection.Class)
       return compileNewClass(compiler, node, <reflection.Class>reference);
+
+    if (reference instanceof reflection.ClassTemplate) {
+      const template = <reflection.ClassTemplate>reference;
+      const instance = template.resolve(compiler, node.typeArguments || []);
+      instance.initialize(compiler);
+      return compileNewClass(compiler, node, instance);
     }
   }
 
@@ -35,15 +42,43 @@ export function compileNewClass(compiler: Compiler, node: typescript.NewExpressi
   const op = compiler.module;
   const binaryenPtrType = binaryen.typeOf(compiler.uintptrType, compiler.uintptrSize);
 
-  // return malloc(classSize)
+  // ptr = malloc(classSize)
 
-  return op.block("", [
+  let ptr = op.block("", [
     op.call("malloc", [ // use wrapped malloc here so mspace_malloc can be inlined
       binaryen.valueOf(compiler.uintptrType, op, clazz.size)
     ], binaryenPtrType)
   ], binaryenPtrType);
 
-  // TODO: call constructor, if any
+  if (clazz.ctor) {
+
+    // return ClassConstructor(ptr, arguments...)
+
+    const parameterCount = clazz.ctor.parameters.length;
+    const argumentCount = node.arguments && node.arguments.length || 0;
+    const args = new Array(parameterCount + 1);
+    args[0] = ptr; // first constructor parameter is 'this'
+    let i = 0;
+    let tooFewDiagnosed = false;
+    for (; i < parameterCount; ++i) {
+      const parameter = clazz.ctor.parameters[i];
+      if (argumentCount > i) {
+        const argumentNode = (<typescript.NodeArray<typescript.Expression>>node.arguments)[i];
+        args[i + 1] = compiler.maybeConvertValue(argumentNode, compiler.compileExpression(argumentNode, parameter.type), typescript.getReflectedType(argumentNode), parameter.type, false);
+      } else { // TODO: use default value if defined
+        if (!tooFewDiagnosed) {
+          tooFewDiagnosed = true;
+          compiler.error(node, "Too few arguments", "Expected " + parameterCount + " but saw " + argumentCount);
+        }
+        args[i + 1] = compiler.module.unreachable();
+      }
+    }
+    if (argumentCount > i)
+      compiler.error(node, "Too many arguments", "Expected " + parameterCount + " but saw " + argumentCount);
+    ptr = op.call(clazz.ctor.name, args, binaryen.typeOf(clazz.ctor.returnType, compiler.uintptrSize));
+  }
+
+  return ptr;
 }
 
 export function compileNewArray(compiler: Compiler, node: typescript.NewExpression, elementType: reflection.Type, sizeArgument: typescript.Expression) {

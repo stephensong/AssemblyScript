@@ -27,5 +27,5 @@ export function compileVariableDeclarationList(compiler: Compiler, node: typescr
 
   return initializers.length === 0 ? op.nop()
        : initializers.length === 1 ? initializers[0]
-       : op.block("", initializers); // praise rule #1
+       : op.block("", initializers); // binaryen -O unwraps this
 }

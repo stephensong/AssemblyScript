@@ -4,16 +4,15 @@
 class SomeClass {
   a: int;
   b: int;
-}
 
-function whatsthesize<T>(): uintptr {
-  return sizeof<T>();
+  constructor(a: int, b: int) {
+    // this.a = a;
+    // this.b = b;
+  }
 }
 
 export function main(): uintptr {
-  /* let a: Array<int> = new Array<int>(10);
-  let s: String = new String(10);
-  let h: SomeClass = new SomeClass();
-  return a.length; */
-  return whatsthesize<uintptr>();
+  let a: Array<int> = new Array<int>(10);
+  let h: SomeClass = new SomeClass(1, 2);
+  return a.length;
 }

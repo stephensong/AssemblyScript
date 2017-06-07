@@ -409,8 +409,8 @@ export class Compiler {
       return;
 
     const instance = this.classes[name] = template.resolve(this, []);
-    instance.initialize(this);
     typescript.setReflectedClass(node, instance);
+    instance.initialize(this);
   }
 
   initializeEnum(node: typescript.EnumDeclaration): void {
@@ -501,6 +501,7 @@ export class Compiler {
   }
 
   compileFunction(instance: reflection.Function): binaryen.Function | null {
+    const op = this.module;
 
     // Handle imports
     if (instance.isImport) {
@@ -542,6 +543,9 @@ export class Compiler {
       ));
     }
 
+    if (instance.isConstructor) // Constructors return 'this' internally
+      body.push(op.return(op.getLocal(0, binaryen.typeOf(this.uintptrType, this.uintptrSize))));
+
     const additionalLocals = instance.locals.slice(initialLocalsIndex).map(local => binaryen.typeOf(local.type, this.uintptrSize));
     const binaryenFunction = this.module.addFunction(instance.name, instance.binaryenSignature, additionalLocals, this.module.block("", body));
 
@@ -562,7 +566,9 @@ export class Compiler {
 
         case typescript.SyntaxKind.Constructor:
         case typescript.SyntaxKind.MethodDeclaration:
-          this.compileFunction(typescript.getReflectedFunction(<typescript.ConstructorDeclaration>member));
+          const instance = typescript.getReflectedFunction(<typescript.ConstructorDeclaration | typescript.MethodDeclaration>member);
+          if (instance) // otherwise generic
+            this.compileFunction(instance);
           break;
 
         // otherwise already reported by initialize
@@ -951,18 +957,27 @@ export class Compiler {
             }
 
             const reference = this.resolveReference(referenceNode.typeName);
+
             if (reference instanceof reflection.Class)
               return (<reflection.Class>reference).type;
+
+            if (reference instanceof reflection.ClassTemplate && referenceNode.typeArguments) {
+              const template = <reflection.ClassTemplate>reference;
+              const instance = template.resolve(this, referenceNode.typeArguments);
+              this.classes[instance.name] = instance;
+              instance.initialize(this);
+              return instance.type;
+            }
           }
         }
       }
     }
 
-    this.error(type, "Unsupported type", type.getText() + "\n" + (new Error().stack));
+    this.error(type, "Unsupported type", type.getText()/* + "\n" + (new Error().stack)*/);
     return reflection.voidType;
   }
 
-  resolveReference(node: typescript.Identifier | typescript.EntityName): reflection.Variable | reflection.Enum | reflection.Class | null {
+  resolveReference(node: typescript.Identifier | typescript.EntityName): reflection.Variable | reflection.Enum | reflection.Class | reflection.ClassTemplate | null {
 
     // Locals including 'this'
     const localName = node.getText();
@@ -986,7 +1001,10 @@ export class Compiler {
             return this.enums[globalName];
 
           if (this.classes[globalName])
-            return <reflection.Class>this.classes[globalName];
+            return this.classes[globalName];
+
+          if (this.classTemplates[globalName])
+            return this.classTemplates[globalName];
         }
       }
     }

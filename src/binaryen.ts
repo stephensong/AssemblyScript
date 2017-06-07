@@ -1,4 +1,4 @@
-import * as binaryen from "../lib/binaryen/index.js";
+import * as binaryen from "binaryen";
 import * as Long from "long";
 import * as reflection from "./reflection";
 
@@ -28,7 +28,7 @@ export {
   Module,
   readBinary
 
-} from "../lib/binaryen/index.js";
+} from "binaryen";
 
 /** Computes a human readable signature identifier of a reflected type. */
 export function identifierOf(type: reflection.Type, uintptrSize: number): string {

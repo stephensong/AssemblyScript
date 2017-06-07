@@ -17,7 +17,6 @@ export abstract class FunctionBase {
   get isExport(): boolean { return typescript.isExport(this.declaration); }
   get isInstance(): boolean { return this.declaration.kind === typescript.SyntaxKind.Constructor || this.declaration.kind === typescript.SyntaxKind.MethodDeclaration; }
   get isConstructor(): boolean { return this.declaration.kind === typescript.SyntaxKind.Constructor; }
-  get parentDeclaration(): typescript.ClassDeclaration | null { return this.isInstance ? <typescript.ClassDeclaration>this.declaration.parent : null; }
 
   toString(): string { return this.name; }
 }
@@ -109,7 +108,7 @@ export class FunctionTemplate extends FunctionBase {
 
   get isGeneric(): boolean { return !!(this.declaration.typeParameters && this.declaration.typeParameters.length); }
 
-  resolve(compiler: Compiler, typeArguments: typescript.TypeNode[]): Function {
+  resolve(compiler: Compiler, typeArguments: typescript.TypeNode[], classTypeArguments?: typescript.TypeNode[]): Function {
     const typeParametersCount = this.declaration.typeParameters && this.declaration.typeParameters.length || 0;
     if (typeArguments.length !== typeParametersCount)
       throw Error("type parameter count mismatch");
