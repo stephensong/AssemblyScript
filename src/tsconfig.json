@@ -9,6 +9,6 @@
     "noLib": false
   },
   "include": [
-    "**/*.ts"
+    "./**/*.ts"
   ]
 }

@@ -10,43 +10,116 @@ export function compileBinary(compiler: Compiler, node: typescript.BinaryExpress
   if (node.operatorToken.kind === typescript.SyntaxKind.EqualsToken)
     return compileAssignment(compiler, node, contextualType);
 
-  const isCompound = node.operatorToken.kind >= typescript.SyntaxKind.FirstCompoundAssignment && node.operatorToken.kind <= typescript.SyntaxKind.LastCompoundAssignment;
-  const op = compiler.module;
-
-  let left  = compiler.compileExpression(node.left, contextualType);
-  let right = compiler.compileExpression(node.right, contextualType);
-
-  const leftType  = typescript.getReflectedType(node.left);
-  const rightType = typescript.getReflectedType(node.right);
-
+  let left: binaryen.Expression = compiler.compileExpression(node.left, contextualType);
+  let leftType: reflection.Type = typescript.getReflectedType(node.left);
+  let right: binaryen.Expression;
+  let rightType: reflection.Type;
   let resultType: reflection.Type;
 
-  if (isCompound) {
-    resultType = leftType;
-  } else {
+  // TODO: This is most likely incorrect
+  switch (node.operatorToken.kind) {
 
-    if (leftType.isAnyFloat) {
+    // **, *, /, %, +, -
+    // prefer float over int, otherwise select the larger type
+    case typescript.SyntaxKind.AsteriskAsteriskToken:
+    case typescript.SyntaxKind.AsteriskToken:
+    case typescript.SyntaxKind.SlashToken:
+    case typescript.SyntaxKind.PercentToken:
+    case typescript.SyntaxKind.PlusToken:
+    case typescript.SyntaxKind.MinusToken:
+      right = compiler.compileExpression(node.right, leftType);
+      rightType = typescript.getReflectedType(node.right);
 
-      if (rightType.isAnyFloat)
-        resultType = leftType.size > rightType.size ? leftType : rightType;
+      if (leftType.isAnyFloat) {
+        if (rightType.isAnyFloat)
+          resultType = leftType.size >= rightType.size ? leftType : rightType;
+        else
+          resultType = leftType;
+      } else if (rightType.isAnyFloat)
+        resultType = rightType;
       else
-        resultType = leftType;
+        resultType = leftType.size >= rightType.size ? leftType : rightType;
 
-    } else if (rightType.isAnyFloat)
-      resultType = rightType;
-    else /* int */ if (leftType.kind === reflection.TypeKind.uintptr && rightType.kind !== reflection.TypeKind.uintptr)
+      left = compiler.maybeConvertValue(node.left, left, leftType, resultType, false);
+      leftType = resultType;
+      right = compiler.maybeConvertValue(node.right, right, rightType, resultType, false);
+      rightType = resultType;
+      break;
+
+    // <<, <<=, >>, >>=
+    // use left type, force right type to int
+    case typescript.SyntaxKind.LessThanLessThanToken:
+    case typescript.SyntaxKind.LessThanLessThanEqualsToken:
+    case typescript.SyntaxKind.GreaterThanGreaterThanToken:
+    case typescript.SyntaxKind.GreaterThanGreaterThanEqualsToken:
+      right = compiler.compileExpression(node.right, reflection.intType);
+      rightType = typescript.getReflectedType(node.right);
       resultType = leftType;
-    else if (leftType.kind !== reflection.TypeKind.uintptr && rightType.kind === reflection.TypeKind.uintptr)
-      resultType = rightType;
-    else
-      resultType = leftType.size >= rightType.size ? leftType : rightType;
+
+      right = compiler.maybeConvertValue(node.right, right, rightType, reflection.intType, false);
+      rightType = reflection.intType;
+      break;
+
+    // <, <=, >, >=, ==
+    // prefer float over int, otherwise select the larger type, result is bool
+    case typescript.SyntaxKind.LessThanToken:
+    case typescript.SyntaxKind.LessThanEqualsToken:
+    case typescript.SyntaxKind.GreaterThanToken:
+    case typescript.SyntaxKind.GreaterThanEqualsToken:
+    case typescript.SyntaxKind.EqualsEqualsToken:
+      right = compiler.compileExpression(node.right, leftType);
+      rightType = typescript.getReflectedType(node.right);
+
+      if (leftType.isAnyFloat) {
+        if (rightType.isAnyFloat)
+          resultType = leftType.size >= rightType.size ? leftType : rightType;
+        else
+          resultType = leftType;
+      } else if (rightType.isAnyFloat)
+        resultType = rightType;
+      else
+        resultType = leftType.size >= rightType.size ? leftType : rightType;
+
+      left = compiler.maybeConvertValue(node.left, left, leftType, resultType, false);
+      leftType = resultType;
+      right = compiler.maybeConvertValue(node.right, right, rightType, resultType, false);
+      rightType = resultType;
+
+      resultType = reflection.boolType;
+      break;
+
+    // &&, ||
+    // TODO: decide how to handle these
+    // case typescript.SyntaxKind.AmpersandAmpersandToken:
+    // case typescript.SyntaxKind.BarBarToken:
+
+    // &, |, ^, +=, -=, **=, *=, /=, %=, &=, |=, ^=
+    // prioritize left type, result is left type?
+    //
+    // case typescript.SyntaxKind.AmpersandToken:
+    // case typescript.SyntaxKind.BarToken:
+    // case typescript.SyntaxKind.CaretToken:
+    //
+    // case typescript.SyntaxKind.PlusEqualsToken:
+    // case typescript.SyntaxKind.MinusEqualsToken:
+    // case typescript.SyntaxKind.AsteriskAsteriskEqualsToken:
+    // case typescript.SyntaxKind.AsteriskEqualsToken:
+    // case typescript.SyntaxKind.SlashEqualsToken:
+    // case typescript.SyntaxKind.PercentEqualsToken:
+    // case typescript.SyntaxKind.AmpersandEqualsToken:
+    // case typescript.SyntaxKind.BarEqualsToken:
+    // case typescript.SyntaxKind.CaretEqualsToken:
+    default:
+      right = compiler.compileExpression(node.right, leftType);
+      rightType = typescript.getReflectedType(node.right);
+      resultType = leftType;
+      right = compiler.maybeConvertValue(node.right, right, rightType, resultType, false);
+      rightType = resultType;
+      break;
   }
 
-  // compile again with common contextual type so that literals can be properly coerced
-  if (leftType !== resultType)
-    left = compiler.maybeConvertValue(node.left, compiler.compileExpression(node.left, resultType), leftType, resultType, false);
-  if (rightType !== resultType)
-    right = compiler.maybeConvertValue(node.right, compiler.compileExpression(node.right, resultType), rightType, resultType, false);
+  const isCompound = node.operatorToken.kind >= typescript.SyntaxKind.FirstCompoundAssignment && node.operatorToken.kind <= typescript.SyntaxKind.LastCompoundAssignment;
+  const op = compiler.module;
 
   typescript.setReflectedType(node, resultType);
 
@@ -290,7 +363,7 @@ export function compileAssignmentWithValue(compiler: Compiler, node: typescript.
           return op.block("", [
             storeOp,
             compileLoad(compiler, accessNode, property.type, op.getLocal(0, binaryen.typeOf(compiler.uintptrType, compiler.uintptrSize)), property.offset)
-          ], property.type);
+          ], binaryen.typeOf(property.type, compiler.uintptrSize));
         } else {
           compiler.error(node, "No such instance property", "'" + propertyName + "' on " + clazz.name);
           return op.unreachable();
@@ -340,7 +413,7 @@ export function compileAssignmentWithValue(compiler: Compiler, node: typescript.
             return op.block("", [
               storeOp,
               compileLoad(compiler, accessNode, property.type, op.getLocal(variable.index, binaryen.typeOf(compiler.uintptrType, compiler.uintptrSize)), property.offset)
-            ], property.type);
+            ], binaryen.typeOf(property.type, compiler.uintptrSize));
           } else {
             compiler.error(node, "No such instance property", "'" + propertyName + "' on " + clazz.name);
             return op.unreachable();

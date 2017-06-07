@@ -80,6 +80,6 @@ export function compileLiteral(compiler: Compiler, node: typescript.LiteralExpre
 
     }
   }
-  compiler.error(node, "Unsupported literal", "'" + text + "' in " + reflection.TypeKind[contextualType.kind] + " context");
+  compiler.error(node, "Unsupported literal", "'" + text + "' in " + reflection.TypeKind[contextualType.kind] + " context\n" + (new Error()).stack);
   return op.unreachable();
 }

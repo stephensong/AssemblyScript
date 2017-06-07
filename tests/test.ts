@@ -14,6 +14,7 @@ class SomeClass {
 export function main(): uintptr {
   let a: Array<int> = new Array<int>(10);
   let h: SomeClass = new SomeClass(1, 2);
-  h.b = h.b + 1;
+  let b: int = 1;
+  h.b += 1;
   return a.length + h.a + h.b; // 14
 }
