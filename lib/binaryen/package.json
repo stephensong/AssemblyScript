@@ -1,0 +1,15 @@
+{
+  "name": "binaryen",
+  "description": "Compiler infrastructure and toolchain library for WebAssembly.",
+  "version": "1.37.13",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/WebAssembly/binaryen.git"
+  },
+  "keywords": [
+    "webassembly"
+  ],
+  "main": "index.js",
+  "typings": "index.d.ts"
+}
