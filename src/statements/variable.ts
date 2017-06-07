@@ -14,7 +14,7 @@ export function compileVariableDeclarationList(compiler: Compiler, node: typescr
     const declaration = node.declarations[i];
     const declarationName = declaration.name.getText();
     if (declaration.type) {
-      const declarationType = compiler.resolveType(declaration.type);
+      const declarationType = compiler.currentFunction && compiler.currentFunction.typeParameters[declaration.type.getText()] || compiler.resolveType(declaration.type);
 
       typescript.setReflectedType(declaration, declarationType);
 

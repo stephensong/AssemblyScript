@@ -13,12 +13,24 @@ export function compileCall(compiler: Compiler, node: typescript.CallExpression,
   }
 
   const declaration = <typescript.FunctionLikeDeclaration>signature.declaration; // FunctionLikeDeclaration extends SignatureDeclaration
-  const instance = typescript.getReflectedFunction(declaration);
+  let instance = typescript.getReflectedFunction(declaration);
 
-  if (!instance) { // TODO: compile template if it exists
-    compiler.error(node, "Unresolvable call target");
-    typescript.setReflectedType(node, contextualType);
-    return op.unreachable();
+  if (!instance) {
+    const template = typescript.getReflectedFunctionTemplate(declaration);
+    if (template) {
+      instance = template.resolve(compiler, node.typeArguments || []);
+      instance.initialize(compiler);
+      typescript.setReflectedFunction(declaration, instance);
+      if (!compiler.compileFunction(instance)) {
+        compiler.error(node, "Failed to compile call target");
+        typescript.setReflectedType(node, contextualType);
+        return op.unreachable();
+      }
+    } else {
+      compiler.error(node, "Unresolvable call target");
+      typescript.setReflectedType(node, contextualType);
+      return op.unreachable();
+    }
   }
 
   const argumentExpressions: binaryen.Expression[] = new Array(instance.parameters.length);
@@ -48,7 +60,8 @@ export function compileCall(compiler: Compiler, node: typescript.CallExpression,
     i = 0;
     typeArguments = new Array(node.typeArguments.length);
     for (const k = declaration.typeParameters.length; i < k; ++i) {
-      const resolvedType = compiler.resolveType(node.typeArguments[i]);
+      const argument = node.typeArguments[i];
+      const resolvedType = compiler.currentFunction && compiler.currentFunction.typeParameters[argument.getText()] || compiler.resolveType(argument);
       if (!resolvedType) {
         compiler.error(node.typeArguments[i], "Unresolvable type");
         return op.unreachable();

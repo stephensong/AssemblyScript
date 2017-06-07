@@ -17,6 +17,7 @@ export abstract class FunctionBase {
   get isExport(): boolean { return typescript.isExport(this.declaration); }
   get isInstance(): boolean { return this.declaration.kind === typescript.SyntaxKind.Constructor || this.declaration.kind === typescript.SyntaxKind.MethodDeclaration; }
   get isConstructor(): boolean { return this.declaration.kind === typescript.SyntaxKind.Constructor; }
+  get parentDeclaration(): typescript.ClassDeclaration | null { return this.isInstance ? <typescript.ClassDeclaration>this.declaration.parent : null; }
 
   toString(): string { return this.name; }
 }

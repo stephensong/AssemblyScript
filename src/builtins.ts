@@ -4,6 +4,82 @@ import * as typescript from "./typescript";
 
 import { Compiler } from "./compiler";
 
+export const names = [
+  "rotl",
+  "rotll",
+  "rotr",
+  "rotrl",
+  "clz",
+  "clzl",
+  "ctz",
+  "ctzl",
+  "popcnt",
+  "popcntl",
+  "abs",
+  "absf",
+  "ceil",
+  "ceilf",
+  "floor",
+  "floorf",
+  "sqrt",
+  "sqrtf",
+  "trunc",
+  "truncf",
+  "nearest",
+  "nearestf",
+  "min",
+  "minf",
+  "max",
+  "maxf",
+  "copysign",
+  "copysignf",
+  "reinterpreti",
+  "reinterpretl",
+  "reinterpretf",
+  "reinterpretd",
+  "sizeof"
+];
+
+export function isBuiltin(name: string): boolean {
+  switch (name) {
+    case "rotl":
+    case "rotll":
+    case "rotr":
+    case "rotrl":
+    case "clz":
+    case "clzl":
+    case "ctz":
+    case "ctzl":
+    case "popcnt":
+    case "popcntl":
+    case "abs":
+    case "absf":
+    case "ceil":
+    case "ceilf":
+    case "floor":
+    case "floorf":
+    case "sqrt":
+    case "sqrtf":
+    case "trunc":
+    case "truncf":
+    case "nearest":
+    case "nearestf":
+    case "min":
+    case "minf":
+    case "max":
+    case "maxf":
+    case "copysign":
+    case "copysignf":
+    case "reinterpreti":
+    case "reinterpretl":
+    case "reinterpretf":
+    case "reinterpretd":
+    case "sizeof":
+      return true;
+  }
+  return false;
+}
+
 type TypeScriptExpressionPair = [ typescript.Expression, typescript.Expression ];
 type BinaryenExpressionPair = [ binaryen.Expression, binaryen.Expression ];
 

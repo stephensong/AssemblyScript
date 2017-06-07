@@ -1,5 +1,6 @@
 import * as base64 from "@protobufjs/base64";
 import * as binaryen from "./binaryen";
+import * as builtins from "./builtins";
 import * as expressions from "./expressions";
 import * as library from "./library";
 import * as path from "path";
@@ -381,10 +382,13 @@ export class Compiler {
       throw Error("function '" + name + "' has already been initialized");
 
     const template = this.functionTemplates[name] = new reflection.FunctionTemplate(name, node);
-    if (template.isGeneric)
+    typescript.setReflectedFunctionTemplate(node, template);
+    if (template.isGeneric) {
+      if (builtins.isBuiltin(name)) // generic builtins evaluate type parameters dynamically
+        typescript.setReflectedFunction(node, new reflection.Function(name, node, {}, [], reflection.voidType));
       return;
+    }
 
-    // If it's not a generic function, initialize
     const instance = this.functions[name] = template.resolve(this, []);
     instance.initialize(this);
     typescript.setReflectedFunction(node, instance);
@@ -396,11 +400,14 @@ export class Compiler {
     if (this.classTemplates[name])
       throw Error("class '" + name + "' has already been initialized");
 
+    if (node.getSourceFile() === this.entryFile && typescript.isExport(node))
+      this.warn(node.getFirstToken(), "Exporting classes is not supported yet");
+
     const template = this.classTemplates[name] = new reflection.ClassTemplate(name, node);
+    typescript.setReflectedClassTemplate(node, template);
     if (template.isGeneric)
       return;
 
-    // If it's not a generic class, initialize the class (and its members)
     const instance = this.classes[name] = template.resolve(this, []);
     instance.initialize(this);
     typescript.setReflectedClass(node, instance);
@@ -411,6 +418,9 @@ export class Compiler {
 
     if (this.enums[name])
       throw Error("enum '" + name + "' has already been initialized");
+
+    if (node.getSourceFile() === this.entryFile && typescript.isExport(node))
+      this.warn(node.getFirstToken(), "Exporting enums is not supported yet");
 
     const instance = this.enums[name] = new reflection.Enum(name, node);
     instance.initialize(this);
@@ -430,6 +440,13 @@ export class Compiler {
 
           case typescript.SyntaxKind.FunctionDeclaration:
           {
+            // TODO: Theoretically, it would be sufficient to start by compiling entry file exports
+            // and then rely on the compiler to automatically traverse through call expressions and
+            // compile everything else on demand. This might significantly reduce compilation time
+            // for large projects because unused functions wouldn't be compiled at all, similar to
+            // built-in tree-shaking, but it also prevents subsequent build-steps from accessing
+            // yet intentionally unused functions, i.e. when linking additional functionality later
+            // on that relies on these unused functions. Maybe as an option?
             const declaration = <typescript.FunctionDeclaration>statement;
             const instance = typescript.getReflectedFunction(declaration);
             if (instance) // otherwise generic
@@ -439,6 +456,7 @@ export class Compiler {
 
           case typescript.SyntaxKind.ClassDeclaration:
           {
+            // TODO: See comment above. This also applies to class members.
             const declaration = <typescript.ClassDeclaration>statement;
             const instance = typescript.getReflectedClass(declaration);
             if (instance) // otherwise generic
@@ -498,7 +516,7 @@ export class Compiler {
         baseName = instance.name;
       }
 
-      this.module.addImport(name, moduleName, baseName, instance.binaryenSignature);
+      this.module.addImport(instance.name, moduleName, baseName, instance.binaryenSignature);
       return null;
     }
 
@@ -509,6 +527,7 @@ export class Compiler {
     const body: binaryen.Statement[] = [];
     const previousFunction = this.currentFunction;
     this.currentFunction = instance;
+    const initialLocalsIndex = instance.locals.length;
 
     if (instance.body.kind === typescript.SyntaxKind.Block) {
       const blockNode = <typescript.Block>instance.body;
@@ -523,7 +542,8 @@ export class Compiler {
       ));
     }
 
-    const binaryenFunction = this.module.addFunction(instance.name, instance.binaryenSignature, instance.binaryenParameterTypes, this.module.block("", body));
+    const additionalLocals = instance.locals.slice(initialLocalsIndex).map(local => binaryen.typeOf(local.type, this.uintptrSize));
+    const binaryenFunction = this.module.addFunction(instance.name, instance.binaryenSignature, additionalLocals, this.module.block("", body));
 
     if (instance.isExport)
       this.module.addExport(instance.name, instance.name);
@@ -686,10 +706,10 @@ export class Compiler {
     if (!explicit) {
 
       if (this.uintptrSize === 4 && fromType.kind === reflection.TypeKind.uintptr && toType.isInt)
-        this.warn(node, "Implicit conversion from 'uintptr' to 'uint' will fail when targeting WASM64");
+        this.warn(node, "Non-portable conversion", "Implicit conversion from 'uintptr' to 'uint' will fail when targeting WASM64");
 
       if (this.uintptrSize === 8 && fromType.isLong && toType.kind === reflection.TypeKind.uintptr)
-        this.warn(node, "Implicit conversion from 'ulong' to 'uintptr' will fail when targeting WASM32");
+        this.warn(node, "Non-portable conversion", "Implicit conversion from 'ulong' to 'uintptr' will fail when targeting WASM32");
     }
 
     typescript.setReflectedType(node, toType);
@@ -938,7 +958,7 @@ export class Compiler {
       }
     }
 
-    this.error(type, "Unsupported type", type.getText());
+    this.error(type, "Unsupported type", type.getText() + "\n" + (new Error().stack));
     return reflection.voidType;
   }
 
