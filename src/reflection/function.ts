@@ -82,7 +82,7 @@ export class Function extends FunctionBase {
     ids.push(binaryen.identifierOf(this.returnType, compiler.uintptrSize));
 
     this.binaryenSignatureId = ids.join("");
-    this.binaryenSignature = compiler.module.getFunctionType(this.binaryenReturnType, this.binaryenParameterTypes);
+    this.binaryenSignature = compiler.module.getFunctionTypeBySignature(this.binaryenReturnType, this.binaryenParameterTypes);
     if (!this.binaryenSignature)
       this.binaryenSignature = compiler.module.addFunctionType(this.binaryenSignatureId, this.binaryenReturnType, this.binaryenParameterTypes);
   }

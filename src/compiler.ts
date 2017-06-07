@@ -293,7 +293,7 @@ export class Compiler {
     const mallocSignatureIdentifier = this.uintptrSize === 4 ? "ii" : "II";
     let mallocSignature = this.signatures[mallocSignatureIdentifier];
     if (!mallocSignature)
-      mallocSignature = this.signatures[mallocSignatureIdentifier] = this.module.getFunctionType(binaryenPtrType, [ binaryenPtrType ]) || this.module.addFunctionType(mallocSignatureIdentifier, binaryenPtrType, [ binaryenPtrType ]);
+      mallocSignature = this.signatures[mallocSignatureIdentifier] = this.module.getFunctionTypeBySignature(binaryenPtrType, [ binaryenPtrType ]) || this.module.addFunctionType(mallocSignatureIdentifier, binaryenPtrType, [ binaryenPtrType ]);
     this.module.addFunction("malloc", mallocSignature, [], op.block("", [
       op.return(
         op.call("mspace_malloc", [ op.getGlobal(".msp", binaryenPtrType), op.getLocal(0, binaryenPtrType) ], binaryenPtrType)
@@ -302,7 +302,7 @@ export class Compiler {
     const freeSignatureIdentifier = this.uintptrSize === 4 ? "iv" : "Iv";
     let freeSignature = this.signatures[freeSignatureIdentifier];
     if (!freeSignature)
-      freeSignature = this.signatures[freeSignatureIdentifier] = this.module.getFunctionType(binaryen.none, [ binaryenPtrType ]) || this.module.addFunctionType(freeSignatureIdentifier, binaryen.none, [ binaryenPtrType ]);
+      freeSignature = this.signatures[freeSignatureIdentifier] = this.module.getFunctionTypeBySignature(binaryen.none, [ binaryenPtrType ]) || this.module.addFunctionType(freeSignatureIdentifier, binaryen.none, [ binaryenPtrType ]);
     this.module.addFunction("free", freeSignature, [], op.block("", [
       op.call("mspace_free", [ op.getGlobal(".msp", binaryenPtrType), op.getLocal(0, binaryenPtrType) ], binaryen.none)
     ]));
@@ -384,8 +384,8 @@ export class Compiler {
     const template = this.functionTemplates[name] = new reflection.FunctionTemplate(name, node);
     typescript.setReflectedFunctionTemplate(node, template);
     if (template.isGeneric) {
-      if (builtins.isBuiltin(name)) // generic builtins evaluate type parameters dynamically
-        typescript.setReflectedFunction(node, new reflection.Function(name, node, {}, [], reflection.voidType));
+      if (builtins.isBuiltin(name)) // generic builtins evaluate type parameters dynamically and have a known return type
+        typescript.setReflectedFunction(node, new reflection.Function(name, node, {}, [], this.resolveType(<typescript.TypeNode>template.declaration.type, true)));
       return;
     }
 
@@ -491,12 +491,12 @@ export class Compiler {
     const startSignatureIdentifier = "v";
     let signature = this.signatures[startSignatureIdentifier];
     if (!signature) {
-      signature = this.signatures[startSignatureIdentifier] = this.module.getFunctionType(binaryen.none, []);
+      signature = this.signatures[startSignatureIdentifier] = this.module.getFunctionTypeBySignature(binaryen.none, []);
       if (!signature)
         signature = this.signatures[startSignatureIdentifier] = this.module.addFunctionType(startSignatureIdentifier, binaryen.none, []);
     }
     this.module.setStart(
-      this.module.addFunction(this.userStartFunction ? "executeGlobalInitializersAndCallStart" : "executeGlobalInitalizers", signature, [], op.block("", body))
+      this.module.addFunction(this.userStartFunction ? ".executeGlobalInitializersAndCallStart" : ".executeGlobalInitalizers", signature, [], op.block("", body))
     );
   }
 

@@ -6,11 +6,11 @@ class SomeClass {
   b: int;
 }
 
-function whatsthesize<T>(): uint {
+function whatsthesize<T>(): uintptr {
   return sizeof<T>();
 }
 
-export function main(): uint {
+export function main(): uintptr {
   /* let a: Array<int> = new Array<int>(10);
   let s: String = new String(10);
   let h: SomeClass = new SomeClass();

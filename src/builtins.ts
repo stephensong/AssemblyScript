@@ -4,42 +4,6 @@ import * as typescript from "./typescript";
 
 import { Compiler } from "./compiler";
 
-export const names = [
-  "rotl",
-  "rotll",
-  "rotr",
-  "rotrl",
-  "clz",
-  "clzl",
-  "ctz",
-  "ctzl",
-  "popcnt",
-  "popcntl",
-  "abs",
-  "absf",
-  "ceil",
-  "ceilf",
-  "floor",
-  "floorf",
-  "sqrt",
-  "sqrtf",
-  "trunc",
-  "truncf",
-  "nearest",
-  "nearestf",
-  "min",
-  "minf",
-  "max",
-  "maxf",
-  "copysign",
-  "copysignf",
-  "reinterpreti",
-  "reinterpretl",
-  "reinterpretf",
-  "reinterpretd",
-  "sizeof"
-];
-
 export function isBuiltin(name: string): boolean {
   switch (name) {
     case "rotl":

@@ -194,7 +194,7 @@ declare module binaryen {
   class Module {
 
     addFunctionType(name: string, resultType: Type, paramTypes: Type[]): Signature;
-    getFunctionType(resultType: Type, paramTypes: Type[]): Signature;
+    getFunctionTypeBySignature(resultType: Type, paramTypes: Type[]): Signature;
     addFunction(name: string, functionType: Signature, varTypes: Type[], body: Statement): binaryen.Function;
     addGlobal(name: string, type: Type, mutable: boolean, init: Expression): Expression;
     addImport(internalName: string, externalModuleName: string, externalBaseName: string, functionType?: Signature): void;
