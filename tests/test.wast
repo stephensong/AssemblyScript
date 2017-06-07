@@ -9450,6 +9450,14 @@
   )
  )
  (func $SomeClass (type $0) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+  (i32.store
+   (get_local $0)
+   (get_local $1)
+  )
+  (i32.store offset=4
+   (get_local $0)
+   (get_local $2)
+  )
   (return
    (get_local $0)
   )
@@ -9492,8 +9500,18 @@
    )
   )
   (return
-   (i32.load
-    (get_local $0)
+   (i32.add
+    (i32.add
+     (i32.load
+      (get_local $0)
+     )
+     (i32.load
+      (get_local $3)
+     )
+    )
+    (i32.load offset=4
+     (get_local $3)
+    )
    )
   )
  )

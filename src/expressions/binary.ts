@@ -1,5 +1,7 @@
 import * as binaryen from "../binaryen";
 import Compiler from "../compiler";
+import compileLoad from "./helpers/load";
+import compileStore from "./helpers/store";
 import * as reflection from "../reflection";
 import * as typescript from "../typescript";
 
@@ -263,6 +265,40 @@ export function compileAssignmentWithValue(compiler: Compiler, node: typescript.
           : op.teeLocal(variable.index, expression);
       }
 
+    }
+
+  // someVar.someProp = expression
+  } else if (node.left.kind === typescript.SyntaxKind.PropertyAccessExpression) {
+    const accessNode = <typescript.PropertyAccessExpression>node.left;
+    const propertyName = accessNode.name.getText();
+
+    if (accessNode.expression.kind === ts.SyntaxKind.ThisKeyword) {
+      const clazz = compiler.currentFunction && compiler.currentFunction.parent || null;
+      if (clazz) {
+        const property = clazz.properties[propertyName];
+        if (property) {
+          const storeOp = compileStore(compiler, accessNode, property.type,
+            op.getLocal(0, binaryen.typeOf(compiler.uintptrType, compiler.uintptrSize)),
+            compiler.maybeConvertValue(node.right, compiler.compileExpression(node.right, property.type), typescript.getReflectedType(node.right), property.type, false),
+            property.offset
+          );
+
+          if (contextualType === reflection.voidType)
+            return storeOp;
+
+          typescript.setReflectedType(node, property.type);
+          return op.block("", [
+            storeOp,
+            compileLoad(compiler, accessNode, property.type, op.getLocal(0, binaryen.typeOf(compiler.uintptrType, compiler.uintptrSize)), property.offset)
+          ], property.type);
+        } else {
+          compiler.error(node, "No such instance property", "'" + propertyName + "' on " + clazz.name);
+          return op.unreachable();
+        }
+      } else {
+        compiler.error(accessNode, "'this' keyword used in non-instance context");
+        return op.unreachable();
+      }
     }
   }
 

@@ -1,46 +1,33 @@
 import * as binaryen from "../binaryen";
 import Compiler from "../compiler";
+import compileLoad from "./helpers/load";
 import * as reflection from "../reflection";
 import * as typescript from "../typescript";
-
-export function compileLoad(compiler: Compiler, node: typescript.Node, type: reflection.Type, ptr: binaryen.Expression, offset: number): binaryen.Expression {
-  const op = compiler.module;
-
-  typescript.setReflectedType(node, type);
-
-  switch (type) {
-
-    case reflection.byteType:
-      return op.i32.load8_u(offset, type.size, ptr);
-
-    case reflection.sbyteType:
-      return op.i32.load8_s(offset, type.size, ptr);
-
-    case reflection.shortType:
-      return op.i32.load16_s(offset, type.size, ptr);
-
-    case reflection.ushortType:
-      return op.i32.load16_u(offset, type.size, ptr);
-
-    case reflection.intType:
-    case reflection.uintType:
-    case reflection.boolType:
-    case reflection.uintptrType32:
-      return op.i32.load(offset, type.size, ptr);
-
-    case reflection.longType:
-    case reflection.ulongType:
-    case reflection.uintptrType64:
-      return op.i64.load(offset, type.size, ptr);
-
-  }
-  throw Error("unexpected type");
-}
 
 export function compilePropertyAccess(compiler: Compiler, node: typescript.PropertyAccessExpression, contextualType: reflection.Type): binaryen.Expression {
   const op = compiler.module;
 
-  const propertyName = (<typescript.Identifier>node.name).text;
+  const propertyName = node.name.getText();
+
+  // this.identifier
+  if (node.expression.kind === typescript.SyntaxKind.ThisKeyword) {
+    const clazz = compiler.currentFunction && compiler.currentFunction.parent || null;
+    if (clazz) {
+      const property = clazz.properties[propertyName];
+      if (property) {
+        typescript.setReflectedType(node, property.type);
+        return compileLoad(compiler, node, property.type, op.getLocal(0, binaryen.typeOf(compiler.uintptrType, compiler.uintptrSize)), property.offset);
+      } else {
+        compiler.error(node, "No such instance property", "'" + propertyName + "' on " + clazz.name);
+        typescript.setReflectedType(node, contextualType);
+        return op.unreachable();
+      }
+    } else {
+      compiler.error(node, "'this' keyword used in non-instance context");
+      typescript.setReflectedType(node, contextualType);
+      return op.unreachable();
+    }
+  }
 
   // identifier.identifier
   if (node.expression.kind === typescript.SyntaxKind.Identifier) {
@@ -63,7 +50,7 @@ export function compilePropertyAccess(compiler: Compiler, node: typescript.Prope
           // TODO: this'd be a global
         }
       } else {
-        compiler.error(node, "No such static property", "'" + propertyName + "' on " + clazz.toString());
+        compiler.error(node, "No such static property", "'" + propertyName + "' on " + clazz.name);
         typescript.setReflectedType(node, contextualType);
         return op.unreachable();
       }
@@ -77,7 +64,7 @@ export function compilePropertyAccess(compiler: Compiler, node: typescript.Prope
         if (property && property.isInstance)
           return compileLoad(compiler, node, property.type, compiler.compileExpression(node.expression, property.type), property.offset);
         else {
-          compiler.error(node, "No such instance property", "'" + propertyName + "' on " + clazz.toString());
+          compiler.error(node, "No such instance property", "'" + propertyName + "' on " + clazz.name);
           typescript.setReflectedType(node, contextualType);
           return op.unreachable();
         }

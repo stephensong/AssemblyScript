@@ -1,6 +1,6 @@
 import * as binaryen from "../binaryen";
 import Compiler from "../compiler";
-import { compileLoad } from "./propertyaccess";
+import compileLoad from "./helpers/load";
 import * as reflection from "../reflection";
 import * as typescript from "../typescript";
 

@@ -1,4 +1,5 @@
 import * as binaryen from "../binaryen";
+import Class from "./class";
 import Compiler from "../compiler";
 import Type from "./type";
 import { Variable, VariableFlags } from "./variable";
@@ -31,6 +32,7 @@ export class Function extends FunctionBase {
   typeParameters: { [key: string]: Type };
   parameters: FunctionParameter[];
   returnType: Type;
+  parent?: Class;
   body?: typescript.Block | typescript.Expression;
 
   // set on initialization
@@ -45,11 +47,12 @@ export class Function extends FunctionBase {
   breakNumber: number = 0;
   breakDepth: number = 0;
 
-  constructor(name: string, declaration: typescript.FunctionLikeDeclaration, typeParameters: { [key: string]: Type }, parameters: FunctionParameter[], returnType: Type, body?: typescript.Block | typescript.Expression) {
+  constructor(name: string, declaration: typescript.FunctionLikeDeclaration, typeParameters: { [key: string]: Type }, parameters: FunctionParameter[], returnType: Type, parent?: Class, body?: typescript.Block | typescript.Expression) {
     super(name, declaration);
     this.typeParameters = typeParameters;
     this.parameters = parameters;
     this.returnType = returnType;
+    this.parent = parent;
     this.body = body;
   }
 
@@ -108,7 +111,7 @@ export class FunctionTemplate extends FunctionBase {
 
   get isGeneric(): boolean { return !!(this.declaration.typeParameters && this.declaration.typeParameters.length); }
 
-  resolve(compiler: Compiler, typeArguments: typescript.TypeNode[], classTypeArguments?: typescript.TypeNode[]): Function {
+  resolve(compiler: Compiler, typeArguments: typescript.TypeNode[], parent?: Class): Function {
     const typeParametersCount = this.declaration.typeParameters && this.declaration.typeParameters.length || 0;
     if (typeArguments.length !== typeParametersCount)
       throw Error("type parameter count mismatch");
@@ -143,6 +146,6 @@ export class FunctionTemplate extends FunctionBase {
       ? compiler.uintptrType
       : typeParametersMap[(<typescript.TypeNode>this.declaration.type).getText()] || compiler.resolveType(<typescript.TypeNode>this.declaration.type, true);
 
-    return this.instances[name] = new Function(name, this.declaration, typeParametersMap, parameters, returnType, this.declaration.body);
+    return this.instances[name] = new Function(name, this.declaration, typeParametersMap, parameters, returnType, parent, this.declaration.body);
   }
 }

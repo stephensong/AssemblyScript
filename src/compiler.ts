@@ -365,6 +365,7 @@ export class Compiler {
 
   initializeFunction(node: typescript.FunctionLikeDeclaration): void {
     let name: string;
+    let parent: reflection.Class | undefined;
     if (node.kind === typescript.SyntaxKind.FunctionDeclaration) {
       name = this.mangleGlobalName((<typescript.Identifier>node.name).getText(), node.getSourceFile());
     } else {
@@ -376,6 +377,7 @@ export class Compiler {
         name = parentName + "." + (<typescript.Identifier>node.name).getText();
       else
         name = parentName + "#" + (<typescript.Identifier>node.name).getText();
+      parent = typescript.getReflectedClass(parentNode);
     }
 
     if (this.functionTemplates[name])
@@ -389,7 +391,7 @@ export class Compiler {
       return;
     }
 
-    const instance = this.functions[name] = template.resolve(this, []);
+    const instance = this.functions[name] = template.resolve(this, [], parent);
     instance.initialize(this);
     typescript.setReflectedFunction(node, instance);
   }
