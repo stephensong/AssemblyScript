@@ -84,6 +84,8 @@ export {
 
 } from "byots";
 
+import * as ts from 'byots'
+
 // Polyfill 'sys' in browsers
 import * as browsersys from "./typescript/browsersys";
 export const sys = ts.sys || browsersys;

@@ -510,14 +510,14 @@ export class Compiler {
     const previousFunction = this.currentFunction;
     this.currentFunction = instance;
 
-    if (instance.body.kind === ts.SyntaxKind.Block) {
-      const blockNode = <ts.Block>instance.body;
+    if (instance.body.kind === typescript.SyntaxKind.Block) {
+      const blockNode = <typescript.Block>instance.body;
       for (let i = 0, k = blockNode.statements.length; i < k; ++i) {
         const statementNode = blockNode.statements[i];
         body.push(this.compileStatement(statementNode));
       }
     } else {
-      const expressionNode = <ts.Expression>instance.body;
+      const expressionNode = <typescript.Expression>instance.body;
       body.push(this.module.return(
         this.compileExpression(expressionNode, instance.returnType)
       ));
@@ -574,7 +574,7 @@ export class Compiler {
         return op.nop(); // already handled by TypeScript
 
       case typescript.SyntaxKind.EmptyStatement:
-        return statements.compileEmpty(this/*, <ts.EmptyStatement>node*/);
+        return statements.compileEmpty(this/*, <typescript.EmptyStatement>node*/);
 
       case typescript.SyntaxKind.VariableStatement:
         return statements.compileVariable(this, <typescript.VariableStatement>node);
