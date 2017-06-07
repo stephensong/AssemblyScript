@@ -78,7 +78,7 @@ export class ClassTemplate extends ClassBase {
   resolve(compiler: Compiler, typeArguments: typescript.TypeNode[]): Class {
     const typeParametersCount = this.declaration.typeParameters && this.declaration.typeParameters.length || 0;
     if (typeArguments.length !== typeParametersCount)
-      throw Error("type parameter count mismatch")
+      throw Error("type parameter count mismatch");
 
     const typeParametersMap: { [key: string]: Type } = {};
     let name = this.name;

@@ -1,5 +1,4 @@
-
-const now = require("performance-now");
+import now = require("performance-now");
 
 export class Profiler {
   startTimes: { [key: string]: number } = {};

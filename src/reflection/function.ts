@@ -111,7 +111,7 @@ export class FunctionTemplate extends FunctionBase {
   resolve(compiler: Compiler, typeArguments: typescript.TypeNode[]): Function {
     const typeParametersCount = this.declaration.typeParameters && this.declaration.typeParameters.length || 0;
     if (typeArguments.length !== typeParametersCount)
-      throw Error("type parameter count mismatch")
+      throw Error("type parameter count mismatch");
 
     let name = this.name;
 

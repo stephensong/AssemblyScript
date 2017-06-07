@@ -26,7 +26,7 @@ export interface CompilerOptions {
   /** Specifies the byte size of a pointer. WASM32 uses `4`, WASM64 uses `8`. */
   uintptrSize?: number;
 
-  /** Specifies whether the standard library (malloc, free, etc.) shall be excluded.*/
+  /** Specifies whether the standard library (malloc, free, etc.) shall be excluded. */
   noLib?: boolean;
 
   /** Specifies that compilation shall be performed in silent mode without writing to stderr. */

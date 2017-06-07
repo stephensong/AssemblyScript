@@ -17,7 +17,7 @@ export function compileElementAccess(compiler: Compiler, node: typescript.Elemen
       const variable = <reflection.Variable>reference;
 
       if (variable.type.isArray) {
-        const underlyingType = (<reflection.Class>variable.type.underlyingClass).typeParametersMap["T"];
+        const underlyingType = (<reflection.Class>variable.type.underlyingClass).typeParametersMap.T;
 
         return compileLoad(compiler, node, underlyingType,
           op.i32.add(
