@@ -66,41 +66,43 @@ Type      | Native type | Description
 
 WebAssembly-specific operations are available as built-in functions that translate to the respective opcode directly:
 
-Function                                        | Opcode
-------------------------------------------------|----------
-`rotl(value: int, shift: int): int`             | i32.rotl
-`rotll(value: long, shift: long): long`         | i64.rotl
-`rotr(value: int, shift: int): int`             | i32.rotr
-`rotrl(value: long, shift: long): long`         | i64.rotr
-`clz(value: int): int`                          | i32.clz
-`clzl(value: long): long`                       | i64.clz
-`ctz(value: int): int`                          | i32.ctz
-`ctzl(value: long): long`                       | i64.ctz
-`popcnt(value: int): int`                       | i32.popcnt
-`popcntl(value: long): long`                    | i64.popcnt
-`abs(value: double): double`                    | f64.abs
-`absf(value: float): float`                     | f32.abs
-`ceil(value: double): double`                   | f64.ceil
-`ceilf(value: float): float`                    | f32.ceil
-`floor(value: double): double`                  | f64.floor
-`floorf(value: float): float`                   | f32.floor
-`sqrt(value: double): double`                   | f64.sqrt
-`sqrtf(value: float): float`                    | f32.sqrt
-`trunc(value: double): double`                  | f64.trunc
-`truncf(value: float): float`                   | f32.trunc
-`nearest(value: double): double`                | f64.nearest
-`nearestf(value: float): float`                 | f32.nearest
-`min(left: double, right: double): double`      | f64.min
-`minf(left: float, right: float): float`        | f32.min
-`max(left: double, right: double): double`      | f64.max
-`maxf(left: float, right: float): float`        | f32.max
-`copysign(left: double, right: double): double` | f64.copysign
-`copysignf(left: float, right: float): float`   | f32.copysign
-`reinterpreti(value: float): int`               | i32.reinterpret/f32
-`reinterpretl(value: double): long`             | i64.reinterpret/f64
-`reinterpretf(value: int): float`               | f32.reinterpret/i32
-`reinterpretd(value: long): double`             | f64.reinterpret/i64
-`sizeof<T>(): uintptr`                          | -
+Function                                        | Opcode              | Description
+------------------------------------------------|---------------------|-------------
+`rotl(value: int, shift: int): int`             | i32.rotl            | Performs the sign-agnostic rotate left operation on a 32-bit integer.
+`rotll(value: long, shift: long): long`         | i64.rotl            | Performs the sign-agnostic rotate left operation on a 64-bit integer.
+`rotr(value: int, shift: int): int`             | i32.rotr            | Performs the sign-agnostic rotate right operation on a 32-bit integer.
+`rotrl(value: long, shift: long): long`         | i64.rotr            | Performs the sign-agnostic rotate right operation on a 64-bit integer.
+`clz(value: int): int`                          | i32.clz             | Performs the sign-agnostic count leading zero bits operation on a 32-bit integer.<br />All zero bits are considered leading if the value is zero.
+`clzl(value: long): long`                       | i64.clz             | Performs the sign-agnostic count leading zero bits operation on a 64-bit integer.<br />All zero bits are considered leading if the value is zero.
+`ctz(value: int): int`                          | i32.ctz             | Performs the sign-agnostic count trailing zero bits operation on a 32-bit integer.<br />All zero bits are considered trailing if the value is zero.
+`ctzl(value: long): long`                       | i64.ctz             | Performs the sign-agnostic count trailing zero bits operation on a 64-bit integer.<br />All zero bits are considered trailing if the value is zero.
+`popcnt(value: int): int`                       | i32.popcnt          | Performs the sign-agnostic count number of one bits operation on a 32-bit integer.
+`popcntl(value: long): long`                    | i64.popcnt          | Performs the sign-agnostic count number of one bits operation on a 64-bit integer.
+`abs(value: double): double`                    | f64.abs             | Computes the absolute value of a 64-bit float.
+`absf(value: float): float`                     | f32.abs             | Computes the absolute value of a 32-bit float.
+`ceil(value: double): double`                   | f64.ceil            | Performs the ceiling operation on a 64-bit float.
+`ceilf(value: float): float`                    | f32.ceil            | Performs the ceiling operation on a 32-bit float.
+`floor(value: double): double`                  | f64.floor           | Performs the floor operation on a 64-bit float.
+`floorf(value: float): float`                   | f32.floor           | Performs the floor operation on a 32-bit float.
+`sqrt(value: double): double`                   | f64.sqrt            | Calculates the square root of a 64-bit float.
+`sqrtf(value: float): float`                    | f32.sqrt            | Calculates the square root of a 32-bit float.
+`trunc(value: double): double`                  | f64.trunc           | Rounds to the nearest integer towards zero of a 64-bit float.
+`truncf(value: float): float`                   | f32.trunc           | Rounds to the nearest integer towards zero of a 32-bit float.
+`nearest(value: double): double`                | f64.nearest         | Rounds to the nearest integer tied to even of a 64-bit float.
+`nearestf(value: float): float`                 | f32.nearest         | Rounds to the nearest integer tied to even of a 32-bit float.
+`min(left: double, right: double): double`      | f64.min             | Determines the minimum of two 64-bit floats.<br />If either operand is `NaN`, returns `NaN`.
+`minf(left: float, right: float): float`        | f32.min             | Determines the minimum of two 32-bit floats.<br />If either operand is `NaN`, returns `NaN`.
+`max(left: double, right: double): double`      | f64.max             | Determines the maximum of two 64-bit floats.<br />If either operand is `NaN`, returns `NaN`.
+`maxf(left: float, right: float): float`        | f32.max             | Determines the maximum of two 32-bit floats.<br />If either operand is `NaN`, returns `NaN`.
+`copysign(x: double, y: double): double`        | f64.copysign        | Composes a 64-bit float from the magnitude of `x` and the sign of `y`.
+`copysignf(x: float, y: float): float`          | f32.copysign        | Composes a 32-bit float from the magnitude of `x` and the sign of `y`.
+`reinterpreti(value: float): int`               | i32.reinterpret/f32 | Reinterprets the bits of a 32-bit float as a 32-bit integer.
+`reinterpretl(value: double): long`             | i64.reinterpret/f64 | Reinterprets the bits of a 64-bit float as a 64-bit integer.
+`reinterpretf(value: int): float`               | f32.reinterpret/i32 | Reinterprets the bits of a 32-bit integer as a 32-bit float.
+`reinterpretd(value: long): double`             | f64.reinterpret/i64 | Reinterprets the bits of a 64-bit integer as a 64-bit double.
+`current_memory(): int`                         | current_memory      | Returns the current memory size in units of pages. One page is 64kb.
+`grow_memory(value: uint): int`                 | grow_memory         | Grows linear memory by a given unsigned delta of pages. One page is 64kb.<br />Returns the previous memory size in units of pages or `-1` on failure.
+`sizeof<T>(): uintptr`                          | i32/i64.const       | Returns the byte size of the specified core or class type. Compiles to a constant.
 
 By default (i.e. if the `--nolib` option isn't set), standard memory management routines based on [dlmalloc](http://g.oswego.edu/dl/html/malloc.html) and [musl](http://www.musl-libc.org/) will be linked statically and exported to the embedder:
 
