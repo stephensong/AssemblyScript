@@ -107,8 +107,8 @@ By default (i.e. if the `--nolib` option isn't set), standard memory management 
 * `malloc(size: uintptr): uintptr`<br />Allocates a chunk of memory of the specified size and returns a pointer to it.
 * `free(ptr: uintptr): void`<br />Frees a previously allocated chunk of memory by its pointer.
 * `memcpy(dest: uintptr, src: uintptr, size: uintptr): uintptr`<br />Copies data from one chunk of memory to another.
-* `memset(dest: uintptr, c: int, size: uintptr): uintptr`<br />Sets a chunk of memory to the provided value `c` (usually used to reset it to all `0`s).
-* `memcmp(vl: uintptr, vr: uintptr, n: uintptr): int`<br />Compares a chunk of memory to another. Returns `0` if both are equal, otherwise the difference of the first differing byte value (`vl[i] - vr[i]`).
+* `memset(dest: uintptr, c: int, size: uintptr): uintptr`<br />Sets a chunk of memory to the provided value `c`. Usually used to reset it to all `0`s.
+* `memcmp(vl: uintptr, vr: uintptr, n: uintptr): int`<br />Compares a chunk of memory to another. Returns `0` if both are equal, otherwise the difference `vl[i] - vr[i]` of the first differing byte values.
 
 Linking in these memory management routines adds about 11kb to a module. Once WebAssembly exposes the garbage collector natively, there'll be other options as well.
 
