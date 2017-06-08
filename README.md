@@ -102,7 +102,7 @@ Function                                        | Opcode              | Descript
 `reinterpretd(value: long): double`             | f64.reinterpret/i64 | Reinterprets the bits of a 64-bit integer as a 64-bit double.
 `current_memory(): int`                         | current_memory      | Returns the current memory size in units of pages. One page is 64kb.
 `grow_memory(value: uint): int`                 | grow_memory         | Grows linear memory by a given unsigned delta of pages. One page is 64kb.<br />Returns the previous memory size in units of pages or `-1` on failure.
-`sizeof<T>(): uintptr`                          | i32/i64.const       | Returns the byte size of the specified core or class type. Compiles to a constant.
+`sizeof<T>(): uintptr`                          | i32/i64.const       | Returns the byte size of the specified core or class type.
 
 By default (i.e. if the `--nolib` option isn't set), standard memory management routines based on [dlmalloc](http://g.oswego.edu/dl/html/malloc.html) and [musl](http://www.musl-libc.org/) will be linked statically and exported to the embedder:
 
@@ -112,13 +112,13 @@ By default (i.e. if the `--nolib` option isn't set), standard memory management 
 * `memset(dest: uintptr, c: int, size: uintptr): uintptr`<br />Sets a chunk of memory to the provided value `c`. Usually used to reset it to all `0`s.
 * `memcmp(vl: uintptr, vr: uintptr, n: uintptr): int`<br />Compares a chunk of memory to another. Returns `0` if both are equal, otherwise the difference `vl[i] - vr[i]` of the first differing byte values.
 
-Linking in these memory management routines adds about 11kb to a module. Once WebAssembly exposes the garbage collector natively, there'll be other options as well.
+Linking in memory management routines adds about 11kb to a module. Once WebAssembly exposes the garbage collector natively, there'll be other options as well. Note that the `new` operator depends on `malloc` and will break when `--nolib` is specified (and no other `malloc` is present). Also note that calling `grow_memory` where `malloc` is present will most likely break `malloc` as it expects contiguous memory.
 
 Type coercion requires an explicit cast where precision or signage is lost respectively is implicit where it is maintained. For example, to cast a `double` to an `int`:
 
 ```ts
 function example(value: double): int {
-  return value as int; // translates to the respective opcode(s)
+  return value as int; // translates to the respective opcode
 }
 ```
 

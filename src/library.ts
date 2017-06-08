@@ -93,62 +93,62 @@ declare class String extends Uint16Array {
 
 // Builtins
 
-/** Sign-agnostic rotate left of a 32-bit integer. */
+/** Performs the sign-agnostic rotate left operation on a 32-bit integer. */
 declare function rotl(value: int, shift: int): int;
-/** Sign-agnostic rotate left of a 64-bit integer. */
+/** Performs the sign-agnostic rotate left operation on a 64-bit integer. */
 declare function rotll(value: long, shift: long): long;
-/** Sign-agnostic rotate right of a 32-bit integer. */
+/** Performs the sign-agnostic rotate right operation on a 32-bit integer. */
 declare function rotr(value: int, shift: int): int;
-/** Sign-agnostic rotate right of a 64-bit integer. */
+/** Performs the sign-agnostic rotate right operation on a 64-bit integer. */
 declare function rotrl(value: long, shift: long): long;
-/** Sign-agnostic count leading zero bits of a 32-bit integer. All zero bits are considered leading if the value is zero. */
+/** Performs the sign-agnostic count leading zero bits operation on a 32-bit integer. All zero bits are considered leading if the value is zero. */
 declare function clz(value: int): int;
-/** Sign-agnostic count leading zero bits of a 64-bit integer. All zero bits are considered leading if the value is zero. */
+/** Performs the sign-agnostic count leading zero bits operation on a 64-bit integer. All zero bits are considered leading if the value is zero. */
 declare function clzl(value: long): long;
-/** Sign-agnostic count trailing zero bits of a 32-bit integer. All zero bits are considered trailing if the value is zero. */
+/** Performs the sign-agnostic count trailing zero bits operation on a 32-bit integer. All zero bits are considered trailing if the value is zero. */
 declare function ctz(value: int): int;
-/** Sign-agnostic count trailing zero bits of a 64-bit integer. All zero bits are considered trailing if the value is zero. */
+/** Performs the sign-agnostic count trailing zero bits operation on a 64-bit integer. All zero bits are considered trailing if the value is zero. */
 declare function ctzl(value: long): long;
-/** Sign-agnostic count number of one bits of a 32-bit integer. */
+/** Performs the sign-agnostic count number of one bits operation on a 32-bit integer. */
 declare function popcnt(value: int): int;
-/** Sign-agnostic count number of one bits of a 64-bit integer. */
+/** Performs the sign-agnostic count number of one bits operation on a 64-bit integer. */
 declare function popcntl(value: long): long;
-/** Absolute value of a 64-bit float. */
+/** Computes the absolute value of a 64-bit float. */
 declare function abs(value: double): double;
-/** Absolute value of a 32-bit float. */
+/** Computes the absolute value of a 32-bit float. */
 declare function absf(value: float): float;
-/** Ceiling operator of a 64-bit float. */
+/** Performs the ceiling operatoion on a 64-bit float. */
 declare function ceil(value: double): double;
-/** Ceiling operator of a 32-bit float. */
+/** Performs the ceiling operation on a 32-bit float. */
 declare function ceilf(value: float): float;
-/** Floor operator of a 64-bit float. */
+/** Performs the floor operation on a 64-bit float. */
 declare function floor(value: double): double;
-/** Floor operator of a 32-bit float. */
+/** Performs the floor operation on a 32-bit float. */
 declare function floorf(value: float): float;
-/** Square root of a 64-bit float. */
+/** Calculates the square root of a 64-bit float. */
 declare function sqrt(value: double): double;
-/** Square root of a 32-bit float. */
+/** Calculates the square root of a 32-bit float. */
 declare function sqrtf(value: float): float;
-/** Round to nearest integer towards zero of a 64-bit float. */
+/** Rounds to nearest integer towards zero of a 64-bit float. */
 declare function trunc(value: double): double;
-/** Round to nearest integer towards zero of a 32-bit float. */
+/** Rounds to nearest integer towards zero of a 32-bit float. */
 declare function truncf(value: float): float;
-/** Round to nearest integer, ties to even, of a 64-bit float. */
+/** Rounds to nearest integer tied to even of a 64-bit float. */
 declare function nearest(value: double): double;
-/** Round to nearest integer, ties to even, of a 32-bit float. */
+/** Rounds to nearest integer tied to even of a 32-bit float. */
 declare function nearestf(value: float): float;
-/** Minimum binary operator of two 64-bit floats. If either operand is NaN, returns NaN. */
+/** Determines the minimum of two 64-bit floats. If either operand is NaN, returns NaN. */
 declare function min(left: double, right: double): double;
-/** Minimum binary operator of two 32-bit floats. If either operand is NaN, returns NaN. */
+/** Determines the minimum of two 32-bit floats. If either operand is NaN, returns NaN. */
 declare function minf(left: float, right: float): float;
-/** Maximum binary operator of two 64-bit floats. If either operand is NaN, returns NaN. */
+/** Determines the maximum of two 64-bit floats. If either operand is NaN, returns NaN. */
 declare function max(left: double, right: double): double;
-/** Maximum binary operator of two 32-bit floats. If either operand is NaN, returns NaN. */
+/** Determines the maximum of two 32-bit floats. If either operand is NaN, returns NaN. */
 declare function maxf(left: float, right: float): float;
-/** Copysign binary operator of two 64-bit floats. */
-declare function copysign(left: double, right: double): double;
-/** Copysign binary operator of two 32-bit floats. */
-declare function copysignf(left: float, right: float): float;
+/** Composes a 64-bit float from the magnitude of \`x\` and the sign of \`y\`. */
+declare function copysign(x: double, y: double): double;
+/** Composes a 32-bit float from the magnitude of \`x\` and the sign of \`y\`. */
+declare function copysignf(x: float, y: float): float;
 /** Reinterprets the bits of a 32-bit float as a 32-bit integer. */
 declare function reinterpreti(value: float): int;
 /** Reinterprets the bits of a 64-bit float as a 64-bit integer. */
@@ -157,20 +157,20 @@ declare function reinterpretl(value: double): long;
 declare function reinterpretf(value: int): float;
 /** Reinterprets the bits of a 64-bit integer as a 64-bit double. */
 declare function reinterpretd(value: long): double;
-/** Returns the current memory size in units of pages (one page is 64kb). */
+/** Returns the current memory size in units of pages. One page is 64kb. */
 declare function current_memory(): int;
-/** Grow linear memory by a given unsigned delta of pages (one page is 64kb). Returns the previous memory size in units of pages or `-1` on failure. */
-declare function grow_memory(value: int): int;
+/** Grows linear memory by a given unsigned delta of pages. One page is 64kb. Returns the previous memory size in units of pages or \`-1\` on failure. */
+declare function grow_memory(value: uint): int;
 /** Returns the byte size of the specified core or class type. */
 declare function sizeof<T>(): uintptr;
 
 // Standard library
 
-/** Sets a chunk of memory to the provided value `c`. Usually used to reset it to all `0`s. */
+/** Sets a chunk of memory to the provided value \`c\`. Usually used to reset it to all \`0\`s. */
 declare function memset(dest: uintptr, c: int, size: uintptr): uintptr;
 /** Copies data from one chunk of memory to another. */
 declare function memcpy(dest: uintptr, src: uintptr, size: uintptr): uintptr;
-/** Compares a chunk of memory to another. Returns `0` if both are equal, otherwise the difference `vl[i] - vr[i]` of the first differing byte values. */
+/** Compares a chunk of memory to another. Returns \`0\` if both are equal, otherwise the difference \`vl[i] - vr[i]\` of the first differing byte values. */
 declare function memcmp(left: uintptr, right: uintptr, size: uintptr): int;
 /** Allocates a chunk of memory of the specified size and returns a pointer to it. */
 declare function malloc(size: uintptr): uintptr;

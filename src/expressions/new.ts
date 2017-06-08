@@ -42,12 +42,14 @@ export function compileNewClass(compiler: Compiler, node: typescript.NewExpressi
   const op = compiler.module;
   const binaryenPtrType = binaryen.typeOf(compiler.uintptrType, compiler.uintptrSize);
 
-  // ptr = malloc(classSize)
+  // ptr = memset(malloc(classSize), 0, classSize)
 
-  let ptr = op.block("", [
+  let ptr = op.call("memset", [
     op.call("malloc", [ // use wrapped malloc here so mspace_malloc can be inlined
       binaryen.valueOf(compiler.uintptrType, op, clazz.size)
-    ], binaryenPtrType)
+    ], binaryenPtrType),
+    op.i32.const(0),
+    binaryen.valueOf(compiler.uintptrType, op, clazz.size)
   ], binaryenPtrType);
 
   if (clazz.ctor) {
@@ -90,7 +92,7 @@ export function compileNewArray(compiler: Compiler, node: typescript.NewExpressi
   const newptr = compiler.currentFunction.localsByName[".newptr"] || compiler.currentFunction.addLocal(".newptr", compiler.uintptrType);
   const binaryenPtrType = binaryen.typeOf(compiler.uintptrType, compiler.uintptrSize);
 
-  // *(.newptr = malloc(4 + size * (.newsize = EXPR))) = .newsize
+  // *(.newptr = memset(malloc(4 + size * (.newsize = EXPR)), 0, .newsize) = .newsize
   // return .newptr
 
   return op.block("", [
@@ -98,17 +100,21 @@ export function compileNewArray(compiler: Compiler, node: typescript.NewExpressi
       0,
       compiler.uintptrType.size,
       op.teeLocal(newptr.index,
-        op.call("malloc", [ // use wrapped malloc here so mspace_malloc can be inlined
-          cat.add(
-            binaryen.valueOf(compiler.uintptrType, op, 4),
-            cat.mul(
-              binaryen.valueOf(compiler.uintptrType, op, elementType.size),
-              op.teeLocal(newsize.index, sizeExpression)
+        op.call("memset", [
+          op.call("malloc", [ // use wrapped malloc here so mspace_malloc can be inlined
+            cat.add(
+              binaryen.valueOf(compiler.uintptrType, op, 4),
+              cat.mul(
+                binaryen.valueOf(compiler.uintptrType, op, elementType.size),
+                op.teeLocal(newsize.index, sizeExpression)
+              )
             )
-          )
+          ], binaryenPtrType),
+          op.i32.const(0),
+          op.getLocal(newsize.index, binaryenPtrType)
         ], binaryenPtrType)
       ),
-      op.getLocal(newsize.index, binaryen.typeOf(reflection.uintType, compiler.uintptrSize))
+      op.getLocal(newsize.index, binaryenPtrType)
     ),
     op.getLocal(newptr.index, binaryenPtrType)
   ], binaryenPtrType);

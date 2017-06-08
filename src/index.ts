@@ -1,3 +1,9 @@
+/*!
+ * AssemblyScript (c) 2017, Daniel Wirtz
+ * Licensed under the Apache-License, Version 2.0
+ * see: https://github.com/dcodeIO/AssemblyScript for details
+ */
+
 /// <reference path="../lib/require-json.d.ts" />
 
 import * as binaryen from "./binaryen";

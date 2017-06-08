@@ -5,7 +5,7 @@ var out = [];
 var librarySource = fs.readFileSync(__dirname + "/../assembly.d.ts");
 out.push(
   "/** Source of assembly.d.ts for in-browser usage. */",
-  "export const libSource = `" + librarySource.toString("utf8") + "`;",
+  "export const libSource = `" + librarySource.toString("utf8").replace(/`/g, "\\`") + "`;",
   ""
 );
 
