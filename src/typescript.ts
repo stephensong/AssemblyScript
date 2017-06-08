@@ -93,6 +93,7 @@ export const sys = ts.sys || browsersys;
 
 export * from "./typescript/diagnostics";
 
+/** Tests if the specified node has an 'export' modifier. */
 export function isExport(node: ts.Node): boolean {
   if (node && node.modifiers)
     for (let i = 0, k = node.modifiers.length; i < k; ++i)
@@ -101,6 +102,7 @@ export function isExport(node: ts.Node): boolean {
   return false;
 }
 
+/** Tests if the specified node has a 'declare' modifier. */
 export function isImport(node: ts.Node): boolean {
   if (node && node.modifiers)
     for (let i = 0, k = node.modifiers.length; i < k; ++i)
@@ -109,57 +111,69 @@ export function isImport(node: ts.Node): boolean {
   return false;
 }
 
+/** Tests if the specified node has a 'static' modifier or is otherwise part of a static context. */
 export function isStatic(node: ts.Node): boolean {
   return (<ts.ModifierFlags>node.modifierFlagsCache & ts.ModifierFlags.Static) !== 0;
 }
 
+/** Tests if the specified node is flagged 'const'. */
 export function isConst(node: ts.Node): boolean {
   return (node.flags & ts.NodeFlags.Const) !== 0;
 }
 
-export function getReflectedType(node: ts.Node): reflection.Type {
+/** Gets the reflected type of an expression. */
+export function getReflectedType(node: ts.Expression): reflection.Type {
   return <reflection.Type>(<any>node).reflectedType || null;
 }
 
-export function setReflectedType(node: ts.Node, type: reflection.Type): void {
+/** Sets the reflected type of an expression. */
+export function setReflectedType(node: ts.Expression, type: reflection.Type): void {
   if (!type) throw Error("type cannot be null");
   (<any>node).reflectedType = type;
 }
 
+/** Gets the reflected function instance (describing a function with generic types resolved) of a function declaration. */
 export function getReflectedFunction(node: ts.FunctionLikeDeclaration): reflection.Function {
   return <reflection.Function>(<any>node).reflectedFunction || null;
 }
 
+/** Sets the reflected function instance (describing a function with generic types resolved) of a function declaration. */
 export function setReflectedFunction(node: ts.FunctionLikeDeclaration, instance: reflection.Function): void {
   if (!instance)
     throw Error("instance cannot be null");
   (<any>node).reflectedFunction = instance;
 }
 
+/** Gets the reflected function template (describing a function with unresolved generic types) of a function declaration. */
 export function getReflectedFunctionTemplate(node: ts.FunctionLikeDeclaration): reflection.FunctionTemplate {
   return <reflection.FunctionTemplate>(<any>node).reflectedFunctionTemplate || null;
 }
 
+/** Sets the reflected function template (describing a function with unresolved generic types) of a function declaration. */
 export function setReflectedFunctionTemplate(node: ts.FunctionLikeDeclaration, template: reflection.FunctionTemplate): void {
   if (!template)
     throw Error("template cannot be null");
   (<any>node).reflectedFunctionTemplate = template;
 }
 
+/** Gets the reflected class instance (describing a class with generic types resolved) of a class declaration. */
 export function getReflectedClass(node: ts.ClassDeclaration): reflection.Class {
   return <reflection.Class>(<any>node).reflectedClass || null;
 }
 
+/** Sets the reflected class instance (describing a class with generic types resolved) of a class declaration. */
 export function setReflectedClass(node: ts.ClassDeclaration, instance: reflection.Class): void {
   if (!instance)
     throw Error("instance cannot be null");
   (<any>node).reflectedClass = instance;
 }
 
+/** Gets the reflected class template (describing a class with unresolved generic types) of a class declaration. */
 export function getReflectedClassTemplate(node: ts.ClassDeclaration): reflection.ClassTemplate {
   return <reflection.ClassTemplate>(<any>node).reflectedClass || null;
 }
 
+/** Sets the reflected class template (describing a class with unresolved generic types) of a class declaration. */
 export function setReflectedClassTemplate(node: ts.ClassDeclaration, template: reflection.ClassTemplate): void {
   if (!template)
     throw Error("template cannot be null");

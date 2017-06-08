@@ -133,9 +133,20 @@ export function createDiagnosticForNodeEx(node: typescript.Node, category: types
   });
 }
 
+import * as browsersys from "./browsersys";
+
 export function printDiagnostic(diagnostic: typescript.Diagnostic): void {
-  if (diagnostic.category === typescript.DiagnosticCategory.Message)
-    process.stderr.write(formatDiagnostics([ diagnostic ]));
-  else
-    process.stderr.write(formatDiagnosticsWithColorAndContext([ diagnostic ]) + "\n");
+  if (typescript.sys === browsersys) {
+    if (diagnostic.category === typescript.DiagnosticCategory.Message)
+      (console.info || console.log)(formatDiagnostics([ diagnostic ]));
+    else if (diagnostic.category === typescript.DiagnosticCategory.Warning)
+      (console.warn || console.log)(formatDiagnostics([ diagnostic ]));
+    else
+      (console.error || console.log)(formatDiagnostics([ diagnostic ]));
+  } else {
+    if (diagnostic.category === typescript.DiagnosticCategory.Message)
+      process.stderr.write(formatDiagnostics([ diagnostic ]));
+    else
+      process.stderr.write(formatDiagnosticsWithColorAndContext([ diagnostic ]) + "\n");
+  }
 }

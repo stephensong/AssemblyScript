@@ -9454,6 +9454,10 @@
    (get_local $0)
    (get_local $1)
   )
+  (i32.store offset=4
+   (get_local $0)
+   (get_local $1)
+  )
   (i32.store
    (get_local $0)
    (get_local $2)

@@ -11,6 +11,7 @@ import * as reflection from "./reflection";
 import * as typescript from "./typescript";
 import * as statements from "./statements";
 
+/** The exported AssemblyScript namespace. */
 const assemblyscript = {
   binaryen,
   builtins,

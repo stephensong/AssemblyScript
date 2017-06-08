@@ -539,7 +539,7 @@ export class Compiler {
         const property = (<reflection.Class>instance.parent).properties[param.name];
         if (property)
           body.push(
-            compileStore(this, param.node, property.type, op.getLocal(0, binaryen.typeOf(this.uintptrType, this.uintptrSize)), op.getLocal(i + 1, binaryen.typeOf(param.type, this.uintptrSize)), property.offset)
+            compileStore(this, /* solely used for diagnostics anyway */ <typescript.Expression>param.node, property.type, op.getLocal(0, binaryen.typeOf(this.uintptrType, this.uintptrSize)), op.getLocal(i + 1, binaryen.typeOf(param.type, this.uintptrSize)), property.offset)
           );
         else
           this.error(param.node, "Property initializer parameter without a property");

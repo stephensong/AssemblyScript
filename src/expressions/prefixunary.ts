@@ -7,7 +7,7 @@ import * as typescript from "../typescript";
 export function compilePrefixUnary(compiler: Compiler, node: typescript.PrefixUnaryExpression, contextualType: reflection.Type): binaryen.Expression {
   const op = compiler.module;
 
-  let operand = compiler.compileExpression(node.operand, contextualType);
+  const operand = compiler.compileExpression(node.operand, contextualType);
   const operandType = typescript.getReflectedType(node.operand);
 
   switch (node.operator) {

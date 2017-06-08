@@ -76,7 +76,7 @@ export class Class extends ClassBase {
           }
           compiler.initializeFunction(constructorNode);
           this.ctor = typescript.getReflectedFunction(constructorNode);
-          for (let j = 0; j < localInitializers.length; ++j)
+          for (let j = 0, l = localInitializers.length; j < l; ++j)
             this.ctor.parameters[localInitializers[j]].isAlsoProperty = true;
           break;
         }

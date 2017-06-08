@@ -22,7 +22,7 @@ declare type long = number;
 /** A 64-bit unsigned integer. */
 declare type ulong = number;
 
-/** A 1-bit unsigned integer.*/
+/** A 1-bit unsigned integer. */
 declare type bool = boolean;
 
 /** A 32-bit float. */
@@ -67,12 +67,12 @@ declare class String extends Array<ushort> {
 }
 
 // Fillers for TypeScript complaining about missing types with 'nolib'
-interface Boolean { }
-interface Function { }
-interface IArguments { }
-interface Number { }
-interface Object { }
-interface RegExp { }
+declare abstract class Boolean {}
+declare abstract class Function {}
+declare abstract class IArguments {}
+declare abstract class Number {}
+declare abstract class Object {}
+declare abstract class RegExp {}
 
 // Builtins
 declare function rotl(value: int, shift: int): int;

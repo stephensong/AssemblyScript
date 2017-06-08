@@ -1,14 +1,26 @@
 import now = require("performance-now");
 
+/** A simple profiler used to measure compilation times. */
 export class Profiler {
-  startTimes: { [key: string]: number } = {};
 
-  start(name: string): void {
-    this.startTimes[name] = now();
+  /** Cached labels. */
+  labels: { [key: string]: number } = {};
+
+  /**
+   * Starts measuring using the specified label.
+   * @param label Label
+   */
+  start(label: string): void {
+    this.labels[label] = now();
   }
 
-  end(name: string): number {
-    const start = this.startTimes[name];
+  /**
+   * Ends measuring using the specified label.
+   * @param label Label
+   * @returns High resolution time span in milliseconds
+   */
+  end(label: string): number {
+    const start = this.labels[label];
     if (!start)
       return 0;
     return now() - start;

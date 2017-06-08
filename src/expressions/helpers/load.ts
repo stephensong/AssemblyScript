@@ -3,7 +3,7 @@ import Compiler from "../../compiler";
 import * as reflection from "../../reflection";
 import * as typescript from "../../typescript";
 
-export function compileLoad(compiler: Compiler, node: typescript.Node, type: reflection.Type, ptr: binaryen.Expression, offset: number): binaryen.Expression {
+export function compileLoad(compiler: Compiler, node: typescript.Expression, type: reflection.Type, ptr: binaryen.Expression, offset: number): binaryen.Expression {
   const op = compiler.module;
 
   typescript.setReflectedType(node, type);

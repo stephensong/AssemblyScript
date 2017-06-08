@@ -4,6 +4,7 @@ import * as typescript from "./typescript";
 
 import { Compiler } from "./compiler";
 
+/** Tests if the specified global name corresponds to a builtin function. */
 export function isBuiltin(name: string): boolean {
   switch (name) {
     case "rotl":
