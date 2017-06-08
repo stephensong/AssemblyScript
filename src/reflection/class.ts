@@ -32,6 +32,9 @@ export class Class extends ClassBase {
     this.typeParametersMap = typeParametersMap;
   }
 
+  // TODO
+  get isArray(): boolean { return (<typescript.Identifier>this.declaration.name).getText() === "Array"; }
+
   initialize(compiler: Compiler): void {
     for (let i = 0, k = this.declaration.members.length; i < k; ++i) {
       const member = this.declaration.members[i];
@@ -56,6 +59,7 @@ export class Class extends ClassBase {
         case typescript.SyntaxKind.Constructor:
         {
           const constructorNode = <typescript.ConstructorDeclaration>member;
+          const localInitializers: number[] = [];
           for (let j = 0, l = constructorNode.parameters.length; j < l; ++j) {
             const parameterNode = constructorNode.parameters[j];
             if (parameterNode.modifiers && parameterNode.modifiers.length) {
@@ -63,6 +67,7 @@ export class Class extends ClassBase {
               const type = compiler.resolveType(<typescript.TypeNode>parameterNode.type);
               if (type) {
                 this.properties[name] = new Property(name, /* works, somehow: */ <typescript.PropertyDeclaration>member, type, this.size);
+                localInitializers.push(j);
                 this.size += type.size;
               } else {
                 compiler.error(parameterNode, "Unresolvable type");
@@ -71,6 +76,8 @@ export class Class extends ClassBase {
           }
           compiler.initializeFunction(constructorNode);
           this.ctor = typescript.getReflectedFunction(constructorNode);
+          for (let j = 0; j < localInitializers.length; ++j)
+            this.ctor.parameters[localInitializers[j]].isAlsoProperty = true;
           break;
         }
 

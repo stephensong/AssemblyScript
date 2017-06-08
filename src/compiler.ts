@@ -2,6 +2,7 @@ import * as base64 from "@protobufjs/base64";
 import * as binaryen from "./binaryen";
 import * as builtins from "./builtins";
 import * as expressions from "./expressions";
+import compileStore from "./expressions/helpers/store";
 import * as library from "./library";
 import * as path from "path";
 import Profiler from "./profiler";
@@ -337,7 +338,7 @@ export class Compiler {
     if (!mutable)
       flags |= reflection.VariableFlags.constant;
 
-    this.globals[name] = new reflection.Variable(name, type, flags, 0, 0);
+    this.globals[name] = new reflection.Variable(name, type, flags, 0);
 
     if (initializerNode) {
 
@@ -532,6 +533,19 @@ export class Compiler {
     this.currentFunction = instance;
     const initialLocalsIndex = instance.locals.length;
 
+    for (let i = 0; i < instance.parameters.length; ++i) {
+      const param = instance.parameters[i];
+      if (param.isAlsoProperty) {
+        const property = (<reflection.Class>instance.parent).properties[param.name];
+        if (property)
+          body.push(
+            compileStore(this, param.node, property.type, op.getLocal(0, binaryen.typeOf(this.uintptrType, this.uintptrSize)), op.getLocal(i + 1, binaryen.typeOf(param.type, this.uintptrSize)), property.offset)
+          );
+        else
+          this.error(param.node, "Property initializer parameter without a property");
+      }
+    }
+
     if (instance.body.kind === typescript.SyntaxKind.Block) {
       const blockNode = <typescript.Block>instance.body;
       for (let i = 0, k = blockNode.statements.length; i < k; ++i) {
@@ -540,7 +554,7 @@ export class Compiler {
       }
     } else {
       const expressionNode = <typescript.Expression>instance.body;
-      body.push(this.module.return(
+      body.push(op.return(
         this.compileExpression(expressionNode, instance.returnType)
       ));
     }
@@ -968,8 +982,10 @@ export class Compiler {
             if (reference instanceof reflection.ClassTemplate && referenceNode.typeArguments) {
               const template = <reflection.ClassTemplate>reference;
               const instance = template.resolve(this, referenceNode.typeArguments);
-              this.classes[instance.name] = instance;
-              instance.initialize(this);
+              if (!this.classes[instance.name]) {
+                this.classes[instance.name] = instance;
+                instance.initialize(this);
+              }
               return instance.type;
             }
           }

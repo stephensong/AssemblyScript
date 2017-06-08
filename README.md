@@ -46,23 +46,23 @@ Usage
 -----
 An AssemblyScript program is valid TypeScript syntactically, but not necessarily semantically.
 
-WebAssembly-specific types are obtained by referencing `assembly.d.ts`:
+WebAssembly-specific types are obtained by referencing [assembly.d.ts](./assembly.d.ts):
 
-Type      | WASM type | Description
-----------|-----------|-------------
-`sbyte`   | i32       | An 8-bit signed integer.
-`byte`    | i32       | An 8-bit unsigned integer.
-`short`   | i32       | A 16-bit signed integer.
-`ushort`  | i32       | A 16-bit unsigned integer.
-`int`     | i32       | A 32-bit signed integer.
-`uint`    | i32       | A 32-bit unsigned integer.
-`long`    | i64       | A 64-bit signed integer.
-`ulong`   | i64       | A 64-bit unsigned integer.
-`bool`    | i32       | A 1-bit unsigned integer.
-`uintptr` | i32 / i64 | A 32-bit unsigned integer when targeting WASM32.<br />A 64-bit unsigned integer when targeting WASM64.
-`float`   | f32       | A 32-bit float.
-`double`  | f64       | A 64-bit float.
-`void`    | none      | No return type.
+Type      | Native type | Description
+----------|-------------|-------------
+`sbyte`   | i32         | An 8-bit signed integer.
+`byte`    | i32         | An 8-bit unsigned integer.
+`short`   | i32         | A 16-bit signed integer.
+`ushort`  | i32         | A 16-bit unsigned integer.
+`int`     | i32         | A 32-bit signed integer.
+`uint`    | i32         | A 32-bit unsigned integer.
+`long`    | i64         | A 64-bit signed integer.
+`ulong`   | i64         | A 64-bit unsigned integer.
+`bool`    | i32         | A 1-bit unsigned integer.
+`uintptr` | i32 / i64   | A 32-bit unsigned integer when targeting 32-bit WebAssembly.<br />A 64-bit unsigned integer when targeting 64-bit WebAssembly.
+`float`   | f32         | A 32-bit float.
+`double`  | f64         | A 64-bit float.
+`void`    | none        | No return type.
 
 WebAssembly-specific operations are available as built-in functions that translate to the respective opcode directly:
 
@@ -100,6 +100,7 @@ Function                                        | Opcode
 `reinterpretl(value: double): long`             | i64.reinterpret/f64
 `reinterpretf(value: int): float`               | f32.reinterpret/i32
 `reinterpretd(value: long): double`             | f64.reinterpret/i64
+`sizeof<T>(): uintptr`                          | -
 
 By default (i.e. if the `--nolib` option isn't set), standard memory management routines based on [dlmalloc](http://g.oswego.edu/dl/html/malloc.html) and [musl](http://www.musl-libc.org/) will be linked statically and exported to the embedder:
 
@@ -109,7 +110,7 @@ By default (i.e. if the `--nolib` option isn't set), standard memory management 
 * `memset(dest: uintptr, c: int, size: uintptr): uintptr`<br />Sets a chunk of memory to the provided value `c` (usually used to reset it to all `0`s).
 * `memcmp(vl: uintptr, vr: uintptr, n: uintptr): int`<br />Compares a chunk of memory to another. Returns `0` if both are equal, otherwise the difference of the first differing byte value (`vl[i] - vr[i]`).
 
-Linking in malloc and friends adds about 11kb to a module. Once WebAssembly exposes the garbage collector natively, there'll be other options as well.
+Linking in these memory management routines adds about 11kb to a module. Once WebAssembly exposes the garbage collector natively, there'll be other options as well.
 
 Type coercion requires an explicit cast where precision or signage is lost respectively is implicit where it is maintained. For example, to cast a `double` to an `int`:
 

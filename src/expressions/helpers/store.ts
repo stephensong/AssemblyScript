@@ -8,29 +8,38 @@ export function compileStore(compiler: Compiler, node: typescript.Node, type: re
 
   typescript.setReflectedType(node, type);
 
-  switch (type) {
+  switch (type.kind) {
 
-    case reflection.byteType:
-    case reflection.sbyteType:
+    case reflection.TypeKind.byte:
+    case reflection.TypeKind.sbyte:
       return op.i32.store8(offset, type.size, ptr, value);
 
-    case reflection.shortType:
-    case reflection.ushortType:
+    case reflection.TypeKind.short:
+    case reflection.TypeKind.ushort:
       return op.i32.store16(offset, type.size, ptr, value);
 
-    case reflection.intType:
-    case reflection.uintType:
-    case reflection.boolType:
-    case reflection.uintptrType32:
+    case reflection.TypeKind.int:
+    case reflection.TypeKind.uint:
+    case reflection.TypeKind.bool:
       return op.i32.store(offset, type.size, ptr, value);
 
-    case reflection.longType:
-    case reflection.ulongType:
-    case reflection.uintptrType64:
+    case reflection.TypeKind.long:
+    case reflection.TypeKind.ulong:
       return op.i64.store(offset, type.size, ptr, value);
 
+    case reflection.TypeKind.uintptr:
+      if (type.size === 4)
+        return op.i32.store(offset, type.size, ptr, value);
+      else
+        return op.i64.store(offset, type.size, ptr, value);
+
+    case reflection.TypeKind.float:
+      return op.f32.store(offset, type.size, ptr, value);
+
+    case reflection.TypeKind.double:
+      return op.f64.store(offset, type.size, ptr, value);
   }
-  throw Error("unexpected type");
+  throw Error("unexpected type: " + type);
 }
 
 export { compileStore as default };

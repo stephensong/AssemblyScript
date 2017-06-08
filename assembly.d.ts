@@ -109,7 +109,6 @@ declare function reinterpretf(value: int): float;
 declare function reinterpretd(value: long): double;
 declare function current_memory(): int;
 declare function grow_memory(value: int): int;
-
 declare function sizeof<T>(): uintptr;
 
 // Linked-in standard library

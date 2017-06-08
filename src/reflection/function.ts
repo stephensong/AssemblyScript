@@ -23,8 +23,10 @@ export abstract class FunctionBase {
 }
 
 export interface FunctionParameter {
+  node: typescript.Node;
   name: string;
   type: Type;
+  isAlsoProperty?: boolean;
 }
 
 /** A function instance with generic parameters resolved. */
@@ -137,6 +139,7 @@ export class FunctionTemplate extends FunctionBase {
     for (let i = 0, k = this.declaration.parameters.length; i < k; ++i) {
       const parameter = this.declaration.parameters[i];
       parameters[i] = {
+        node: parameter,
         name: parameter.name.getText(),
         type: typeParametersMap[parameter.name.getText()] || compiler.resolveType(<typescript.TypeNode>parameter.type)
       };

@@ -1,12 +1,13 @@
 import * as binaryen from "../binaryen";
 import Compiler from "../compiler";
+import compileLiteral from "./literal";
 import * as reflection from "../reflection";
 import * as typescript from "../typescript";
 
 export function compilePrefixUnary(compiler: Compiler, node: typescript.PrefixUnaryExpression, contextualType: reflection.Type): binaryen.Expression {
   const op = compiler.module;
 
-  const operand = compiler.compileExpression(node.operand, contextualType);
+  let operand = compiler.compileExpression(node.operand, contextualType);
   const operandType = typescript.getReflectedType(node.operand);
 
   switch (node.operator) {
@@ -38,16 +39,19 @@ export function compilePrefixUnary(compiler: Compiler, node: typescript.PrefixUn
     {
       typescript.setReflectedType(node, operandType);
 
+      if (node.operand.kind === typescript.SyntaxKind.NumericLiteral)
+        return compileLiteral(compiler, <typescript.LiteralExpression>node.operand, operandType, true);
+
       if (operandType === reflection.floatType)
-        return op.f32.neg(node.operand);
+        return op.f32.neg(operand);
 
       else if (operandType === reflection.doubleType)
-        return op.f64.neg(node.operand);
+        return op.f64.neg(operand);
 
       else if (operandType.isLong)
         return op.i64.sub(op.i64.const(0, 0), operand);
 
-      else // FIXME: negated constant literals result in sub(const.0, const.value)
+      else
         return compiler.maybeConvertValue(node, op.i32.sub(op.i32.const(0), operand), reflection.intType, operandType, true);
     }
 

@@ -53,7 +53,7 @@ export class Type {
   get isInt(): boolean { return this.kind === TypeKind.int || this.kind === TypeKind.uint || (this.kind === TypeKind.uintptr && this.size === 4); }
   get isLong(): boolean { return this.kind === TypeKind.long || this.kind === TypeKind.ulong || (this.kind === TypeKind.uintptr && this.size === 8); }
   get isClass(): boolean { return this.kind === TypeKind.uintptr && !!this.underlyingClass; }
-  get isArray(): boolean { return this.isClass && (<Class>this.underlyingClass).name === "Array"; }
+  get isArray(): boolean { return this.isClass && (<Class>this.underlyingClass).isArray; }
 
   withUnderlyingClass(underlyingClass: Class): Type {
     const type = new Type(this.kind, this.size);

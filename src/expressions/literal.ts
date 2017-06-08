@@ -4,7 +4,7 @@ import * as Long from "long";
 import * as reflection from "../reflection";
 import * as typescript from "../typescript";
 
-export function compileLiteral(compiler: Compiler, node: typescript.LiteralExpression, contextualType: reflection.Type): binaryen.Expression {
+export function compileLiteral(compiler: Compiler, node: typescript.LiteralExpression, contextualType: reflection.Type, negate: boolean = false): binaryen.Expression {
   const op = compiler.module;
 
   let text = node.text;
@@ -12,11 +12,15 @@ export function compileLiteral(compiler: Compiler, node: typescript.LiteralExpre
 
     case "true":
       typescript.setReflectedType(node, reflection.boolType);
-      return contextualType.isLong ? op.i64.const(1, 0) : op.i32.const(1);
+      return negate
+        ? contextualType.isLong ? op.i64.const(0, 0) : op.i32.const(0)
+        : contextualType.isLong ? op.i64.const(1, 0) : op.i32.const(1);
 
     case "false":
       typescript.setReflectedType(node, reflection.boolType);
-      return contextualType.isLong ? op.i64.const(0, 0) : op.i32.const(0);
+      return negate
+        ? contextualType.isLong ? op.i64.const(1, 0) : op.i32.const(1)
+        : contextualType.isLong ? op.i64.const(0, 0) : op.i32.const(0);
 
     case "null":
       typescript.setReflectedType(node, compiler.uintptrType);
@@ -31,6 +35,8 @@ export function compileLiteral(compiler: Compiler, node: typescript.LiteralExpre
 
     if (/^(?![eE])[0-9]*(?:\.[0-9]*)?(?:[eE][+-]?[0-9]+)?$/.test(text)) {
       floatValue = parseFloat(text);
+      if (negate)
+        floatValue = -floatValue;
     } else {
       floatValue = 0;
       compiler.error(node, "Illegal float literal", text);
@@ -54,6 +60,9 @@ export function compileLiteral(compiler: Compiler, node: typescript.LiteralExpre
       compiler.error(node, "Illegal integer literal", text);
     }
 
+    if (negate)
+      intValue = -intValue;
+
     switch (contextualType) {
 
       case reflection.sbyteType:
@@ -75,7 +84,9 @@ export function compileLiteral(compiler: Compiler, node: typescript.LiteralExpre
       case reflection.longType:
       case reflection.ulongType:
       case reflection.uintptrType64:
-        const long = Long.fromString(text, !contextualType.isSigned, intRadix);
+        let long = Long.fromString(text, !contextualType.isSigned, intRadix);
+        if (negate)
+          long = long.negate();
         return op.i64.const(long.low, long.high);
 
     }
@@ -83,3 +94,5 @@ export function compileLiteral(compiler: Compiler, node: typescript.LiteralExpre
   compiler.error(node, "Unsupported literal", "'" + text + "' in " + reflection.TypeKind[contextualType.kind] + " context\n" + (new Error()).stack);
   return op.unreachable();
 }
+
+export { compileLiteral as default };
