@@ -37,6 +37,8 @@ export interface CompilerOptions {
 
 /** AssemblyScript compiler. */
 export class Compiler {
+  static lastDiagnostics: typescript.Diagnostic[];
+
   options: CompilerOptions;
 
   // TypeScript-related
@@ -119,8 +121,10 @@ export class Compiler {
     let diagnostics = typescript.getPreEmitDiagnostics(compiler.program);
     for (let i = 0, k = diagnostics.length; i < k; ++i) {
       typescript.printDiagnostic(diagnostics[i]);
-      if (diagnostics[i].category === typescript.DiagnosticCategory.Error)
+      if (diagnostics[i].category === typescript.DiagnosticCategory.Error) {
+        this.lastDiagnostics = diagnostics;
         return null;
+      }
     }
 
     if (!silent)
@@ -132,8 +136,10 @@ export class Compiler {
     // bail out if there were initialization errors
     diagnostics = compiler.diagnostics.getDiagnostics();
     for (let i = 0, k = diagnostics.length; i < k; ++i)
-      if (diagnostics[i].category === typescript.DiagnosticCategory.Error)
+      if (diagnostics[i].category === typescript.DiagnosticCategory.Error) {
+        this.lastDiagnostics = diagnostics;
         return null;
+      }
 
     if (!silent)
       compiler.profiler.start("compile");
@@ -144,8 +150,10 @@ export class Compiler {
     // bail out if there were compilation errors
     diagnostics = compiler.diagnostics.getDiagnostics();
     for (let i = 0, k = diagnostics.length; i < k; ++i)
-      if (diagnostics[i].category === typescript.DiagnosticCategory.Error)
+      if (diagnostics[i].category === typescript.DiagnosticCategory.Error) {
+        this.lastDiagnostics = diagnostics;
         return null;
+      }
 
     return compiler.module;
   }
