@@ -48,7 +48,7 @@ export function compileNewClass(compiler: Compiler, node: typescript.NewExpressi
     op.call("malloc", [ // use wrapped malloc here so mspace_malloc can be inlined
       binaryen.valueOf(compiler.uintptrType, op, clazz.size)
     ], binaryenPtrType),
-    op.i32.const(0),
+    op.i32.const(0), // 2nd memset argument is int
     binaryen.valueOf(compiler.uintptrType, op, clazz.size)
   ], binaryenPtrType);
 
@@ -83,34 +83,34 @@ export function compileNewClass(compiler: Compiler, node: typescript.NewExpressi
   return ptr;
 }
 
-export function compileNewArray(compiler: Compiler, node: typescript.NewExpression, elementType: reflection.Type, sizeArgument: typescript.Expression) {
+export function compileNewArray(compiler: Compiler, node: typescript.NewExpression, elementType: reflection.Type, sizeArgumentNode: typescript.Expression) {
   const op = compiler.module;
 
-  const sizeExpression = compiler.maybeConvertValue(sizeArgument, compiler.compileExpression(sizeArgument, compiler.uintptrType), typescript.getReflectedType(sizeArgument), compiler.uintptrType, false);
-  const cat = binaryen.categoryOf(compiler.uintptrType, compiler.module, compiler.uintptrSize);
-  const newsize = compiler.currentFunction.localsByName[".newsize"] || compiler.currentFunction.addLocal(".newsize", reflection.uintType);
+  const sizeArgument = compiler.maybeConvertValue(sizeArgumentNode, compiler.compileExpression(sizeArgumentNode, compiler.uintptrType), typescript.getReflectedType(sizeArgumentNode), compiler.uintptrType, false);
+  const uintptrCategory = binaryen.categoryOf(compiler.uintptrType, compiler.module, compiler.uintptrSize);
+  const newsize = compiler.currentFunction.localsByName[".newsize"] || compiler.currentFunction.addLocal(".newsize", compiler.uintptrType);
   const newptr = compiler.currentFunction.localsByName[".newptr"] || compiler.currentFunction.addLocal(".newptr", compiler.uintptrType);
   const binaryenPtrType = binaryen.typeOf(compiler.uintptrType, compiler.uintptrSize);
 
-  // *(.newptr = memset(malloc(4 + size * (.newsize = EXPR)), 0, .newsize) = .newsize
+  // *(.newptr = memset(malloc(uintptrSize + size * (.newsize = EXPR)), 0, .newsize) = .newsize
   // return .newptr
 
   return op.block("", [
-    cat.store(
+    uintptrCategory.store(
       0,
       compiler.uintptrType.size,
       op.teeLocal(newptr.index,
         op.call("memset", [
           op.call("malloc", [ // use wrapped malloc here so mspace_malloc can be inlined
-            cat.add(
-              binaryen.valueOf(compiler.uintptrType, op, 4),
-              cat.mul(
+            uintptrCategory.add(
+              binaryen.valueOf(compiler.uintptrType, op, compiler.uintptrSize),
+              uintptrCategory.mul(
                 binaryen.valueOf(compiler.uintptrType, op, elementType.size),
-                op.teeLocal(newsize.index, sizeExpression)
+                op.teeLocal(newsize.index, sizeArgument)
               )
             )
           ], binaryenPtrType),
-          op.i32.const(0),
+          op.i32.const(0), // 2nd memset argument is int
           op.getLocal(newsize.index, binaryenPtrType)
         ], binaryenPtrType)
       ),
@@ -119,5 +119,3 @@ export function compileNewArray(compiler: Compiler, node: typescript.NewExpressi
     op.getLocal(newptr.index, binaryenPtrType)
   ], binaryenPtrType);
 }
-
-// TODO: String (an ushort array basically)

@@ -55,8 +55,8 @@ declare type float64 = double;
 
 /** A fixed-size array. */
 declare class Array<T> {
-  readonly length: uint;
-  constructor(size: uint);
+  readonly length: uintptr;
+  constructor(size: uintptr);
 }
 
 /** A fixed-size 8-bit signed integer array. */
@@ -86,8 +86,8 @@ declare class Buffer extends Uint8Array {}
 
 /** A fixed-size utf16-le encoded string. */
 declare class String extends Uint16Array {
-  readonly length: uint;
-  constructor(size: uint);
+  readonly length: uintptr;
+  constructor(size: uintptr);
 }
 
 // Builtins

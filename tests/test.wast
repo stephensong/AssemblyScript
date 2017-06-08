@@ -9475,16 +9475,20 @@
    (block i32
     (i32.store
      (tee_local $2
-      (call $malloc
-       (i32.add
-        (i32.const 4)
-        (i32.mul
+      (call $memset
+       (call $malloc
+        (i32.add
          (i32.const 4)
-         (tee_local $1
-          (i32.const 10)
+         (i32.mul
+          (i32.const 4)
+          (tee_local $1
+           (i32.const 10)
+          )
          )
         )
        )
+       (i32.const 0)
+       (get_local $1)
       )
      )
      (get_local $1)
@@ -9492,12 +9496,36 @@
     (get_local $2)
    )
   )
+  (drop
+   (i32.load offset=4
+    (i32.add
+     (get_local $0)
+     (i32.mul
+      (i32.const 0)
+      (i32.const 4)
+     )
+    )
+   )
+  )
+  (drop
+   (i32.load offset=4
+    (i32.add
+     (get_local $0)
+     (i32.mul
+      (i32.const 9)
+      (i32.const 4)
+     )
+    )
+   )
+  )
   (set_local $3
    (call $SomeClass
-    (block i32
+    (call $memset
      (call $malloc
       (i32.const 8)
      )
+     (i32.const 0)
+     (i32.const 8)
     )
     (i32.const 1)
     (i32.const 2)

@@ -286,10 +286,10 @@ export class Compiler {
     const binaryenPtrType = binaryen.typeOf(this.uintptrType, this.uintptrSize);
 
     // initialize mspace'd malloc on start and remember the mspace within `.msp`:
-    op.addGlobal(".msp", binaryenPtrType, true, binaryen.valueOf(this.uintptrType, this.module, 0));
+    op.addGlobal(".msp", binaryenPtrType, true, binaryen.valueOf(this.uintptrType, op, 0));
     this.globalInitializers.push(
       op.setGlobal(".msp", op.call("mspace_init", [
-        binaryen.valueOf(this.uintptrType, this.module, this.uintptrSize * 2) // TODO: change to actual heap start offset
+        binaryen.valueOf(this.uintptrType, op, this.uintptrSize * 2) // TODO: change to actual heap start offset
       ], binaryenPtrType))
     );
 
@@ -354,7 +354,7 @@ export class Compiler {
         op.addGlobal(name, binaryen.typeOf(type, this.uintptrSize), mutable, expressions.compileLiteral(this, <typescript.LiteralExpression>initializerNode, type));
 
       } else if (mutable) {
-        op.addGlobal(name, binaryen.typeOf(type, this.uintptrSize), mutable, binaryen.valueOf(type, this.module, 0));
+        op.addGlobal(name, binaryen.typeOf(type, this.uintptrSize), mutable, binaryen.valueOf(type, op, 0));
 
         this.globalInitializers.push(
           op.setGlobal(name,
@@ -369,7 +369,7 @@ export class Compiler {
         this.error(initializerNode, "Unsupported global constant initializer");
 
     } else
-      op.addGlobal(name, binaryen.typeOf(type, this.uintptrSize), mutable, binaryen.valueOf(type, this.module, 0));
+      op.addGlobal(name, binaryen.typeOf(type, this.uintptrSize), mutable, binaryen.valueOf(type, op, 0));
   }
 
   initializeFunction(node: typescript.FunctionLikeDeclaration): void {
@@ -571,7 +571,7 @@ export class Compiler {
       body.push(op.return(op.getLocal(0, binaryen.typeOf(this.uintptrType, this.uintptrSize))));
 
     const additionalLocals = instance.locals.slice(initialLocalsIndex).map(local => binaryen.typeOf(local.type, this.uintptrSize));
-    const binaryenFunction = this.module.addFunction(instance.name, instance.binaryenSignature, additionalLocals, this.module.block("", body));
+    const binaryenFunction = this.module.addFunction(instance.name, instance.binaryenSignature, additionalLocals, op.block("", body));
 
     if (instance.isExport)
       this.module.addExport(instance.name, instance.name);
@@ -710,12 +710,12 @@ export class Compiler {
       case typescript.SyntaxKind.FalseKeyword:
 
         typescript.setReflectedType(node, reflection.boolType);
-        return binaryen.valueOf(reflection.boolType, this.module, node.kind === typescript.SyntaxKind.TrueKeyword ? 1 : 0);
+        return binaryen.valueOf(reflection.boolType, op, node.kind === typescript.SyntaxKind.TrueKeyword ? 1 : 0);
 
       case typescript.SyntaxKind.NullKeyword:
 
         typescript.setReflectedType(node, this.uintptrType);
-        return binaryen.valueOf(this.uintptrType, this.module, 0);
+        return binaryen.valueOf(this.uintptrType, op, 0);
     }
 
     this.error(node, "Unsupported expression node", typescript.SyntaxKind[node.kind]);
@@ -976,7 +976,7 @@ export class Compiler {
               case "uint": return reflection.uintType;
               case "long": return reflection.longType;
               case "ulong": return reflection.ulongType;
-              case "bool": return reflection.boolType;
+              case "bool": case "boolean": return reflection.boolType;
               case "float": return reflection.floatType;
               case "double": return reflection.doubleType;
               case "uintptr": return this.uintptrType;
