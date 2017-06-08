@@ -958,6 +958,14 @@ export class Compiler {
           this.error(type, "Illegal type", "void");
         return reflection.voidType;
 
+      case typescript.SyntaxKind.BooleanKeyword:
+        this.warn(type, "Assuming 'bool'");
+        return reflection.boolType;
+
+      case typescript.SyntaxKind.NumberKeyword:
+        this.warn(type, "Assuming 'double'");
+        return reflection.doubleType;
+
       case typescript.SyntaxKind.TypeReference:
       {
         const referenceNode = <typescript.TypeReferenceNode>type;
@@ -976,7 +984,7 @@ export class Compiler {
               case "uint": return reflection.uintType;
               case "long": return reflection.longType;
               case "ulong": return reflection.ulongType;
-              case "bool": case "boolean": return reflection.boolType;
+              case "bool": return reflection.boolType;
               case "float": return reflection.floatType;
               case "double": return reflection.doubleType;
               case "uintptr": return this.uintptrType;
@@ -1000,6 +1008,8 @@ export class Compiler {
         }
       }
     }
+
+    console.log(typescript.SyntaxKind[type.kind]);
 
     this.error(type, "Unsupported type", type.getText()/* + "\n" + (new Error().stack)*/);
     return reflection.voidType;

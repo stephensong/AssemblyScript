@@ -337,7 +337,7 @@ export function compileBinary(compiler: Compiler, node: typescript.BinaryExpress
 
   if (result)
     return isCompound
-      ? compileAssignmentWithValue(compiler, node, left, result, resultType)
+      ? compileAssignmentWithValue(compiler, node, left, result, contextualType)
       : result;
 
   compiler.error(node.operatorToken, "Unsupported binary operator", typescript.SyntaxKind[node.operatorToken.kind]);
@@ -376,6 +376,75 @@ export function compileAssignmentWithValue(compiler: Compiler, node: typescript.
           : op.teeLocal(variable.index, expression);
       }
 
+    }
+
+  } else if (node.left.kind === typescript.SyntaxKind.ElementAccessExpression) {
+    const accessNode = <typescript.ElementAccessExpression>node.left;
+    const reference = compiler.resolveReference(<typescript.Identifier>accessNode.expression);
+    const binaryenPtrType = binaryen.typeOf(compiler.uintptrType, compiler.uintptrSize);
+    const uintptrCategory = <binaryen.I32Operations | binaryen.I64Operations>binaryen.categoryOf(compiler.uintptrType, op, compiler.uintptrSize);
+    const argumentNode = <typescript.Expression>accessNode.argumentExpression;
+    const argument = compiler.maybeConvertValue(argumentNode, compiler.compileExpression(argumentNode, compiler.uintptrType), typescript.getReflectedType(argumentNode), compiler.uintptrType, false);
+
+    // this[argument] = expression
+    if (accessNode.expression.kind === typescript.SyntaxKind.ThisKeyword) {
+      const clazz = compiler.currentFunction && compiler.currentFunction.parent || null;
+      if (clazz && compiler.currentFunction.isInstance) {
+        if (clazz.type.isArray) {
+          const underlyingType = (<reflection.Class>clazz.type.underlyingClass).typeParametersMap.T;
+          const storeOp = compileStore(compiler, accessNode, underlyingType,
+            uintptrCategory.add(
+              op.getLocal(0, binaryenPtrType),
+              uintptrCategory.mul(
+                argument,
+                binaryen.valueOf(compiler.uintptrType, op, underlyingType.size)
+              )
+            ), value, compiler.uintptrSize
+          );
+
+          if (contextualType === reflection.voidType)
+            return storeOp;
+
+          typescript.setReflectedType(node, underlyingType);
+          // TODO
+
+        } else {
+          compiler.error(accessNode, "Array access used on non-array object");
+          return op.unreachable();
+        }
+      } else {
+        compiler.error(accessNode.expression, "'this' keyword used in non-instance context");
+        return op.unreachable();
+      }
+
+    // identifier[argument] = expression
+    } else if (accessNode.expression.kind === typescript.SyntaxKind.Identifier) {
+
+      if (reference instanceof reflection.Variable) {
+        const variable = <reflection.Variable>reference;
+        if (variable.type.isArray) {
+          const underlyingType = (<reflection.Class>variable.type.underlyingClass).typeParametersMap.T;
+          const storeOp = compileStore(compiler, accessNode, underlyingType,
+            uintptrCategory.add(
+              compiler.compileExpression(accessNode.expression, compiler.uintptrType),
+              uintptrCategory.mul(
+                argument,
+                binaryen.valueOf(compiler.uintptrType, op, underlyingType.size)
+              ),
+            ), value, compiler.uintptrSize
+          );
+
+          if (contextualType === reflection.voidType)
+            return storeOp;
+
+          typescript.setReflectedType(node, variable.type);
+          // TODO
+
+        } else {
+          compiler.error(accessNode, "Array access used on non-array object");
+          return op.unreachable();
+        }
+      }
     }
 
   } else if (node.left.kind === typescript.SyntaxKind.PropertyAccessExpression) {

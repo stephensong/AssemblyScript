@@ -9496,27 +9496,25 @@
     (get_local $2)
    )
   )
-  (drop
-   (i32.load offset=4
-    (i32.add
-     (get_local $0)
-     (i32.mul
-      (i32.const 0)
-      (i32.const 4)
-     )
+  (i32.store offset=4
+   (i32.add
+    (get_local $0)
+    (i32.mul
+     (i32.const 0)
+     (i32.const 4)
     )
    )
+   (i32.const 1)
   )
-  (drop
-   (i32.load offset=4
-    (i32.add
-     (get_local $0)
-     (i32.mul
-      (i32.const 9)
-      (i32.const 4)
-     )
+  (i32.store offset=4
+   (i32.add
+    (get_local $0)
+    (i32.mul
+     (i32.const 9)
+     (i32.const 4)
     )
    )
+   (i32.const 2)
   )
   (set_local $3
    (call $SomeClass
@@ -9531,20 +9529,13 @@
     (i32.const 2)
    )
   )
-  (drop
-   (block i32
-    (i32.store
-     (get_local $3)
-     (i32.add
-      (i32.load
-       (get_local $3)
-      )
-      (i32.const 1)
-     )
-    )
+  (i32.store
+   (get_local $3)
+   (i32.add
     (i32.load
      (get_local $3)
     )
+    (i32.const 1)
    )
   )
   (return
