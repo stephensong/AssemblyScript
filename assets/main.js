@@ -8,6 +8,9 @@ require.config({
 });
 require([ 'vs/editor/editor.main', 'assets/language-wast' ], function() {
 
+  var loadingIcon = document.getElementById('loading-icon');
+  loadingIcon.parentNode.removeChild(loadingIcon);
+
   // Set up TypeScript
   monaco.languages.typescript.typescriptDefaults.addExtraLib(assemblyscript.library.libSource, "assembly.d.ts");
   monaco.editor.defineTheme('vs-dark-plus', {
