@@ -4,6 +4,8 @@ AssemblyScript defines a subset of [TypeScript](https://github.com/Microsoft/Typ
 
 Be warned that this is an early prototype and that it cannot do anything useful yet.
 
+An initial playground to mess with the current state of the compiler is available at [dcode.io/AssemblyScript](http://dcode.io/AssemblyScript/).
+
 Example
 -------
 
