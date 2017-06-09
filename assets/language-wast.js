@@ -170,15 +170,15 @@ define(['vs/editor/editor.main'], function() {
         [/(@digits)[lL]?/, 'number'],
 
         // binaryen names as variables
-        [/\$[^\s\)]*/, { token: 'variable.wast' }],
+        [/\$[^\s\)]*/, { token: 'variable' }],
 
         // identifiers and keywords
         [/[a-zA-Z_$][\w$]*/, {
           cases: {
-            '@keywords': { token: 'keyword.$0.wast' },
-            '@types': { token: 'type.$0.wast' },
-            '@operations': { token: 'entity.name.$0.wast', foreground: 'ff0000' },
-            '@default': 'identifier.wast'
+            '@keywords': { token: 'keyword.$0' },
+            '@types': { token: 'type.$0' },
+            '@operations': { token: 'entity.name.function.$0', foreground: 'ff0000' },
+            '@default': 'identifier'
           }
         }]
       ],

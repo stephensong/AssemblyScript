@@ -10,6 +10,21 @@ require([ 'vs/editor/editor.main', 'assets/language-wast' ], function() {
 
   // Set up TypeScript
   monaco.languages.typescript.typescriptDefaults.addExtraLib(assemblyscript.library.libSource, "assembly.d.ts");
+  monaco.editor.defineTheme('vs-dark-plus', {
+    base: 'vs-dark',
+    inherit: true,
+    rules: [
+      { token: 'entity.name.function', foreground: 'dcdcaa' },
+      { token: 'entity.method.name', foreground: 'dcdcaa' },
+      { token: 'storage.type', foreground: '569cd6' },
+      { token: 'keyword.control', foreground: 'c586c0' },
+      { token: 'meta.preprocessor', foreground: 'c586c0' },
+      { token: 'variable.parameter', foreground: '9cdcfe' },
+      { token: 'variable', foreground: '9cdcfe' },
+      { token: 'variable.name', foreground: '9cdcfe' },
+      { token: 'meta.parameter.type.variable', foreground: '9cdcfe' }
+    ]
+  });
 
   // Initialize TypeScript editor
   sourceEditor = monaco.editor.create(document.getElementById('source'), {
@@ -24,25 +39,18 @@ require([ 'vs/editor/editor.main', 'assets/language-wast' ], function() {
     ].join("\n"),
     language: "typescript",
     scrollBeyondLastLine: false,
-    theme: "vs-dark",
+    theme: "vs-dark-plus",
     automaticLayout: true
   });
 
   // Initialize WebAssembly editor
-  monaco.editor.defineTheme('vs-dark-wast', {
-    base: 'vs-dark',
-    inherit: true,
-    rules: [
-      { token: 'entity.name', foreground: 'dcdcaa' }
-    ]
-  });
   assemblyEditor = monaco.editor.create(document.getElementById('assembly'), {
     value: [
       ''
     ].join("\n"),
     language: "wast",
     scrollBeyondLastLine: false,
-    theme: "vs-dark-wast",
+    theme: "vs-dark-plus",
     automaticLayout: true,
     readOnly: true
   });
