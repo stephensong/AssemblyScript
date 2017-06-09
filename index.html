@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>AssemblyScript Playground</title>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" >
+<style>
+html, body { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; font-family: sans-serif; font-size: 12pt; }
+.editor { width: 50%; height: calc(100% - 45px); padding-top: 5px; border: 0; float: left; background: #1e1e1e; }
+button { position: absolute; z-index: 4294967295; width: 120px; padding: 5px 10px; border-radius: 5px; cursor: pointer; outline: none; }
+button.compile { left: 50%; margin-left: -150px; bottom: 15px; }
+button.download { left: 100%; margin-left: -150px; bottom: 15px; }
+#header { height: 40px; box-sizing: border-box; padding: 0 12px; line-height: 40px; background: #0074c1; color: #fff; }
+#header a { color: #ccc; }
+#header .r { float: right; }
+#header a:hover { color: #fff; }
+</style>
+</head>
+<body>
+
+<button id="compile-button" class="compile">Compile →</button>
+<button id="download-button" class="download">Download ⭳</button>
+
+<div id="header">
+  <span class="r">see <a href="https://github.com/dcodeIO/AssemblyScript">github.com/dcodeIO/AssemblyScript</a> for details</span>
+  <strong>Assembly</strong>Script Playground
+</div>
+
+<div id="source" class="editor"></div>
+<div id="assembly" class="editor"></div>
+<div style="clear: both" />
+
+<script src="assets/assemblyscript.min.js"></script>
+<script src="assets/monaco/loader.js"></script>
+<script src="assets/main.js"></script>
+</body>
+</html>
