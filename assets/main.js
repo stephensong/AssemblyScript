@@ -1,7 +1,11 @@
 var sourceEditor;
 var assemblyEditor;
 
-require.config({ paths: { 'vs': 'assets/monaco' }});
+require.config({
+  paths: {
+    'vs': 'assets/vs'
+  }
+});
 require([ 'vs/editor/editor.main', 'assets/language-wast' ], function() {
 
   // Set up TypeScript
