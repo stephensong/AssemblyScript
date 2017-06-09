@@ -32,6 +32,8 @@ require([ 'vs/editor/editor.main', 'assets/language-wast' ], function() {
   // Initialize TypeScript editor
   sourceEditor = monaco.editor.create(document.getElementById('source'), {
     value: [
+      '// Edit here and press "Compile"',
+      '',
       'export function fib(n: int): int {',
       '  let i: int, t: int, a: int = 0, b: int = 1;',
       '  for (i = 0; i \< n; i++) {',
@@ -65,23 +67,25 @@ require([ 'vs/editor/editor.main', 'assets/language-wast' ], function() {
   document.getElementById("download-button").onclick = download;
 });
 
+var Compiler = assemblyscript.Compiler;
 var currentModule;
 
 function compile() {
-  if (currentModule) {
+  if (currentModule)
     currentModule.dispose();
-  }
+
   var source = sourceEditor.getValue();
-  currentModule = assemblyscript.Compiler.compileString(source, { noLib: !/\bnew\b/.test(source), uintptrSize: 4, silent: true });
+  currentModule = Compiler.compileString(source, { noLib: !/\bnew\b/.test(source), uintptrSize: 4, silent: true });
+
+  var diagnostics = assemblyscript.typescript.formatDiagnostics(Compiler.lastDiagnostics).trim();
+  if (diagnostics.length)
+    diagnostics = diagnostics.replace(/^/mg, "// ");
+
   if (currentModule) {
     currentModule.optimize();
-    assemblyEditor.setValue(currentModule.emitText());
-  } else {
-    var message = assemblyscript.typescript.formatDiagnostics(assemblyscript.Compiler.lastDiagnostics)
-      .trim()
-      .replace(/^/mg, "// ");
-    assemblyEditor.setValue(message);
-  }
+    assemblyEditor.setValue((diagnostics ? diagnostics + "\n\n" : "") + currentModule.emitText());
+  } else
+    assemblyEditor.setValue(diagnostics);
 }
 
 function saveAs(blob, fileName) {
