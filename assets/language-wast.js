@@ -156,6 +156,9 @@ define(['vs/editor/editor.main'], function() {
     tokenizer: {
       root: [
 
+        // whitespace
+        { include: '@whitespace' },
+
         // strings
         [/"([^"\\]|\\.)*$/, 'string.invalid'], // non-teminated string
         [/"/, 'string', '@string'],
@@ -188,6 +191,19 @@ define(['vs/editor/editor.main'], function() {
         [/@escapes/, 'string.escape'],
         [/\\./, 'string.escape.invalid'],
         [/"/, 'string', '@pop']
+      ],
+
+      whitespace: [
+        [/[ \t\r\n]+/, ''],
+        [/\/\*\*(?!\/)/, 'comment', '@comment'],
+        [/\/\*/, 'comment', '@comment'],
+        [/\/\/.*$/, 'comment'],
+      ],
+
+      comment: [
+        [/[^\/*]+/, 'comment'],
+        [/\*\//, 'comment', '@pop'],
+        [/[\/*]/, 'comment']
       ],
     }
   });

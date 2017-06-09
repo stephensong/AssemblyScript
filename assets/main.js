@@ -70,8 +70,15 @@ function compile() {
   }
   var source = sourceEditor.getValue();
   currentModule = assemblyscript.Compiler.compileString(source, { noLib: !/\bnew\b/.test(source), uintptrSize: 4, silent: true });
-  currentModule.optimize();
-  assemblyEditor.setValue(currentModule.emitText());
+  if (currentModule) {
+    currentModule.optimize();
+    assemblyEditor.setValue(currentModule.emitText());
+  } else {
+    var message = assemblyscript.typescript.formatDiagnostics(assemblyscript.Compiler.lastDiagnostics)
+      .trim()
+      .replace(/^/mg, "// ");
+    assemblyEditor.setValue(message);
+  }
 }
 
 function saveAs(blob, fileName) {
