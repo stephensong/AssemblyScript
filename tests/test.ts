@@ -5,13 +5,12 @@ class SomeClass {
   b: int;
 
   constructor(public a: int, b: int) {
-    this.a = a;
     this.b = b;
   }
 }
 
 export function main(): uintptr {
-  let a: Array<int> = new Array<SomeClass>(10);
+  let a: Array<int> = new Array<int>(10);
   a[0] = 1;
   a[9] = 2;
   let h: SomeClass = new SomeClass(1, 2);

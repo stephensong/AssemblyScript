@@ -54,9 +54,10 @@ declare type float64 = double;
 // Arrays
 
 /** A fixed-size array. */
-declare class Array<T> {
+declare class Array<T> implements IDisposable {
   readonly length: uintptr;
   constructor(size: uintptr);
+  dispose(): void;
 }
 
 /** A fixed-size 8-bit signed integer array. */
@@ -184,3 +185,9 @@ declare abstract class IArguments {}
 declare abstract class Number {}
 declare abstract class Object {}
 declare abstract class RegExp {}
+
+// Interfaces
+
+declare interface IDisposable {
+  dispose(): void;
+}

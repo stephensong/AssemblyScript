@@ -45,6 +45,31 @@ export class Type {
     }
   }
 
+  /* get logAlignment(): number {
+    switch (this.kind) {
+      case TypeKind.sbyte:
+      case TypeKind.byte:
+        return 0;
+      case TypeKind.short:
+      case TypeKind.ushort:
+        return 1;
+      case TypeKind.int:
+      case TypeKind.uint:
+      case TypeKind.float:
+        return 2;
+      case TypeKind.long:
+      case TypeKind.ulong:
+      case TypeKind.double:
+        return 3;
+      case TypeKind.uintptr:
+        if (this.size === 4)
+          return 2;
+        else
+          return 3;
+    }
+    return 0;
+  } */
+
   get isAnyInteger(): boolean { return this.kind >= TypeKind.FirstInteger && this.kind <= TypeKind.LastInteger; }
   get isAnyFloat(): boolean { return this.kind >= TypeKind.FirstFloat && this.kind <= TypeKind.LastFloat; }
   get isSigned(): boolean { return this.kind >= TypeKind.FirstSigned && this.kind <= TypeKind.LastSigned; }

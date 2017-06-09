@@ -302,7 +302,8 @@ export class Compiler {
     const mallocSignatureIdentifier = this.uintptrSize === 4 ? "ii" : "II";
     let mallocSignature = this.signatures[mallocSignatureIdentifier];
     if (!mallocSignature)
-      mallocSignature = this.signatures[mallocSignatureIdentifier] = this.module.getFunctionTypeBySignature(binaryenPtrType, [ binaryenPtrType ]) || this.module.addFunctionType(mallocSignatureIdentifier, binaryenPtrType, [ binaryenPtrType ]);
+      mallocSignature = this.signatures[mallocSignatureIdentifier] = this.module.getFunctionTypeBySignature(binaryenPtrType, [ binaryenPtrType ])
+                     || this.module.addFunctionType(mallocSignatureIdentifier, binaryenPtrType, [ binaryenPtrType ]);
     this.module.addFunction("malloc", mallocSignature, [], op.block("", [
       op.return(
         op.call("mspace_malloc", [ op.getGlobal(".msp", binaryenPtrType), op.getLocal(0, binaryenPtrType) ], binaryenPtrType)
@@ -311,12 +312,13 @@ export class Compiler {
     const freeSignatureIdentifier = this.uintptrSize === 4 ? "iv" : "Iv";
     let freeSignature = this.signatures[freeSignatureIdentifier];
     if (!freeSignature)
-      freeSignature = this.signatures[freeSignatureIdentifier] = this.module.getFunctionTypeBySignature(binaryen.none, [ binaryenPtrType ]) || this.module.addFunctionType(freeSignatureIdentifier, binaryen.none, [ binaryenPtrType ]);
+      freeSignature = this.signatures[freeSignatureIdentifier] = this.module.getFunctionTypeBySignature(binaryen.none, [ binaryenPtrType ])
+                   || this.module.addFunctionType(freeSignatureIdentifier, binaryen.none, [ binaryenPtrType ]);
     this.module.addFunction("free", freeSignature, [], op.block("", [
       op.call("mspace_free", [ op.getGlobal(".msp", binaryenPtrType), op.getLocal(0, binaryenPtrType) ], binaryen.none)
     ]));
 
-    // ... and expose these to the outside for convenience:
+    // ... and expose these to the embedder for convenience:
     this.module.addExport("malloc", "malloc");
     this.module.addExport("free", "free");
   }
