@@ -1,7 +1,7 @@
 import * as binaryen from "../binaryen";
 import Class from "./class";
 import Compiler from "../compiler";
-import Type from "./type";
+import { Type, voidType } from "./type";
 import { Variable, VariableFlags } from "./variable";
 import * as typescript from "../typescript";
 
@@ -138,16 +138,25 @@ export class FunctionTemplate extends FunctionBase {
     const parameters: FunctionParameter[] = new Array(this.declaration.parameters.length);
     for (let i = 0, k = this.declaration.parameters.length; i < k; ++i) {
       const parameter = this.declaration.parameters[i];
-      parameters[i] = {
-        node: parameter,
-        name: parameter.name.getText(),
-        type: typeParametersMap[parameter.name.getText()] || compiler.resolveType(<typescript.TypeNode>parameter.type)
-      };
+      if (parameter.type) {
+        parameters[i] = {
+          node: parameter,
+          name: parameter.name.getText(),
+          type: typeParametersMap[parameter.name.getText()] || compiler.resolveType(parameter.type)
+        };
+      } else
+        compiler.error(parameter.getLastToken(), "Type expected");
     }
 
-    const returnType = this.isConstructor
-      ? compiler.uintptrType
-      : typeParametersMap[(<typescript.TypeNode>this.declaration.type).getText()] || compiler.resolveType(<typescript.TypeNode>this.declaration.type, true);
+    let returnType: Type;
+    if (this.isConstructor)
+      returnType = compiler.uintptrType;
+    else if (this.declaration.type)
+      returnType = typeParametersMap[this.declaration.type.getText()] || compiler.resolveType(this.declaration.type, true);
+    else {
+      returnType = voidType;
+      compiler.warn(this.declaration.getLastToken(), "Assuming return type 'void'");
+    }
 
     return this.instances[name] = new Function(name, this.declaration, typeParametersMap, parameters, returnType, parent, this.declaration.body);
   }

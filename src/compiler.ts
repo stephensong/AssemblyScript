@@ -131,7 +131,7 @@ export class Compiler {
       compiler.profiler.start("initialize");
     compiler.initialize();
     if (!silent)
-      process.stderr.write("initialization took " + compiler.profiler.end("initialize").toFixed(3) + " ms\n");
+      (console.error || console.log)("initialization took " + compiler.profiler.end("initialize").toFixed(3) + " ms");
 
     // bail out if there were initialization errors
     diagnostics = compiler.diagnostics.getDiagnostics();
@@ -145,7 +145,7 @@ export class Compiler {
       compiler.profiler.start("compile");
     compiler.compile();
     if (!silent)
-      process.stderr.write("compilation took " + compiler.profiler.end("compile").toFixed(3) + " ms\n");
+      (console.error || console.log)("compilation took " + compiler.profiler.end("compile").toFixed(3) + " ms\n");
 
     // bail out if there were compilation errors
     diagnostics = compiler.diagnostics.getDiagnostics();

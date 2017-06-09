@@ -55,9 +55,10 @@ declare type float64 = double;
 // Arrays
 
 /** A fixed-size array. */
-declare class Array<T> {
-  readonly length: uint;
-  constructor(size: uint);
+declare class Array<T> implements IDisposable {
+  readonly length: uintptr;
+  constructor(size: uintptr);
+  dispose(): void;
 }
 
 /** A fixed-size 8-bit signed integer array. */
@@ -87,8 +88,8 @@ declare class Buffer extends Uint8Array {}
 
 /** A fixed-size utf16-le encoded string. */
 declare class String extends Uint16Array {
-  readonly length: uint;
-  constructor(size: uint);
+  readonly length: uintptr;
+  constructor(size: uintptr);
 }
 
 // Builtins
@@ -185,6 +186,12 @@ declare abstract class IArguments {}
 declare abstract class Number {}
 declare abstract class Object {}
 declare abstract class RegExp {}
+
+// Interfaces
+
+declare interface IDisposable {
+  dispose(): void;
+}
 `;
 
 /** Precompiled malloc.wasm as a base64-encoded string. */
