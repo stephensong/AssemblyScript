@@ -14,35 +14,35 @@ const sys: typescript.System = {
   getDirectories(): string[] {
     return [ "." ];
   },
-  fileExists(path: string): boolean {
+  fileExists(/* path: string */): boolean {
     return false;
   },
   directoryExists(path: string): boolean {
     return path === ".";
   },
-  readFile(path: string, encoding?: string): string {
-    throw Error("not supported");
+  readFile(/* path: string, encoding?: string */): string {
+    throw Error("not implemented");
   },
-  writeFile(path: string, data: string, writeByteOrderMark?: boolean): void {
-    throw Error("not supported");
+  writeFile(/* path: string, data: string, writeByteOrderMark?: boolean */): void {
+    throw Error("not implemented");
   },
-  resolvePath(path: string): string {
-    throw Error("not supported");
+  resolvePath(/* path: string */): string {
+    throw Error("not implemented");
   },
-  createDirectory(path: string): void {
-    throw Error("not supported");
+  createDirectory(/* path: string */): void {
+    throw Error("not implemented");
   },
   getExecutingFilePath(): string {
-    throw Error("not supported");
+    throw Error("not implemented");
   },
-  readDirectory(path: string, extensions?: string[], exclude?: string[], include?: string[]): string[] {
-    throw Error("not supported");
+  readDirectory(/* path: string, extensions?: string[], exclude?: string[], include?: string[] */): string[] {
+    throw Error("not implemented");
   },
-  exit(exitCode?: number): void {
-    throw Error("not supported");
+  exit(/* exitCode?: number */): void {
+    throw Error("not implemented");
   },
-  getEnvironmentVariable(name: string): string {
-    throw Error("not supported");
+  getEnvironmentVariable(/* name: string */): string {
+    throw Error("not implemented");
   }
 };
 

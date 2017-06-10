@@ -19,6 +19,7 @@ export abstract class ClassBase {
 /** A class instance with generic parameters resolved. */
 export class Class extends ClassBase {
   type: Type;
+  typeParameterTypes: Type[];
   typeParametersMap: { [key: string]: Type };
 
   properties: { [key: string]: Property } = {};
@@ -30,6 +31,7 @@ export class Class extends ClassBase {
     super(name, declaration);
     this.type = uintptrType.withUnderlyingClass(this);
     this.typeParametersMap = typeParametersMap;
+    this.typeParameterTypes = Object.keys(this.typeParametersMap).map(key => typeParametersMap[key]);
   }
 
   // TODO

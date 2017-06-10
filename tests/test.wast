@@ -9378,10 +9378,7 @@
    (get_local $0)
   )
   (i32.load offset=4
-   (i32.add
-    (get_local $1)
-    (i32.const 36)
-   )
+   (get_local $1)
   )
  )
  (func $.start (type $v)

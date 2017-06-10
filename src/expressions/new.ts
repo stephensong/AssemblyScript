@@ -6,31 +6,44 @@ import * as typescript from "../typescript";
 export function compileNew(compiler: Compiler, node: typescript.NewExpression, contextualType: reflection.Type): binaryen.Expression {
   const op = compiler.module;
 
-  typescript.setReflectedType(node, compiler.uintptrType);
+  typescript.setReflectedType(node, contextualType);
 
   if (node.expression.kind === typescript.SyntaxKind.Identifier) {
     const identifierNode = <typescript.Identifier>node.expression;
-
-    if (!contextualType.isClass && contextualType !== reflection.voidType) {
-      compiler.error(node, "'new' used in non class context");
+    if (!contextualType.isClass) {
+      compiler.error(node, "'new' used in non-class context");
       return op.unreachable();
     }
 
     const clazz = <reflection.Class>contextualType.underlyingClass;
+    let typeArguments: reflection.Type[] = [];
 
-    // TODO: These are hard-coded but should go through compileNewClass -> compileNewArray eventually
+    // If type arguments are provided, validate (TODO: accept sub-classes)
+    if (node.typeArguments) {
+      if (node.typeArguments.length !== clazz.typeParameterTypes.length) {
+        compiler.error(node.typeArguments[0], "Type parameters mismatch", "Expected " + clazz.typeParameterTypes.length + " but found " + node.typeArguments.length);
+        return op.unreachable();
+      }
+      for (let i = 0, k = node.typeArguments.length; i < k; ++i) {
+        const typeArgument = compiler.resolveType(node.typeArguments[i]);
+        if (typeArgument !== clazz.typeParameterTypes[i]) {
+          compiler.error(node.typeArguments[i], "Type parameters mismatch", "Expected " + clazz.typeParameterTypes[i] + " but found " + node.typeArguments[i]);
+          return op.unreachable();
+        }
+        typeArguments.push(typeArgument);
+      }
+    } else // otherwise inherit
+      typeArguments = clazz.typeParameterTypes;
 
     // new Array<T>(size)
-    if (identifierNode.text === "Array" && node.arguments && node.arguments.length === 1 && node.typeArguments && node.typeArguments.length === 1) {
-      const arrayType = compiler.resolveType(node.typeArguments[0]);
-      if (clazz && clazz.typeParametersMap.T !== arrayType)
-        compiler.error(node.typeArguments[0], "Type parameter mismatch", "Expected '" + clazz.typeParametersMap.T + "' but found '" + arrayType + "'");
-      return compileNewArray(compiler, node, arrayType, <typescript.Expression>node.arguments[0]);
+    if (identifierNode.text === "Array" && node.arguments && node.arguments.length === 1) {
+      const arrayType = typeArguments[0];
+      return compileNewArray(compiler, /* node, */ arrayType, <typescript.Expression>node.arguments[0]);
     }
 
     // new String(size)
-    if (identifierNode.text === "String" && node.arguments && node.arguments.length === 1 && !node.typeArguments)
-      return compileNewArray(compiler, node, reflection.ushortType, <typescript.Expression>node.arguments[0]);
+    if (identifierNode.text === "String" && node.arguments && node.arguments.length === 1)
+      return compileNewArray(compiler, /* node, */ reflection.ushortType, <typescript.Expression>node.arguments[0]);
 
     const reference = compiler.resolveReference(identifierNode);
 
@@ -94,7 +107,7 @@ export function compileNewClass(compiler: Compiler, node: typescript.NewExpressi
   return ptr;
 }
 
-export function compileNewArray(compiler: Compiler, node: typescript.NewExpression, elementType: reflection.Type, sizeArgumentNode: typescript.Expression) {
+export function compileNewArray(compiler: Compiler, /* node: typescript.NewExpression, */ elementType: reflection.Type, sizeArgumentNode: typescript.Expression) {
   const op = compiler.module;
 
   const sizeArgument = compiler.maybeConvertValue(sizeArgumentNode, compiler.compileExpression(sizeArgumentNode, compiler.uintptrType), typescript.getReflectedType(sizeArgumentNode), compiler.uintptrType, false);

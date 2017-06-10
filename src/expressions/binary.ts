@@ -337,7 +337,7 @@ export function compileBinary(compiler: Compiler, node: typescript.BinaryExpress
 
   if (result)
     return isCompound
-      ? compileAssignmentWithValue(compiler, node, left, result, contextualType)
+      ? compileAssignmentWithValue(compiler, node, result, contextualType)
       : result;
 
   compiler.error(node.operatorToken, "Unsupported binary operator", typescript.SyntaxKind[node.operatorToken.kind]);
@@ -345,10 +345,10 @@ export function compileBinary(compiler: Compiler, node: typescript.BinaryExpress
 }
 
 export function compileAssignment(compiler: Compiler, node: typescript.BinaryExpression, contextualType: reflection.Type): binaryen.Expression {
-  return compileAssignmentWithValue(compiler, node, compiler.compileExpression(node.left, contextualType), compiler.compileExpression(node.right, typescript.getReflectedType(node.left)), contextualType);
+  return compileAssignmentWithValue(compiler, node, compiler.compileExpression(node.right, typescript.getReflectedType(node.left)), contextualType);
 }
 
-export function compileAssignmentWithValue(compiler: Compiler, node: typescript.BinaryExpression, target: binaryen.Expression, value: binaryen.Expression, contextualType: reflection.Type): binaryen.Expression {
+export function compileAssignmentWithValue(compiler: Compiler, node: typescript.BinaryExpression, value: binaryen.Expression, contextualType: reflection.Type): binaryen.Expression {
   const op = compiler.module;
 
   typescript.setReflectedType(node, contextualType);
