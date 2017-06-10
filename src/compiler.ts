@@ -1045,7 +1045,7 @@ export class Compiler {
       case typescript.SyntaxKind.ArrayType:
       {
         const arrayTypeNode = <typescript.ArrayTypeNode>type;
-        const template = this.classTemplates["Array"];
+        const template = this.classTemplates.Array;
         const instance = template.resolve(this, [ arrayTypeNode.elementType ]);
         if (!this.classes[instance.name]) {
           this.classes[instance.name] = instance;

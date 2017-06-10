@@ -1,0 +1,10 @@
+{
+  "name": "assemblyscript-examples-project",
+  "dependencies": {
+    "assemblyscript": "latest"
+  },
+  "scripts":{
+    "build": "asc module.ts -o module.wasm"
+  },
+  "private": true
+}

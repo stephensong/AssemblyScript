@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "noLib": true
+  },
+  "files":[
+    "./assembly.d.ts"
+  ]
+}

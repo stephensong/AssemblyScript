@@ -6,7 +6,9 @@
     "outDir": "../out/",
     "types": [ "byots", "node", "long" ],
     "inlineSourceMap": true,
-    "noLib": false
+    "noLib": false,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true
   },
   "include": [
     "./**/*.ts"

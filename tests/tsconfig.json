@@ -1,7 +1,5 @@
 {
-  "compilerOptions": {
-    "noLib": true
-  },
+  "extends": "../tsconfig.assembly.json",
   "include": [
     "./*.ts"
   ]
