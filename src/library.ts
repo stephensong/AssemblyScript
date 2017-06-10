@@ -165,6 +165,12 @@ declare function grow_memory(value: uint): int;
 /** Returns the byte size of the specified core or class type. */
 declare function sizeof<T>(): uintptr;
 
+// tbd.
+/** UNSAFE - Casts a class to a pointer. */
+// declare function __deref<T>(value: T): uintptr;
+/** UNSAFE - Casts a pointer to a class. */
+// declare function __ref<T>(ptr: uintptr): T;
+
 // Standard library
 
 /** Sets a chunk of memory to the provided value \`c\`. Usually used to reset it to all \`0\`s. */

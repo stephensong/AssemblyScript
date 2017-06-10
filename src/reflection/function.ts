@@ -138,13 +138,12 @@ export class FunctionTemplate extends FunctionBase {
     const parameters: FunctionParameter[] = new Array(this.declaration.parameters.length);
     for (let i = 0, k = this.declaration.parameters.length; i < k; ++i) {
       const parameter = this.declaration.parameters[i];
-      if (parameter.type) {
-        parameters[i] = {
-          node: parameter,
-          name: parameter.name.getText(),
-          type: typeParametersMap[parameter.name.getText()] || compiler.resolveType(parameter.type)
-        };
-      } else
+      parameters[i] = {
+        node: parameter,
+        name: parameter.name.getText(),
+        type: parameter.type ? typeParametersMap[parameter.name.getText()] || compiler.resolveType(parameter.type) : voidType
+      };
+      if (!parameter.type && this.declaration.getSourceFile() !== compiler.libraryFile) // library may use 'any'
         compiler.error(parameter.getLastToken(), "Type expected");
     }
 
@@ -155,7 +154,8 @@ export class FunctionTemplate extends FunctionBase {
       returnType = typeParametersMap[this.declaration.type.getText()] || compiler.resolveType(this.declaration.type, true);
     else {
       returnType = voidType;
-      compiler.warn(<typescript.Identifier>this.declaration.name, "Assuming return type 'void'");
+      if (this.declaration.getSourceFile() !== compiler.libraryFile) // library may use 'any'
+        compiler.warn(<typescript.Identifier>this.declaration.name, "Assuming return type 'void'");
     }
 
     return this.instances[name] = new Function(name, this.declaration, typeParametersMap, parameters, returnType, parent, this.declaration.body);

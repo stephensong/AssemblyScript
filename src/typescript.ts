@@ -6,6 +6,7 @@ import * as reflection from "./reflection";
 export {
 
   // Classes and interfaces
+  ArrayTypeNode,
   AsExpression,
   BinaryExpression,
   Block,

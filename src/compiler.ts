@@ -1041,9 +1041,21 @@ export class Compiler {
           }
         }
       }
+
+      case typescript.SyntaxKind.ArrayType:
+      {
+        const arrayTypeNode = <typescript.ArrayTypeNode>type;
+        const template = this.classTemplates["Array"];
+        const instance = template.resolve(this, [ arrayTypeNode.elementType ]);
+        if (!this.classes[instance.name]) {
+          this.classes[instance.name] = instance;
+          instance.initialize(this);
+        }
+        return instance.type;
+      }
     }
 
-    this.error(type, "Unsupported type", type.getText()/* + "\n" + (new Error().stack)*/);
+    this.error(type, "Unsupported type", typescript.SyntaxKind[type.kind] + " " + type.getText()/* + "\n" + (new Error().stack)*/);
     return reflection.voidType;
   }
 
