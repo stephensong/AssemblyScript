@@ -66,6 +66,7 @@ export class Compiler {
   functions: { [key: string]: reflection.Function } = {};
   classes: { [key: string]: reflection.Class } = {};
   enums: { [key: string]: reflection.Enum } = {};
+  startFunction: reflection.Function;
 
   /**
    * Compiles an AssemblyScript file to WebAssembly.
@@ -116,16 +117,20 @@ export class Compiler {
   static compileProgram(program: typescript.Program, options?: CompilerOptions): binaryen.Module | null {
     const compiler = new Compiler(program, options);
     const silent = !!(options && options.silent);
+    let hasErrors = false;
+
+    Compiler.lastDiagnostics = [];
 
     // bail out if there were 'pre emit' errors
     let diagnostics = typescript.getPreEmitDiagnostics(compiler.program);
     for (let i = 0, k = diagnostics.length; i < k; ++i) {
-      typescript.printDiagnostic(diagnostics[i]);
-      if (diagnostics[i].category === typescript.DiagnosticCategory.Error) {
-        this.lastDiagnostics = diagnostics;
-        return null;
-      }
+      if (!silent)
+        typescript.printDiagnostic(diagnostics[i]);
+      Compiler.lastDiagnostics.push(diagnostics[i]);
+      if (diagnostics[i].category === typescript.DiagnosticCategory.Error)
+        hasErrors = true;
     }
+    if (hasErrors) return null;
 
     if (!silent)
       compiler.profiler.start("initialize");
@@ -135,11 +140,14 @@ export class Compiler {
 
     // bail out if there were initialization errors
     diagnostics = compiler.diagnostics.getDiagnostics();
-    for (let i = 0, k = diagnostics.length; i < k; ++i)
-      if (diagnostics[i].category === typescript.DiagnosticCategory.Error) {
-        this.lastDiagnostics = diagnostics;
-        return null;
-      }
+    for (let i = 0, k = diagnostics.length; i < k; ++i) {
+      Compiler.lastDiagnostics.push(diagnostics[i]);
+      if (diagnostics[i].category === typescript.DiagnosticCategory.Error)
+        hasErrors = true;
+    }
+    if (hasErrors) return null;
+
+    compiler.diagnostics = typescript.createDiagnosticCollection();
 
     if (!silent)
       compiler.profiler.start("compile");
@@ -149,11 +157,12 @@ export class Compiler {
 
     // bail out if there were compilation errors
     diagnostics = compiler.diagnostics.getDiagnostics();
-    for (let i = 0, k = diagnostics.length; i < k; ++i)
-      if (diagnostics[i].category === typescript.DiagnosticCategory.Error) {
-        this.lastDiagnostics = diagnostics;
-        return null;
-      }
+    for (let i = 0, k = diagnostics.length; i < k; ++i) {
+      Compiler.lastDiagnostics.push(diagnostics[i]);
+      if (diagnostics[i].category === typescript.DiagnosticCategory.Error)
+        hasErrors = true;
+    }
+    if (hasErrors) return null;
 
     return compiler.module;
   }
@@ -287,7 +296,7 @@ export class Compiler {
 
     // initialize mspace'd malloc on start and remember the mspace within `.msp`:
     op.addGlobal(".msp", binaryenPtrType, true, binaryen.valueOf(this.uintptrType, op, 0));
-    this.globalInitializers.push(
+    this.globalInitializers.unshift( // must be initialized before other global initializers use 'new'
       op.setGlobal(".msp", op.call("mspace_init", [
         binaryen.valueOf(this.uintptrType, op, this.uintptrSize * 2) // TODO: change to actual heap start offset
       ], binaryenPtrType))
@@ -358,6 +367,13 @@ export class Compiler {
       } else if (mutable) {
         op.addGlobal(name, binaryen.typeOf(type, this.uintptrSize), mutable, binaryen.valueOf(type, op, 0));
 
+        if (!this.startFunction)
+          (this.startFunction = new reflection.Function(".start", <typescript.FunctionLikeDeclaration>{}, {}, [], reflection.voidType))
+            .initialize(this);
+
+        const previousFunction = this.currentFunction;
+        this.currentFunction = this.startFunction;
+
         this.globalInitializers.push(
           op.setGlobal(name,
             this.maybeConvertValue(
@@ -367,6 +383,8 @@ export class Compiler {
             )
           )
         );
+
+        this.currentFunction = previousFunction;
       } else
         this.error(initializerNode, "Unsupported global constant initializer");
 
@@ -392,7 +410,7 @@ export class Compiler {
     }
 
     if (this.functionTemplates[name])
-      throw Error("function '" + name + "' has already been initialized");
+      return; // already initialized
 
     const template = this.functionTemplates[name] = new reflection.FunctionTemplate(name, node);
     typescript.setReflectedFunctionTemplate(node, template);
@@ -411,7 +429,7 @@ export class Compiler {
     const name = this.mangleGlobalName((<typescript.Identifier>node.name).getText(), node.getSourceFile());
 
     if (this.classTemplates[name])
-      throw Error("class '" + name + "' has already been initialized");
+      return; // already initialized
 
     if (node.getSourceFile() === this.entryFile && typescript.isExport(node))
       this.warn(node.getFirstToken(), "Exporting classes is not supported yet");
@@ -430,7 +448,7 @@ export class Compiler {
     const name = this.mangleGlobalName(node.name.getText(), node.getSourceFile());
 
     if (this.enums[name])
-      throw Error("enum '" + name + "' has already been initialized");
+      return; // already initialized
 
     if (node.getSourceFile() === this.entryFile && typescript.isExport(node))
       this.warn(node.getFirstToken(), "Exporting enums is not supported yet");
@@ -492,6 +510,13 @@ export class Compiler {
       return;
     }
 
+    if (!this.startFunction)
+      (this.startFunction = new reflection.Function(".start", <typescript.FunctionLikeDeclaration>{}, {}, [], reflection.voidType))
+        .initialize(this);
+
+    const previousFunction = this.currentFunction;
+    this.currentFunction = this.startFunction;
+
     const op = this.module;
     const body: binaryen.Statement[] = new Array(this.globalInitializers.length + (this.userStartFunction ? 1 : 0));
 
@@ -508,9 +533,16 @@ export class Compiler {
       if (!signature)
         signature = this.signatures[startSignatureIdentifier] = this.module.addFunctionType(startSignatureIdentifier, binaryen.none, []);
     }
+
+    const additionalLocals: binaryen.Type[] = [];
+    for (i = 0; i < this.startFunction.locals.length; ++i)
+      additionalLocals.push(binaryen.typeOf(this.startFunction.locals[i].type, this.uintptrSize));
+
     this.module.setStart(
-      this.module.addFunction(this.userStartFunction ? ".executeGlobalInitializersAndCallStart" : ".executeGlobalInitalizers", signature, [], op.block("", body))
+      this.module.addFunction(this.startFunction.name, signature, additionalLocals, op.block("", body))
     );
+
+    this.currentFunction = previousFunction;
   }
 
   compileFunction(instance: reflection.Function): binaryen.Function | null {
@@ -1010,8 +1042,6 @@ export class Compiler {
         }
       }
     }
-
-    console.log(typescript.SyntaxKind[type.kind]);
 
     this.error(type, "Unsupported type", type.getText()/* + "\n" + (new Error().stack)*/);
     return reflection.voidType;

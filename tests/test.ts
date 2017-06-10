@@ -17,3 +17,5 @@ export function main(): uintptr {
   h.b += 1;
   return a.length + h.a + h.b; // 14
 }
+
+let array: Array<float> = new Array<float>(3);

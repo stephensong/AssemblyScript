@@ -452,7 +452,7 @@ export function compileAssignmentWithValue(compiler: Compiler, node: typescript.
     const propertyName = accessNode.name.getText();
 
     // this.identifier = expression
-    if (accessNode.expression.kind === ts.SyntaxKind.ThisKeyword) {
+    if (accessNode.expression.kind === typescript.SyntaxKind.ThisKeyword) {
       const clazz = compiler.currentFunction && compiler.currentFunction.parent || null;
       if (clazz) {
         const property = clazz.properties[propertyName];

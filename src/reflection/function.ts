@@ -155,7 +155,7 @@ export class FunctionTemplate extends FunctionBase {
       returnType = typeParametersMap[this.declaration.type.getText()] || compiler.resolveType(this.declaration.type, true);
     else {
       returnType = voidType;
-      compiler.warn(this.declaration.getLastToken(), "Assuming return type 'void'");
+      compiler.warn(<typescript.Identifier>this.declaration.name, "Assuming return type 'void'");
     }
 
     return this.instances[name] = new Function(name, this.declaration, typeParametersMap, parameters, returnType, parent, this.declaration.body);

@@ -6,6 +6,7 @@
  (type $i (func (result i32)))
  (type $iv (func (param i32)))
  (type $v (func))
+ (global $array (mut i32) (i32.const 0))
  (global $.msp (mut i32) (i32.const 0))
  (table 0 anyfunc)
  (memory $0 1)
@@ -16,7 +17,7 @@
  (export "malloc" (func $malloc))
  (export "free" (func $free))
  (export "main" (func $main))
- (start $.executeGlobalInitalizers)
+ (start $.start)
  (func $memcmp (type $0) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (local $3 i32)
   (local $4 i32)
@@ -9436,10 +9437,37 @@
    )
   )
  )
- (func $.executeGlobalInitalizers (type $v)
+ (func $.start (type $v)
+  (local $0 i32)
+  (local $1 i32)
   (set_global $.msp
    (call $mspace_init
     (i32.const 8)
+   )
+  )
+  (set_global $array
+   (block i32
+    (i32.store
+     (tee_local $1
+      (call $memset
+       (call $malloc
+        (i32.add
+         (i32.mul
+          (tee_local $0
+           (i32.const 3)
+          )
+          (i32.const 4)
+         )
+         (i32.const 4)
+        )
+       )
+       (i32.const 0)
+       (get_local $0)
+      )
+     )
+     (get_local $0)
+    )
+    (get_local $1)
    )
   )
  )
