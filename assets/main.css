@@ -4,7 +4,8 @@ html, body { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden;
 #assembly .monaco-editor-background { background: #111; }
 #assembly { border-color: #111; }
 
-button { position: absolute; z-index: 4294967295; width: 120px; padding: 5px 10px; border-radius: 5px; cursor: pointer; outline: none; }
+button { position: absolute; z-index: 4294967295; width: 120px; padding: 0 10px; line-height: 28px; border-radius: 5px; cursor: pointer; outline: none; background: #ddd; }
+button:hover { background: #fff; }
 button.compile { left: 50%; margin-left: -150px; bottom: 15px; }
 button.download { left: 100%; margin-left: -150px; bottom: 15px; }
 
