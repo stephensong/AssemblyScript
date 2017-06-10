@@ -6,12 +6,18 @@ require.config({
     'vs': 'assets/vs'
   }
 });
-require([ 'vs/editor/editor.main', 'assets/language-wast' ], function() {
+require([ 'vs/editor/editor.main', 'assets/language-wast-sexpr' ], function() {
 
   var loadingIcon = document.getElementById('loading-icon');
   loadingIcon.parentNode.removeChild(loadingIcon);
 
   // Set up TypeScript
+  monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
+    target: monaco.languages.typescript.ScriptTarget.Latest,
+    module: monaco.languages.typescript.ModuleKind.None,
+    noLib: true,
+    allowNonTsExtensions: true
+  });
   monaco.languages.typescript.typescriptDefaults.addExtraLib(assemblyscript.library.libSource, "assembly.d.ts");
   monaco.editor.defineTheme('vs-dark-plus', {
     base: 'vs-dark',
