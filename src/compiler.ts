@@ -702,6 +702,8 @@ export class Compiler {
   compileExpression(node: typescript.Expression, contextualType: reflection.Type): binaryen.Expression {
     const op = this.module;
 
+    typescript.setReflectedType(node, contextualType);
+
     switch (node.kind) {
 
       case typescript.SyntaxKind.ParenthesizedExpression:

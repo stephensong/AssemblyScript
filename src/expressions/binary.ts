@@ -345,6 +345,7 @@ export function compileBinary(compiler: Compiler, node: typescript.BinaryExpress
 }
 
 export function compileAssignment(compiler: Compiler, node: typescript.BinaryExpression, contextualType: reflection.Type): binaryen.Expression {
+  compiler.compileExpression(node.left, contextualType); // determines left type (usually an identifier anyway)
   return compileAssignmentWithValue(compiler, node, compiler.compileExpression(node.right, typescript.getReflectedType(node.left)), contextualType);
 }
 
