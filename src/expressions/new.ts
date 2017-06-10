@@ -11,11 +11,22 @@ export function compileNew(compiler: Compiler, node: typescript.NewExpression, c
   if (node.expression.kind === typescript.SyntaxKind.Identifier) {
     const identifierNode = <typescript.Identifier>node.expression;
 
+    if (!contextualType.isClass) {
+      compiler.error(node, "'new' used in non class context");
+      return op.unreachable();
+    }
+
+    const clazz = <reflection.Class>contextualType.underlyingClass;
+
     // TODO: These are hard-coded but should go through compileNewClass -> compileNewArray eventually
 
     // new Array<T>(size)
-    if (identifierNode.text === "Array" && node.arguments && node.arguments.length === 1 && node.typeArguments && node.typeArguments.length === 1)
-      return compileNewArray(compiler, node, compiler.resolveType(node.typeArguments[0]), <typescript.Expression>node.arguments[0]);
+    if (identifierNode.text === "Array" && node.arguments && node.arguments.length === 1 && node.typeArguments && node.typeArguments.length === 1) {
+      const arrayType = compiler.resolveType(node.typeArguments[0]);
+      if (clazz.typeParametersMap.T !== arrayType)
+        compiler.error(node.typeArguments[0], "Type parameter mismatch", "Expected '" + clazz.typeParametersMap.T + "' but found '" + arrayType + "'");
+      return compileNewArray(compiler, node, arrayType, <typescript.Expression>node.arguments[0]);
+    }
 
     // new String(size)
     if (identifierNode.text === "String" && node.arguments && node.arguments.length === 1 && !node.typeArguments)

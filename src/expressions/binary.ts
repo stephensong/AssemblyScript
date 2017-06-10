@@ -430,7 +430,7 @@ export function compileAssignmentWithValue(compiler: Compiler, node: typescript.
               uintptrCategory.mul(
                 argument,
                 binaryen.valueOf(compiler.uintptrType, op, underlyingType.size)
-              ),
+              )
             ), value, compiler.uintptrSize
           );
 
