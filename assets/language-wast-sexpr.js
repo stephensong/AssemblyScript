@@ -19,10 +19,15 @@ define(['vs/editor/editor.main'], function() {
       "module",
       "type",
       "memory",
+      "data",
       "export",
       "import",
       "func",
+      "start",
+      "table",
+      "element",
       "global",
+      "mut",
       "local",
       "param",
       "result"
@@ -33,7 +38,8 @@ define(['vs/editor/editor.main'], function() {
       "i64",
       "f32",
       "f64",
-      "none"
+      "anyfunc",
+      "func"
     ],
 
     operations: [
