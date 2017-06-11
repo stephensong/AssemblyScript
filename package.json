@@ -37,6 +37,7 @@
   "scripts": {
     "build:malloc": "node scripts/build-malloc",
     "build:library": "node scripts/build-library",
+    "build:typescript": "tsc -P lib/typescript.tsconfig.json",
     "build:compiler": "tsc -P src",
     "build:bundle": "browserify --standalone assemblyscript --debug out/index.js > out/bundle.js",
     "build:minified": "uglifyjs --compress --mangle --output dist/assemblyscript.min.js --source-map content=inline,url=assemblyscript.min.js.map -- out/bundle.js",

@@ -1074,22 +1074,19 @@ export class Compiler {
 
       for (let i = 0, k = symbol.declarations.length; i < k; ++i) {
         const declaration = symbol.declarations[i];
+        const globalName = this.mangleGlobalName(symbol.name, declaration.getSourceFile());
 
-        if (declaration.symbol) {
-          const globalName = this.mangleGlobalName(declaration.symbol.name, declaration.getSourceFile());
+        if (this.globals[globalName])
+          return this.globals[globalName];
 
-          if (this.globals[globalName])
-            return this.globals[globalName];
+        if (this.enums[globalName])
+          return this.enums[globalName];
 
-          if (this.enums[globalName])
-            return this.enums[globalName];
+        if (this.classes[globalName])
+          return this.classes[globalName];
 
-          if (this.classes[globalName])
-            return this.classes[globalName];
-
-          if (this.classTemplates[globalName])
-            return this.classTemplates[globalName];
-        }
+        if (this.classTemplates[globalName])
+          return this.classTemplates[globalName];
       }
     }
     return null;

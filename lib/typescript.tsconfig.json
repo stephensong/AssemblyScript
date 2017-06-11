@@ -1,0 +1,14 @@
+{
+  "extends": "./typescript/src/tsconfig.base.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "es5",
+    "removeComments": true,
+    "outDir": "./typescript-build",
+    "declaration": true,
+    "sourceMap": true
+  },
+  "files": [
+    "typescript.ts"
+  ]
+}

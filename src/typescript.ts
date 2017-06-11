@@ -19,7 +19,6 @@ export {
   ConstructorDeclaration,
   ContinueStatement,
   DiagnosticCategory,
-  DiagnosticCollection,
   DiagnosticMessage,
   Declaration,
   Diagnostic,
@@ -76,21 +75,27 @@ export {
   getLineAndCharacterOfPosition,
   getPreEmitDiagnostics,
   getPositionOfLineAndCharacter,
+  createProgram,
+  createSourceFile,
+  flattenDiagnosticMessageText,
+
+  // Internals not present in the default typings
+  DiagnosticCollection,
   convertToRelativePath,
   createGetCanonicalFileName,
   createDiagnosticCollection,
-  createDiagnosticForNode,
-  createProgram,
-  createSourceFile,
-  flattenDiagnosticMessageText
-
+  createDiagnosticForNode
 } from "byots";
 
-import * as ts from "byots";
-
+import {
+  ClassDeclaration,
+  Expression,
+  FunctionLikeDeclaration,
+  sys as defaultsys
+} from "byots";
 // Polyfill 'sys' in browsers
 import * as browsersys from "./typescript/browsersys";
-export const sys = ts.sys || browsersys;
+export const sys = defaultsys || browsersys;
 
 export * from "./typescript/diagnostics";
 
@@ -123,59 +128,59 @@ export function isConst(node: ts.Node): boolean {
 }
 
 /** Gets the reflected type of an expression. */
-export function getReflectedType(node: ts.Expression): reflection.Type {
+export function getReflectedType(node: Expression): reflection.Type {
   return <reflection.Type>(<any>node).reflectedType || null;
 }
 
 /** Sets the reflected type of an expression. */
-export function setReflectedType(node: ts.Expression, type: reflection.Type): void {
+export function setReflectedType(node: Expression, type: reflection.Type): void {
   if (!type) throw Error("type cannot be null");
   (<any>node).reflectedType = type;
 }
 
 /** Gets the reflected function instance (describing a function with generic types resolved) of a function declaration. */
-export function getReflectedFunction(node: ts.FunctionLikeDeclaration): reflection.Function {
+export function getReflectedFunction(node: FunctionLikeDeclaration): reflection.Function {
   return <reflection.Function>(<any>node).reflectedFunction || null;
 }
 
 /** Sets the reflected function instance (describing a function with generic types resolved) of a function declaration. */
-export function setReflectedFunction(node: ts.FunctionLikeDeclaration, instance: reflection.Function): void {
+export function setReflectedFunction(node: FunctionLikeDeclaration, instance: reflection.Function): void {
   if (!instance)
     throw Error("instance cannot be null");
   (<any>node).reflectedFunction = instance;
 }
 
 /** Gets the reflected function template (describing a function with unresolved generic types) of a function declaration. */
-export function getReflectedFunctionTemplate(node: ts.FunctionLikeDeclaration): reflection.FunctionTemplate {
+export function getReflectedFunctionTemplate(node: FunctionLikeDeclaration): reflection.FunctionTemplate {
   return <reflection.FunctionTemplate>(<any>node).reflectedFunctionTemplate || null;
 }
 
 /** Sets the reflected function template (describing a function with unresolved generic types) of a function declaration. */
-export function setReflectedFunctionTemplate(node: ts.FunctionLikeDeclaration, template: reflection.FunctionTemplate): void {
+export function setReflectedFunctionTemplate(node: FunctionLikeDeclaration, template: reflection.FunctionTemplate): void {
   if (!template)
     throw Error("template cannot be null");
   (<any>node).reflectedFunctionTemplate = template;
 }
 
 /** Gets the reflected class instance (describing a class with generic types resolved) of a class declaration. */
-export function getReflectedClass(node: ts.ClassDeclaration): reflection.Class {
+export function getReflectedClass(node: ClassDeclaration): reflection.Class {
   return <reflection.Class>(<any>node).reflectedClass || null;
 }
 
 /** Sets the reflected class instance (describing a class with generic types resolved) of a class declaration. */
-export function setReflectedClass(node: ts.ClassDeclaration, instance: reflection.Class): void {
+export function setReflectedClass(node: ClassDeclaration, instance: reflection.Class): void {
   if (!instance)
     throw Error("instance cannot be null");
   (<any>node).reflectedClass = instance;
 }
 
 /** Gets the reflected class template (describing a class with unresolved generic types) of a class declaration. */
-export function getReflectedClassTemplate(node: ts.ClassDeclaration): reflection.ClassTemplate {
+export function getReflectedClassTemplate(node: ClassDeclaration): reflection.ClassTemplate {
   return <reflection.ClassTemplate>(<any>node).reflectedClass || null;
 }
 
 /** Sets the reflected class template (describing a class with unresolved generic types) of a class declaration. */
-export function setReflectedClassTemplate(node: ts.ClassDeclaration, template: reflection.ClassTemplate): void {
+export function setReflectedClassTemplate(node: ClassDeclaration, template: reflection.ClassTemplate): void {
   if (!template)
     throw Error("template cannot be null");
   (<any>node).reflectedClassTemplate = template;
