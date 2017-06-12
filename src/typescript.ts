@@ -78,7 +78,9 @@ export {
   getTextOfNode,
   createDiagnosticCollection,
   createProgram,
-  createSourceFile
+  createSourceFile,
+  formatDiagnostics,
+  formatDiagnosticsWithColorAndContext
 
 } from "../lib/typescript/build";
 
