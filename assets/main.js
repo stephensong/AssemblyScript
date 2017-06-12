@@ -3,10 +3,10 @@ var assemblyEditor;
 
 require.config({
   paths: {
-    'vs': 'assets/vs'
+    'vs': 'https://unpkg.com/monaco-editor@0.8.3/min/vs/'
   }
 });
-require([ 'vs/editor/editor.main', 'assets/language-wast-sexpr' ], function() {
+require([ 'vs/editor/editor.main', 'assets/sexpr' ], function() {
 
   var loadingIcon = document.getElementById('loading-icon');
   loadingIcon.parentNode.removeChild(loadingIcon);
@@ -66,11 +66,19 @@ require([ 'vs/editor/editor.main', 'assets/language-wast-sexpr' ], function() {
     readOnly: true
   });
 
+  console.log(assemblyEditor);
+
   // Compile once ready
   compile();
 
-  document.getElementById("compile-button").onclick = compile;
-  document.getElementById("download-button").onclick = download;
+  // Initialize UI
+  var btn = document.getElementById("compile-button");
+  btn.style.display = "block";
+  btn.onclick = compile;
+
+  btn = document.getElementById("download-button");
+  btn.style.display = "block";
+  btn.onclick = download;
 });
 
 var Compiler = assemblyscript.Compiler;

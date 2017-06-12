@@ -1,1 +1,4 @@
-[dcode.io/AssemblyScript](http://dcode.io/AssemblyScript/)
+AssemblyScript Playground
+=========================
+
+See: [dcode.io/AssemblyScript](http://dcode.io/AssemblyScript/)
