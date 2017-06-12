@@ -2,7 +2,7 @@ module.exports = {
   entry: "./src/index.ts",
   devtool: "source-map",
   output: {
-    filename: "./out/webpack-bundle.js"
+    filename: "./dist/assemblyscript.js"
   },
   resolve: {
     extensions: [".ts", ".js"]
