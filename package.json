@@ -44,7 +44,6 @@
     "test": "node bin/asc tests/test.ts"
   },
   "devDependencies": {
-    "prepack-webpack-plugin": "^1.1.0",
     "source-map-loader": "^0.2.1",
     "ts-loader": "^2.1.0",
     "tslint": "^5.4.2",
