@@ -1,5 +1,6 @@
 {
   "name": "assemblyscript-examples-project",
+  "description": "A pre-configured AssemblyScript project.",
   "dependencies": {
     "assemblyscript": "latest"
   },

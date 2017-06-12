@@ -1,9 +1,9 @@
-assemblyscript-examples-project
-===============================
+AssemblyScript example project
+==============================
 
-A minimal pre-configured AssemblyScript project.
+A pre-configured AssemblyScript project inheriting from `tsconfig.assembly.json` as provided by the `assemblyscript` package.
 
-To build `module.ts` to `module.wasm`, just run:
+To build `module.ts` to `module.wasm`, simply run:
 
 ```
 $> npm run build

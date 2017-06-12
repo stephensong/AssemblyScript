@@ -22,7 +22,10 @@ CDN:
 <script src="//rawgit.com/dcodeIO/AssemblyScript/master/dist/assemblyscript.min.js"></script>
 ```
 
-Remember to replace `master` with the exact version / tag your application depends upon, if applicable.
+When using the CDN, remember to replace `master` with the exact version / tag your application depends upon, if applicable.
+
+Example
+-------
 
 ```js
 const Compiler = assemblyscript.Compiler;
