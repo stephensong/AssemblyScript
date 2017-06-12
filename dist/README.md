@@ -8,10 +8,21 @@ Note that Binaryen is not included in the bundle. A compatible version of Binary
 Usage
 -----
 
+Local:
+
 ```html
 <script src="binaryen.js"></script>
 <script src="assemblyscript.min.js"></script>
 ```
+
+CDN:
+
+```html
+<script src="//rawgit.com/dcodeIO/AssemblyScript/master/lib/binaryen/index.js"></script>
+<script src="//rawgit.com/dcodeIO/AssemblyScript/master/dist/assemblyscript.min.js"></script>
+```
+
+Remember to replace `master` with the exact version / tag your application depends upon, if applicable.
 
 ```js
 const Compiler = assemblyscript.Compiler;
