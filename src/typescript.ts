@@ -92,20 +92,104 @@ export {
 
 import {
   ClassDeclaration,
+  Diagnostic,
+  DiagnosticCategory,
   Expression,
+  FormatDiagnosticsHost,
   FunctionLikeDeclaration,
   ModifierFlags,
   Node,
   NodeFlags,
   SyntaxKind,
+  createDiagnosticForNode,
+  createGetCanonicalFileName,
+  formatDiagnostics,
+  formatDiagnosticsWithColorAndContext,
   sys as defaultsys
 } from "../lib/typescript/build";
 
 // Polyfill 'sys' in browsers
-import * as browsersys from "./typescript/browsersys";
-export const sys = defaultsys || browsersys;
+export const sys = defaultsys || {
+  args: [],
+  newLine: "\n",
+  useCaseSensitiveFileNames: true,
+  write(s: string) {
+    // tslint:disable-next-line
+    console.log(s);
+  },
+  getCurrentDirectory(): string {
+    return ".";
+  },
+  getDirectories(): string[] {
+    return [ "." ];
+  },
+  fileExists(/* path: string */): boolean {
+    return false;
+  },
+  directoryExists(path: string): boolean {
+    return path === ".";
+  },
+  readFile(/* path: string, encoding?: string */): string {
+    throw Error("not implemented");
+  },
+  writeFile(/* path: string, data: string, writeByteOrderMark?: boolean */): void {
+    throw Error("not implemented");
+  },
+  resolvePath(/* path: string */): string {
+    throw Error("not implemented");
+  },
+  createDirectory(/* path: string */): void {
+    throw Error("not implemented");
+  },
+  getExecutingFilePath(): string {
+    throw Error("not implemented");
+  },
+  readDirectory(/* path: string, extensions?: string[], exclude?: string[], include?: string[] */): string[] {
+    throw Error("not implemented");
+  },
+  exit(/* exitCode?: number */): void {
+    throw Error("not implemented");
+  },
+  getEnvironmentVariable(/* name: string */): string {
+    throw Error("not implemented");
+  }
+};
 
-export * from "./typescript/diagnostics";
+const defaultFormatDiagnosticsHost: FormatDiagnosticsHost = {
+  getCurrentDirectory: () => sys.getCurrentDirectory(),
+  getNewLine: () => sys.newLine,
+  getCanonicalFileName: createGetCanonicalFileName(sys.useCaseSensitiveFileNames)
+};
+
+/** Creates a diagnostic message referencing a node. */
+export function createDiagnosticForNodeEx(node: Node, category: DiagnosticCategory, message: string, arg1?: string) {
+  let realMessage = message;
+  if (arg1 != null)
+    realMessage += ": " + arg1;
+  return createDiagnosticForNode(node, {
+    key: message.toLowerCase().replace(/\s+/g, "_").replace(/[^\w]/g, ""),
+    category: category,
+    code: <any>"-AS",
+    message: realMessage
+  });
+}
+
+/** Prints a diagnostic message to console. */
+export function printDiagnostic(diagnostic: Diagnostic): void {
+  if (sys === defaultsys) {
+    if (diagnostic.category === DiagnosticCategory.Message)
+      process.stderr.write(formatDiagnostics([ diagnostic ], defaultFormatDiagnosticsHost));
+    else
+      process.stderr.write(formatDiagnosticsWithColorAndContext([ diagnostic ], defaultFormatDiagnosticsHost) + "\n");
+  } else {
+    if (diagnostic.category === DiagnosticCategory.Message)
+      (console.info || console.log)(formatDiagnostics([ diagnostic ], defaultFormatDiagnosticsHost));
+    else if (diagnostic.category === DiagnosticCategory.Warning)
+      (console.warn || console.log)(formatDiagnostics([ diagnostic ], defaultFormatDiagnosticsHost));
+    else
+      (console.error || console.log)(formatDiagnostics([ diagnostic ], defaultFormatDiagnosticsHost));
+  }
+}
 
 /** Tests if the specified node has an 'export' modifier. */
 export function isExport(node: Node): boolean {

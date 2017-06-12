@@ -1,3 +1,12 @@
+const webpack = require("webpack");
+const pkg = require("./package.json");
+const date = (new Date()).toUTCString().replace("GMT", "UTC");
+
+const banner = `@license AssemblyScript v${pkg.version} (c) 2017, Daniel Wirtz
+Compiled ${date}
+Licensed under the Apache-License, Version 2.0
+see: https://github.com/dcodeIO/AssemblyScript for details`;
+
 module.exports = {
   entry: "./src/index.ts",
   devtool: "source-map",
@@ -16,6 +25,9 @@ module.exports = {
   externals: {
     "binaryen": "Binaryen"
   },
+  plugins: [
+    new webpack.BannerPlugin(banner)
+  ],
   node: {
     "buffer": "empty",
     "crypto": "empty",

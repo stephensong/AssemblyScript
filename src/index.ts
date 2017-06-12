@@ -1,9 +1,3 @@
-/*!
- * AssemblyScript (c) 2017, Daniel Wirtz
- * Licensed under the Apache-License, Version 2.0
- * see: https://github.com/dcodeIO/AssemblyScript for details
- */
-
 import * as binaryen from "./binaryen";
 import * as builtins from "./builtins";
 import Compiler from "./compiler";

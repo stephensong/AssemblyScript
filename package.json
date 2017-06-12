@@ -38,7 +38,7 @@
     "build:typescript": "tsc -P lib/typescript && echo export = ts; >> lib/typescript/build/index.d.ts",
     "build:library": "node scripts/build-library",
     "build:bundle": "webpack --config webpack.config.js --display-max-modules 100",
-    "build:dist": "uglifyjs --compress --mangle --output dist/assemblyscript.min.js --source-map root=dist/assemblyscript.js.map,url=assemblyscript.min.js.map -- dist/assemblyscript.js",
+    "build:dist": "uglifyjs --compress --mangle --output dist/assemblyscript.min.js --source-map root=dist/assemblyscript.js.map,url=assemblyscript.min.js.map --comments -- dist/assemblyscript.js",
     "build": "npm run build:library && npm run build:bundle && npm run build:dist",
     "lint": "tslint --config tslint.json src/**/*.ts cli/**/*.ts assembly.d.ts",
     "test": "node bin/asc tests/test.ts"
