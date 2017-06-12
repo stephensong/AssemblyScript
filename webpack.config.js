@@ -1,5 +1,5 @@
 const webpack = require("webpack");
-const PrepackWebpackPlugin = require("prepack-webpack-plugin").default;
+//const PrepackWebpackPlugin = require("prepack-webpack-plugin").default;
 const pkg = require("./package.json");
 
 const date = (new Date()).toUTCString().replace("GMT", "UTC");
@@ -27,11 +27,37 @@ module.exports = {
     "binaryen": "Binaryen"
   },
   plugins: [
+    new webpack.NoEmitOnErrorsPlugin(),
     new webpack.BannerPlugin(banner),
     new webpack.optimize.UglifyJsPlugin({
-      compress: true,
-      mangle: true,
-      sourceMap: true
+      mangle: {
+        screw_ie8: true,
+        except: ['$super', '$', '_']
+      },
+      beautify : false,
+      squeeze  : true,
+      minimize : true,
+      warnings : false,
+      sourceMap: true,
+
+      compress: {
+        dead_code   : true,
+        screw_ie8   : true,
+        sequences   : true,
+        booleans    : true,
+        loops       : true,
+        evaluate    : true,
+        unused      : true,
+        warnings    : false,
+        drop_console: false,
+        unsafe      : true,
+        reduce_vars : true,
+        join_vars   : true,
+        comparisons : true,
+        conditionals: true,
+        properties  : true,
+        if_return   : true
+      }
     })
   ],
   node: {
