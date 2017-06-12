@@ -5,7 +5,7 @@
     "target": "es5",
     "outDir": "../out/",
     "types": [ "node", "long" ],
-    "inlineSourceMap": true,
+    "sourceMap": true,
     "noLib": false,
     "noUnusedLocals": true,
     "noUnusedParameters": true,

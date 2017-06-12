@@ -12,14 +12,14 @@ module.exports = {
   entry: "./src/index.ts",
   devtool: "source-map",
   output: {
-    filename: "./dist/assemblyscript.js"
+    filename: "./dist/assemblyscript.min.js"
   },
   resolve: {
     extensions: [".ts", ".js"]
   },
   module: {
-    loaders: [
-      { test: /\.js$/, loader: "source-map-loader", enforce: "pre" },
+    rules: [
+      { test: /\.js$/, use: "source-map-loader", enforce: "pre" },
       { test: /\.ts$/, loader: "ts-loader" }
     ]
   },
@@ -27,8 +27,12 @@ module.exports = {
     "binaryen": "Binaryen"
   },
   plugins: [
-    new webpack.BannerPlugin(banner)
-    // new PrepackWebpackPlugin()
+    new webpack.BannerPlugin(banner),
+    new webpack.optimize.UglifyJsPlugin({
+      compress: true,
+      mangle: true,
+      sourceMap: true
+    })
   ],
   node: {
     "buffer": "empty",
