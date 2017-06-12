@@ -4,8 +4,12 @@ import * as typescript from "./typescript";
 
 import { Compiler } from "./compiler";
 
-/** Tests if the specified global name corresponds to a builtin function. */
-export function isBuiltin(name: string): boolean {
+/** Tests if the specified function name corresponds to a builtin function. */
+export function isBuiltin(name: string, isGlobalName: boolean = false): boolean {
+  if (isGlobalName) {
+    if (name.substring(0, 14) !== "assembly.d.ts/") return false;
+    name = name.substring(14);
+  }
   switch (name) {
     case "rotl":
     case "rotll":

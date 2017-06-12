@@ -1,9 +1,7 @@
-let globalArr: uint[] = new Array(10);
+function sqrt(a: double): double {
+  return 3.1415;
+}
 
-export function main(): uint {
-  let arr: uint[] = new Array(10);
-  arr[0] = 1;
-  // return arr[1];
-  globalArr[0] = 123;
-  return globalArr[1];
+export function sqrt2(a: double): double {
+  return sqrt(a);
 }

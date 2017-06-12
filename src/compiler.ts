@@ -232,8 +232,9 @@ export class Compiler {
 
   /** Mangles a global name (of a function, a class, ...) for use with binaryen. */
   mangleGlobalName(name: string, sourceFile: typescript.SourceFile) {
-    // prepends the relative path to imported files
-    if (sourceFile !== this.entryFile && sourceFile !== this.libraryFile) {
+    if (sourceFile === this.libraryFile) {
+      name = "assembly.d.ts/" + name;
+    } else if (sourceFile !== this.entryFile) {
       name = path.relative(
         path.dirname(path.normalize(this.entryFile.fileName)),
         path.normalize(sourceFile.fileName)
@@ -433,6 +434,20 @@ export class Compiler {
 
     if (typescript.getSourceFileOfNode(node) === this.entryFile && typescript.isExport(node))
       this.warn(<typescript.Identifier>node.name, "Exporting classes is not supported yet");
+
+    // TODO: extends
+    /* if (node.heritageClauses) {
+      for (let i = 0, k = node.heritageClauses.length; i < k; ++i) {
+        const clause = node.heritageClauses[i];
+        if (clause.token === typescript.SyntaxKind.ExtendsKeyword) {
+          const extendsNode = clause.types[0];
+          if (extendsNode.expression.kind === typescript.SyntaxKind.Identifier) {
+            const reference = this.resolveReference(<typescript.Identifier>extendsNode.expression);
+            console.log(name, "extends", reference);
+          }
+        }
+      }
+    } */
 
     const template = this.classTemplates[name] = new reflection.ClassTemplate(name, node);
     typescript.setReflectedClassTemplate(node, template);
@@ -1047,7 +1062,7 @@ export class Compiler {
       case typescript.SyntaxKind.ArrayType:
       {
         const arrayTypeNode = <typescript.ArrayTypeNode>type;
-        const template = this.classTemplates.Array;
+        const template = this.classTemplates["assembly.d.ts/Array"];
         const instance = template.resolve(this, [ arrayTypeNode.elementType ]);
         if (!this.classes[instance.name]) {
           this.classes[instance.name] = instance;
