@@ -1,3 +1,6 @@
+/** AssemblyScript version. */
+export const version = "0.0.1";
+
 /** Source of assembly.d.ts for in-browser usage. */
 export const libSource = `// TypeScript definition file for AssemblyScript compilation.
 // see: https://github.com/dcodeIO/AssemblyScript for details

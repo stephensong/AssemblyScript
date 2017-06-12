@@ -61,7 +61,7 @@ export function compileCall(compiler: Compiler, node: typescript.CallExpression,
     typeArguments = new Array(node.typeArguments.length);
     for (const k = declaration.typeParameters.length; i < k; ++i) {
       const argument = node.typeArguments[i];
-      const resolvedType = compiler.currentFunction && compiler.currentFunction.typeParameters[argument.getText()] || compiler.resolveType(argument);
+      const resolvedType = compiler.currentFunction && compiler.currentFunction.typeParameters[typescript.getTextOfNode(argument)] || compiler.resolveType(argument);
       if (!resolvedType) {
         compiler.error(node.typeArguments[i], "Unresolvable type");
         return op.unreachable();

@@ -27,7 +27,6 @@
     "@types/minimist": "^1.2.0",
     "@types/node": "^7.0.27",
     "binaryen": "^1.37.13",
-    "byots": "^2.4.0-dev.20170603.2.9",
     "long": "^3.2.0",
     "minimist": "^1.2.0",
     "performance-now": "^2.1.0",
@@ -36,20 +35,29 @@
   },
   "scripts": {
     "build:malloc": "node scripts/build-malloc",
+    "build:typescript": "tsc -P lib/typescript && echo export = ts; >> lib/typescript/build/index.d.ts",
     "build:library": "node scripts/build-library",
-    "build:typescript": "tsc -P lib/typescript.tsconfig.json",
-    "build:compiler": "tsc -P src",
-    "build:bundle": "browserify --standalone assemblyscript --debug out/index.js > out/bundle.js",
-    "build:minified": "uglifyjs --compress --mangle --output dist/assemblyscript.min.js --source-map content=inline,url=assemblyscript.min.js.map -- out/bundle.js",
-    "build": "npm run build:library && npm run build:compiler && npm run build:bundle && npm run build:minified",
+    "build:bundle": "webpack --config webpack.config.js --display-max-modules 100",
+    "build:dist": "uglifyjs --compress --mangle --output dist/assemblyscript.min.js --source-map root=out/webpack-bundle.js.map,url=assemblyscript.min.js.map -- out/webpack-bundle.js",
+    "build": "npm run build:library && npm run build:bundle && npm run build:dist",
     "lint": "tslint -c tslint.json src/**/*.ts cli/**/*.ts assembly.d.ts",
     "test": "node bin/asc tests/test.ts"
   },
   "devDependencies": {
-    "browserify": "^14.4.0",
+    "source-map-loader": "^0.2.1",
+    "ts-loader": "^2.1.0",
     "tslint": "^5.4.2",
     "tslint-eslint-rules": "^4.1.1",
     "uglify-js": "^3.0.15",
-    "webassembly": "^0.11.0"
-  }
+    "webassembly": "^0.11.0",
+    "webpack": "^2.6.1"
+  },
+  "browser": {
+    "buffer": false,
+    "crypto": false,
+    "fs": false,
+    "os": false,
+    "source-map-support": false
+  },
+  "false": {}
 }

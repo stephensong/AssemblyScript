@@ -35,7 +35,7 @@ export class Class extends ClassBase {
   }
 
   // TODO
-  get isArray(): boolean { return (<typescript.Identifier>this.declaration.name).getText() === "Array"; }
+  get isArray(): boolean { return typescript.getTextOfNode(<typescript.Identifier>this.declaration.name) === "Array"; }
 
   initialize(compiler: Compiler): void {
     for (let i = 0, k = this.declaration.members.length; i < k; ++i) {
@@ -46,7 +46,7 @@ export class Class extends ClassBase {
         {
           const propertyNode = <typescript.PropertyDeclaration>member;
           if (propertyNode.type) {
-            const name = propertyNode.name.getText();
+            const name = typescript.getTextOfNode(propertyNode.name);
             const type = compiler.resolveType(propertyNode.type);
             if (type) {
               this.properties[name] = new Property(name, <typescript.PropertyDeclaration>member, type, this.size);
@@ -65,7 +65,7 @@ export class Class extends ClassBase {
           for (let j = 0, l = constructorNode.parameters.length; j < l; ++j) {
             const parameterNode = constructorNode.parameters[j];
             if (parameterNode.modifiers && parameterNode.modifiers.length) {
-              const name = parameterNode.name.getText();
+              const name = typescript.getTextOfNode(parameterNode.name);
               const type = compiler.resolveType(<typescript.TypeNode>parameterNode.type);
               if (type) {
                 this.properties[name] = new Property(name, /* works, somehow: */ <typescript.PropertyDeclaration>member, type, this.size);
@@ -88,7 +88,7 @@ export class Class extends ClassBase {
           break;
 
         default:
-          compiler.error(member, "Unsupported class member", typescript.SyntaxKind[member.kind]);
+          compiler.error(member, "Unsupported class member");
       }
     }
   }
@@ -118,7 +118,7 @@ export class ClassTemplate extends ClassBase {
       for (let i = 0; i < typeParametersCount; ++i) {
         const parameter = (<typescript.NodeArray<typescript.TypeParameterDeclaration>>this.declaration.typeParameters)[i];
         const type = compiler.resolveType(typeArguments[i]);
-        typeParametersMap[(<typescript.Identifier>parameter.name).getText()] = type;
+        typeParametersMap[typescript.getTextOfNode(<typescript.Identifier>parameter.name)] = type;
         typeNames[i] = type.toString();
       }
       name += "<" + typeNames.join(",") + ">";

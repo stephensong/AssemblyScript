@@ -1,6 +1,4 @@
 .vscode/
-dist/**
-!dist/README.md
 node_modules/
 npm-debug.*
 out/

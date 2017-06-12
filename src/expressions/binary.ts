@@ -340,7 +340,7 @@ export function compileBinary(compiler: Compiler, node: typescript.BinaryExpress
       ? compileAssignmentWithValue(compiler, node, result, contextualType)
       : result;
 
-  compiler.error(node.operatorToken, "Unsupported binary operator", typescript.SyntaxKind[node.operatorToken.kind]);
+  compiler.error(node.operatorToken, "Unsupported binary operator");
   return op.unreachable();
 }
 
@@ -450,7 +450,7 @@ export function compileAssignmentWithValue(compiler: Compiler, node: typescript.
 
   } else if (node.left.kind === typescript.SyntaxKind.PropertyAccessExpression) {
     const accessNode = <typescript.PropertyAccessExpression>node.left;
-    const propertyName = accessNode.name.getText();
+    const propertyName = typescript.getTextOfNode(accessNode.name);
 
     // this.identifier = expression
     if (accessNode.expression.kind === typescript.SyntaxKind.ThisKeyword) {
@@ -531,6 +531,6 @@ export function compileAssignmentWithValue(compiler: Compiler, node: typescript.
     }
   }
 
-  compiler.error(node.operatorToken, "Unsupported assignment", typescript.SyntaxKind[node.left.kind]);
+  compiler.error(node.operatorToken, "Unsupported assignment");
   return op.unreachable();
 }

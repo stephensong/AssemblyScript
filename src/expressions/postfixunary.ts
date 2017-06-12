@@ -43,7 +43,7 @@ export function compilePostfixUnary(compiler: Compiler, node: typescript.Postfix
     }
   }
 
-  compiler.error(node, "Unsupported unary postfix operator", typescript.SyntaxKind[node.operator]);
+  compiler.error(node, "Unsupported unary postfix operator");
   typescript.setReflectedType(node, contextualType);
   return op.unreachable();
 }

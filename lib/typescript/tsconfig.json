@@ -1,0 +1,36 @@
+{
+  "compilerOptions": {
+    "lib": ["es5"],
+    "noEmitOnError": true,
+    "noImplicitAny": false,
+    "noImplicitThis": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "pretty": true,
+    "preserveConstEnums": false,
+    "stripInternal": false,
+    "sourceMap": true,
+    "target": "es5",
+    "types": ["node"],
+    "removeComments": true,
+    "outFile": "./build/index.js",
+    "declaration": true
+  },
+  "files": [
+    "./master/src/compiler/core.ts",
+    "./master/src/compiler/performance.ts",
+    "./master/src/compiler/sys.ts",
+    "./master/src/compiler/types.ts",
+    "./master/src/compiler/scanner.ts",
+    "./master/src/compiler/parser.ts",
+    "./master/src/compiler/utilities.ts",
+    "./master/src/compiler/binder.ts",
+    "./master/src/compiler/checker.ts",
+    "./master/src/compiler/factory.ts",
+    "./master/src/compiler/visitor.ts",
+    "./master/src/compiler/comments.ts",
+    "./master/src/compiler/program.ts",
+    "./master/src/compiler/diagnosticInformationMap.generated.ts",
+    "./index.ts"
+  ]
+}

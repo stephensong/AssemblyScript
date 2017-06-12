@@ -275,7 +275,7 @@ export class Compiler {
             break;
 
           default:
-            this.error(statement, "Unsupported top-level statement", typescript.SyntaxKind[statement.kind]);
+            this.error(statement, "Unsupported top-level statement"/*, typescript.SyntaxKind[statement.kind]*/);
             break;
         }
       }
@@ -338,7 +338,7 @@ export class Compiler {
       const initializerNode = declaration.initializer;
 
       if (declaration.type && declaration.symbol) {
-        const name = this.mangleGlobalName(declaration.symbol.name, declaration.getSourceFile());
+        const name = this.mangleGlobalName(declaration.symbol.name, typescript.getSourceFileOfNode(declaration));
         const type = this.resolveType(declaration.type);
 
         if (type)
@@ -396,16 +396,16 @@ export class Compiler {
     let name: string;
     let parent: reflection.Class | undefined;
     if (node.kind === typescript.SyntaxKind.FunctionDeclaration) {
-      name = this.mangleGlobalName((<typescript.Identifier>node.name).getText(), node.getSourceFile());
+      name = this.mangleGlobalName(typescript.getTextOfNode(<typescript.Identifier>node.name), typescript.getSourceFileOfNode(node));
     } else {
       const parentNode = <typescript.ClassDeclaration>node.parent;
-      const parentName = this.mangleGlobalName((<typescript.Identifier>parentNode.name).getText(), parentNode.getSourceFile());
+      const parentName = this.mangleGlobalName(typescript.getTextOfNode(<typescript.Identifier>parentNode.name), typescript.getSourceFileOfNode(parentNode));
       if (node.kind === typescript.SyntaxKind.Constructor)
         name = parentName;
       else if (typescript.isStatic(node))
-        name = parentName + "." + (<typescript.Identifier>node.name).getText();
+        name = parentName + "." + typescript.getTextOfNode(<typescript.Identifier>node.name);
       else
-        name = parentName + "#" + (<typescript.Identifier>node.name).getText();
+        name = parentName + "#" + typescript.getTextOfNode(<typescript.Identifier>node.name);
       parent = typescript.getReflectedClass(parentNode);
     }
 
@@ -426,13 +426,13 @@ export class Compiler {
   }
 
   initializeClass(node: typescript.ClassDeclaration): void {
-    const name = this.mangleGlobalName((<typescript.Identifier>node.name).getText(), node.getSourceFile());
+    const name = this.mangleGlobalName(typescript.getTextOfNode(<typescript.Identifier>node.name), typescript.getSourceFileOfNode(node));
 
     if (this.classTemplates[name])
       return; // already initialized
 
-    if (node.getSourceFile() === this.entryFile && typescript.isExport(node))
-      this.warn(node.getFirstToken(), "Exporting classes is not supported yet");
+    if (typescript.getSourceFileOfNode(node) === this.entryFile && typescript.isExport(node))
+      this.warn(<typescript.Identifier>node.name, "Exporting classes is not supported yet");
 
     const template = this.classTemplates[name] = new reflection.ClassTemplate(name, node);
     typescript.setReflectedClassTemplate(node, template);
@@ -445,13 +445,13 @@ export class Compiler {
   }
 
   initializeEnum(node: typescript.EnumDeclaration): void {
-    const name = this.mangleGlobalName(node.name.getText(), node.getSourceFile());
+    const name = this.mangleGlobalName(typescript.getTextOfNode(node.name), typescript.getSourceFileOfNode(node));
 
     if (this.enums[name])
       return; // already initialized
 
-    if (node.getSourceFile() === this.entryFile && typescript.isExport(node))
-      this.warn(node.getFirstToken(), "Exporting enums is not supported yet");
+    if (typescript.getSourceFileOfNode(node) === this.entryFile && typescript.isExport(node))
+      this.warn(node.name, "Exporting enums is not supported yet");
 
     const instance = this.enums[name] = new reflection.Enum(name, node);
     instance.initialize(this);
@@ -695,7 +695,7 @@ export class Compiler {
 
     }
 
-    this.error(node, "Unsupported statement node", typescript.SyntaxKind[node.kind]);
+    this.error(node, "Unsupported statement node");
     return op.unreachable();
   }
 
@@ -754,7 +754,7 @@ export class Compiler {
         return binaryen.valueOf(this.uintptrType, op, 0);
     }
 
-    this.error(node, "Unsupported expression node", typescript.SyntaxKind[node.kind]);
+    this.error(node, "Unsupported expression node");
     typescript.setReflectedType(node, contextualType);
     return op.unreachable();
   }
@@ -1057,14 +1057,14 @@ export class Compiler {
       }
     }
 
-    this.error(type, "Unsupported type", typescript.SyntaxKind[type.kind] + " " + type.getText()/* + "\n" + (new Error().stack)*/);
+    this.error(type, "Unsupported type");
     return reflection.voidType;
   }
 
   resolveReference(node: typescript.Identifier | typescript.EntityName): reflection.Variable | reflection.Enum | reflection.Class | reflection.ClassTemplate | null {
 
     // Locals including 'this'
-    const localName = node.getText();
+    const localName = typescript.getTextOfNode(node);
     if (this.currentFunction && this.currentFunction.localsByName[localName])
       return this.currentFunction.localsByName[localName];
 
@@ -1074,7 +1074,7 @@ export class Compiler {
 
       for (let i = 0, k = symbol.declarations.length; i < k; ++i) {
         const declaration = symbol.declarations[i];
-        const globalName = this.mangleGlobalName(symbol.name, declaration.getSourceFile());
+        const globalName = this.mangleGlobalName(symbol.name, typescript.getSourceFileOfNode(declaration));
 
         if (this.globals[globalName])
           return this.globals[globalName];

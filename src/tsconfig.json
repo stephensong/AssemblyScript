@@ -4,11 +4,13 @@
     "module": "commonjs",
     "target": "es5",
     "outDir": "../out/",
-    "types": [ "byots", "node", "long" ],
+    "types": [ "node", "long" ],
     "inlineSourceMap": true,
     "noLib": false,
     "noUnusedLocals": true,
-    "noUnusedParameters": true
+    "noUnusedParameters": true,
+    "preserveConstEnums": false,
+    "allowJs": false
   },
   "include": [
     "./**/*.ts"

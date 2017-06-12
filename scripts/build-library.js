@@ -2,6 +2,13 @@ var fs = require("fs");
 
 var out = [];
 
+var pkg = require("../package.json");
+out.push(
+  "/** AssemblyScript version. */",
+  "export const version = " + JSON.stringify(pkg.version) + ";",
+  ""
+);
+
 var librarySource = fs.readFileSync(__dirname + "/../assembly.d.ts");
 out.push(
   "/** Source of assembly.d.ts for in-browser usage. */",

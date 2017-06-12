@@ -126,7 +126,7 @@ export class FunctionTemplate extends FunctionBase {
       for (let i = 0; i < typeParametersCount; ++i) {
         const parameterDeclaration = (<typescript.NodeArray<typescript.TypeParameterDeclaration>>this.declaration.typeParameters)[i];
         const type = compiler.resolveType(typeArguments[i]);
-        typeParametersMap[(<typescript.Identifier>parameterDeclaration.name).getText()] = type;
+        typeParametersMap[typescript.getTextOfNode(<typescript.Identifier>parameterDeclaration.name)] = type;
         typeNames[i] = type.toString();
       }
       name += "<" + typeNames.join(",") + ">";
@@ -140,21 +140,21 @@ export class FunctionTemplate extends FunctionBase {
       const parameter = this.declaration.parameters[i];
       parameters[i] = {
         node: parameter,
-        name: parameter.name.getText(),
-        type: parameter.type ? typeParametersMap[parameter.name.getText()] || compiler.resolveType(parameter.type) : voidType
+        name: typescript.getTextOfNode(parameter.name),
+        type: parameter.type ? typeParametersMap[typescript.getTextOfNode(parameter.name)] || compiler.resolveType(parameter.type) : voidType
       };
-      if (!parameter.type && this.declaration.getSourceFile() !== compiler.libraryFile) // library may use 'any'
-        compiler.error(parameter.getLastToken(), "Type expected");
+      if (!parameter.type && typescript.getSourceFileOfNode(this.declaration) !== compiler.libraryFile) // library may use 'any'
+        compiler.error(parameter, "Type expected");
     }
 
     let returnType: Type;
     if (this.isConstructor)
       returnType = compiler.uintptrType;
     else if (this.declaration.type)
-      returnType = typeParametersMap[this.declaration.type.getText()] || compiler.resolveType(this.declaration.type, true);
+      returnType = typeParametersMap[typescript.getTextOfNode(this.declaration.type)] || compiler.resolveType(this.declaration.type, true);
     else {
       returnType = voidType;
-      if (this.declaration.getSourceFile() !== compiler.libraryFile) // library may use 'any'
+      if (typescript.getSourceFileOfNode(this.declaration) !== compiler.libraryFile) // library may use 'any'
         compiler.warn(<typescript.Identifier>this.declaration.name, "Assuming return type 'void'");
     }
 

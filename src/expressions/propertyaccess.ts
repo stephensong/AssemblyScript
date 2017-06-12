@@ -7,7 +7,7 @@ import * as typescript from "../typescript";
 export function compilePropertyAccess(compiler: Compiler, node: typescript.PropertyAccessExpression, contextualType: reflection.Type): binaryen.Expression {
   const op = compiler.module;
 
-  const propertyName = node.name.getText();
+  const propertyName = typescript.getTextOfNode(node.name);
 
   // this.identifier
   if (node.expression.kind === typescript.SyntaxKind.ThisKeyword) {
@@ -73,7 +73,7 @@ export function compilePropertyAccess(compiler: Compiler, node: typescript.Prope
     }
   }
 
-  compiler.error(node, "Unsupported property access", typescript.SyntaxKind[node.expression.kind]);
+  compiler.error(node, "Unsupported property access");
   typescript.setReflectedType(node, contextualType);
   return op.unreachable();
 }

@@ -12,9 +12,9 @@ export function compileVariableDeclarationList(compiler: Compiler, node: typescr
   const initializers: binaryen.Expression[] = [];
   for (let i = 0, k = node.declarations.length; i < k; ++i) {
     const declaration = node.declarations[i];
-    const declarationName = declaration.name.getText();
+    const declarationName = typescript.getTextOfNode(declaration.name);
     if (declaration.type) {
-      const declarationType = compiler.currentFunction && compiler.currentFunction.typeParameters[declaration.type.getText()] || compiler.resolveType(declaration.type);
+      const declarationType = compiler.currentFunction && compiler.currentFunction.typeParameters[typescript.getTextOfNode(declaration.type)] || compiler.resolveType(declaration.type);
       const local = compiler.currentFunction.addLocal(declarationName, declarationType);
       if (declaration.initializer)
         initializers.push(op.setLocal(local.index, compiler.maybeConvertValue(declaration.initializer, compiler.compileExpression(declaration.initializer, declarationType), typescript.getReflectedType(declaration.initializer), declarationType, false)));

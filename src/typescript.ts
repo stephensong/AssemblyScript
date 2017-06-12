@@ -19,6 +19,7 @@ export {
   ConstructorDeclaration,
   ContinueStatement,
   DiagnosticCategory,
+  DiagnosticCollection,
   DiagnosticMessage,
   Declaration,
   Diagnostic,
@@ -75,24 +76,29 @@ export {
   getLineAndCharacterOfPosition,
   getPreEmitDiagnostics,
   getPositionOfLineAndCharacter,
+  getSourceFileOfNode,
+  getTextOfNode,
+  convertToRelativePath,
+  createDiagnosticCollection,
+  createDiagnosticForNode,
+  createGetCanonicalFileName,
   createProgram,
   createSourceFile,
-  flattenDiagnosticMessageText,
+  flattenDiagnosticMessageText
 
-  // Internals not present in the default typings
-  DiagnosticCollection,
-  convertToRelativePath,
-  createGetCanonicalFileName,
-  createDiagnosticCollection,
-  createDiagnosticForNode
-} from "byots";
+} from "../lib/typescript/build";
 
 import {
   ClassDeclaration,
   Expression,
   FunctionLikeDeclaration,
+  ModifierFlags,
+  Node,
+  NodeFlags,
+  SyntaxKind,
   sys as defaultsys
-} from "byots";
+} from "../lib/typescript/build";
+
 // Polyfill 'sys' in browsers
 import * as browsersys from "./typescript/browsersys";
 export const sys = defaultsys || browsersys;
@@ -100,31 +106,31 @@ export const sys = defaultsys || browsersys;
 export * from "./typescript/diagnostics";
 
 /** Tests if the specified node has an 'export' modifier. */
-export function isExport(node: ts.Node): boolean {
+export function isExport(node: Node): boolean {
   if (node && node.modifiers)
     for (let i = 0, k = node.modifiers.length; i < k; ++i)
-      if (node.modifiers[i].kind === ts.SyntaxKind.ExportKeyword)
+      if (node.modifiers[i].kind === SyntaxKind.ExportKeyword)
         return true;
   return false;
 }
 
 /** Tests if the specified node has a 'declare' modifier. */
-export function isImport(node: ts.Node): boolean {
+export function isImport(node: Node): boolean {
   if (node && node.modifiers)
     for (let i = 0, k = node.modifiers.length; i < k; ++i)
-      if (node.modifiers[i].kind === ts.SyntaxKind.DeclareKeyword)
+      if (node.modifiers[i].kind === SyntaxKind.DeclareKeyword)
         return true;
   return false;
 }
 
 /** Tests if the specified node has a 'static' modifier or is otherwise part of a static context. */
-export function isStatic(node: ts.Node): boolean {
-  return (<ts.ModifierFlags>node.modifierFlagsCache & ts.ModifierFlags.Static) !== 0;
+export function isStatic(node: Node): boolean {
+  return (<ModifierFlags>node.modifierFlagsCache & ModifierFlags.Static) !== 0;
 }
 
 /** Tests if the specified node is flagged 'const'. */
-export function isConst(node: ts.Node): boolean {
-  return (node.flags & ts.NodeFlags.Const) !== 0;
+export function isConst(node: Node): boolean {
+  return (node.flags & NodeFlags.Const) !== 0;
 }
 
 /** Gets the reflected type of an expression. */

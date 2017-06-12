@@ -16,7 +16,7 @@ export class Enum {
   initialize(compiler: Compiler): void {
     for (let i = 0, k = this.declaration.members.length; i < k; ++i) {
       const member = this.declaration.members[i];
-      const name = member.name.getText();
+      const name = typescript.getTextOfNode(member.name);
       this.properties[name] = new Property(name, member, intType, 0, <number>compiler.checker.getConstantValue(member));
     }
   }

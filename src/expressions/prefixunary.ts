@@ -111,6 +111,6 @@ export function compilePrefixUnary(compiler: Compiler, node: typescript.PrefixUn
     }
   }
 
-  compiler.error(node, "Unsupported unary prefix operator", typescript.SyntaxKind[node.operator]);
+  compiler.error(node, "Unsupported unary prefix operator");
   return op.unreachable();
 }
