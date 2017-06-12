@@ -73,20 +73,12 @@ export {
   WhileStatement,
 
   // Global functions
-  getLineAndCharacterOfPosition,
   getPreEmitDiagnostics,
-  getPositionOfLineAndCharacter,
   getSourceFileOfNode,
   getTextOfNode,
-  convertToRelativePath,
   createDiagnosticCollection,
-  createDiagnosticForNode,
-  createGetCanonicalFileName,
   createProgram,
-  createSourceFile,
-  flattenDiagnosticMessageText,
-  formatDiagnostics,
-  formatDiagnosticsWithColorAndContext
+  createSourceFile
 
 } from "../lib/typescript/build";
 

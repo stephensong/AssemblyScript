@@ -1,7 +1,8 @@
 const webpack = require("webpack");
+const PrepackWebpackPlugin = require("prepack-webpack-plugin").default;
 const pkg = require("./package.json");
-const date = (new Date()).toUTCString().replace("GMT", "UTC");
 
+const date = (new Date()).toUTCString().replace("GMT", "UTC");
 const banner = `@license AssemblyScript v${pkg.version} (c) 2017, Daniel Wirtz
 Compiled ${date}
 Licensed under the Apache-License, Version 2.0
@@ -27,6 +28,7 @@ module.exports = {
   },
   plugins: [
     new webpack.BannerPlugin(banner)
+    // new PrepackWebpackPlugin()
   ],
   node: {
     "buffer": "empty",
