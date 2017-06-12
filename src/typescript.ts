@@ -84,7 +84,9 @@ export {
   createGetCanonicalFileName,
   createProgram,
   createSourceFile,
-  flattenDiagnosticMessageText
+  flattenDiagnosticMessageText,
+  formatDiagnostics,
+  formatDiagnosticsWithColorAndContext
 
 } from "../lib/typescript/build";
 
