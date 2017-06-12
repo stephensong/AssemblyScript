@@ -15,5 +15,12 @@ module.exports = {
   },
   externals: {
     "binaryen": "Binaryen"
+  },
+  node: {
+    "buffer": "empty",
+    "crypto": "empty",
+    "fs": "empty",
+    "os": "empty",
+    "source-map-support": "empty"
   }
 };
