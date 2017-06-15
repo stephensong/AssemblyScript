@@ -3,7 +3,7 @@ Distributions
 
 This folder contains pre-built browser binaries of AssemblyScript.
 
-Note that Binaryen is not included in the bundle. A compatible version of Binaryen can be obtained from [lib/binaryen](../lib/binaryen).
+Note that Binaryen is not included in the bundle. A compatible version of Binaryen can be obtained [from this binaryen.js repository](https://github.com/dcodeIO/binaryen.js).
 
 Usage
 -----
@@ -18,11 +18,11 @@ Local:
 CDN:
 
 ```html
-<script src="//rawgit.com/dcodeIO/AssemblyScript/master/lib/binaryen/index.js"></script>
+<script src="//rawgit.com/dcodeIO/binaryen.js/master/index.js"></script>
 <script src="//rawgit.com/dcodeIO/AssemblyScript/master/dist/assemblyscript.min.js"></script>
 ```
 
-When using the CDN, remember to replace `master` with the exact version / tag your application depends upon, if applicable.
+When using the CDN, remember to replace `master` with the exact versions / tags your application depends upon, if applicable.
 
 Example
 -------
