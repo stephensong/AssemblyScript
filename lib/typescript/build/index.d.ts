@@ -10025,5 +10025,5 @@ declare namespace ts {
     function createProgram(rootNames: string[], options: CompilerOptions, host?: CompilerHost, oldProgram?: Program): Program;
     function getResolutionDiagnostic(options: CompilerOptions, {extension}: ResolvedModuleFull): DiagnosticMessage | undefined;
 }
-declare const _getScriptKindFromFileName: typeof ts.getScriptKindFromFileName;
+declare const getScriptKindFromFileName_original: typeof ts.getScriptKindFromFileName;
 export = ts; 

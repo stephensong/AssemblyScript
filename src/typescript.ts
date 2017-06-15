@@ -78,9 +78,7 @@ export {
   getTextOfNode,
   createDiagnosticCollection,
   createProgram,
-  createSourceFile,
-  formatDiagnostics,
-  formatDiagnosticsWithColorAndContext
+  createSourceFile
 
 } from "../lib/typescript/build";
 
@@ -97,59 +95,12 @@ import {
   SyntaxKind,
   createDiagnosticForNode,
   createGetCanonicalFileName,
-  formatDiagnostics,
-  formatDiagnosticsWithColorAndContext,
-  sys as defaultsys
+  formatDiagnostics as formatDiagnostics_default,
+  formatDiagnosticsWithColorAndContext as formatDiagnosticsWithColorAndContext_default,
+  sys
 } from "../lib/typescript/build";
 
-// Polyfill 'sys' in browsers
-export const sys = defaultsys || {
-  args: [],
-  newLine: "\n",
-  useCaseSensitiveFileNames: true,
-  write(s: string) {
-    // tslint:disable-next-line
-    console.log(s);
-  },
-  getCurrentDirectory(): string {
-    return ".";
-  },
-  getDirectories(): string[] {
-    return [ "." ];
-  },
-  fileExists(/* path: string */): boolean {
-    return false;
-  },
-  directoryExists(path: string): boolean {
-    return path === ".";
-  },
-  readFile(/* path: string, encoding?: string */): string {
-    throw Error("not implemented");
-  },
-  writeFile(/* path: string, data: string, writeByteOrderMark?: boolean */): void {
-    throw Error("not implemented");
-  },
-  resolvePath(/* path: string */): string {
-    throw Error("not implemented");
-  },
-  createDirectory(/* path: string */): void {
-    throw Error("not implemented");
-  },
-  getExecutingFilePath(): string {
-    throw Error("not implemented");
-  },
-  readDirectory(/* path: string, extensions?: string[], exclude?: string[], include?: string[] */): string[] {
-    throw Error("not implemented");
-  },
-  exit(/* exitCode?: number */): void {
-    throw Error("not implemented");
-  },
-  getEnvironmentVariable(/* name: string */): string {
-    throw Error("not implemented");
-  }
-};
-
-const defaultFormatDiagnosticsHost: FormatDiagnosticsHost = {
+export const defaultFormatDiagnosticsHost: FormatDiagnosticsHost = {
   getCurrentDirectory: () => sys.getCurrentDirectory(),
   getNewLine: () => sys.newLine,
   getCanonicalFileName: createGetCanonicalFileName(sys.useCaseSensitiveFileNames)
@@ -168,9 +119,19 @@ export function createDiagnosticForNodeEx(node: Node, category: DiagnosticCatego
   });
 }
 
+/** Formats a diagnostic message in plain text. */
+export function formatDiagnostics(diagnostics: Diagnostic[], host?: FormatDiagnosticsHost) {
+  return formatDiagnostics_default(diagnostics, host || defaultFormatDiagnosticsHost);
+}
+
+/** Formats a diagnostic message with terminal colors and source context. */
+export function formatDiagnosticsWithColorAndContext(diagnostics: Diagnostic[], host?: FormatDiagnosticsHost) {
+  return formatDiagnosticsWithColorAndContext_default(diagnostics, host || defaultFormatDiagnosticsHost);
+}
+
 /** Prints a diagnostic message to console. */
 export function printDiagnostic(diagnostic: Diagnostic): void {
-  if (sys === defaultsys) {
+  if ((<any>sys).browser) {
     if (diagnostic.category === DiagnosticCategory.Message)
       process.stderr.write(formatDiagnostics([ diagnostic ], defaultFormatDiagnosticsHost));
     else
