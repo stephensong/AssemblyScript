@@ -1,13 +1,11 @@
 {
   "defaultSeverity": "error",
   "extends": [
-    "tslint:recommended",
-    "tslint-eslint-rules"
+    "tslint:recommended"
   ],
   "jsRules": {},
   "rules": {
     "no-angle-bracket-type-assertion": false,
-    "no-constant-condition": true,
     "no-bitwise": false,
     "no-conditional-assignment": false,
     "no-reference": false,

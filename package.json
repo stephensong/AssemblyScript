@@ -39,7 +39,7 @@
     "build:typescript": "tsc -P lib/typescript && echo export = ts; >> lib/typescript/build/index.d.ts",
     "build:library": "node scripts/build-library",
     "build:bundle": "webpack --config webpack.config.js",
-    "build": "npm run build:check && npm run build:malloc && npm run build:typescript && npm run build:library && npm run build:bundle",
+    "build": "npm run lint && npm run build:check && npm run build:malloc && npm run build:typescript && npm run build:library && npm run build:bundle",
     "lint": "tslint --config tslint.json src/**/*.ts cli/**/*.ts assembly.d.ts",
     "test": "node bin/asc tests/test.ts"
   },
