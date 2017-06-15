@@ -42,8 +42,11 @@ if (!wasmModule)
 
 else {
 
-  if (argv.validate)
-    wasmModule.validate();
+  if (argv.validate) {
+    const result = <any>wasmModule.validate();
+    if (!result)
+      throw Error("validation failed");
+  }
 
   if (argv.optimize)
     wasmModule.optimize();
