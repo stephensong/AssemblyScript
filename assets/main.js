@@ -81,7 +81,6 @@ require([ 'vs/editor/editor.main', 'assets/sexpr' ], function() {
   btn.onclick = download;
 });
 
-var Compiler = assemblyscript.Compiler;
 var currentModule;
 
 function compile() {
@@ -89,9 +88,9 @@ function compile() {
     currentModule.dispose();
 
   var source = sourceEditor.getValue();
-  currentModule = Compiler.compileString(source, { noLib: !/\bnew\b/.test(source), uintptrSize: 4, silent: true });
+  currentModule = assemblyscript.Compiler.compileString(source, { noLib: !/\bnew\b/.test(source), uintptrSize: 4, silent: true });
 
-  var diagnostics = assemblyscript.typescript.formatDiagnostics(Compiler.lastDiagnostics).trim();
+  var diagnostics = assemblyscript.typescript.formatDiagnostics(assemblyscript.Compiler.lastDiagnostics).trim();
   if (diagnostics.length)
     diagnostics = diagnostics.replace(/^/mg, "// ");
 
