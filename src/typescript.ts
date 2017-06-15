@@ -1,3 +1,4 @@
+import * as path from "path";
 import * as reflection from "./reflection";
 
 // Reasoning behind this file is that it's just too easy to lose track of this stuff so
@@ -84,19 +85,27 @@ export {
 
 import {
   ClassDeclaration,
+  CompilerHost,
+  CompilerOptions,
   Diagnostic,
   DiagnosticCategory,
   Expression,
   FormatDiagnosticsHost,
   FunctionLikeDeclaration,
   ModifierFlags,
+  ModuleKind,
   Node,
   NodeFlags,
+  ResolvedModule,
+  ScriptTarget,
+  SourceFile,
   SyntaxKind,
   createDiagnosticForNode,
   createGetCanonicalFileName,
+  createSourceFile,
   formatDiagnostics as formatDiagnostics_default,
   formatDiagnosticsWithColorAndContext as formatDiagnosticsWithColorAndContext_default,
+  resolveModuleName,
   sys
 } from "../lib/typescript/build";
 
@@ -105,6 +114,72 @@ export const defaultFormatDiagnosticsHost: FormatDiagnosticsHost = {
   getNewLine: () => sys.newLine,
   getCanonicalFileName: createGetCanonicalFileName(sys.useCaseSensitiveFileNames)
 };
+
+export const defaultCompilerOptions = <CompilerOptions>{
+  target: ScriptTarget.Latest,
+  module: ModuleKind.None,
+  noLib: true,
+  experimentalDecorators: true,
+  types: []
+};
+
+import * as library from "./library";
+
+export function createCompilerHost(moduleSearchLocations: string[], entryFileSource?: string, entryFileName: string = "module.ts"): CompilerHost {
+  const files: { [key: string]: SourceFile } = {}
+  if (entryFileSource)
+    files[entryFileName] = createSourceFile(entryFileName, <string>entryFileSource, ScriptTarget.Latest);
+  Object.keys(library.files).forEach(name => {
+    files[name] = createSourceFile(name, library.files[name], ScriptTarget.Latest);
+  });
+
+  return {
+    getSourceFile,
+    getDefaultLibFileName: () => "assembly.d.ts",
+    writeFile: (filename: string, content: string) => sys.writeFile(filename, content),
+    getCurrentDirectory: () => sys.getCurrentDirectory(),
+    getDirectories: (path: string) => sys.getDirectories(path),
+    getCanonicalFileName: fileName => sys.useCaseSensitiveFileNames ? fileName : fileName.toLowerCase(),
+    getNewLine: () => sys.newLine,
+    useCaseSensitiveFileNames: () => sys.useCaseSensitiveFileNames,
+    fileExists,
+    readFile,
+    resolveModuleNames
+  };
+
+  function fileExists(fileName: string): boolean {
+    return !!files[fileName] || sys.fileExists(fileName);
+  }
+
+  function readFile(fileName: string): string {
+    return files[fileName] ? files[fileName].text : sys.readFile(fileName);
+  }
+
+  function getSourceFile(fileName: string, languageVersion: ScriptTarget, onError?: (message: string) => void): SourceFile {
+    if (files[fileName])
+      return files[fileName];
+    const sourceText = sys.readFile(fileName);
+    if (sourceText === undefined && onError)
+      onError("file not found: " + fileName);
+    return files[fileName] = createSourceFile(fileName, sourceText || "", languageVersion);
+  }
+
+  function resolveModuleNames(moduleNames: string[], containingFile: string): ResolvedModule[] {
+    return <ResolvedModule[]>moduleNames.map(moduleName => {
+      // try to use standard resolution
+      let result = resolveModuleName(moduleName, containingFile, defaultCompilerOptions, { fileExists, readFile });
+      if (result.resolvedModule)
+        return result.resolvedModule;
+      // check fallback locations, for simplicity assume that module at location should be represented by '.d.ts' file
+      for (const location of moduleSearchLocations) {
+        const modulePath = path.join(location, moduleName + ".d.ts");
+        if (fileExists(modulePath))
+          return { resolvedFileName: modulePath }
+      }
+      return undefined;
+    });
+  }
+}
 
 /** Creates a diagnostic message referencing a node. */
 export function createDiagnosticForNodeEx(node: Node, category: DiagnosticCategory, message: string, arg1?: string) {

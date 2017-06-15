@@ -86,9 +86,10 @@ declare class Buffer extends Uint8Array {}
 // Strings
 
 /** A fixed-size utf16-le encoded string. */
-declare class String extends Uint16Array {
+declare class String extends Array<ushort> implements IDisposable {
   readonly length: uintptr;
   constructor(size: uintptr);
+  dispose(): void;
 }
 
 // Builtins

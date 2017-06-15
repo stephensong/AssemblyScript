@@ -1,9 +1,12 @@
 import { Compiler } from "../src/compiler";
 
-const compiled = Compiler.compileString(`
+const module = Compiler.compileString(`
 export function test(a: int): int {
   return a;
 }
-`).emitText();
+`, { noLib: true });
 
-console.log(compiled);
+if (module) {
+  module.optimize();
+  console.log(module.emitText());
+}

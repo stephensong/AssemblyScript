@@ -1,25 +1,30 @@
 var fs = require("fs");
 
 var out = [];
-
-var pkg = require("../package.json");
 out.push(
   "/** AssemblyScript version. */",
-  "export const version = " + JSON.stringify(pkg.version) + ";",
+  "export const version: string = " + JSON.stringify(require("../package.json").version) + ";",
   ""
 );
 
-var librarySource = fs.readFileSync(__dirname + "/../assembly.d.ts");
+var files = {};
+[
+  "assembly.d.ts",
+  "std/array.ts",
+  "std/string.ts"
+].forEach(file => {
+  files[file] = fs.readFileSync(__dirname + "/../" + file).toString().replace(/\r?\n/g, "\n");
+});
 out.push(
-  "/** Source of assembly.d.ts for in-browser usage. */",
-  "export const libSource = `" + librarySource.toString("utf8").replace(/`/g, "\\`") + "`;",
+  "/** Library sources for in-browser usage. */",
+  "export const files: { [key: string]: string } = " + JSON.stringify(files) + ";",
   ""
 );
 
 var mallocBlob = fs.readFileSync(__dirname + "/../lib/malloc/build/malloc.wasm");
 out.push(
   "/** Precompiled malloc.wasm as a base64-encoded string. */",
-  "export const mallocBlob = \"" + mallocBlob.toString("base64") + "\";",
+  "export const malloc: string = \"" + mallocBlob.toString("base64") + "\";",
   ""
 );
 

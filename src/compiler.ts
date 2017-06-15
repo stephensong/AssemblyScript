@@ -10,15 +10,6 @@ import * as reflection from "./reflection";
 import * as statements from "./statements";
 import * as typescript from "./typescript";
 
-// TypeScript compiler options for AssemblyScript compilation.
-const tscOptions = <typescript.CompilerOptions>{
-  target: typescript.ScriptTarget.Latest,
-  module: typescript.ModuleKind.None,
-  noLib: true,
-  experimentalDecorators: true,
-  types: []
-};
-
 // Malloc, free, etc. is present as a base64 encoded blob and prepared once when required.
 let mallocWasm: Uint8Array;
 
@@ -76,7 +67,11 @@ export class Compiler {
    */
   static compileFile(filename: string, options?: CompilerOptions): binaryen.Module | null {
     return Compiler.compileProgram(
-      typescript.createProgram([ __dirname + "/../assembly.d.ts", filename ], tscOptions),
+      typescript.createProgram(
+        Object.keys(library.files).concat(filename),
+        typescript.defaultCompilerOptions,
+        typescript.createCompilerHost([ process.cwd() ])
+      ),
       options
     );
   }
@@ -85,27 +80,17 @@ export class Compiler {
    * Compiles an AssemblyScript string to WebAssembly.
    * @param source Source string
    * @param options Compiler options
+   * @param fileName File to use for the entry file
    * @returns Compiled module or `null` if compilation failed. In case of failure, diagnostics are stored in {@link Compiler#diagnostics}.
    */
-  static compileString(source: string, options?: CompilerOptions): binaryen.Module | null {
-    const sourceFileName = "module.ts";
-    const sourceFile = typescript.createSourceFile(sourceFileName, source, typescript.ScriptTarget.Latest);
-    const libraryFileName = "assembly.d.ts";
-    const libraryFile = typescript.createSourceFile(libraryFileName, library.libSource, typescript.ScriptTarget.Latest);
-
-    const program = typescript.createProgram([ libraryFileName, sourceFileName ], tscOptions, <typescript.CompilerHost>{
-      getSourceFile: (fileName) => fileName === sourceFileName ? sourceFile : fileName === libraryFileName ? libraryFile : undefined,
-      getDefaultLibFileName: () => libraryFileName,
-      getCurrentDirectory: () => ".",
-      getDirectories: () => [ "." ],
-      getCanonicalFileName: (fileName) => fileName,
-      getNewLine: () => "\n",
-      readFile: (fileName) => fileName === sourceFileName ? source : fileName === libraryFileName ? library.libSource : null,
-      writeFile: () => undefined,
-      useCaseSensitiveFileNames: () => true,
-      fileExists: (fileName) => fileName === sourceFileName || fileName === libraryFileName
-    });
-    return Compiler.compileProgram(program, options);
+  static compileString(source: string, options?: CompilerOptions, fileName: string = "module.ts"): binaryen.Module | null {
+    return Compiler.compileProgram(
+      typescript.createProgram(
+        Object.keys(library.files).concat(fileName),
+        typescript.defaultCompilerOptions,
+        typescript.createCompilerHost([], source, fileName)
+      ), options
+    );
   }
 
   /**
@@ -186,8 +171,8 @@ export class Compiler {
     this.diagnostics = typescript.createDiagnosticCollection();
 
     if (!this.options.noLib && !mallocWasm) {
-      mallocWasm = new Uint8Array(base64.length(library.mallocBlob));
-      base64.decode(library.mallocBlob, mallocWasm, 0);
+      mallocWasm = new Uint8Array(base64.length(library.malloc));
+      base64.decode(library.malloc, mallocWasm, 0);
     }
 
     this.module = this.options.noLib ? new binaryen.Module() : binaryen.readBinary(mallocWasm);
