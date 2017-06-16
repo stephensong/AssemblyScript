@@ -1,6 +1,8 @@
 var sourceEditor;
 var assemblyEditor;
 
+var currentGist = "dcodeIO/b05ea1f97efb9ceb1ce17667af73793a";
+
 require.config({
   paths: {
     'vs': 'https://unpkg.com/monaco-editor@0.8.3/min/vs/'
@@ -37,17 +39,6 @@ require([ 'vs/editor/editor.main', 'assets/sexpr' ], function() {
 
   // Initialize TypeScript editor
   sourceEditor = monaco.editor.create(document.getElementById('source'), {
-    value: [
-      '// Edit here and press "Compile"',
-      '',
-      'export function fib(n: int): int {',
-      '  let i: int, t: int, a: int = 0, b: int = 1;',
-      '  for (i = 0; i \< n; i++) {',
-      '    t = a + b; a = b; b = t;',
-      '  }',
-      '  return b;',
-      '}'
-    ].join("\n"),
     language: "typescript",
     scrollBeyondLastLine: false,
     theme: "vs-dark-plus",
@@ -66,22 +57,61 @@ require([ 'vs/editor/editor.main', 'assets/sexpr' ], function() {
     readOnly: true
   });
 
-  console.log(assemblyEditor);
+  if (!document.location.hash.substring(1))
+    document.location.hash = currentGist;
+  else
+    currentGist = document.location.hash.substr(1);
 
-  // Compile once ready
-  compile();
-
-  // Initialize UI
-  var btn = document.getElementById("compile-button");
-  btn.style.display = "block";
-  btn.onclick = compile;
-
-  btn = document.getElementById("download-button");
-  btn.style.display = "block";
-  btn.onclick = download;
+  loadGist(currentGist);
+  setInterval(function() {
+    var newGist = document.location.hash.substring(1);
+    if (newGist !== currentGist) {
+      currentGist = newGist;
+      loadGist(newGist);
+    }
+  }, 100);
 });
 
 var currentModule;
+var initialized = false;
+
+function loadGist(gist) {
+  console.log("Loading " + gist + " ...")
+  var match = /\/([a-f0-9]{32})$/.exec(gist);
+  if (match) {
+    var scr = document.createElement("script");
+    scr.type = "text/javascript";
+    scr.src = "https://api.github.com/gists/" + match[1] + "?callback=onGistLoaded";
+    document.body.appendChild(scr);
+  } else
+    alert("Not a valid gist url:\n\n" + gist);
+}
+
+function onGistLoaded(gist) {
+  try {
+    if (gist.meta.status !== 200) {
+      alert("Failed to load gist: Not found\n\n" + currentGist);
+      return;
+    }
+    var data = gist.data.files[Object.keys(gist.data.files)[0]].content;
+
+    sourceEditor.setValue(data);
+    compile();
+
+    if (!initialized) {
+      // Initialize UI
+      var btn = document.getElementById("compile-button");
+      btn.style.display = "block";
+      btn.onclick = compile;
+      btn = document.getElementById("download-button");
+      btn.style.display = "block";
+      btn.onclick = download;
+      initialized = true;
+    }
+  } catch (e) {
+    alert("Failed to load gist: " + e.message + "\n\n" + currentGist);
+  }
+}
 
 function compile() {
   if (currentModule)
