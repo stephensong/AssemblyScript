@@ -44,6 +44,18 @@ Compiles to:
 
 See the pre-configured [example project](./examples/project) for a quickstart.
 
+### Running a module
+
+The package also provides a convenient [stand-alone loader component](./lib/loader) to run and work with compiled WebAssembly modules:
+
+```ts
+import load from "assemblyscript/loader"; // JS: var load = require("assemblyscript/loader").load;
+
+load("path/to/module.wasm").then(module => {
+  ...
+});
+```
+
 Usage
 -----
 An AssemblyScript program is valid TypeScript syntactically, but not necessarily semantically.

@@ -83,3 +83,5 @@ function fetch_node(file: string): Promise<Body> {
     )
   );
 }
+
+export { load as default };

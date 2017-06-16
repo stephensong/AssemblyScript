@@ -33,6 +33,13 @@
     "ts-node": "^3.0.4",
     "typescript": "^2.4.0-dev.20170604"
   },
+  "devDependencies": {
+    "source-map-loader": "^0.2.1",
+    "ts-loader": "^2.1.0",
+    "tslint": "^5.4.2",
+    "webassembly": "^0.11.0",
+    "webpack": "^2.6.1"
+  },
   "scripts": {
     "build:check": "node scripts/build-check",
     "build:malloc": "node scripts/build-malloc",
@@ -44,19 +51,11 @@
     "lint": "tslint --config tslint.json src/**/*.ts cli/**/*.ts assembly.d.ts",
     "test": "node bin/asc tests/test.ts"
   },
-  "devDependencies": {
-    "source-map-loader": "^0.2.1",
-    "ts-loader": "^2.1.0",
-    "tslint": "^5.4.2",
-    "webassembly": "^0.11.0",
-    "webpack": "^2.6.1"
-  },
   "browser": {
     "buffer": false,
     "crypto": false,
     "fs": false,
     "os": false,
     "source-map-support": false
-  },
-  "false": {}
+  }
 }

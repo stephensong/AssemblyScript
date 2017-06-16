@@ -1,0 +1,1 @@
+Just the relevant parts of [TypeScript](http://www.typescriptlang.org/)'s [compiler API](https://github.com/Microsoft/TypeScript-wiki/blob/master/Using-the-Compiler-API.md) (including internals) for use with [AssemblyScript](https://github.com/dcodeIO/AssemblyScript).
