@@ -26,3 +26,4 @@ export interface IModule {
     growMemory(numPages: number): number;
 }
 export declare function load(file: ArrayBuffer | Uint8Array | string, options?: ILoadOptions): Promise<IModule>;
+export { load as default };

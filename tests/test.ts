@@ -1,7 +1,28 @@
-function sqrt(a: double): double {
-  return 3.1415;
+class BaseClass {
+  baseProperty: int;
+
+  constructor(a: int) {
+  }
+
+  baseMethod<T>(): void {
+  }
 }
 
-export function sqrt2(a: double): double {
-  return sqrt(a);
+class SubClass extends BaseClass {
+  subProperty: float;
+
+  constructor(a: int, b: int) {
+    super(a);
+  }
+
+  subMethod(): void {
+    this.baseMethod<float>();
+  }
+}
+
+export function main(): int {
+  let c: BaseClass = new SubClass(1, 2);
+  c.baseMethod<int>();
+  let a: Uint32Array = new Uint32Array(10);
+  return a.length as int;
 }

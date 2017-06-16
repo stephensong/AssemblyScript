@@ -59,5 +59,5 @@ else {
   if (argv.text || output.isTTY)
     output.write(wasmModule.emitText(), "utf8");
   else
-    output.write(Buffer.from(wasmModule.emitBinary()));
+    output.write(Buffer.from(<Buffer>wasmModule.emitBinary()));
 }

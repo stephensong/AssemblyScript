@@ -21,23 +21,38 @@ export class Class extends ClassBase {
   type: Type;
   typeParameterTypes: Type[];
   typeParametersMap: { [key: string]: Type };
+  base?: Class;
 
+  initialized: boolean = false;
   properties: { [key: string]: Property } = {};
-  methods: { [key: string]: Function } = {};
   ctor?: Function;
   size: number = 0;
 
-  constructor(name: string, declaration: typescript.ClassDeclaration, uintptrType: Type, typeParametersMap: { [key: string]: Type }) {
+  constructor(name: string, declaration: typescript.ClassDeclaration, uintptrType: Type, typeParametersMap: { [key: string]: Type }, base?: Class) {
     super(name, declaration);
     this.type = uintptrType.withUnderlyingClass(this);
     this.typeParametersMap = typeParametersMap;
     this.typeParameterTypes = Object.keys(this.typeParametersMap).map(key => typeParametersMap[key]);
+    this.base = base;
   }
 
   // TODO
   get isArray(): boolean { return typescript.getTextOfNode(<typescript.Identifier>this.declaration.name) === "Array"; }
 
   initialize(compiler: Compiler): void {
+    if (this.initialized)
+      return;
+
+    // Inherit from base class
+    if (this.base) {
+      this.base.initialize(compiler);
+      for (let keys = Object.keys(this.base.properties), i = 0; i < keys.length; ++i)
+        this.properties[keys[i]] = this.base.properties[keys[i]];
+      this.size = this.base.size;
+      // methods are handled by TypeScript
+    }
+
+    // TODO: Investigate impact of dense unaligned properties in memory (that's the case currently)
     for (let i = 0, k = this.declaration.members.length; i < k; ++i) {
       const member = this.declaration.members[i];
       switch (member.kind) {
@@ -60,6 +75,7 @@ export class Class extends ClassBase {
 
         case typescript.SyntaxKind.Constructor:
         {
+          // TODO: super - or is this managed by ts?
           const constructorNode = <typescript.ConstructorDeclaration>member;
           const localInitializers: number[] = [];
           for (let j = 0, l = constructorNode.parameters.length; j < l; ++j) {
@@ -84,13 +100,14 @@ export class Class extends ClassBase {
         }
 
         case typescript.SyntaxKind.MethodDeclaration:
-          // initialized on demand once the class has been resolved and type information is known
+          compiler.initializeFunction(<typescript.MethodDeclaration>member);
           break;
 
         default:
           compiler.error(member, "Unsupported class member");
       }
     }
+    this.initialized = true;
   }
 }
 
@@ -99,9 +116,15 @@ export { Class as default };
 /** A class template with possibly unresolved generic parameters. */
 export class ClassTemplate extends ClassBase {
   instances: { [key: string]: Class } = {};
+  base?: ClassTemplate;
+  baseTypeArguments?: typescript.TypeNode[];
 
-  constructor(name: string, declaration: typescript.ClassDeclaration) {
+  constructor(name: string, declaration: typescript.ClassDeclaration, base?: ClassTemplate, baseTypeArguments?: typescript.TypeNode[]) {
     super(name, declaration);
+    if (base && !baseTypeArguments)
+      throw Error("missing base type arguments");
+    this.base = base;
+    this.baseTypeArguments = baseTypeArguments;
   }
 
   get isGeneric(): boolean { return !!(this.declaration.typeParameters && this.declaration.typeParameters.length); }
@@ -111,19 +134,37 @@ export class ClassTemplate extends ClassBase {
     if (typeArguments.length !== typeParametersCount)
       throw Error("type parameter count mismatch");
 
-    const typeParametersMap: { [key: string]: Type } = {};
     let name = this.name;
+    const typeNodeParametersMap: { [key: string]: typescript.TypeNode } = {};
+    const typeParametersMap: { [key: string]: Type } = {};
     if (typeParametersCount) {
       const typeNames: string[] = new Array(typeParametersCount);
       for (let i = 0; i < typeParametersCount; ++i) {
         const parameter = (<typescript.NodeArray<typescript.TypeParameterDeclaration>>this.declaration.typeParameters)[i];
-        const type = compiler.resolveType(typeArguments[i]);
-        typeParametersMap[typescript.getTextOfNode(<typescript.Identifier>parameter.name)] = type;
-        typeNames[i] = type.toString();
+        const parameterType = compiler.resolveType(typeArguments[i]);
+        const parameterName = typescript.getTextOfNode(<typescript.Identifier>parameter.name);
+        typeNodeParametersMap[name] = typeArguments[i];
+        typeParametersMap[parameterName] = parameterType;
+        typeNames[i] = parameterType.toString();
       }
       name += "<" + typeNames.join(",") + ">";
     }
 
-    return this.instances[name] || (this.instances[name] = new Class(name, this.declaration, compiler.uintptrType, typeParametersMap));
+    if (this.instances[name])
+      return this.instances[name];
+
+    // Resolve base type arguments against current type arguments
+    let base: Class | undefined;
+    if (this.base) {
+      const baseTypeArguments: typescript.TypeNode[] = [];
+      for (let i = 0; i < (<typescript.TypeNode[]>this.baseTypeArguments).length; ++i) {
+        const argument = (<typescript.TypeNode[]>this.baseTypeArguments)[i];
+        const argumentName = typescript.getTextOfNode(argument);
+        baseTypeArguments[i] = typeNodeParametersMap[argumentName] || argument;
+      }
+      base = this.base.resolve(compiler, baseTypeArguments);
+    }
+
+    return this.instances[name] = new Class(name, this.declaration, compiler.uintptrType, typeParametersMap, base);
   }
 }

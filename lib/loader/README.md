@@ -44,7 +44,7 @@ API
     Imported elements. Usually functions.
   * **exports**: `{ [key: string]: any }`<br />
     Exported elements. Usually functions.
-  * **S8**: `Uint8Array`<br />
+  * **S8**: `Int8Array`<br />
     An 8-bit signed integer view on the memory.
   * **U8**: `Uint8Array`<br />
     An 8-bit unsigned integer view on the memory.
@@ -64,3 +64,5 @@ API
     Gets the current size of the memory in 64kb pages.
   * **growMemory**(numPages: `number`): `number`<br />
     Grows the memory by the specified number of 64kb pages.
+
+**Note** that memory views (I8, U8, etc.) are updated when the module's memory grows, hence make sure to always access them directly on the module instance.

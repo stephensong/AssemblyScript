@@ -80,7 +80,7 @@ export function compileNewClass(compiler: Compiler, node: typescript.NewExpressi
 
     // return ClassConstructor(ptr, arguments...)
 
-    const parameterCount = clazz.ctor.parameters.length;
+    const parameterCount = clazz.ctor.parameters.length - 1;
     const argumentCount = node.arguments && node.arguments.length || 0;
     const args = new Array(parameterCount + 1);
     args[0] = ptr; // first constructor parameter is 'this'

@@ -432,21 +432,30 @@ export class Compiler {
     if (typescript.getSourceFileOfNode(node) === this.entryFile && typescript.isExport(node))
       this.warn(<typescript.Identifier>node.name, "Exporting classes is not supported yet");
 
-    // TODO: extends
-    /* if (node.heritageClauses) {
+    let base: reflection.ClassTemplate | undefined;
+    let baseTypeArguments: typescript.TypeNode[] | undefined;
+    if (node.heritageClauses) {
       for (let i = 0, k = node.heritageClauses.length; i < k; ++i) {
         const clause = node.heritageClauses[i];
         if (clause.token === typescript.SyntaxKind.ExtendsKeyword) {
           const extendsNode = clause.types[0];
           if (extendsNode.expression.kind === typescript.SyntaxKind.Identifier) {
-            const reference = this.resolveReference(<typescript.Identifier>extendsNode.expression);
-            console.log(name, "extends", reference);
-          }
-        }
+            const reference = this.resolveReference(<typescript.Identifier>extendsNode.expression, true);
+            if (reference instanceof reflection.ClassTemplate) {
+              base = reference;
+              baseTypeArguments = extendsNode.typeArguments || [];
+            } else
+              this.error(clause, "No such base class");
+          } else
+            this.error(clause, "Unsupported extension");
+        } else if (clause.token === typescript.SyntaxKind.ImplementsKeyword) {
+          // TODO
+        } else
+          this.error(clause, "Unsupported extension");
       }
-    } */
+    }
 
-    const template = this.classTemplates[name] = new reflection.ClassTemplate(name, node);
+    const template = this.classTemplates[name] = new reflection.ClassTemplate(name, node, base, baseTypeArguments);
     typescript.setReflectedClassTemplate(node, template);
     if (template.isGeneric)
       return;
@@ -1073,7 +1082,7 @@ export class Compiler {
     return reflection.voidType;
   }
 
-  resolveReference(node: typescript.Identifier | typescript.EntityName): reflection.Variable | reflection.Enum | reflection.Class | reflection.ClassTemplate | null {
+  resolveReference(node: typescript.Identifier | typescript.EntityName, preferTemplate: boolean = false): reflection.Variable | reflection.Enum | reflection.Class | reflection.ClassTemplate | null {
 
     // Locals including 'this'
     const localName = typescript.getTextOfNode(node);
@@ -1094,7 +1103,7 @@ export class Compiler {
         if (this.enums[globalName])
           return this.enums[globalName];
 
-        if (this.classes[globalName])
+        if (this.classes[globalName] && !preferTemplate)
           return this.classes[globalName];
 
         if (this.classTemplates[globalName])

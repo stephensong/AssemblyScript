@@ -89,8 +89,6 @@ declare class Uint64Array extends Array<ulong> {}
 declare class Float32Array extends Array<float> {}
 /** A fixed-size 64-bit float array. */
 declare class Float64Array extends Array<double> {}
-/** A fixed-size 8-bit unsigned integer array. */
-declare class Buffer extends Uint8Array {}
 
 // Strings
 

@@ -66,14 +66,6 @@ export class Function extends FunctionBase {
     this.localsByName = {};
     const ids: string[] = [];
 
-    if (this.isInstance) {
-      const variable = new Variable("this", compiler.uintptrType, VariableFlags.none, this.locals.length);
-      this.binaryenParameterTypes.push(binaryen.typeOf(compiler.uintptrType, compiler.uintptrSize));
-      this.locals.push(variable);
-      this.localsByName[variable.name] = variable;
-      ids.push(binaryen.identifierOf(compiler.uintptrType, compiler.uintptrSize));
-    }
-
     for (let i = 0, k = this.parameters.length; i < k; ++i) {
       const variable = new Variable(this.parameters[i].name, this.parameters[i].type, VariableFlags.none, this.locals.length);
       this.binaryenParameterTypes.push(binaryen.typeOf(this.parameters[i].type, compiler.uintptrSize));
@@ -145,6 +137,13 @@ export class FunctionTemplate extends FunctionBase {
       };
       if (!parameter.type && typescript.getSourceFileOfNode(this.declaration) !== compiler.libraryFile) // library may use 'any'
         compiler.error(parameter, "Type expected");
+    }
+    if (this.isInstance) {
+      parameters.unshift({
+        node: this.declaration,
+        name: "this",
+        type: compiler.uintptrType
+      });
     }
 
     let returnType: Type;

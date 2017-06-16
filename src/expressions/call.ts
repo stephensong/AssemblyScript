@@ -14,13 +14,13 @@ export function compileCall(compiler: Compiler, node: typescript.CallExpression,
 
   const declaration = <typescript.FunctionLikeDeclaration>signature.declaration; // FunctionLikeDeclaration extends SignatureDeclaration
   let instance = typescript.getReflectedFunction(declaration);
-
   if (!instance) {
     const template = typescript.getReflectedFunctionTemplate(declaration);
     if (template) {
       instance = template.resolve(compiler, node.typeArguments || []);
       instance.initialize(compiler);
-      typescript.setReflectedFunction(declaration, instance);
+      if (!template.isGeneric)
+        typescript.setReflectedFunction(declaration, instance);
       if (!compiler.compileFunction(instance)) {
         compiler.error(node, "Failed to compile call target");
         typescript.setReflectedType(node, contextualType);
@@ -33,19 +33,25 @@ export function compileCall(compiler: Compiler, node: typescript.CallExpression,
     }
   }
 
-  const argumentExpressions: binaryen.Expression[] = new Array(instance.parameters.length);
+  let argumentCount = instance.parameters.length;
+  const argumentExpressions: binaryen.Expression[] = new Array(argumentCount);
 
   typescript.setReflectedType(node, instance.returnType);
 
   let i = 0;
 
-  if (instance.isInstance)
+  if (instance.isInstance) {
     argumentExpressions[i++] = op.getLocal(0, binaryen.typeOf(instance.parameters[0].type, compiler.uintptrSize));
+    argumentCount -= 1;
+  }
 
-  for (const k = argumentExpressions.length; i < k; ++i)
-    argumentExpressions[i] = compiler.maybeConvertValue(node.arguments[i], compiler.compileExpression(node.arguments[i], instance.parameters[i].type), typescript.getReflectedType(node.arguments[i]), instance.parameters[i].type, false);
+  for (let j = 0; j < argumentCount; ++j) {
+    const argumentNode = node.arguments[j];
+    argumentExpressions[i] = compiler.maybeConvertValue(argumentNode, compiler.compileExpression(argumentNode, instance.parameters[i].type), typescript.getReflectedType(argumentNode), instance.parameters[i].type, false);
+    ++i;
+  }
 
-  if (i < argumentExpressions.length) { // TODO: pull default value initializers from declaration
+  if (i !== argumentExpressions.length) { // TODO: pull default value initializers from declaration
     compiler.error(node, "Invalid number of arguments", "Expected " + declaration.parameters.length + " but saw " + node.arguments.length);
     return op.unreachable();
   }

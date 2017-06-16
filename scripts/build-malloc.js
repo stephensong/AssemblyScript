@@ -37,6 +37,7 @@ util.run(path.join(util.bindir, "s2wasm"), [
 
 util.run(path.join(util.bindir, "wasm-opt"), [
   "build/malloc.wast",
+  "-g",
   "-Oz",
   "--coalesce-locals-learning",
   "--ignore-implicit-traps",
