@@ -377,10 +377,14 @@ export class Compiler {
     } else {
       let value: number = 0;
       switch (name) {
-        case "assembly.d.ts/NaN": value = NaN; break;
-        case "assembly.d.ts/NaNf": value = NaN; break;
-        case "assembly.d.ts/Infinity": value = Infinity; break;
-        case "assembly.d.ts/Infinityf": value = Infinity; break;
+        case "assembly.d.ts/NaN":
+        case "assembly.d.ts/NaNf":
+          value = NaN;
+          break;
+        case "assembly.d.ts/Infinity":
+        case "assembly.d.ts/Infinityf":
+          value = Infinity;
+          break;
       }
       op.addGlobal(name, binaryen.typeOf(type, this.uintptrSize), mutable, binaryen.valueOf(type, op, value));
     }

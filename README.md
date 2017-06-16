@@ -50,21 +50,23 @@ An AssemblyScript program is valid TypeScript syntactically, but not necessarily
 
 WebAssembly-specific types are obtained by referencing [assembly.d.ts](./assembly.d.ts):
 
-Type      | Native type | sizeof | Description
-----------|-------------|--------|-------------
-`sbyte`   | i32         | 1      | An 8-bit signed integer.
-`byte`    | i32         | 1      | An 8-bit unsigned integer.
-`short`   | i32         | 2      | A 16-bit signed integer.
-`ushort`  | i32         | 2      | A 16-bit unsigned integer.
-`int`     | i32         | 4      | A 32-bit signed integer.
-`uint`    | i32         | 4      | A 32-bit unsigned integer.
-`long`    | i64         | 8      | A 64-bit signed integer.
-`ulong`   | i64         | 8      | A 64-bit unsigned integer.
-`bool`    | i32         | 1      | A 1-bit unsigned integer.
-`uintptr` | i32 / i64   | 4 / 8  | A 32-bit unsigned integer when targeting 32-bit WebAssembly.<br />A 64-bit unsigned integer when targeting 64-bit WebAssembly.
-`float`   | f32         | 4      | A 32-bit float.
-`double`  | f64         | 8      | A 64-bit float.
-`void`    | none        | -      | No return type.
+Type      | Alias     | Native type | sizeof | Description
+----------|-----------|------|--------|-------------
+`sbyte`   | `int8`    | i32         | 1      | An 8-bit signed integer.
+`byte`    | `uint8`   | i32         | 1      | An 8-bit unsigned integer.
+`short`   | `int16`   | i32         | 2      | A 16-bit signed integer.
+`ushort`  | `uint16`  | i32         | 2      | A 16-bit unsigned integer.
+`int`     | `int32`   | i32         | 4      | A 32-bit signed integer.
+`uint`    | `uint32`  | i32         | 4      | A 32-bit unsigned integer.
+`long`    | `int64`   | i64         | 8      | A 64-bit signed integer.
+`ulong`   | `uint64`  | i64         | 8      | A 64-bit unsigned integer.
+`uintptr` | -         | i32 / i64   | 4 / 8  | A 32-bit unsigned integer when targeting 32-bit WebAssembly.<br />A 64-bit unsigned integer when targeting 64-bit WebAssembly.
+`float`   | `float32` | f32         | 4      | A 32-bit float.
+`double`  | `float64` | f64         | 8      | A 64-bit float.
+`bool`    | -         | i32         | 1      | A 1-bit unsigned integer.
+`void`    | -         | none        | -      | No return type.
+
+While generating a warning to avoid type confusion, the JavaScript types `number` and `boolean` resolve to `double` and `bool` respectively.
 
 WebAssembly-specific operations are available as built-in functions that translate to the respective opcode directly:
 
@@ -136,6 +138,11 @@ WebAssembly-specific operations are available as built-in functions that transla
   Returns the current memory size in units of pages. One page is 64kb.
 * **grow_memory**(value: `uint`): `int`<br />
   Grows linear memory by a given unsigned delta of pages. One page is 64kb. Returns the previous memory size in units of pages or `-1` on failure.
+* **sizeof**<`T`>(): `uintptr`<br />
+  Returns the byte size of the specified core or class type. Compiles to a constant.
+
+The following built-in constants are present as immutable globals:
+
 * **NaN**: `double`<br />
   NaN (not a number) as a 64-bit float.
 * **NaNf**: `float`<br />
@@ -144,8 +151,6 @@ WebAssembly-specific operations are available as built-in functions that transla
   Positive infinity as a 64-bit float.
 * **Infinityf**: `float`<br />
   Positive infinity as a 32-bit float.
-* **sizeof**<`T`>(): `uintptr`<br />
-  Returns the byte size of the specified core or class type. Compiles to a constant.
 
 By default (i.e. if the `--nolib` option isn't set), standard memory management routines based on [dlmalloc](http://g.oswego.edu/dl/html/malloc.html) and [musl](http://www.musl-libc.org/) will be linked statically and exported to the embedder:
 
