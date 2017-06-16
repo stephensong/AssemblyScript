@@ -126,7 +126,7 @@ WebAssembly-specific operations are available as built-in functions that transla
   Composes a 32-bit float from the magnitude of `x` and the sign of `y`.
 * **reinterpreti**(value: `float`): `int`<br />
   Reinterprets the bits of a 32-bit float as a 32-bit integer.
-* **reinterpretl**(value: `double`): `long`
+* **reinterpretl**(value: `double`): `long`<br />
   Reinterprets the bits of a 64-bit float as a 64-bit integer.
 * **reinterpretf**(value: `int`): `float`<br />
   Reinterprets the bits of a 32-bit integer as a 32-bit float.
