@@ -51,6 +51,15 @@ declare type float32 = float;
 /** A 64-bit float. */
 declare type float64 = double;
 
+/** NaN (not a number) as a 64-bit float. */
+declare const NaN: double;
+/** NaN (not a number) as a 32-bit float. */
+declare const NaNf: float;
+/** Positive infinity as a 64-bit float. */
+declare const Infinity: double;
+/** Positive infinity as a 32-bit float. */
+declare const Infinityf: float;
+
 // Arrays
 
 /** A fixed-size array. */
