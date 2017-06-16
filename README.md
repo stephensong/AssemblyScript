@@ -51,7 +51,7 @@ An AssemblyScript program is valid TypeScript syntactically, but not necessarily
 WebAssembly-specific types are obtained by referencing [assembly.d.ts](./assembly.d.ts):
 
 Type      | Alias     | Native type | sizeof | Description
-----------|-----------|------|--------|-------------
+----------|-----------|-------------|--------|-------------
 `sbyte`   | `int8`    | i32         | 1      | An 8-bit signed integer.
 `byte`    | `uint8`   | i32         | 1      | An 8-bit unsigned integer.
 `short`   | `int16`   | i32         | 2      | A 16-bit signed integer.
@@ -63,8 +63,8 @@ Type      | Alias     | Native type | sizeof | Description
 `uintptr` | -         | i32 / i64   | 4 / 8  | A 32-bit unsigned integer when targeting 32-bit WebAssembly.<br />A 64-bit unsigned integer when targeting 64-bit WebAssembly.
 `float`   | `float32` | f32         | 4      | A 32-bit float.
 `double`  | `float64` | f64         | 8      | A 64-bit float.
-`bool`    | -         | i32         | 1      | A 1-bit unsigned integer.
-`void`    | -         | none        | -      | No return type.
+`bool`    | -         | i32         | 1      | A 1-bit unsigned _integer_.
+`void`    | -         | none        | -      | No return type
 
 While generating a warning to avoid type confusion, the JavaScript types `number` and `boolean` resolve to `double` and `bool` respectively.
 
@@ -141,7 +141,7 @@ WebAssembly-specific operations are available as built-in functions that transla
 * **sizeof**<`T`>(): `uintptr`<br />
   Returns the byte size of the specified core or class type. Compiles to a constant.
 
-The following built-in constants are present as immutable globals:
+The following built-in constants are present as immutable globals (note that optimizers might inline them):
 
 * **NaN**: `double`<br />
   NaN (not a number) as a 64-bit float.
@@ -205,7 +205,8 @@ function start(): void {
 
 Command line
 ------------
-The command line compiler is named `asc` following TypeScript's `tsc`.
+
+The command line compiler `asc` follows TypeScript's `tsc`:
 
 ```
 Syntax: asc [options] [file ...]
