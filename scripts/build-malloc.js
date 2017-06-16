@@ -37,9 +37,22 @@ util.run(path.join(util.bindir, "s2wasm"), [
 
 util.run(path.join(util.bindir, "wasm-opt"), [
   "build/malloc.wast",
-  "-O",
-  "-g",
+  "-Oz",
+  "--coalesce-locals-learning",
+  "--ignore-implicit-traps",
+  "--dce",
+  "--duplicate-function-elimination",
   "--inlining",
+  "--local-cse",
+  "--merge-blocks",
+  "--optimize-instructions",
+  "--pick-load-signs",
+  "--precompute",
+  "--remove-unused-brs",
+  "--remove-unused-module-elements",
+  "--reorder-locals",
+  "--simplify-locals",
+  "--vacuum",
   "-o", "build/malloc.wasm"
 ], { cwd: basedir }))
 
