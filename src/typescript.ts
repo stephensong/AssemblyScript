@@ -126,7 +126,7 @@ export const defaultCompilerOptions = <CompilerOptions>{
 import * as library from "./library";
 
 export function createCompilerHost(moduleSearchLocations: string[], entryFileSource?: string, entryFileName: string = "module.ts"): CompilerHost {
-  const files: { [key: string]: SourceFile } = {}
+  const files: { [key: string]: SourceFile } = {};
   if (entryFileSource)
     files[entryFileName] = createSourceFile(entryFileName, <string>entryFileSource, ScriptTarget.Latest);
   Object.keys(library.files).forEach(name => {
@@ -167,14 +167,14 @@ export function createCompilerHost(moduleSearchLocations: string[], entryFileSou
   function resolveModuleNames(moduleNames: string[], containingFile: string): ResolvedModule[] {
     return <ResolvedModule[]>moduleNames.map(moduleName => {
       // try to use standard resolution
-      let result = resolveModuleName(moduleName, containingFile, defaultCompilerOptions, { fileExists, readFile });
+      const result = resolveModuleName(moduleName, containingFile, defaultCompilerOptions, { fileExists, readFile });
       if (result.resolvedModule)
         return result.resolvedModule;
       // check fallback locations, for simplicity assume that module at location should be represented by '.d.ts' file
       for (const location of moduleSearchLocations) {
         const modulePath = path.join(location, moduleName + ".d.ts");
         if (fileExists(modulePath))
-          return { resolvedFileName: modulePath }
+          return { resolvedFileName: modulePath };
       }
       return undefined;
     });

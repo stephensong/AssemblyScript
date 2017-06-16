@@ -17,14 +17,14 @@ var files = {};
 });
 out.push(
   "/** Library sources for in-browser usage. */",
-  "export const files: { [key: string]: string } = " + JSON.stringify(files) + ";",
+  "export const files: { [key: string]: string } = " + JSON.stringify(files, null, 2) + ";",
   ""
 );
 
 var mallocBlob = fs.readFileSync(__dirname + "/../lib/malloc/build/malloc.wasm");
 out.push(
   "/** Precompiled malloc.wasm as a base64-encoded string. */",
-  "export const malloc: string = \"" + mallocBlob.toString("base64") + "\";",
+  "export const malloc: string = " + JSON.stringify(mallocBlob.toString("base64")) + ";",
   ""
 );
 

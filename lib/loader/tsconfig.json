@@ -5,7 +5,12 @@
     "target": "es5",
     "types": [
       "node"
-    ]
+    ],
+    "lib":[
+      "es6",
+      "dom"
+    ],
+    "outDir": "./build"
   },
   "files": [
     "./index.ts"

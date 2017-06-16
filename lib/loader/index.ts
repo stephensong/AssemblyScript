@@ -1,4 +1,4 @@
-/// <reference path="./webassembly.d.ts" />
+/// <reference path="./types/webassembly.d.ts" />
 
 export interface ILoadOptions {
   initialMemory?: number;
@@ -6,7 +6,7 @@ export interface ILoadOptions {
   imports?: { [key: string]: any }
 }
 
-interface IModule {
+export interface IModule {
   memory: WebAssembly.Memory;
   imports: { [key: string]: any };
   exports: { [key: string]: any };
@@ -22,7 +22,7 @@ interface IModule {
   growMemory(numPages: number): number;
 }
 
-export function load(filename: string, options?: ILoadOptions): Promise<IModule> {
+export function load(file: ArrayBuffer | Uint8Array | string, options?: ILoadOptions): Promise<IModule> {
   if (!options)
     options = {};
 
@@ -60,20 +60,26 @@ export function load(filename: string, options?: ILoadOptions): Promise<IModule>
     module.F64 = new Float64Array(memory.buffer);
   }
 
-  return (typeof fetch === "function" && fetch || fetch_node)(filename)
-    .then((result: Response) => result.arrayBuffer())
-    .then((buffer: ArrayBuffer) => WebAssembly.instantiate(buffer, imports))
-    .then((result: WebAssembly.ResultObject) => {
-      module.exports = result.instance.exports;
-      onGrowMemory();
-      return <IModule>module;
-    });
+  return (typeof file === "string"
+    ? (typeof fetch === "function" && fetch || fetch_node)(file)
+      .then((result: Response) => result.arrayBuffer())
+      .then((buffer: ArrayBuffer) => WebAssembly.instantiate(buffer, imports))
+    : WebAssembly.instantiate(<ArrayBuffer | Uint8Array>file, imports)
+  )
+  .then(result => {
+    module.exports = result.instance.exports;
+    onGrowMemory();
+    return <IModule>module;
+  });
 }
 
 var fs: any;
-function fetch_node(file: string): Promise<Response> {
-  // 'Promise' only refers to a type, but is being used as a value here. - no idea why that's still a thing
-  return new Promise((resolve: (result: any) => {}, reject: (error: Error) => {}) =>
-    (fs || (fs = eval("equire".replace(/^/, "r"))("fs"))).readFile(file, (err: Error, data?: Buffer) => err ? reject(err) : resolve({ arrayBuffer: () => data }))
+function fetch_node(file: string): Promise<Body> {
+  return new Promise<Body>((resolve, reject) =>
+    (fs || (fs = eval("equire".replace(/^/, "r"))("fs")))
+    .readFile(file, (err: Error, data?: Buffer) => err
+      ? reject(err)
+      : resolve(<Body><any>{ arrayBuffer: () => data })
+    )
   );
 }
