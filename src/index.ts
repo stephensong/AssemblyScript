@@ -3,6 +3,7 @@ import * as builtins from "./builtins";
 import Compiler from "./compiler";
 import * as expressions from "./expressions";
 import * as library from "./library";
+import * as loader from "../lib/loader/build";
 import Profiler from "./profiler";
 import * as reflection from "./reflection";
 import * as typescript from "./typescript";
@@ -15,6 +16,7 @@ const assemblyscript = {
   Compiler,
   expressions,
   library,
+  loader,
   Profiler,
   reflection,
   statements,

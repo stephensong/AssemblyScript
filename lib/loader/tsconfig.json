@@ -10,7 +10,8 @@
       "es6",
       "dom"
     ],
-    "outDir": "./build"
+    "outDir": "./build",
+    "declaration": true
   },
   "files": [
     "./index.ts"
