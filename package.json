@@ -26,7 +26,7 @@
     "@types/long": "^3.0.31",
     "@types/minimist": "^1.2.0",
     "@types/node": "^7.0.27",
-    "binaryen": "^1.37.13",
+    "binaryen": "1.37.13-nightly.20170617",
     "long": "^3.2.0",
     "minimist": "^1.2.0",
     "performance-now": "^2.1.0",
