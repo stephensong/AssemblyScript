@@ -5,51 +5,82 @@ import { Type, voidType } from "./type";
 import { Variable, VariableFlags } from "./variable";
 import * as typescript from "../typescript";
 
+/** Common base class of {@link Function} and {@link FunctionTemplate}. */
 export abstract class FunctionBase {
+
+  /** Global name. */
   name: string;
+  /** Declaration reference. */
   declaration: typescript.FunctionLikeDeclaration;
 
-  constructor(name: string, declaration: typescript.FunctionLikeDeclaration) {
+  protected constructor(name: string, declaration: typescript.FunctionLikeDeclaration) {
     this.name = name;
     this.declaration = declaration;
   }
 
+  /** Tests if this function is imported (just a declaration). */
   get isImport(): boolean { return typescript.isDeclare(this.declaration); }
+  /** Tests if this function is exported to the embedder. */
   get isExport(): boolean { return typescript.isExport(this.declaration); }
+  /** Tests if this function is an instance member / not static. */
   get isInstance(): boolean { return this.declaration.kind === typescript.SyntaxKind.Constructor || this.declaration.kind === typescript.SyntaxKind.MethodDeclaration; }
+  /** Tests if this function is the constructor of a class. */
   get isConstructor(): boolean { return this.declaration.kind === typescript.SyntaxKind.Constructor; }
 
   toString(): string { return this.name; }
 }
 
+/** Interface describing a reflected function parameter. */
 export interface FunctionParameter {
-  node: typescript.Node;
+  /** Simple name. */
   name: string;
+  /** Resolved type. */
   type: Type;
+  /** Parameter node reference. */
+  node: typescript.Node;
+  /** Whether this parameter also introduces a property (like when used with the `public` keyword). */
   isAlsoProperty?: boolean;
 }
 
 /** A function instance with generic parameters resolved. */
 export class Function extends FunctionBase {
+
+  /** Resolved type arguments. */
   typeArguments: { [key: string]: TypeArgument };
+  /** Function parameters including `this`. */
   parameters: FunctionParameter[];
+  /** Resolved return type. */
   returnType: Type;
+  /** Parent class, if any. */
   parent?: Class;
+  /** Body reference, if not just a declaration. */
   body?: typescript.Block | typescript.Expression;
 
-  // set on initialization
+  // Set on initialization
+
+  /** Local variables. */
   locals: Variable[];
+  /** Local variables by name for lookups. */
   localsByName: { [key: string]: Variable };
+  /** Resolved binaryen parameter types. */
   binaryenParameterTypes: binaryen.Type[];
+  /** Resolved binaryen return type. */
   binaryenReturnType: binaryen.Type;
+  /** Binaryen signature id, for example "iiv". */
   binaryenSignatureId: string;
+  /** Binaryen signature reference. */
   binaryenSignature: binaryen.Signature;
 
-  // used in compilation
+  // Used in compilation
+
+  /** Whether this function has already been compiled. */
   compiled: boolean = false;
+  /** Number of the current break context. */
   breakNumber: number = 0;
+  /** Depth within the current break context. */
   breakDepth: number = 0;
 
+  /** Constructs a new reflected function instance and binds it to its TypeScript declaration. */
   constructor(name: string, declaration: typescript.FunctionLikeDeclaration, typeArguments: { [key: string]: TypeArgument }, parameters: FunctionParameter[], returnType: Type, parent?: Class, body?: typescript.Block | typescript.Expression) {
     super(name, declaration);
     this.typeArguments = typeArguments;
@@ -60,8 +91,10 @@ export class Function extends FunctionBase {
     typescript.setReflectedFunction(declaration, this);
   }
 
+  /** Gets the current break label for use with binaryen loops and blocks. */
   get breakLabel(): string { return this.breakNumber + "." + this.breakDepth; }
 
+  /** Initializes this function. Does not compile it, yet. */
   initialize(compiler: Compiler): void {
     this.binaryenParameterTypes = [];
     this.locals = [];
@@ -85,6 +118,7 @@ export class Function extends FunctionBase {
       this.binaryenSignature = compiler.module.addFunctionType(this.binaryenSignatureId, this.binaryenReturnType, this.binaryenParameterTypes);
   }
 
+  /** Introduces an additional local variable. */
   addLocal(name: string, type: Type): Variable {
     const variable = new Variable(name, type, VariableFlags.none, this.locals.length);
     this.locals.push(variable);
@@ -97,9 +131,13 @@ export { Function as default };
 
 /** A function template with possibly unresolved generic parameters. */
 export class FunctionTemplate extends FunctionBase {
+
+  /** Declaration reference. */
   declaration: typescript.FunctionLikeDeclaration;
+  /** So far resolved instances by global name. */
   instances: { [key: string]: Function };
 
+  /** Constructs a new reflected function template and binds it to its TypeScript declaration. */
   constructor(name: string, declaration: typescript.FunctionLikeDeclaration) {
     super(name, declaration);
     this.declaration = declaration;
@@ -107,8 +145,10 @@ export class FunctionTemplate extends FunctionBase {
     typescript.setReflectedFunctionTemplate(declaration, this);
   }
 
+  /** Tests if this function requires type arguments. */
   get isGeneric(): boolean { return !!(this.declaration.typeParameters && this.declaration.typeParameters.length); }
 
+  /** Resolves this possibly generic function against the provided type arguments. */
   resolve(compiler: Compiler, typeArgumentNodes: typescript.TypeNode[], parent?: Class): Function {
     const typeParametersCount = this.declaration.typeParameters && this.declaration.typeParameters.length || 0;
     if (typeArgumentNodes.length !== typeParametersCount)

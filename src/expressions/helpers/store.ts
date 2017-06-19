@@ -39,7 +39,7 @@ export function compileStore(compiler: Compiler, node: typescript.Expression, ty
     case reflection.TypeKind.double:
       return op.f64.store(offset, type.size, ptr, value);
   }
-  throw Error("unexpected type: " + type);
+  throw Error("unexpected type");
 }
 
 export { compileStore as default };

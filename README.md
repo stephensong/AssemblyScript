@@ -238,6 +238,8 @@ API
     Specifies that compilation shall be performed in silent mode without writing to stderr. Defaults to `false`.
   * **treeShaking**: `boolean`<br />
     Disables built-in tree-shaking if set to `false`. Defaults to `true`.
+  * **internalMalloc**: `boolean`<br />
+    Does not export malloc, free, memcpy, memset and memcmp when set to `true` so these can be DCEd if not used. Defaults to `false`.
 
 ### Example
 

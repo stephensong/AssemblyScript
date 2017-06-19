@@ -36,7 +36,7 @@ export function compilePropertyAccess(compiler: Compiler, node: typescript.Prope
     if (reference instanceof reflection.Enum) {
       const enm = <reflection.Enum>reference;
       typescript.setReflectedType(node, reflection.intType);
-      const property = enm.properties[propertyName];
+      const property = enm.values[propertyName];
       if (property.isConstant)
         return op.i32.const(<number>property.constantValue | 0); // todo: actual type
 

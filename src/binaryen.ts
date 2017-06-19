@@ -34,6 +34,7 @@ export {
 export function identifierOf(type: reflection.Type, uintptrSize: number): string {
   switch (type.kind) {
 
+    case reflection.TypeKind.sbyte:
     case reflection.TypeKind.byte:
     case reflection.TypeKind.short:
     case reflection.TypeKind.ushort:
@@ -65,6 +66,7 @@ export function identifierOf(type: reflection.Type, uintptrSize: number): string
 export function typeOf(type: reflection.Type, uintptrSize: number): binaryen.Type {
   switch (type.kind) {
 
+    case reflection.TypeKind.sbyte:
     case reflection.TypeKind.byte:
     case reflection.TypeKind.short:
     case reflection.TypeKind.ushort:
@@ -96,6 +98,7 @@ export function typeOf(type: reflection.Type, uintptrSize: number): binaryen.Typ
 export function categoryOf(type: reflection.Type, module: binaryen.Module, uintptrSize: number): binaryen.I32Operations | binaryen.I64Operations | binaryen.F32Operations | binaryen.F64Operations {
   switch (type.kind) {
 
+    case reflection.TypeKind.sbyte:
     case reflection.TypeKind.byte:
     case reflection.TypeKind.short:
     case reflection.TypeKind.ushort:

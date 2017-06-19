@@ -1,14 +1,18 @@
 import Compiler from "../compiler";
 import { FunctionTemplate, Function } from "./function";
-import { Property } from "./property";
-import { Type } from "./type";
+import Property from "./property";
+import Type from "./type";
 import * as typescript from "../typescript";
 
+/** Common base class of {@link Class} and {@link ClassTemplate}. */
 export abstract class ClassBase {
+
+  /** Global name. */
   name: string;
+  /** Declaration reference. */
   declaration: typescript.ClassDeclaration;
 
-  constructor(name: string, declaration: typescript.ClassDeclaration) {
+  protected constructor(name: string, declaration: typescript.ClassDeclaration) {
     this.name = name;
     this.declaration = declaration;
   }
@@ -16,26 +20,39 @@ export abstract class ClassBase {
   toString(): string { return this.name; }
 }
 
+/** Interface describing a reflected type argument. */
 export interface TypeArgument {
+  /** Reflected type. */
   type: Type;
+  /** TypeScript type node. */
   node: typescript.TypeNode;
 }
 
 /** A class instance with generic parameters resolved. */
 export class Class extends ClassBase {
+
+  /** Reflected class type. */
   type: Type;
+  /** Concrete type arguments. */
   typeArguments: { [key: string]: TypeArgument};
+  /** Base class, if any. */
   base?: Class;
-
+  /** Whether already initialized or not. */
   initialized: boolean = false;
+  /** Static and instance class properties. */
   properties: { [key: string]: Property } = {};
+  /** Static and instance class methods. */
   methods: { [key: string]: { template: FunctionTemplate, instance?: Function } } = {};
+  /** Class constructor, if any. */
   ctor?: Function;
+  /** Size in memory, in bytes. */
   size: number = 0;
-
+  /** Whether array access is supported on this class. */
   isArray: boolean = false;
+  // TODO
   isString: boolean = false;
 
+  /** Constructs a new reflected class and binds it to its TypeScript declaration. */
   constructor(name: string, declaration: typescript.ClassDeclaration, uintptrType: Type, typeArguments: { [key: string]: TypeArgument } , base?: Class) {
     super(name, declaration);
     this.type = uintptrType.withUnderlyingClass(this);
@@ -49,10 +66,12 @@ export class Class extends ClassBase {
       this.isString = true;
   }
 
+  /** Initializes the class, its properties, methods and constructor. */
   initialize(compiler: Compiler): void {
     if (this.initialized)
       return;
 
+    this.initialized = true;
     this.size = 0;
 
     // Inherit from base class
@@ -119,9 +138,9 @@ export class Class extends ClassBase {
           compiler.error(member, "Unsupported class member");
       }
     }
-    this.initialized = true;
   }
 
+  /** Initializes a single method. */
   initializeMethod(compiler: Compiler, node: typescript.MethodDeclaration) {
     const simpleName = typescript.getTextOfNode(node.name);
     const hasBody = !!node.body;
@@ -136,10 +155,15 @@ export { Class as default };
 
 /** A class template with possibly unresolved generic parameters. */
 export class ClassTemplate extends ClassBase {
+
+  /** Class instances by global name. */
   instances: { [key: string]: Class } = {};
+  /** Base class template, if any. */
   base?: ClassTemplate;
+  /** Base type arguments. */
   baseTypeArguments: typescript.TypeNode[];
 
+  /** Constructs a new reflected class template and binds it to is TypeScript declaration. */
   constructor(name: string, declaration: typescript.ClassDeclaration, base?: ClassTemplate, baseTypeArguments?: typescript.TypeNode[]) {
     super(name, declaration);
     if (base && !baseTypeArguments)
@@ -149,8 +173,10 @@ export class ClassTemplate extends ClassBase {
     typescript.setReflectedClassTemplate(declaration, this);
   }
 
+  /** Tests if this class requires type arguments. */
   get isGeneric(): boolean { return !!(this.declaration.typeParameters && this.declaration.typeParameters.length); }
 
+  /** Resolves this possibly generic class against the provided type arguments. */
   resolve(compiler: Compiler, typeArgumentNodes: typescript.TypeNode[]): Class {
     const typeParametersCount = this.declaration.typeParameters && this.declaration.typeParameters.length || 0;
     if (typeArgumentNodes.length !== typeParametersCount)

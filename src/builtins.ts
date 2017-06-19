@@ -2,11 +2,12 @@ import * as binaryen from "./binaryen";
 import * as reflection from "./reflection";
 import * as typescript from "./typescript";
 
-import { Compiler } from "./compiler";
+import Compiler from "./compiler";
 
 /** Tests if the specified function name corresponds to a builtin function. */
 export function isBuiltin(name: string, isGlobalName: boolean = false): boolean {
   if (isGlobalName) {
+    // Builtins are declared in assembly.d.ts exclusively
     if (name.substring(0, 14) !== "assembly.d.ts/") return false;
     name = name.substring(14);
   }
@@ -49,12 +50,18 @@ export function isBuiltin(name: string, isGlobalName: boolean = false): boolean 
   return false;
 }
 
-type TypeScriptExpressionPair = [ typescript.Expression, typescript.Expression ];
-type BinaryenExpressionPair = [ binaryen.Expression, binaryen.Expression ];
+export interface TypeScriptExpressionPair {
+  0: typescript.Expression;
+  1: typescript.Expression;
+}
+
+export interface BinaryenExpressionPair {
+  0: binaryen.Expression;
+  1: binaryen.Expression;
+}
 
 export function rotl(compiler: Compiler, node: TypeScriptExpressionPair, expr: BinaryenExpressionPair): binaryen.Expression {
   const op = compiler.module;
-
   const leftType = typescript.getReflectedType(node[0]);
   const rightType = typescript.getReflectedType(node[1]);
 
