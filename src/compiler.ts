@@ -14,21 +14,16 @@ let mallocWasm: Uint8Array;
 
 /** AssemblyScript compiler options. */
 export interface CompilerOptions {
-
   /** Specifies the byte size of a pointer. 32-bit WebAssembly expects `4`, 64-bit WebAssembly expects `8`. Defaults to `4`. */
   uintptrSize?: number;
-
-  /** Specifies whether the standard library (malloc, free, etc.) shall be excluded. */
-  noLib?: boolean;
-
-  /** Specifies that compilation shall be performed in silent mode without writing to stderr. */
+  /** Whether compilation shall be performed in silent mode without writing to console. Defaults to `false`. */
   silent?: boolean;
-
-  /** Disables built-in tree-shaking if set to `false`, i.e. when building a dynamically linked library. Defaults to `true`. */
+  /** Whether to use built-in tree-shaking. Defaults to `true`. Disable this when building a dynamically linked library. */
   treeShaking?: boolean;
-
-  /** Does not export malloc, free, memcpy, memset and memcmp when set to `true` so these can be DCEd if not used. Defaults to `false`. */
-  internalMalloc?: boolean;
+  /** Whether to include malloc, free, etc. Defaults to `true`. Note that malloc is required when using the `new` operator. */
+  malloc?: boolean;
+  /** Whether to export malloc, free, etc. Defaults to `true`. Disable this if you want malloc etc. to be dead-code-eliminated later on. */
+  exportMalloc?: boolean;
 }
 
 /** AssemblyScript compiler. */
@@ -177,12 +172,12 @@ export class Compiler {
     this.checker = program.getDiagnosticsProducingTypeChecker();
     this.diagnostics = typescript.createDiagnosticCollection();
 
-    if (!this.options.noLib && !mallocWasm) {
+    if (this.options.malloc !== false && !mallocWasm) {
       mallocWasm = new Uint8Array(base64.length(library.malloc));
       base64.decode(library.malloc, mallocWasm, 0);
     }
 
-    this.module = this.options.noLib ? new binaryen.Module() : binaryen.readBinary(mallocWasm);
+    this.module = this.options.malloc === false ? new binaryen.Module() : binaryen.readBinary(mallocWasm);
     this.uintptrType = this.uintptrSize === 4 ? reflection.uintptrType32 : reflection.uintptrType64;
 
     const sourceFiles = program.getSourceFiles();
@@ -273,11 +268,11 @@ export class Compiler {
       }
     }
 
-    if (this.options.noLib) {
+    if (this.options.malloc === false) {
       // setup empty memory
       this.module.setMemory(1, 0xffff, "memory", []);
     } else {
-      // memory is imported
+      // memory is imported - FIXME: does this make sense?
       this.initializeLibrary();
     }
   }
@@ -320,7 +315,7 @@ export class Compiler {
     ]));
 
     // ... and expose these to the embedder for convenience, if configured
-    if (!this.options.internalMalloc) {
+    if (this.options.exportMalloc !== false) {
       this.module.addExport("malloc", "malloc");
       this.module.addExport("free", "free");
     } else {

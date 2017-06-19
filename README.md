@@ -232,14 +232,14 @@ API
 
   * **uintptrSize**: `number`<br />
     Specifies the byte size of a pointer. 32-bit WebAssembly expects `4`, 64-bit WebAssembly expects `8`. Defaults to `4`.
-  * **noLib**: `boolean`<br />
-    Specifies whether the standard library (malloc, free, etc.) shall be excluded. Defaults to `false`.
   * **silent**: `boolean`<br />
-    Specifies that compilation shall be performed in silent mode without writing to stderr. Defaults to `false`.
+    Whether compilation shall be performed in silent mode without writing to console. Defaults to `false`.
   * **treeShaking**: `boolean`<br />
-    Disables built-in tree-shaking if set to `false`, i.e. when building a dynamically linked library. Defaults to `true`.
-  * **internalMalloc**: `boolean`<br />
-    Does not export malloc, free, memcpy, memset and memcmp when set to `true` so these can be DCEd if not used. Defaults to `false`.
+    Whether to use built-in tree-shaking. Defaults to `true`. Disable this when building a dynamically linked library.
+  * **malloc**: `boolean`<br />
+    Whether to include malloc, free, etc. Defaults to `true`. Note that malloc is required when using the `new` operator.
+  * **exportMalloc**: `boolean`<br />
+    Whether to export malloc, free, etc. Defaults to `true`. Disable this if you want malloc etc. to be dead-code-eliminated later on.
 
 ### Example
 
@@ -275,13 +275,16 @@ Command line
 The command line compiler `asc` works similar to TypeScript's `tsc`:
 
 ```
-Syntax: asc [options] [file ...]
+Syntax: asc [options] [entryFile]
 
 Options:
  -o, --out, --outFile   Specifies the output file name.
  -v, --validate         Validates the module.
  -O, --optimize         Runs optimizing binaryen IR passes.
  -t, --text             Emits text format instead of a binary.
+
+ --no-malloc            Does not include malloc, free, etc.
+ --no-export-malloc     Does not export malloc, free, etc.
 ```
 
 ---
