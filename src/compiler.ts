@@ -24,7 +24,7 @@ export interface CompilerOptions {
   /** Specifies that compilation shall be performed in silent mode without writing to stderr. */
   silent?: boolean;
 
-  /** Disables built-in tree-shaking if set to `false`. Defaults to `true`. */
+  /** Disables built-in tree-shaking if set to `false`, i.e. when building a dynamically linked library. Defaults to `true`. */
   treeShaking?: boolean;
 
   /** Does not export malloc, free, memcpy, memset and memcmp when set to `true` so these can be DCEd if not used. Defaults to `false`. */
