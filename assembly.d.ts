@@ -63,10 +63,14 @@ declare const Infinityf: float;
 // Arrays
 
 /** A fixed-size array. */
+@__impl("ArrayImpl")
 declare class Array<T> implements IDisposable {
   readonly length: uintptr;
   constructor(size: uintptr);
   dispose(): void;
+
+  // implemented in std/array.ts
+  indexOf(value: T, startOffset: uintptr): uintptr;
 }
 
 /** A fixed-size 8-bit signed integer array. */
@@ -93,6 +97,7 @@ declare class Float64Array extends Array<double> {}
 // Strings
 
 /** A fixed-size utf16-le encoded string. */
+@__impl("StringImpl")
 declare class String extends Array<ushort> implements IDisposable {
   readonly length: uintptr;
   constructor(size: uintptr);
@@ -193,15 +198,19 @@ declare function free(ptr: uintptr): void;
 
 // Temporary fillers
 
-declare abstract class Boolean {}
-declare abstract class Function {}
-declare abstract class IArguments {}
-declare abstract class Number {}
-declare abstract class Object {}
-declare abstract class RegExp {}
+declare interface Boolean {}
+declare interface Function {}
+declare interface IArguments {}
+declare interface Number {}
+declare interface Object {}
+declare interface RegExp {}
 
 // Interfaces
 
+/** An internal decorator specifying the implementation of a declared class. */
+declare function __impl(path: string);
+
+/** Marks a class as being disposable (can be freed from memory manually). */
 declare interface IDisposable {
   dispose(): void;
 }

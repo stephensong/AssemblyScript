@@ -9,7 +9,7 @@ out.push(
 
 var files = {};
 [
-  "assembly.d.ts",
+  "assembly.d.ts", // must be first
   "std/array.ts",
   "std/string.ts"
 ].forEach(file => {

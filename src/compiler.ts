@@ -4,7 +4,6 @@ import * as builtins from "./builtins";
 import * as expressions from "./expressions";
 import compileStore from "./expressions/helpers/store";
 import * as library from "./library";
-import * as path from "path";
 import Profiler from "./profiler";
 import * as reflection from "./reflection";
 import * as statements from "./statements";
@@ -16,7 +15,7 @@ let mallocWasm: Uint8Array;
 /** AssemblyScript compiler options. */
 export interface CompilerOptions {
 
-  /** Specifies the byte size of a pointer. WASM32 uses `4`, WASM64 uses `8`. */
+  /** Specifies the byte size of a pointer. 32-bit WebAssembly expects `4`, 64-bit WebAssembly expects `8`. Defaults to `4`. */
   uintptrSize?: number;
 
   /** Specifies whether the standard library (malloc, free, etc.) shall be excluded. */
@@ -24,6 +23,12 @@ export interface CompilerOptions {
 
   /** Specifies that compilation shall be performed in silent mode without writing to stderr. */
   silent?: boolean;
+
+  /** Disables built-in tree-shaking if set to `false`. Defaults to `true`. */
+  treeShaking?: boolean;
+
+  /** Disables exporting of malloc, free, memcpy, memset and memcmp when set to `true` so these can be DCEd if not used. Defaults to `false`. */
+  internalMalloc?: boolean;
 }
 
 /** AssemblyScript compiler. */
@@ -48,6 +53,7 @@ export class Compiler {
   // Codegen
   profiler = new Profiler();
   currentFunction: reflection.Function;
+  stringPool: { [key: string]: number } = {};
 
   // Reflection
   uintptrType: reflection.Type;
@@ -58,6 +64,7 @@ export class Compiler {
   classes: { [key: string]: reflection.Class } = {};
   enums: { [key: string]: reflection.Enum } = {};
   startFunction: reflection.Function;
+  pendingImplementations: { [key: string]: reflection.ClassTemplate } = {};
 
   /**
    * Compiles an AssemblyScript file to WebAssembly.
@@ -220,10 +227,9 @@ export class Compiler {
     if (sourceFile === this.libraryFile) {
       name = "assembly.d.ts/" + name;
     } else if (sourceFile !== this.entryFile) {
-      name = path.relative(
-        path.dirname(path.normalize(this.entryFile.fileName)),
-        path.normalize(sourceFile.fileName)
-      ).replace(/[^a-zA-Z0-9\.\/\\$]/g, "") + path.sep + name;
+      name = sourceFile.fileName
+      .replace(/\\/g, "/")
+      .replace(/[^a-zA-Z0-9\.\/$]/g, "") + "/" + name;
     }
     return name;
   }
@@ -313,9 +319,15 @@ export class Compiler {
       op.call("mspace_free", [ op.getGlobal(".msp", binaryenPtrType), op.getLocal(0, binaryenPtrType) ], binaryen.none)
     ]));
 
-    // ... and expose these to the embedder for convenience:
-    this.module.addExport("malloc", "malloc");
-    this.module.addExport("free", "free");
+    // ... and expose these to the embedder for convenience, if configured
+    if (!this.options.internalMalloc) {
+      this.module.addExport("malloc", "malloc");
+      this.module.addExport("free", "free");
+    } else {
+      this.module.removeExport("memcpy");
+      this.module.removeExport("memset");
+      this.module.removeExport("memcmp");
+    }
   }
 
   initializeGlobal(node: typescript.VariableStatement): void {
@@ -390,47 +402,45 @@ export class Compiler {
     }
   }
 
-  initializeFunction(node: typescript.FunctionLikeDeclaration): void {
+  initializeFunction(node: typescript.FunctionLikeDeclaration): { template: reflection.FunctionTemplate, instance?: reflection.Function } {
     let name: string;
     let parent: reflection.Class | undefined;
     if (node.kind === typescript.SyntaxKind.FunctionDeclaration) {
       name = this.mangleGlobalName(typescript.getTextOfNode(<typescript.Identifier>node.name), typescript.getSourceFileOfNode(node));
     } else {
-      const parentNode = <typescript.ClassDeclaration>node.parent;
-      const parentName = this.mangleGlobalName(typescript.getTextOfNode(<typescript.Identifier>parentNode.name), typescript.getSourceFileOfNode(parentNode));
+      parent = typescript.getReflectedClass(<typescript.ClassDeclaration>node.parent);
       if (node.kind === typescript.SyntaxKind.Constructor)
-        name = parentName;
+        name = parent.name;
       else if (typescript.isStatic(node))
-        name = parentName + "." + typescript.getTextOfNode(<typescript.Identifier>node.name);
+        name = parent.name + "." + typescript.getTextOfNode(<typescript.Identifier>node.name);
       else
-        name = parentName + "#" + typescript.getTextOfNode(<typescript.Identifier>node.name);
-      parent = typescript.getReflectedClass(parentNode);
+        name = parent.name + "#" + typescript.getTextOfNode(<typescript.Identifier>node.name);
     }
 
-    if (this.functionTemplates[name])
-      return; // already initialized
-
-    const template = this.functionTemplates[name] = new reflection.FunctionTemplate(name, node);
-    typescript.setReflectedFunctionTemplate(node, template);
-    if (template.isGeneric) {
-      if (builtins.isBuiltin(name)) // generic builtins evaluate type parameters dynamically and have a known return type
-        typescript.setReflectedFunction(node, new reflection.Function(name, node, {}, [], this.resolveType(<typescript.TypeNode>template.declaration.type, true)));
-      return;
+    let template = this.functionTemplates[name];
+    let instance: reflection.Function | undefined;
+    if (!template) { // not already initialized
+      template = this.functionTemplates[name] = new reflection.FunctionTemplate(name, node);
+      if (template.isGeneric) {
+        if (builtins.isBuiltin(name)) // generic builtins evaluate type parameters dynamically and have a known return type
+          typescript.setReflectedFunction(node, new reflection.Function(name, node, {}, [], this.resolveType(<typescript.TypeNode>template.declaration.type, true)));
+      } else {
+        instance = this.functions[name] = template.resolve(this, [], parent);
+        instance.initialize(this);
+      }
     }
-
-    const instance = this.functions[name] = template.resolve(this, [], parent);
-    instance.initialize(this);
-    typescript.setReflectedFunction(node, instance);
+    return { template, instance };
   }
 
   initializeClass(node: typescript.ClassDeclaration): void {
-    const name = this.mangleGlobalName(typescript.getTextOfNode(<typescript.Identifier>node.name), typescript.getSourceFileOfNode(node));
+    const simpleName = typescript.getTextOfNode(<typescript.Identifier>node.name);
+    const name = this.mangleGlobalName(simpleName, typescript.getSourceFileOfNode(node));
 
     if (this.classTemplates[name])
       return; // already initialized
 
     if (typescript.getSourceFileOfNode(node) === this.entryFile && typescript.isExport(node))
-      this.warn(<typescript.Identifier>node.name, "Exporting classes is not supported yet");
+      this.warn(<typescript.Identifier>node.name, "Exporting entire classes is not supported yet");
 
     let base: reflection.ClassTemplate | undefined;
     let baseTypeArguments: typescript.TypeNode[] | undefined;
@@ -455,14 +465,33 @@ export class Compiler {
       }
     }
 
-    const template = this.classTemplates[name] = new reflection.ClassTemplate(name, node, base, baseTypeArguments);
-    typescript.setReflectedClassTemplate(node, template);
-    if (template.isGeneric)
-      return;
+    // Determine @__impl argument, if annotated
+    let impl: string | undefined;
+    if (node.decorators)
+      for (let i = 0, k = node.decorators.length; i < k; ++i) {
+        const decorator = node.decorators[i];
+        if (decorator.expression.kind === typescript.SyntaxKind.CallExpression) {
+          const call = <typescript.CallExpression>decorator.expression;
+          if (call.expression.kind === typescript.SyntaxKind.Identifier && typescript.getTextOfNode(call.expression) === "__impl") {
+            impl = (<typescript.LiteralExpression>call.arguments[0]).text;
+          }
+        }
+      }
 
-    const instance = this.classes[name] = template.resolve(this, []);
-    typescript.setReflectedClass(node, instance);
-    instance.initialize(this);
+    const template = this.classTemplates[name] = new reflection.ClassTemplate(name, node, base, baseTypeArguments);
+    let instance: reflection.Class | undefined;
+    if (!template.isGeneric) {
+      instance = this.classes[name] = template.resolve(this, []);
+      instance.initialize(this);
+    }
+
+    // Remember that this is a declaration that needs to be implemented
+    if (impl)
+      this.pendingImplementations[impl] = template;
+
+    // Replace the declaration with the implementation later on
+    else if (this.pendingImplementations[simpleName])
+      reflection.patchClassImplementation(this, this.pendingImplementations[simpleName], template);
   }
 
   initializeEnum(node: typescript.EnumDeclaration): void {
@@ -492,26 +521,20 @@ export class Compiler {
 
           case typescript.SyntaxKind.FunctionDeclaration:
           {
-            // TODO: Theoretically, it would be sufficient to start by compiling entry file exports
-            // and then rely on the compiler to automatically traverse through call expressions and
-            // compile everything else on demand. This might significantly reduce compilation time
-            // for large projects because unused functions wouldn't be compiled at all, similar to
-            // built-in tree-shaking, but it also prevents subsequent build-steps from accessing
-            // yet intentionally unused functions, i.e. when linking additional functionality later
-            // on that relies on these unused functions. Maybe as an option?
             const declaration = <typescript.FunctionDeclaration>statement;
-            const instance = typescript.getReflectedFunction(declaration);
-            if (instance) // otherwise generic
-              this.compileFunction(instance);
+            if (typescript.isExport(declaration) || this.options.treeShaking === false) {
+              const instance = typescript.getReflectedFunction(declaration);
+              if (instance) // otherwise generic: compiled once type arguments are known
+                this.compileFunction(instance);
+            }
             break;
           }
 
           case typescript.SyntaxKind.ClassDeclaration:
           {
-            // TODO: See comment above. This also applies to class members.
             const declaration = <typescript.ClassDeclaration>statement;
             const instance = typescript.getReflectedClass(declaration);
-            if (instance) // otherwise generic
+            if (instance) // otherwise generic: compiled once type arguments are known
               this.compileClass(instance);
             break;
           }
@@ -589,7 +612,7 @@ export class Compiler {
 
     // Otherwise compile
     if (!instance.body)
-      throw Error("cannot compile a function without a body");
+      throw Error("cannot compile a function without a body: " + instance.name);
 
     const body: binaryen.Statement[] = [];
     const previousFunction = this.currentFunction;
@@ -646,9 +669,12 @@ export class Compiler {
         case typescript.SyntaxKind.Constructor:
         case typescript.SyntaxKind.MethodDeclaration:
         {
-          const functionInstance = typescript.getReflectedFunction(<typescript.ConstructorDeclaration | typescript.MethodDeclaration>member);
-          if (functionInstance) // otherwise generic
-            this.compileFunction(functionInstance);
+          const methodDeclaration = <typescript.ConstructorDeclaration | typescript.MethodDeclaration>member;
+          if (typescript.isExport(methodDeclaration) || this.options.treeShaking === false) {
+            const functionInstance = typescript.getReflectedFunction(methodDeclaration);
+            if (functionInstance) // otherwise generic: compiled once type arguments are known
+              this.compileFunction(functionInstance);
+          }
           break;
         }
 
@@ -760,19 +786,12 @@ export class Compiler {
       case typescript.SyntaxKind.NewExpression:
         return expressions.compileNew(this, <typescript.NewExpression>node, contextualType);
 
-      case typescript.SyntaxKind.NumericLiteral:
-        return expressions.compileLiteral(this, <typescript.LiteralExpression>node, contextualType);
-
       case typescript.SyntaxKind.TrueKeyword:
       case typescript.SyntaxKind.FalseKeyword:
-
-        typescript.setReflectedType(node, reflection.boolType);
-        return binaryen.valueOf(reflection.boolType, op, node.kind === typescript.SyntaxKind.TrueKeyword ? 1 : 0);
-
       case typescript.SyntaxKind.NullKeyword:
-
-        typescript.setReflectedType(node, this.uintptrType);
-        return binaryen.valueOf(this.uintptrType, op, 0);
+      case typescript.SyntaxKind.NumericLiteral:
+      case typescript.SyntaxKind.StringLiteral:
+        return expressions.compileLiteral(this, <typescript.LiteralExpression>node, contextualType);
     }
 
     this.error(node, "Unsupported expression node");
@@ -986,6 +1005,7 @@ export class Compiler {
       case "float":
       case "double":
       case "uintptr":
+      case "string":
         return symbol;
     }
 
@@ -1045,6 +1065,7 @@ export class Compiler {
               case "float": return reflection.floatType;
               case "double": return reflection.doubleType;
               case "uintptr": return this.uintptrType;
+              case "string": return this.classes["assembly.d.ts/String"].type;
             }
 
             const reference = this.resolveReference(referenceNode.typeName);
@@ -1063,7 +1084,11 @@ export class Compiler {
             }
           }
         }
+        break;
       }
+
+      case typescript.SyntaxKind.StringKeyword:
+        return this.classes["assembly.d.ts/String"].type;
 
       case typescript.SyntaxKind.ArrayType:
       {

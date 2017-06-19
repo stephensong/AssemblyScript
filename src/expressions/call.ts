@@ -12,6 +12,7 @@ export function compileCall(compiler: Compiler, node: typescript.CallExpression,
     return op.unreachable();
   }
 
+  // Initialize generic function from type arguments
   const declaration = <typescript.FunctionLikeDeclaration>signature.declaration; // FunctionLikeDeclaration extends SignatureDeclaration
   let instance = typescript.getReflectedFunction(declaration);
   if (!instance) {
@@ -21,16 +22,17 @@ export function compileCall(compiler: Compiler, node: typescript.CallExpression,
       instance.initialize(compiler);
       if (!template.isGeneric)
         typescript.setReflectedFunction(declaration, instance);
-      if (!compiler.compileFunction(instance)) {
-        compiler.error(node, "Failed to compile call target");
-        typescript.setReflectedType(node, contextualType);
-        return op.unreachable();
-      }
     } else {
-      compiler.error(node, "Unresolvable call target");
+      compiler.error(node, "Unresolvable call target", typescript.getTextOfNode(<typescript.Identifier>declaration.name));
       typescript.setReflectedType(node, contextualType);
       return op.unreachable();
     }
+  }
+
+  // Compile function if not yet compiled
+  if (!instance.compiled) {
+    compiler.compileFunction(instance); // throws if unexpected things happen (i.e. has no body)
+    instance.compiled = true;
   }
 
   let argumentCount = instance.parameters.length;
@@ -67,7 +69,8 @@ export function compileCall(compiler: Compiler, node: typescript.CallExpression,
     typeArguments = new Array(node.typeArguments.length);
     for (const k = declaration.typeParameters.length; i < k; ++i) {
       const argument = node.typeArguments[i];
-      const resolvedType = compiler.currentFunction && compiler.currentFunction.typeParameters[typescript.getTextOfNode(argument)] || compiler.resolveType(argument);
+      const argumentName = typescript.getTextOfNode(argument);
+      const resolvedType = compiler.currentFunction && compiler.currentFunction.typeArguments[argumentName] && compiler.currentFunction.typeArguments[argumentName].type || compiler.resolveType(argument);
       if (!resolvedType) {
         compiler.error(node.typeArguments[i], "Unresolvable type");
         return op.unreachable();
@@ -78,7 +81,7 @@ export function compileCall(compiler: Compiler, node: typescript.CallExpression,
   }
 
   // user function
-  if (!typescript.isImport(declaration))
+  if (!typescript.isDeclare(declaration))
     return op.call(instance.name, argumentExpressions, binaryen.typeOf(instance.returnType, compiler.uintptrSize));
 
   // builtin

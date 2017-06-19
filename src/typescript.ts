@@ -206,7 +206,7 @@ export function formatDiagnosticsWithColorAndContext(diagnostics: Diagnostic[], 
 
 /** Prints a diagnostic message to console. */
 export function printDiagnostic(diagnostic: Diagnostic): void {
-  if ((<any>sys).browser) {
+  if (!(<any>sys).browser) {
     if (diagnostic.category === DiagnosticCategory.Message)
       process.stderr.write(formatDiagnostics([ diagnostic ], defaultFormatDiagnosticsHost));
     else
@@ -231,7 +231,7 @@ export function isExport(node: Node): boolean {
 }
 
 /** Tests if the specified node has a 'declare' modifier. */
-export function isImport(node: Node): boolean {
+export function isDeclare(node: Node): boolean {
   if (node && node.modifiers)
     for (let i = 0, k = node.modifiers.length; i < k; ++i)
       if (node.modifiers[i].kind === SyntaxKind.DeclareKeyword)
@@ -242,6 +242,11 @@ export function isImport(node: Node): boolean {
 /** Tests if the specified node has a 'static' modifier or is otherwise part of a static context. */
 export function isStatic(node: Node): boolean {
   return (<ModifierFlags>node.modifierFlagsCache & ModifierFlags.Static) !== 0;
+}
+
+/** Tests if the specified node has an 'abstract' modifier. */
+export function isAbstract(node: Node): boolean {
+  return (<ModifierFlags>node.modifierFlagsCache & ModifierFlags.Abstract) !== 0;
 }
 
 /** Tests if the specified node is flagged 'const'. */

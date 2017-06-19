@@ -14,7 +14,8 @@ export function compileVariableDeclarationList(compiler: Compiler, node: typescr
     const declaration = node.declarations[i];
     const declarationName = typescript.getTextOfNode(declaration.name);
     if (declaration.type) {
-      const declarationType = compiler.currentFunction && compiler.currentFunction.typeParameters[typescript.getTextOfNode(declaration.type)] || compiler.resolveType(declaration.type);
+      const declarationTypeName = typescript.getTextOfNode(declaration.type);
+      const declarationType = compiler.currentFunction && compiler.currentFunction.typeArguments[declarationTypeName] && compiler.currentFunction.typeArguments[declarationTypeName].type || compiler.resolveType(declaration.type);
       const local = compiler.currentFunction.addLocal(declarationName, declarationType);
       if (declaration.initializer)
         initializers.push(op.setLocal(local.index, compiler.maybeConvertValue(declaration.initializer, compiler.compileExpression(declaration.initializer, declarationType), typescript.getReflectedType(declaration.initializer), declarationType, false)));

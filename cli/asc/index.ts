@@ -44,8 +44,10 @@ else {
 
   if (argv.validate) {
     const result = <any>wasmModule.validate();
-    if (!result)
-      throw Error("validation failed");
+    if (!result) {
+      process.stderr.write("\nValidation failed. See above for details.\n");
+      process.exit(1);
+    }
   }
 
   if (argv.optimize)

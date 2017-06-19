@@ -392,7 +392,7 @@ export function compileAssignmentWithValue(compiler: Compiler, node: typescript.
       const clazz = compiler.currentFunction && compiler.currentFunction.parent || null;
       if (clazz && compiler.currentFunction.isInstance) {
         if (clazz.type.isArray) {
-          const underlyingType = (<reflection.Class>clazz.type.underlyingClass).typeParametersMap.T;
+          const underlyingType = (<reflection.Class>clazz.type.underlyingClass).typeArguments.T.type;
           const storeOp = compileStore(compiler, accessNode, underlyingType,
             uintptrCategory.add(
               op.getLocal(0, binaryenPtrType),
@@ -424,7 +424,7 @@ export function compileAssignmentWithValue(compiler: Compiler, node: typescript.
       if (reference instanceof reflection.Variable) {
         const variable = <reflection.Variable>reference;
         if (variable.type.isArray) {
-          const underlyingType = (<reflection.Class>variable.type.underlyingClass).typeParametersMap.T;
+          const underlyingType = (<reflection.Class>variable.type.underlyingClass).typeArguments.T.type;
           const storeOp = compileStore(compiler, accessNode, underlyingType,
             uintptrCategory.add(
               compiler.compileExpression(accessNode.expression, compiler.uintptrType),

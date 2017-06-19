@@ -17,23 +17,24 @@ export function compileNew(compiler: Compiler, node: typescript.NewExpression, c
 
     const clazz = <reflection.Class>contextualType.underlyingClass;
     let typeArguments: reflection.Type[] = [];
+    const classTypeArgumentTypes = Object.keys(clazz.typeArguments).map(key => clazz.typeArguments[key].type);
 
     // If type arguments are provided, validate (TODO: accept sub-classes)
     if (node.typeArguments) {
-      if (node.typeArguments.length !== clazz.typeParameterTypes.length) {
-        compiler.error(node.typeArguments[0], "Type parameters mismatch", "Expected " + clazz.typeParameterTypes.length + " but found " + node.typeArguments.length);
+      if (node.typeArguments.length !== classTypeArgumentTypes.length) {
+        compiler.error(node.typeArguments[0], "Type parameters mismatch", "Expected " + classTypeArgumentTypes.length + " but found " + node.typeArguments.length);
         return op.unreachable();
       }
       for (let i = 0, k = node.typeArguments.length; i < k; ++i) {
         const typeArgument = compiler.resolveType(node.typeArguments[i]);
-        if (typeArgument !== clazz.typeParameterTypes[i]) {
-          compiler.error(node.typeArguments[i], "Type parameters mismatch", "Expected " + clazz.typeParameterTypes[i] + " but found " + node.typeArguments[i]);
+        if (typeArgument !== classTypeArgumentTypes[i]) {
+          compiler.error(node.typeArguments[i], "Type parameters mismatch", "Expected " + classTypeArgumentTypes[i] + " but found " + node.typeArguments[i]);
           return op.unreachable();
         }
         typeArguments.push(typeArgument);
       }
     } else // otherwise inherit
-      typeArguments = clazz.typeParameterTypes;
+      typeArguments = classTypeArgumentTypes;
 
     // new Array<T>(size)
     if (identifierNode.text === "Array" && node.arguments && node.arguments.length === 1) {

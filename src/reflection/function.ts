@@ -1,5 +1,5 @@
 import * as binaryen from "../binaryen";
-import Class from "./class";
+import { Class, TypeArgument } from "./class";
 import Compiler from "../compiler";
 import { Type, voidType } from "./type";
 import { Variable, VariableFlags } from "./variable";
@@ -14,7 +14,7 @@ export abstract class FunctionBase {
     this.declaration = declaration;
   }
 
-  get isImport(): boolean { return typescript.isImport(this.declaration); }
+  get isImport(): boolean { return typescript.isDeclare(this.declaration); }
   get isExport(): boolean { return typescript.isExport(this.declaration); }
   get isInstance(): boolean { return this.declaration.kind === typescript.SyntaxKind.Constructor || this.declaration.kind === typescript.SyntaxKind.MethodDeclaration; }
   get isConstructor(): boolean { return this.declaration.kind === typescript.SyntaxKind.Constructor; }
@@ -31,7 +31,7 @@ export interface FunctionParameter {
 
 /** A function instance with generic parameters resolved. */
 export class Function extends FunctionBase {
-  typeParameters: { [key: string]: Type };
+  typeArguments: { [key: string]: TypeArgument };
   parameters: FunctionParameter[];
   returnType: Type;
   parent?: Class;
@@ -46,16 +46,18 @@ export class Function extends FunctionBase {
   binaryenSignature: binaryen.Signature;
 
   // used in compilation
+  compiled: boolean = false;
   breakNumber: number = 0;
   breakDepth: number = 0;
 
-  constructor(name: string, declaration: typescript.FunctionLikeDeclaration, typeParameters: { [key: string]: Type }, parameters: FunctionParameter[], returnType: Type, parent?: Class, body?: typescript.Block | typescript.Expression) {
+  constructor(name: string, declaration: typescript.FunctionLikeDeclaration, typeArguments: { [key: string]: TypeArgument }, parameters: FunctionParameter[], returnType: Type, parent?: Class, body?: typescript.Block | typescript.Expression) {
     super(name, declaration);
-    this.typeParameters = typeParameters;
+    this.typeArguments = typeArguments;
     this.parameters = parameters;
     this.returnType = returnType;
     this.parent = parent;
     this.body = body;
+    typescript.setReflectedFunction(declaration, this);
   }
 
   get breakLabel(): string { return this.breakNumber + "." + this.breakDepth; }
@@ -96,29 +98,41 @@ export { Function as default };
 /** A function template with possibly unresolved generic parameters. */
 export class FunctionTemplate extends FunctionBase {
   declaration: typescript.FunctionLikeDeclaration;
-  instances: { [key: string]: Function } = {};
+  instances: { [key: string]: Function };
 
   constructor(name: string, declaration: typescript.FunctionLikeDeclaration) {
     super(name, declaration);
     this.declaration = declaration;
+    this.instances = {};
+    typescript.setReflectedFunctionTemplate(declaration, this);
   }
 
   get isGeneric(): boolean { return !!(this.declaration.typeParameters && this.declaration.typeParameters.length); }
 
-  resolve(compiler: Compiler, typeArguments: typescript.TypeNode[], parent?: Class): Function {
+  resolve(compiler: Compiler, typeArgumentNodes: typescript.TypeNode[], parent?: Class): Function {
     const typeParametersCount = this.declaration.typeParameters && this.declaration.typeParameters.length || 0;
-    if (typeArguments.length !== typeParametersCount)
+    if (typeArgumentNodes.length !== typeParametersCount)
       throw Error("type parameter count mismatch");
 
     let name = this.name;
 
-    const typeParametersMap: { [key: string]: Type } = {};
+    const typeArguments: { [key: string]: TypeArgument } = {};
+
+    // Inherit class type arguments
+    if (parent)
+      Object.keys(parent.typeArguments).forEach(key => typeArguments[key] = parent.typeArguments[key]);
+
+    // Handle function type arguments
     if (typeParametersCount) {
       const typeNames: string[] = new Array(typeParametersCount);
       for (let i = 0; i < typeParametersCount; ++i) {
         const parameterDeclaration = (<typescript.NodeArray<typescript.TypeParameterDeclaration>>this.declaration.typeParameters)[i];
-        const type = compiler.resolveType(typeArguments[i]);
-        typeParametersMap[typescript.getTextOfNode(<typescript.Identifier>parameterDeclaration.name)] = type;
+        const typeName = typescript.getTextOfNode(<typescript.Identifier>parameterDeclaration.name);
+        const type = compiler.resolveType(typeArgumentNodes[i]);
+        typeArguments[typeName] = {
+          type: type,
+          node: <typescript.TypeNode><any>parameterDeclaration
+        };
         typeNames[i] = type.toString();
       }
       name += "<" + typeNames.join(",") + ">";
@@ -127,13 +141,17 @@ export class FunctionTemplate extends FunctionBase {
     if (this.instances[name])
       return this.instances[name];
 
+    // Resolve function parameters
     const parameters: FunctionParameter[] = new Array(this.declaration.parameters.length);
     for (let i = 0, k = this.declaration.parameters.length; i < k; ++i) {
       const parameter = this.declaration.parameters[i];
+      const parameterTypeName = typescript.getTextOfNode(<typescript.TypeNode>parameter.type);
       parameters[i] = {
         node: parameter,
         name: typescript.getTextOfNode(parameter.name),
-        type: parameter.type ? typeParametersMap[typescript.getTextOfNode(parameter.name)] || compiler.resolveType(parameter.type) : voidType
+        type: parameter.type
+          ? typeArguments[parameterTypeName] && typeArguments[parameterTypeName].type || compiler.resolveType(parameter.type)
+          : voidType
       };
       if (!parameter.type && typescript.getSourceFileOfNode(this.declaration) !== compiler.libraryFile) // library may use 'any'
         compiler.error(parameter, "Type expected");
@@ -149,14 +167,15 @@ export class FunctionTemplate extends FunctionBase {
     let returnType: Type;
     if (this.isConstructor)
       returnType = compiler.uintptrType;
-    else if (this.declaration.type)
-      returnType = typeParametersMap[typescript.getTextOfNode(this.declaration.type)] || compiler.resolveType(this.declaration.type, true);
-    else {
+    else if (this.declaration.type) {
+      const returnTypeName = typescript.getTextOfNode(this.declaration.type);
+      returnType = typeArguments[returnTypeName] && typeArguments[returnTypeName].type || compiler.resolveType(this.declaration.type, true);
+    } else {
       returnType = voidType;
       if (typescript.getSourceFileOfNode(this.declaration) !== compiler.libraryFile) // library may use 'any'
         compiler.warn(<typescript.Identifier>this.declaration.name, "Assuming return type 'void'");
     }
 
-    return this.instances[name] = new Function(name, this.declaration, typeParametersMap, parameters, returnType, parent, this.declaration.body);
+    return this.instances[name] = new Function(name, this.declaration, typeArguments, parameters, returnType, parent, this.declaration.body);
   }
 }

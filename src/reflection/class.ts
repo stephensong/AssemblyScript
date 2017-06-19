@@ -1,5 +1,5 @@
 import Compiler from "../compiler";
-import { Function } from "./function";
+import { FunctionTemplate, Function } from "./function";
 import { Property } from "./property";
 import { Type } from "./type";
 import * as typescript from "../typescript";
@@ -16,32 +16,44 @@ export abstract class ClassBase {
   toString(): string { return this.name; }
 }
 
+export interface TypeArgument {
+  type: Type;
+  node: typescript.TypeNode;
+}
+
 /** A class instance with generic parameters resolved. */
 export class Class extends ClassBase {
   type: Type;
-  typeParameterTypes: Type[];
-  typeParametersMap: { [key: string]: Type };
+  typeArguments: { [key: string]: TypeArgument};
   base?: Class;
 
   initialized: boolean = false;
   properties: { [key: string]: Property } = {};
+  methods: { [key: string]: { template: FunctionTemplate, instance?: Function } } = {};
   ctor?: Function;
   size: number = 0;
 
-  constructor(name: string, declaration: typescript.ClassDeclaration, uintptrType: Type, typeParametersMap: { [key: string]: Type }, base?: Class) {
+  isArray: boolean = false;
+  isString: boolean = false;
+
+  constructor(name: string, declaration: typescript.ClassDeclaration, uintptrType: Type, typeArguments: { [key: string]: TypeArgument } , base?: Class) {
     super(name, declaration);
     this.type = uintptrType.withUnderlyingClass(this);
-    this.typeParametersMap = typeParametersMap;
-    this.typeParameterTypes = Object.keys(this.typeParametersMap).map(key => typeParametersMap[key]);
+    this.typeArguments = typeArguments;
     this.base = base;
-  }
+    typescript.setReflectedClass(declaration, this);
 
-  // TODO
-  get isArray(): boolean { return typescript.getTextOfNode(<typescript.Identifier>this.declaration.name) === "Array"; }
+    if (/^assembly\.d\.ts\/Array<|^std\/array\.ts\/ArrayImpl</.test(this.name) || (!!this.base && this.base.isArray))
+      this.isArray = true;
+    if (this.name === "assembly.d.ts/String" || (!!this.base && this.base.isString))
+      this.isString = true;
+  }
 
   initialize(compiler: Compiler): void {
     if (this.initialized)
       return;
+
+    this.size = 0;
 
     // Inherit from base class
     if (this.base) {
@@ -75,7 +87,7 @@ export class Class extends ClassBase {
 
         case typescript.SyntaxKind.Constructor:
         {
-          // TODO: super - or is this managed by ts?
+          // 'super' is managed by TypeScript
           const constructorNode = <typescript.ConstructorDeclaration>member;
           const localInitializers: number[] = [];
           for (let j = 0, l = constructorNode.parameters.length; j < l; ++j) {
@@ -100,7 +112,7 @@ export class Class extends ClassBase {
         }
 
         case typescript.SyntaxKind.MethodDeclaration:
-          compiler.initializeFunction(<typescript.MethodDeclaration>member);
+          this.initializeMethod(compiler, <typescript.MethodDeclaration>member);
           break;
 
         default:
@@ -108,6 +120,15 @@ export class Class extends ClassBase {
       }
     }
     this.initialized = true;
+  }
+
+  initializeMethod(compiler: Compiler, node: typescript.MethodDeclaration) {
+    const simpleName = typescript.getTextOfNode(node.name);
+    const hasBody = !!node.body;
+    if (!hasBody && this.base && this.base.methods[simpleName])
+      this.methods[simpleName] = this.base.methods[simpleName];
+    else
+      this.methods[simpleName] = compiler.initializeFunction(node);
   }
 }
 
@@ -117,34 +138,36 @@ export { Class as default };
 export class ClassTemplate extends ClassBase {
   instances: { [key: string]: Class } = {};
   base?: ClassTemplate;
-  baseTypeArguments?: typescript.TypeNode[];
+  baseTypeArguments: typescript.TypeNode[];
 
   constructor(name: string, declaration: typescript.ClassDeclaration, base?: ClassTemplate, baseTypeArguments?: typescript.TypeNode[]) {
     super(name, declaration);
     if (base && !baseTypeArguments)
       throw Error("missing base type arguments");
     this.base = base;
-    this.baseTypeArguments = baseTypeArguments;
+    this.baseTypeArguments = baseTypeArguments || [];
+    typescript.setReflectedClassTemplate(declaration, this);
   }
 
   get isGeneric(): boolean { return !!(this.declaration.typeParameters && this.declaration.typeParameters.length); }
 
-  resolve(compiler: Compiler, typeArguments: typescript.TypeNode[]): Class {
+  resolve(compiler: Compiler, typeArgumentNodes: typescript.TypeNode[]): Class {
     const typeParametersCount = this.declaration.typeParameters && this.declaration.typeParameters.length || 0;
-    if (typeArguments.length !== typeParametersCount)
-      throw Error("type parameter count mismatch");
+    if (typeArgumentNodes.length !== typeParametersCount)
+      throw Error("type parameter count mismatch: expected "+ typeParametersCount + " but saw " + typeArgumentNodes.length);
 
     let name = this.name;
-    const typeNodeParametersMap: { [key: string]: typescript.TypeNode } = {};
-    const typeParametersMap: { [key: string]: Type } = {};
+    const typeArguments: { [key: string]: TypeArgument } = {};
     if (typeParametersCount) {
       const typeNames: string[] = new Array(typeParametersCount);
       for (let i = 0; i < typeParametersCount; ++i) {
         const parameter = (<typescript.NodeArray<typescript.TypeParameterDeclaration>>this.declaration.typeParameters)[i];
-        const parameterType = compiler.resolveType(typeArguments[i]);
+        const parameterType = compiler.resolveType(typeArgumentNodes[i]);
         const parameterName = typescript.getTextOfNode(<typescript.Identifier>parameter.name);
-        typeNodeParametersMap[name] = typeArguments[i];
-        typeParametersMap[parameterName] = parameterType;
+        typeArguments[parameterName] = {
+          type: parameterType,
+          node: typeArgumentNodes[i]
+        };
         typeNames[i] = parameterType.toString();
       }
       name += "<" + typeNames.join(",") + ">";
@@ -156,15 +179,51 @@ export class ClassTemplate extends ClassBase {
     // Resolve base type arguments against current type arguments
     let base: Class | undefined;
     if (this.base) {
-      const baseTypeArguments: typescript.TypeNode[] = [];
+      const baseTypeArgumentNodes: typescript.TypeNode[] = [];
       for (let i = 0; i < (<typescript.TypeNode[]>this.baseTypeArguments).length; ++i) {
         const argument = (<typescript.TypeNode[]>this.baseTypeArguments)[i];
         const argumentName = typescript.getTextOfNode(argument);
-        baseTypeArguments[i] = typeNodeParametersMap[argumentName] || argument;
+        baseTypeArgumentNodes[i] = typeArguments[argumentName] ? typeArguments[argumentName].node : argument;
       }
-      base = this.base.resolve(compiler, baseTypeArguments);
+      base = this.base.resolve(compiler, baseTypeArgumentNodes);
     }
 
-    return this.instances[name] = new Class(name, this.declaration, compiler.uintptrType, typeParametersMap, base);
+    return this.instances[name] = new Class(name, this.declaration, compiler.uintptrType, typeArguments, base);
+  }
+}
+
+/** Patches a @__impl-annotated declaration to inherit from its actual implementation. */
+export function patchClassImplementation(compiler: Compiler, declTemplate: ClassTemplate, implTemplate: ClassTemplate): void {
+
+  // Make the declaration and extend the implementation. New instances will automatically inherit this change from the template.
+  implTemplate.base = declTemplate.base; // overrides inheritance from declaration
+  declTemplate.base = implTemplate;
+  if (implTemplate.declaration.typeParameters) {
+    for (let i = 0, k = implTemplate.declaration.typeParameters.length; i < k; ++i) {
+      const parameter = implTemplate.declaration.typeParameters[i];
+      declTemplate.baseTypeArguments.push(<typescript.TypeNode><any>parameter); // solely used to obtain a name
+    }
+  }
+
+  // Patch existing instances.
+  for (let keys = Object.keys(declTemplate.instances), i = 0, k = keys.length; i < k; ++i) {
+    const declInstance = declTemplate.instances[keys[i]];
+    const implInstance = implTemplate.resolve(compiler, Object.keys(declInstance.typeArguments).map(key => declInstance.typeArguments[key].node ));
+
+    implInstance.initialize(compiler);
+
+    implInstance.base = declInstance.base;
+    declInstance.base = implInstance;
+
+    // Replace already initialized class instance methods with their actual implementations
+    for (let mkeys = Object.keys(declInstance.methods), j = 0, l = mkeys.length; j < l; ++j) {
+      const declMethod = declInstance.methods[mkeys[j]];
+      const implMethod = implInstance.methods[mkeys[j]];
+      if (implMethod) {
+        typescript.setReflectedFunctionTemplate(declMethod.template.declaration, implMethod.template);
+        if (implMethod.instance)
+          typescript.setReflectedFunction(declMethod.template.declaration, implMethod.instance);
+      }
+    }
   }
 }

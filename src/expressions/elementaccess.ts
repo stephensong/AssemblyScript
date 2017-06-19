@@ -19,7 +19,7 @@ export function compileElementAccess(compiler: Compiler, node: typescript.Elemen
     const clazz = compiler.currentFunction && compiler.currentFunction.parent || null;
     if (clazz && compiler.currentFunction.isInstance) {
       if (clazz.type.isArray) {
-        const underlyingType = (<reflection.Class>clazz.type.underlyingClass).typeParametersMap.T;
+        const underlyingType = (<reflection.Class>clazz.type.underlyingClass).typeArguments.T.type;
 
         typescript.setReflectedType(node, underlyingType);
         return compileLoad(compiler, node, underlyingType,
@@ -48,7 +48,7 @@ export function compileElementAccess(compiler: Compiler, node: typescript.Elemen
       const variable = <reflection.Variable>reference;
 
       if (variable.type.isArray) {
-        const underlyingType = (<reflection.Class>variable.type.underlyingClass).typeParametersMap.T;
+        const underlyingType = (<reflection.Class>variable.type.underlyingClass).typeArguments.T.type;
 
         typescript.setReflectedType(node, variable.type);
         return compileLoad(compiler, node, underlyingType,

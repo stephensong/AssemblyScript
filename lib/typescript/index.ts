@@ -10,7 +10,7 @@ ts.supportedTypeScriptExtensions.unshift(<ts.Extension>".as");
 ts.supportedTypescriptExtensionsForExtractExtension.push(<ts.Extension>".as");
 
 // Polyfill 'sys' in browsers
-if (!ts.sys)
+if (!ts.sys) {
   ts.sys = <ts.System>{
     args: [],
     newLine: "\n",
@@ -55,5 +55,7 @@ if (!ts.sys)
       throw Error("not implemented");
     }
   };
+  (<any>ts.sys).browser = true;
+}
 
 module.exports = ts;
