@@ -14,6 +14,7 @@ export function compileBinary(compiler: Compiler, node: typescript.BinaryExpress
   let leftType: reflection.Type = typescript.getReflectedType(node.left);
   let right: binaryen.Expression;
   let rightType: reflection.Type;
+  let commonType: reflection.Type | undefined;
   let resultType: reflection.Type;
 
   // TODO: This is most likely incorrect
@@ -32,18 +33,20 @@ export function compileBinary(compiler: Compiler, node: typescript.BinaryExpress
 
       if (leftType.isAnyFloat) {
         if (rightType.isAnyFloat)
-          resultType = leftType.size >= rightType.size ? leftType : rightType;
+          commonType = leftType.size >= rightType.size ? leftType : rightType;
         else
-          resultType = leftType;
+          commonType = leftType;
       } else if (rightType.isAnyFloat)
-        resultType = rightType;
+        commonType = rightType;
       else
-        resultType = leftType.size >= rightType.size ? leftType : rightType;
+        commonType = leftType.size >= rightType.size ? leftType : rightType;
 
-      left = compiler.maybeConvertValue(node.left, left, leftType, resultType, false);
-      leftType = resultType;
-      right = compiler.maybeConvertValue(node.right, right, rightType, resultType, false);
-      rightType = resultType;
+      left = compiler.maybeConvertValue(node.left, left, leftType, commonType, false);
+      leftType = commonType;
+      right = compiler.maybeConvertValue(node.right, right, rightType, commonType, false);
+      rightType = commonType;
+
+      resultType = commonType;
       break;
 
     // <<, <<=, >>, >>=
@@ -53,11 +56,11 @@ export function compileBinary(compiler: Compiler, node: typescript.BinaryExpress
     case typescript.SyntaxKind.GreaterThanGreaterThanToken:
     case typescript.SyntaxKind.GreaterThanGreaterThanEqualsToken:
       right = compiler.compileExpression(node.right, reflection.intType);
-      rightType = typescript.getReflectedType(node.right);
-      resultType = leftType;
-
-      right = compiler.maybeConvertValue(node.right, right, rightType, reflection.intType, false);
+      right = compiler.maybeConvertValue(node.right, right, typescript.getReflectedType(node.right), reflection.intType, false);
       rightType = reflection.intType;
+
+      // has no common type
+      resultType = leftType;
       break;
 
     // <, <=, >, >=, ==
@@ -72,13 +75,13 @@ export function compileBinary(compiler: Compiler, node: typescript.BinaryExpress
 
       if (leftType.isAnyFloat) {
         if (rightType.isAnyFloat)
-          resultType = leftType.size >= rightType.size ? leftType : rightType;
+          commonType = leftType.size >= rightType.size ? leftType : rightType;
         else
-          resultType = leftType;
+          commonType = leftType;
       } else if (rightType.isAnyFloat)
-        resultType = rightType;
+        commonType = rightType;
       else
-        resultType = leftType.size > rightType.size
+        commonType = leftType.size > rightType.size
           ? leftType
           : rightType.size > leftType.size
             ? rightType
@@ -88,10 +91,10 @@ export function compileBinary(compiler: Compiler, node: typescript.BinaryExpress
                 ? leftType
                 : rightType;
 
-      left = compiler.maybeConvertValue(node.left, left, leftType, resultType, false);
-      leftType = resultType;
-      right = compiler.maybeConvertValue(node.right, right, rightType, resultType, false);
-      rightType = resultType;
+      left = compiler.maybeConvertValue(node.left, left, leftType, commonType, false);
+      leftType = commonType;
+      right = compiler.maybeConvertValue(node.right, right, rightType, commonType, false);
+      rightType = commonType;
 
       resultType = reflection.boolType;
       break;
@@ -105,17 +108,17 @@ export function compileBinary(compiler: Compiler, node: typescript.BinaryExpress
       rightType = typescript.getReflectedType(node.right);
       if (leftType.isLong) {
         if (rightType.isLong) {
-          resultType = leftType.isSigned === rightType.isSigned
+          commonType = leftType.isSigned === rightType.isSigned
             ? leftType
             : contextualType.isSigned
               ? reflection.longType
               : reflection.ulongType;
         } else
-          resultType = leftType;
+          commonType = leftType;
       } else if (rightType.isLong)
-        resultType = rightType;
+        commonType = rightType;
       else
-        resultType = leftType.size > rightType.size
+        commonType = leftType.size > rightType.size
           ? leftType
           : rightType.size > leftType.size
             ? rightType
@@ -125,10 +128,12 @@ export function compileBinary(compiler: Compiler, node: typescript.BinaryExpress
                 ? leftType
                 : rightType;
 
-      left = compiler.maybeConvertValue(node.left, left, leftType, resultType, false);
-      leftType = resultType;
-      right = compiler.maybeConvertValue(node.right, right, rightType, resultType, false);
-      rightType = resultType;
+      left = compiler.maybeConvertValue(node.left, left, leftType, commonType, false);
+      leftType = commonType;
+      right = compiler.maybeConvertValue(node.right, right, rightType, commonType, false);
+      rightType = commonType;
+
+      resultType = commonType;
       break;
 
     // &&, ||
@@ -150,9 +155,10 @@ export function compileBinary(compiler: Compiler, node: typescript.BinaryExpress
     // case typescript.SyntaxKind.CaretEqualsToken:
       right = compiler.compileExpression(node.right, leftType);
       rightType = typescript.getReflectedType(node.right);
+      right = compiler.maybeConvertValue(node.right, right, rightType, leftType, false);
+      rightType = leftType;
+
       resultType = leftType;
-      right = compiler.maybeConvertValue(node.right, right, rightType, resultType, false);
-      rightType = resultType;
       break;
   }
 
@@ -163,31 +169,35 @@ export function compileBinary(compiler: Compiler, node: typescript.BinaryExpress
 
   let result: binaryen.Expression | null = null;
 
-  if (resultType.isAnyFloat) {
+  const operandType = commonType || leftType;
+  const operandCategory = binaryen.categoryOf(operandType, op, compiler.uintptrSize);
+  // const resultCategory = binaryen.categoryOf(resultType, op, compiler.uintptrSize);
 
-    const cat = <binaryen.F32Operations | binaryen.F64Operations>binaryen.categoryOf(resultType, op, compiler.uintptrSize);
+  if (operandType.isAnyFloat) {
+
+    const category = <binaryen.F32Operations | binaryen.F64Operations>operandCategory;
 
     switch (node.operatorToken.kind) {
 
       // Arithmetic
       case typescript.SyntaxKind.PlusToken:
       case typescript.SyntaxKind.PlusEqualsToken:
-        result = cat.add(left, right);
+        result = category.add(left, right);
         break;
 
       case typescript.SyntaxKind.MinusToken:
       case typescript.SyntaxKind.MinusEqualsToken:
-        result = cat.sub(left, right);
+        result = category.sub(left, right);
         break;
 
       case typescript.SyntaxKind.AsteriskToken:
       case typescript.SyntaxKind.AsteriskEqualsToken:
-        result = cat.mul(left, right);
+        result = category.mul(left, right);
         break;
 
       case typescript.SyntaxKind.SlashToken:
       case typescript.SyntaxKind.SlashEqualsToken:
-        result = cat.div(left, right);
+        result = category.div(left, right);
         break;
 
       case typescript.SyntaxKind.PercentToken:
@@ -199,134 +209,134 @@ export function compileBinary(compiler: Compiler, node: typescript.BinaryExpress
       case typescript.SyntaxKind.EqualsEqualsEqualsToken:
         compiler.warn(node.operatorToken, "Assuming '=='");
       case typescript.SyntaxKind.EqualsEqualsToken:
-        result = cat.eq(left, right);
+        result = category.eq(left, right);
         break;
 
       case typescript.SyntaxKind.ExclamationEqualsToken:
-        result = cat.ne(left, right);
+        result = category.ne(left, right);
         break;
 
       case typescript.SyntaxKind.GreaterThanToken:
-        result = cat.gt(left, right);
+        result = category.gt(left, right);
         break;
 
       case typescript.SyntaxKind.GreaterThanEqualsToken:
-        result = cat.ge(left, right);
+        result = category.ge(left, right);
         break;
 
       case typescript.SyntaxKind.LessThanToken:
-        result = cat.lt(left, right);
+        result = category.lt(left, right);
         break;
 
       case typescript.SyntaxKind.LessThanEqualsToken:
-        result = cat.le(left, right);
+        result = category.le(left, right);
         break;
 
     }
 
-  } else if (resultType.isAnyInteger) {
+  } else if (operandType.isAnyInteger) {
 
-    const cat = <binaryen.I32Operations | binaryen.I64Operations>binaryen.categoryOf(resultType, op, compiler.uintptrSize);
+    const category = <binaryen.I32Operations | binaryen.I64Operations>operandCategory;
 
     switch (node.operatorToken.kind) {
 
       // Arithmetic
       case typescript.SyntaxKind.PlusToken:
       case typescript.SyntaxKind.PlusEqualsToken:
-        result = cat.add(left, right);
+        result = category.add(left, right);
         break;
 
       case typescript.SyntaxKind.MinusToken:
       case typescript.SyntaxKind.MinusEqualsToken:
-        result = cat.sub(left, right);
+        result = category.sub(left, right);
         break;
 
       case typescript.SyntaxKind.AsteriskToken:
       case typescript.SyntaxKind.AsteriskEqualsToken:
-        result = cat.mul(left, right);
+        result = category.mul(left, right);
         break;
 
       case typescript.SyntaxKind.SlashToken:
       case typescript.SyntaxKind.SlashEqualsToken:
         if (resultType.isSigned)
-          result = cat.div_s(left, right);
+          result = category.div_s(left, right);
         else
-          result = cat.div_u(left, right);
+          result = category.div_u(left, right);
         break;
 
       case typescript.SyntaxKind.PercentToken:
       case typescript.SyntaxKind.PercentEqualsToken:
         if (resultType.isSigned)
-          result = cat.rem_s(left, right);
+          result = category.rem_s(left, right);
         else
-          result = cat.rem_u(left, right);
+          result = category.rem_u(left, right);
         break;
 
       case typescript.SyntaxKind.AmpersandToken:
       case typescript.SyntaxKind.AmpersandEqualsToken:
-        result = cat.and(left, right);
+        result = category.and(left, right);
         break;
 
       case typescript.SyntaxKind.BarToken:
       case typescript.SyntaxKind.BarEqualsToken:
-        result = cat.or(left, right);
+        result = category.or(left, right);
         break;
 
       case typescript.SyntaxKind.CaretToken:
       case typescript.SyntaxKind.CaretEqualsToken:
-        result = cat.xor(left, right);
+        result = category.xor(left, right);
         break;
 
       case typescript.SyntaxKind.LessThanLessThanToken:
       case typescript.SyntaxKind.LessThanLessThanEqualsToken:
-        result = cat.shl(left, right);
+        result = category.shl(left, right);
         break;
 
       case typescript.SyntaxKind.GreaterThanGreaterThanToken:
       case typescript.SyntaxKind.GreaterThanGreaterThanEqualsToken:
         if (resultType.isSigned)
-          result = cat.shr_s(left, right);
+          result = category.shr_s(left, right);
         else
-          result = cat.shr_u(left, right);
+          result = category.shr_u(left, right);
         break;
 
       // Logical
       case typescript.SyntaxKind.EqualsEqualsEqualsToken:
         compiler.warn(node.operatorToken, "Assuming '=='");
       case typescript.SyntaxKind.EqualsEqualsToken:
-        result = cat.eq(left, right);
+        result = category.eq(left, right);
         break;
 
       case typescript.SyntaxKind.ExclamationEqualsToken:
-        result = cat.ne(left, right);
+        result = category.ne(left, right);
         break;
 
       case typescript.SyntaxKind.GreaterThanToken:
         if (resultType.isSigned)
-          result = cat.gt_s(left, right);
+          result = category.gt_s(left, right);
         else
-          result = cat.gt_u(left, right);
+          result = category.gt_u(left, right);
         break;
 
       case typescript.SyntaxKind.GreaterThanEqualsToken:
         if (resultType.isSigned)
-          result = cat.ge_s(left, right);
+          result = category.ge_s(left, right);
         else
-          result = cat.ge_u(left, right);
+          result = category.ge_u(left, right);
         break;
 
       case typescript.SyntaxKind.LessThanToken:
         if (resultType.isSigned)
-          result = cat.lt_s(left, right);
+          result = category.lt_s(left, right);
         else
-          result = cat.lt_u(left, right);
+          result = category.lt_u(left, right);
         break;
 
       case typescript.SyntaxKind.LessThanEqualsToken:
         if (resultType.isSigned)
-          result = cat.le_s(left, right);
+          result = category.le_s(left, right);
         else
-          result = cat.le_u(left, right);
+          result = category.le_u(left, right);
         break;
 
     }
