@@ -1,7 +1,9 @@
 var sourceEditor;
 var assemblyEditor;
-
+var currentModule;
 var currentGist = "dcodeIO/b05ea1f97efb9ceb1ce17667af73793a";
+var currentRequest = null;
+var uiInitialized = false;
 
 require.config({
   paths: {
@@ -72,53 +74,12 @@ require([ 'vs/editor/editor.main', 'assets/sexpr' ], function() {
   }, 100);
 });
 
-var currentModule;
-var initialized = false;
-
-function loadGist(gist) {
-  console.log("Loading " + gist + " ...")
-  var match = /\/([a-f0-9]{32})$/.exec(gist);
-  if (match) {
-    var scr = document.createElement("script");
-    scr.type = "text/javascript";
-    scr.src = "https://api.github.com/gists/" + match[1] + "?callback=onGistLoaded";
-    document.body.appendChild(scr);
-  } else
-    alert("Not a valid gist url:\n\n" + gist);
-}
-
-function onGistLoaded(gist) {
-  try {
-    if (gist.meta.status !== 200) {
-      alert("Failed to load gist: Not found\n\n" + currentGist);
-      return;
-    }
-    var data = gist.data.files[Object.keys(gist.data.files)[0]].content;
-
-    sourceEditor.setValue(data);
-    compile();
-
-    if (!initialized) {
-      // Initialize UI
-      var btn = document.getElementById("compile-button");
-      btn.style.display = "block";
-      btn.onclick = compile;
-      btn = document.getElementById("download-button");
-      btn.style.display = "block";
-      btn.onclick = download;
-      initialized = true;
-    }
-  } catch (e) {
-    alert("Failed to load gist: " + e.message + "\n\n" + currentGist);
-  }
-}
-
 function compile() {
   if (currentModule)
     currentModule.dispose();
 
   var source = sourceEditor.getValue();
-  currentModule = assemblyscript.Compiler.compileString(source, { noLib: !/\bnew\b/.test(source), uintptrSize: 4, silent: true });
+  currentModule = assemblyscript.Compiler.compileString(source, { malloc: /\bnew\b/.test(source), exportMalloc: false, silent: true });
 
   var diagnostics = assemblyscript.typescript.formatDiagnostics(assemblyscript.Compiler.lastDiagnostics).trim();
   if (diagnostics.length)
@@ -132,23 +93,17 @@ function compile() {
 }
 
 function saveAs(blob, fileName) {
-    var url = window.URL.createObjectURL(blob);
-
-    var anchorElem = document.createElement("a");
-    anchorElem.style = "display: none";
-    anchorElem.href = url;
-    anchorElem.download = fileName;
-
-    document.body.appendChild(anchorElem);
-    anchorElem.click();
-
-    document.body.removeChild(anchorElem);
-
-    // On Edge, revokeObjectURL should be called only after
-    // a.click() has completed, atleast on EdgeHTML 15.15048
-    setTimeout(function() {
-        window.URL.revokeObjectURL(url);
-    }, 1000);
+  var url = window.URL.createObjectURL(blob);
+  var anchorElem = document.createElement("a");
+  anchorElem.style = "display: none";
+  anchorElem.href = url;
+  anchorElem.download = fileName;
+  document.body.appendChild(anchorElem);
+  anchorElem.click();
+  document.body.removeChild(anchorElem);
+  setTimeout(function() {
+    window.URL.revokeObjectURL(url);
+  }, 1000);
 }
 
 function download() {
@@ -156,4 +111,43 @@ function download() {
   var buffer = currentModule.emitBinary();
   var blob = new Blob([ buffer ], { type : 'application/octet-stream'});
   saveAs(blob, "module.wasm");
+}
+
+function loadGist(gist) {
+  if (currentRequest) return;
+  var match = /\/([a-f0-9]{32})$/.exec(gist);
+  if (match) {
+    currentRequest = document.createElement("script");
+    currentRequest.type = "text/javascript";
+    currentRequest.src = "https://api.github.com/gists/" + match[1] + "?callback=onGistLoaded";
+    document.body.appendChild(currentRequest);
+  } else
+    alert("Not a valid gist url:\n\n" + gist);
+}
+
+function onGistLoaded(gist) {
+  if (currentRequest) {
+    document.body.removeChild(currentRequest);
+    currentRequest = null;
+  }
+  try {
+    if (gist.meta.status !== 200) {
+      alert("Failed to load gist: status " + gist.meta.status + "\n\n" + currentGist);
+      return;
+    }
+    var data = gist.data.files[Object.keys(gist.data.files)[0]].content;
+    sourceEditor.setValue(data);
+    if (!uiInitialized) {
+      var btn = document.getElementById("compile-button");
+      btn.style.display = "block";
+      btn.onclick = compile;
+      btn = document.getElementById("download-button");
+      btn.style.display = "block";
+      btn.onclick = download;
+      uiInitialized = true;
+    }
+    compile();
+  } catch (e) {
+    alert("Failed to load gist: " + e.message + "\n\n" + currentGist);
+  }
 }
