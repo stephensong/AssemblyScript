@@ -35,9 +35,20 @@ export function main(): void {
 function used(): void {}
 function unused(): void {}
 */
-
+/*
 export function stringTest(): void {
   let s: string = "123";
   s.startsWith("1");
   // let a: Array<int> = new Array(10);
+}
+*/
+export function test(): float32 {
+  return 1;
+}
+export function test2(): double {
+  let a: double = 4;
+  let b: double = 5;
+  if(a == b)
+    return a;
+  return b;
 }

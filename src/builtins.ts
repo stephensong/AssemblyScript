@@ -61,11 +61,6 @@ export interface BinaryenExpressionPair {
   1: binaryen.Expression;
 }
 
-export interface ReflectionTypePair {
-  0: reflection.Type;
-  1: reflection.Type;
-}
-
 export function rotl(compiler: Compiler, node: TypeScriptExpressionPair, expr: BinaryenExpressionPair): binaryen.Expression {
   const op = compiler.module;
   const leftType = typescript.getReflectedType(node[0]);

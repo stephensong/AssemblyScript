@@ -100,6 +100,7 @@ import {
   ScriptTarget,
   SourceFile,
   SyntaxKind,
+  getTextOfNode,
   createDiagnosticForNode,
   createGetCanonicalFileName,
   createSourceFile,
@@ -252,6 +253,18 @@ export function isAbstract(node: Node): boolean {
 /** Tests if the specified node is flagged 'const'. */
 export function isConst(node: Node): boolean {
   return (node.flags & NodeFlags.Const) !== 0;
+}
+
+/** Tests if a function fulfills the requirements to become a start function. */
+export function isStartFunction(node: FunctionLikeDeclaration): boolean {
+  return !!(
+    node.name &&
+    getTextOfNode(node.name) === "start" &&
+    !node.typeParameters &&
+    node.parameters.length === 0 &&
+    node.type &&
+    getTextOfNode(node.type) === "void"
+  );
 }
 
 /** Gets the reflected type of an expression. */

@@ -266,7 +266,10 @@ if (!module.validate())
 
 const textFile = module.emitText();
 const wasmFile = module.emitBinary();
+
 ...
+
+module.dispose();
 ```
 
 Command line

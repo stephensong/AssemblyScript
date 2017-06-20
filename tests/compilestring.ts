@@ -4,7 +4,9 @@ const module = Compiler.compileString(`
 export function test(a: int): int {
   return a;
 }
-`, { noLib: true });
+
+function start(): void {}
+`);
 
 if (module) {
   module.optimize();

@@ -324,8 +324,8 @@ export class Compiler {
       this.module.addExport("malloc", "malloc");
       this.module.addExport("free", "free");
     } else {
-      this.module.removeExport("memcpy");
       this.module.removeExport("memset");
+      this.module.removeExport("memcpy");
       this.module.removeExport("memcmp");
     }
   }
@@ -558,7 +558,7 @@ export class Compiler {
           case typescript.SyntaxKind.FunctionDeclaration:
           {
             const declaration = <typescript.FunctionDeclaration>statement;
-            if (typescript.isExport(declaration) || this.options.treeShaking === false) {
+            if (typescript.isExport(declaration) || typescript.isStartFunction(declaration) || this.options.treeShaking === false) {
               const instance = typescript.getReflectedFunction(declaration);
               if (instance) // otherwise generic: compiled once type arguments are known
                 this.compileFunction(instance);
@@ -714,8 +714,11 @@ export class Compiler {
     if (instance.isExport)
       this.module.addExport(instance.name, instance.name);
 
-    if (instance.name === "start" && instance.parameters.length === 0 && instance.returnType === binaryen.none)
+    if (!instance.parent && instance.body && typescript.isStartFunction(instance.declaration)) {
+      if (this.userStartFunction)
+        this.error(<typescript.Identifier>instance.declaration.name, "Duplicate start function");
       this.userStartFunction = binaryenFunction;
+    }
 
     this.currentFunction = previousFunction;
     return binaryenFunction;

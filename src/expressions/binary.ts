@@ -42,24 +42,40 @@ export function compileBinary(compiler: Compiler, node: typescript.BinaryExpress
         commonType = leftType.size >= rightType.size ? leftType : rightType;
 
       left = compiler.maybeConvertValue(node.left, left, leftType, commonType, false);
-      leftType = commonType;
       right = compiler.maybeConvertValue(node.right, right, rightType, commonType, false);
-      rightType = commonType;
+      leftType = rightType = commonType;
 
       resultType = commonType;
       break;
 
     // <<, <<=, >>, >>=
-    // use left type, force right type to int
+    // use left type, derive right type to compatible int
     case typescript.SyntaxKind.LessThanLessThanToken:
     case typescript.SyntaxKind.LessThanLessThanEqualsToken:
     case typescript.SyntaxKind.GreaterThanGreaterThanToken:
     case typescript.SyntaxKind.GreaterThanGreaterThanEqualsToken:
-      right = compiler.compileExpression(node.right, reflection.intType);
-      right = compiler.maybeConvertValue(node.right, right, typescript.getReflectedType(node.right), reflection.intType, false);
-      rightType = reflection.intType;
-
-      // has no common type
+      if (leftType.isAnyFloat) { // will actually generate an implicit conversion error but it's here for completeness
+        left = compiler.compileExpression(node.left, reflection.longType);
+        left = compiler.maybeConvertValue(node.left, left, typescript.getReflectedType(node.left), reflection.longType, false);
+        leftType = reflection.longType;
+        right = compiler.compileExpression(node.right, reflection.longType);
+        right = compiler.maybeConvertValue(node.right, right, typescript.getReflectedType(node.right), reflection.longType, false);
+        rightType = reflection.longType;
+        commonType = reflection.longType;
+      } else if (leftType.isLong) {
+        right = compiler.compileExpression(node.right, reflection.longType);
+        right = compiler.maybeConvertValue(node.right, right, typescript.getReflectedType(node.right), reflection.longType, false);
+        rightType = reflection.longType;
+        // has no common type (left might be unsigned)
+      } else { // i.e. int, ushort etc.
+        left = compiler.compileExpression(node.left, reflection.intType);
+        left = compiler.maybeConvertValue(node.left, left, typescript.getReflectedType(node.left), reflection.intType, false);
+        leftType = reflection.intType;
+        right = compiler.compileExpression(node.right, reflection.intType);
+        right = compiler.maybeConvertValue(node.right, right, typescript.getReflectedType(node.right), reflection.intType, false);
+        rightType = reflection.intType;
+        // has no common type (left might be unsigned)
+      }
       resultType = leftType;
       break;
 
@@ -92,9 +108,8 @@ export function compileBinary(compiler: Compiler, node: typescript.BinaryExpress
                 : rightType;
 
       left = compiler.maybeConvertValue(node.left, left, leftType, commonType, false);
-      leftType = commonType;
       right = compiler.maybeConvertValue(node.right, right, rightType, commonType, false);
-      rightType = commonType;
+      leftType = rightType = commonType;
 
       resultType = reflection.boolType;
       break;
@@ -129,9 +144,8 @@ export function compileBinary(compiler: Compiler, node: typescript.BinaryExpress
                 : rightType;
 
       left = compiler.maybeConvertValue(node.left, left, leftType, commonType, false);
-      leftType = commonType;
       right = compiler.maybeConvertValue(node.right, right, rightType, commonType, false);
-      rightType = commonType;
+      leftType = rightType = commonType;
 
       resultType = commonType;
       break;
@@ -154,8 +168,7 @@ export function compileBinary(compiler: Compiler, node: typescript.BinaryExpress
     // case typescript.SyntaxKind.BarEqualsToken:
     // case typescript.SyntaxKind.CaretEqualsToken:
       right = compiler.compileExpression(node.right, leftType);
-      rightType = typescript.getReflectedType(node.right);
-      right = compiler.maybeConvertValue(node.right, right, rightType, leftType, false);
+      right = compiler.maybeConvertValue(node.right, right, typescript.getReflectedType(node.right), leftType, false);
       rightType = leftType;
 
       resultType = leftType;
