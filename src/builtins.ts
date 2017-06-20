@@ -45,6 +45,7 @@ export function isBuiltin(name: string, isGlobalName: boolean = false): boolean 
     case "reinterpretf":
     case "reinterpretd":
     case "sizeof":
+    case "unsafe_cast":
       return true;
   }
   return false;
@@ -58,6 +59,11 @@ export interface TypeScriptExpressionPair {
 export interface BinaryenExpressionPair {
   0: binaryen.Expression;
   1: binaryen.Expression;
+}
+
+export interface ReflectionTypePair {
+  0: reflection.Type;
+  1: reflection.Type;
 }
 
 export function rotl(compiler: Compiler, node: TypeScriptExpressionPair, expr: BinaryenExpressionPair): binaryen.Expression {
@@ -357,4 +363,8 @@ export function sizeof(compiler: Compiler, type: reflection.Type): binaryen.Expr
   return compiler.uintptrType === reflection.uintptrType32
     ? op.i32.const(type.size)
     : op.i64.const(type.size, 0);
+}
+
+export function unsafe_cast(expr: binaryen.Expression): binaryen.Expression {
+  return expr;
 }

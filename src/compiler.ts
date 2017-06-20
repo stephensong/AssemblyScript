@@ -14,8 +14,8 @@ let mallocWasm: Uint8Array;
 
 /** AssemblyScript compiler options. */
 export interface CompilerOptions {
-  /** Specifies the byte size of a pointer. 32-bit WebAssembly expects `4`, 64-bit WebAssembly expects `8`. Defaults to `4`. */
-  uintptrSize?: number;
+  /** Specifies the target architecture. Defaults to `WASM32`. */
+  target?: CompilerTarget;
   /** Whether compilation shall be performed in silent mode without writing to console. Defaults to `false`. */
   silent?: boolean;
   /** Whether to use built-in tree-shaking. Defaults to `true`. Disable this when building a dynamically linked library. */
@@ -24,6 +24,17 @@ export interface CompilerOptions {
   malloc?: boolean;
   /** Whether to export malloc, free, etc. Defaults to `true`. Disable this if you want malloc etc. to be dead-code-eliminated later on. */
   exportMalloc?: boolean;
+}
+
+/** AssemblyScript compiler target. */
+export enum CompilerTarget {
+  WASM32,
+  WASM64
+}
+
+export interface MemorySegment {
+  offset: number;
+  buffer: Uint8Array;
 }
 
 /** AssemblyScript compiler. */
@@ -44,11 +55,13 @@ export class Compiler {
   signatures: { [key: string]: binaryen.Signature } = {};
   globalInitializers: binaryen.Expression[] = [];
   userStartFunction?: binaryen.Function;
+  memoryBase: number;
+  memorySegments: MemorySegment[] = [];
 
   // Codegen
   profiler = new Profiler();
   currentFunction: reflection.Function;
-  stringPool: { [key: string]: number } = {};
+  stringPool: { [key: string]: MemorySegment } = {};
 
   // Reflection
   uintptrType: reflection.Type;
@@ -155,7 +168,7 @@ export class Compiler {
   }
 
   /** Gets the configured byte size of a pointer. */
-  get uintptrSize(): number { return this.options.uintptrSize || 4; }
+  get uintptrSize(): number { return this.uintptrType.size; }
 
   /**
    * Constructs a new AssemblyScript compiler.
@@ -164,10 +177,6 @@ export class Compiler {
    */
   constructor(program: typescript.Program, options?: CompilerOptions) {
     this.options = options || {};
-
-    if (this.options.uintptrSize && this.options.uintptrSize !== 4 && this.options.uintptrSize !== 8)
-      throw Error("unsupported uintptrSize");
-
     this.program = program;
     this.checker = program.getDiagnosticsProducingTypeChecker();
     this.diagnostics = typescript.createDiagnosticCollection();
@@ -178,7 +187,8 @@ export class Compiler {
     }
 
     this.module = this.options.malloc === false ? new binaryen.Module() : binaryen.readBinary(mallocWasm);
-    this.uintptrType = this.uintptrSize === 4 ? reflection.uintptrType32 : reflection.uintptrType64;
+    this.uintptrType = this.options.target === CompilerTarget.WASM64 ? reflection.uintptrType64 : reflection.uintptrType32;
+    this.memoryBase = this.uintptrSize; // leave space for NULL
 
     const sourceFiles = program.getSourceFiles();
     for (let i = sourceFiles.length - 1; i >= 0; --i) {
@@ -268,16 +278,11 @@ export class Compiler {
       }
     }
 
-    if (this.options.malloc === false) {
-      // setup empty memory
-      this.module.setMemory(1, 0xffff, "memory", []);
-    } else {
-      // memory is imported - FIXME: does this make sense?
-      this.initializeLibrary();
-    }
+    if (this.options.malloc !== false)
+      this.initializeMalloc();
   }
 
-  initializeLibrary(): void {
+  initializeMalloc(): void {
     const op = this.module;
     const binaryenPtrType = binaryen.typeOf(this.uintptrType, this.uintptrSize);
 
@@ -285,7 +290,7 @@ export class Compiler {
     op.addGlobal(".msp", binaryenPtrType, true, binaryen.valueOf(this.uintptrType, op, 0));
     this.globalInitializers.unshift( // must be initialized before other global initializers use 'new'
       op.setGlobal(".msp", op.call("mspace_init", [
-        binaryen.valueOf(this.uintptrType, op, this.uintptrSize * 2) // TODO: change to actual heap start offset
+        binaryen.valueOf(this.uintptrType, op, this.uintptrSize) // Leave space for null
       ], binaryenPtrType))
     );
 
@@ -395,6 +400,42 @@ export class Compiler {
       }
       op.addGlobal(name, binaryen.typeOf(type, this.uintptrSize), mutable, binaryen.valueOf(type, op, value));
     }
+  }
+
+  /** Creates or, if it already exists, looks up a static string and returns its offset in linear memory. */
+  createStaticString(value: string): number {
+    let pooled = this.stringPool[value];
+    if (!pooled) {
+      if (this.memoryBase & 3) this.memoryBase = (this.memoryBase | 3) + 1; // align to 4 bytes (length is an int)
+      const length = value.length;
+      const buffer = new Uint8Array(4 + 2 * length);
+      if (length < 0 || length > 0x7fffffff)
+        throw Error("string length exceeds INTMAX");
+
+      // Prepend length
+      let offset = 0;
+      buffer[offset++] =  length         & 0xff;
+      buffer[offset++] = (length >>>  8) & 0xff;
+      buffer[offset++] = (length >>> 16) & 0xff;
+      buffer[offset++] = (length >>> 24) & 0xff;
+
+      // Append UTF-16LE chars
+      for (let i = 0; i < length; ++i) {
+        const charCode = value.charCodeAt(i);
+        buffer[offset++] =  charCode        & 0xff;
+        buffer[offset++] = (charCode >>> 8) & 0xff;
+      }
+
+      const memorySegment = <MemorySegment>{
+        offset: this.memoryBase,
+        buffer: buffer
+      };
+      this.memorySegments.push(memorySegment);
+
+      pooled = this.stringPool[value] = memorySegment;
+      this.memoryBase += offset;
+    }
+    return pooled.offset;
   }
 
   initializeFunction(node: typescript.FunctionLikeDeclaration): { template: reflection.FunctionTemplate, instance?: reflection.Function } {
@@ -539,6 +580,19 @@ export class Compiler {
       }
     }
 
+    // setup static memory
+    const binaryenSegments: binaryen.MemorySegment[] = [];
+    this.memorySegments.forEach(segment => {
+      binaryenSegments.push({
+        offset: binaryen.valueOf(reflection.uintType, this.module, segment.offset),
+        data: segment.buffer
+      });
+    });
+    if (this.memoryBase & 7) this.memoryBase = (this.memoryBase | 7) + 1; // align to 8 bytes
+    const initialSize = Math.floor((this.memoryBase - 1) / 65536) + 1;
+    this.module.setMemory(initialSize, 0xffff, undefined, binaryenSegments);
+
+    // compile start function (initializes malloc mspaces)
     this.maybeCompileStartFunction();
   }
 
@@ -549,6 +603,14 @@ export class Compiler {
       return;
     }
 
+    const op = this.module;
+
+    if (this.options.malloc !== false) { // Override malloc initializer with actual static offset
+      this.globalInitializers[0] = op.setGlobal(".msp", op.call("mspace_init", [
+        binaryen.valueOf(this.uintptrType, op, this.memoryBase) // memoryBase is aligned at this point
+      ], binaryen.typeOf(this.uintptrType, this.uintptrSize)));
+    }
+
     if (!this.startFunction)
       (this.startFunction = new reflection.Function(".start", <typescript.FunctionLikeDeclaration>{}, {}, [], reflection.voidType))
         .initialize(this);
@@ -556,7 +618,6 @@ export class Compiler {
     const previousFunction = this.currentFunction;
     this.currentFunction = this.startFunction;
 
-    const op = this.module;
     const body: binaryen.Statement[] = new Array(this.globalInitializers.length + (this.userStartFunction ? 1 : 0));
 
     let i = 0;
@@ -584,24 +645,28 @@ export class Compiler {
     this.currentFunction = previousFunction;
   }
 
+  static splitImportName(name: string): { moduleName: string, name: string } {
+    let moduleName;
+    const idx = name.indexOf("$");
+    if (idx > 0) {
+      moduleName = name.substring(0, idx);
+      name = name.substring(idx + 1);
+    } else
+      moduleName = "env";
+    return {
+      moduleName,
+      name
+    };
+  }
+
   compileFunction(instance: reflection.Function): binaryen.Function | null {
     const op = this.module;
 
     // Handle imports
     if (instance.isImport) {
-      let moduleName: string;
-      let baseName: string;
-
-      const idx = instance.name.indexOf("$");
-      if (idx > 0) {
-        moduleName = instance.name.substring(0, idx);
-        baseName = instance.name.substring(idx + 1);
-      } else {
-        moduleName = "env";
-        baseName = instance.name;
-      }
-
-      this.module.addImport(instance.name, moduleName, baseName, instance.binaryenSignature);
+      const importName = Compiler.splitImportName(instance.simpleName);
+      this.module.addImport(instance.name, importName.moduleName, importName.name, instance.binaryenSignature);
+      instance.imported = true;
       return null;
     }
 
@@ -780,6 +845,11 @@ export class Compiler {
 
       case typescript.SyntaxKind.NewExpression:
         return expressions.compileNew(this, <typescript.NewExpression>node, contextualType);
+
+      case typescript.SyntaxKind.ThisKeyword:
+        if (!this.currentFunction.isInstance)
+          this.error(node, "'this' used in non-instance context");
+        return op.getLocal(0, binaryen.typeOf(this.uintptrType, this.uintptrSize));
 
       case typescript.SyntaxKind.TrueKeyword:
       case typescript.SyntaxKind.FalseKeyword:

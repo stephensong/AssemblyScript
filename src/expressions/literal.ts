@@ -88,10 +88,9 @@ export function compileLiteral(compiler: Compiler, node: typescript.LiteralExpre
 
     case typescript.SyntaxKind.StringLiteral:
     {
-      const args: binaryen.I32Expression[] = new Array(node.text.length);
-      for (let i = 0, k = node.text.length; i < k; ++i)
-        args[i] = op.i32.const(node.text.charCodeAt(i));
-      return op.call("assembly.d.ts/String.from", args, binaryen.typeOf(compiler.uintptrType, compiler.uintptrSize));
+      const text = node.text;
+      const offset = compiler.createStaticString(text);
+      return binaryen.valueOf(compiler.uintptrType, op, offset);
     }
   }
 

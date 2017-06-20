@@ -18,6 +18,8 @@ export abstract class FunctionBase {
     this.declaration = declaration;
   }
 
+  /** Simple name. */
+  get simpleName(): string { return typescript.getTextOfNode(<typescript.Identifier>this.declaration.name); }
   /** Tests if this function is imported (just a declaration). */
   get isImport(): boolean { return typescript.isDeclare(this.declaration); }
   /** Tests if this function is exported to the embedder. */
@@ -75,6 +77,8 @@ export class Function extends FunctionBase {
 
   /** Whether this function has already been compiled. */
   compiled: boolean = false;
+  /** Whether this function has been imported. */
+  imported: boolean = false;
   /** Number of the current break context. */
   breakNumber: number = 0;
   /** Depth within the current break context. */

@@ -1,6 +1,6 @@
 /// <reference path="../../lib/require-json.d.ts" />
 
-import { Compiler } from "../../src/compiler";
+import { Compiler, CompilerTarget } from "../../src/compiler";
 import * as fs from "fs";
 import * as minimist from "minimist";
 import * as pkg from "../../package.json";
@@ -9,17 +9,18 @@ const argv = minimist(process.argv.slice(2), {
   alias: {
     out: [ "o", "outFile" ],
     validate: [ "v" ],
-    optimize: [ "O" ],
-    text: [ "t" ]
+    optimize: [ "O" ]
   },
   default: {
     "validate": false,
     "optimize": false,
+    "text": false,
+    "silent": false,
     "malloc": true,
     "export-malloc": true
   },
   string: [ "out" ],
-  boolean: [ "text", "optimize", "validate", "malloc", "export-malloc" ]
+  boolean: [ "optimize", "validate", "text", "silent", "malloc", "export-malloc" ]
 });
 
 const files = argv._;
@@ -30,11 +31,18 @@ if (files.length !== 1) {
     "Syntax: asc [options] [entryFile]",
     "",
     "Options:",
-    " -o, --out, --outFile   Specifies the output file name.",
-    " -v, --validate         Validates the module.",
-    " -O, --optimize         Runs optimizing binaryen IR passes.",
-    " -t, --text             Emits text format instead of a binary.",
+    " --out, -o              Specifies the output file name.",
+    " --validate, -v         Validates the module.",
+    " --optimize, -O         Runs optimizing binaryen IR passes.",
+    " --text                 Emits text format instead of a binary.",
+    " --silent               Does not print anything to console.",
+    /*
+    " --target               Specifies the target architecture.",
     "",
+    "                        WASM32   Compiles to 32-bit WebAssembly (default)",
+    "                        WASM64   Compiles to 64-bit WebAssembly",
+    "",
+    */
     " --no-malloc            Does not include malloc, free, etc.",
     " --no-export-malloc     Does not export malloc, free, etc.",
     ""
@@ -43,6 +51,8 @@ if (files.length !== 1) {
 }
 
 const wasmModule = Compiler.compileFile(files[0], {
+  target: argv.target === "WASM64" ? CompilerTarget.WASM64 : CompilerTarget.WASM32,
+  silent: argv.silent,
   malloc: argv.malloc,
   exportMalloc: argv["export-malloc"]
 });

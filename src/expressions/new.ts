@@ -111,7 +111,7 @@ export function compileNewClass(compiler: Compiler, node: typescript.NewExpressi
 export function compileNewArray(compiler: Compiler, /* node: typescript.NewExpression, */ elementType: reflection.Type, sizeArgumentNode: typescript.Expression) {
   const op = compiler.module;
 
-  const sizeArgument = compiler.maybeConvertValue(sizeArgumentNode, compiler.compileExpression(sizeArgumentNode, compiler.uintptrType), typescript.getReflectedType(sizeArgumentNode), compiler.uintptrType, false);
+  const sizeArgument = compiler.maybeConvertValue(sizeArgumentNode, compiler.compileExpression(sizeArgumentNode, reflection.intType), typescript.getReflectedType(sizeArgumentNode), reflection.intType, false);
   const uintptrCategory = binaryen.categoryOf(compiler.uintptrType, compiler.module, compiler.uintptrSize);
   const newsize = compiler.currentFunction.localsByName[".newsize"] || compiler.currentFunction.addLocal(".newsize", compiler.uintptrType);
   const newptr = compiler.currentFunction.localsByName[".newptr"] || compiler.currentFunction.addLocal(".newptr", compiler.uintptrType);
@@ -121,14 +121,14 @@ export function compileNewArray(compiler: Compiler, /* node: typescript.NewExpre
   // return .newptr
 
   return op.block("", [
-    uintptrCategory.store(
+    op.i32.store(
       0,
-      compiler.uintptrType.size,
+      reflection.uintType.size,
       op.teeLocal(newptr.index,
         op.call("memset", [
           op.call("malloc", [ // use wrapped malloc here so mspace_malloc can be inlined
             uintptrCategory.add(
-              binaryen.valueOf(compiler.uintptrType, op, compiler.uintptrSize),
+              binaryen.valueOf(compiler.uintptrType, op, reflection.uintType.size), // length as an (u)int
               uintptrCategory.mul(
                 binaryen.valueOf(compiler.uintptrType, op, elementType.size),
                 op.teeLocal(newsize.index, sizeArgument)
@@ -139,7 +139,9 @@ export function compileNewArray(compiler: Compiler, /* node: typescript.NewExpre
           op.getLocal(newsize.index, binaryenPtrType)
         ], binaryenPtrType)
       ),
-      op.getLocal(newsize.index, binaryenPtrType)
+      compiler.uintptrType === reflection.uintptrType64
+        ? op.i32.wrap(op.getLocal(newsize.index, binaryenPtrType))
+        : op.getLocal(newsize.index, binaryenPtrType)
     ),
     op.getLocal(newptr.index, binaryenPtrType)
   ], binaryenPtrType);

@@ -30,8 +30,8 @@ export function compileCall(compiler: Compiler, node: typescript.CallExpression,
   }
 
   // Compile function if not yet compiled
-  if (!instance.compiled) {
-    compiler.compileFunction(instance); // throws if unexpected things happen (i.e. has no body)
+  if (!instance.compiled && instance.body) {
+    compiler.compileFunction(instance);
     instance.compiled = true;
   }
 
@@ -85,7 +85,7 @@ export function compileCall(compiler: Compiler, node: typescript.CallExpression,
     return op.call(instance.name, argumentExpressions, binaryen.typeOf(instance.returnType, compiler.uintptrSize));
 
   // builtin
-  switch ((<typescript.Symbol>declaration.symbol).name) {
+  switch (instance.simpleName) {
 
     case "rotl":
     case "rotll":
@@ -157,8 +157,27 @@ export function compileCall(compiler: Compiler, node: typescript.CallExpression,
 
     case "sizeof":
       return builtins.sizeof(compiler, typeArguments[0]);
+
+    case "unsafe_cast":
+      return builtins.unsafe_cast(argumentExpressions[0]);
   }
 
-  // import
+  // Rewire malloc calls
+  if (compiler.options.malloc !== false) {
+    switch (instance.name) {
+      case "assembly.d.ts/malloc":
+      case "assembly.d.ts/free":
+      case "assembly.d.ts/memcpy":
+      case "assembly.d.ts/memset":
+      case "assembly.d.ts/memcmp":
+         return op.call(instance.simpleName, argumentExpressions, binaryen.typeOf(instance.returnType, compiler.uintptrSize));
+    }
+  }
+
+  if (!instance.imported) {
+    instance.imported = true;
+    const importName = Compiler.splitImportName(instance.simpleName);
+    compiler.module.addImport(instance.name, importName.moduleName, importName.name, instance.binaryenSignature);
+  }
   return op.call(instance.name, argumentExpressions, binaryen.typeOf(instance.returnType, compiler.uintptrSize));
 }

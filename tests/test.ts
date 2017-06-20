@@ -1,4 +1,4 @@
-class BaseClass {
+/*class BaseClass {
   baseProperty: int;
 
   constructor(a: int) {
@@ -23,8 +23,8 @@ class SubClass extends BaseClass {
 export function classTest(): void {
   let c: BaseClass = new SubClass(1, 2);
   c.baseMethod<int>();
-}
-
+}*/
+/*
 export function main(): void {
   // let s: string = "123";
   let a: Array<int> = new Array(10);
@@ -32,6 +32,12 @@ export function main(): void {
   used();
 }
 
-
 function used(): void {}
 function unused(): void {}
+*/
+
+export function stringTest(): void {
+  let s: string = "123";
+  s.startsWith("1");
+  // let a: Array<int> = new Array(10);
+}

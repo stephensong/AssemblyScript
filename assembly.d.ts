@@ -20,7 +20,7 @@ declare type long = number;
 /** A 64-bit unsigned integer. */
 declare type ulong = number;
 /** A 1-bit unsigned integer. */
-declare type bool = number;
+declare type bool = boolean;
 /** A 32-bit float. */
 declare type float = number;
 /** A 64-bit float. */
@@ -65,8 +65,8 @@ declare const Infinityf: float;
 /** A fixed-size array. */
 @__impl("ArrayImpl")
 declare class Array<T> implements IDisposable {
-  readonly length: uintptr;
-  constructor(size: uintptr);
+  readonly length: int;
+  constructor(size: int);
   dispose(): void;
 
   // implemented in std/array.ts
@@ -96,12 +96,14 @@ declare class Float64Array extends Array<double> {}
 
 // Strings
 
-/** A fixed-size utf16-le encoded string. */
+/** A fixed-size UTF-16LE encoded string. */
 @__impl("StringImpl")
 declare class String extends Array<ushort> implements IDisposable {
-  readonly length: uintptr;
-  constructor(size: uintptr);
-  dispose(): void;
+  constructor(size: int);
+
+  // implemented in std/string.ts
+  startsWith(value: string): bool;
+  endsWidth(value: string): bool;
 }
 
 // Builtins
@@ -176,14 +178,10 @@ declare function current_memory(): int;
 declare function grow_memory(value: uint): int;
 /** Returns the byte size of the specified core or class type. Compiles to a constant. */
 declare function sizeof<T>(): uintptr;
+/** Casts a class to a pointer or vice-versa. */
+declare function unsafe_cast<T1,T2>(value: T1): T2;
 
-// tbd.
-/** UNSAFE - Casts a class to a pointer. */
-// declare function __deref<T>(value: T): uintptr;
-/** UNSAFE - Casts a pointer to a class. */
-// declare function __ref<T>(ptr: uintptr): T;
-
-// Standard library
+// Optional malloc implementation
 
 /** Sets a chunk of memory to the provided value `c`. Usually used to reset it to all `0`s. */
 declare function memset(dest: uintptr, c: int, size: uintptr): uintptr;

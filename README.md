@@ -164,7 +164,7 @@ The following built-in constants are present as immutable globals (note that opt
 * **Infinityf**: `float`<br />
   Positive infinity as a 32-bit float.
 
-By default (i.e. if the `--nolib` option isn't set), standard memory management routines based on [dlmalloc](http://g.oswego.edu/dl/html/malloc.html) and [musl](http://www.musl-libc.org/) will be linked statically and exported to the embedder:
+By default (i.e. if `--no-malloc` isn't specified), standard memory management routines based on [dlmalloc](http://g.oswego.edu/dl/html/malloc.html) and [musl](http://www.musl-libc.org/) will be linked statically and exported to the embedder:
 
 * **malloc**(size: `uintptr`): `uintptr`<br />
   Allocates a chunk of memory of the specified size and returns a pointer to it.
@@ -177,7 +177,7 @@ By default (i.e. if the `--nolib` option isn't set), standard memory management 
 * **memcmp**(vl: `uintptr`, vr: `uintptr`, n: `uintptr`): `int`<br />
   Compares a chunk of memory to another. Returns `0` if both are equal, otherwise `vl[i] - vr[i]` at the first difference's byte offset `i`.
 
-Linking in memory management routines adds about 11kb to a module. Once WebAssembly exposes the garbage collector natively, there'll be other options as well. Note that the `new` operator depends on `malloc` and will break when `--nolib` is specified (and no other `malloc` is present). Also note that calling `grow_memory` where `malloc` is present will most likely break `malloc` as it expects contiguous memory.
+Linking in memory management routines adds about 11kb to a module. Once WebAssembly exposes the garbage collector natively, there'll be other options as well. Note that the `new` operator depends on `malloc` and will break when `--no-malloc` is specified (and no other `malloc` is present). Also note that calling `grow_memory` where `malloc` is present will most likely break `malloc` as it expects contiguous memory.
 
 Type coercion requires an explicit cast where precision or signage is lost respectively is implicit where it is maintained. For example, to cast a `double` to an `int`:
 
@@ -187,7 +187,7 @@ function example(value: double): int {
 }
 ```
 
-Global WebAssembly imports can be `declare`d anywhere while WebAssembly exports are `export`ed from the entry file (the file specified when calling `asc` or `Compiler.compile`). Aside from that, imports and exports work just like in TypeScript.
+Global WebAssembly imports can be `declare`d anywhere while WebAssembly exports are `export`ed from the entry file (the file specified when calling `asc` or `Compiler.compileFile`). Aside from that, imports and exports work just like in TypeScript.
 
 ```ts
 // entry.ts
