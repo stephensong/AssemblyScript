@@ -66,8 +66,6 @@ export function compileLiteral(compiler: Compiler, node: typescript.LiteralExpre
         case reflection.ushortType:
           return op.i32.const(intValue & <number>contextualType.mask32);
 
-        default:
-          typescript.setReflectedType(node, reflection.intType);
         case reflection.intType:
         case reflection.uintType:
         case reflection.uintptrType32:
@@ -83,7 +81,14 @@ export function compileLiteral(compiler: Compiler, node: typescript.LiteralExpre
           if (negate)
             long = long.negate();
           return op.i64.const(long.low, long.high);
+
+        case reflection.floatType:
+          return op.f32.const(intValue);
+
+        case reflection.doubleType:
+          return op.f64.const(intValue);
       }
+      throw Error("unexpected type");
     }
 
     case typescript.SyntaxKind.StringLiteral:
