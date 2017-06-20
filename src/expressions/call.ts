@@ -31,8 +31,8 @@ export function compileCall(compiler: Compiler, node: typescript.CallExpression,
 
   // Compile function if not yet compiled
   if (!instance.compiled && instance.body) {
-    compiler.compileFunction(instance);
     instance.compiled = true;
+    compiler.compileFunction(instance);
   }
 
   let argumentCount = instance.parameters.length;
