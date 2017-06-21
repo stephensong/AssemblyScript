@@ -1,3 +1,5 @@
+/** @module assemblyscript */ /** */
+
 import now = require("performance-now");
 
 /** A simple profiler used to measure compilation times. */

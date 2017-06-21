@@ -254,6 +254,8 @@ API
   * **exportMalloc**: `boolean`<br />
     Whether to export malloc, free, etc. Defaults to `true`. Disable this if you want malloc etc. to be dead-code-eliminated later on.
 
+See the [API documentation](http://dcode.io/AssemblyScript/documentation) for all the details.
+
 ### Example
 
 ```ts

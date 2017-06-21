@@ -1,3 +1,5 @@
+/** @module assemblyscript/reflection */ /** */
+
 import Compiler from "../compiler";
 import { FunctionTemplate, Function } from "./function";
 import Property from "./property";

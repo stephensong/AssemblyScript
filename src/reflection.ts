@@ -1,3 +1,9 @@
+/**
+ * Reflection components.
+ * @module assemblyscript/reflection
+ * @preferred
+ */ /** */
+
 export * from "./reflection/class";
 export * from "./reflection/enum";
 export * from "./reflection/function";

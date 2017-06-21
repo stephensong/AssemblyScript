@@ -1,3 +1,14 @@
+/**
+ * A re-exporting wrapper around the relevant parts of TypeScript.
+ *
+ * Note that the API documentation does not reference any re-exports because this isn't supported
+ * by the documentation generator.
+ *
+ * For additional exports, see: https://github.com/dcodeIO/AssemblyScript/blob/master/src/typescript.ts
+ *
+ * @module assemblyscript/typescript
+ */ /** */
+
 import * as path from "path";
 import * as reflection from "./reflection";
 

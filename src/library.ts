@@ -1,3 +1,8 @@
+/**
+ * Bundled library components for in-browser usage.
+ * @module assemblyscript/library
+ */
+
 /** AssemblyScript version. */
 export const version: string = "0.0.1";
 

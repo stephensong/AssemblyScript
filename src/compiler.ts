@@ -1,3 +1,5 @@
+/** @module assemblyscript */ /** */
+
 import * as base64 from "@protobufjs/base64";
 import * as binaryen from "./binaryen";
 import * as builtins from "./builtins";

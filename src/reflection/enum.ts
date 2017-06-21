@@ -1,3 +1,5 @@
+/** @module assemblyscript/reflection */ /** */
+
 import Compiler from "../compiler";
 import { Property } from "./property";
 import { intType } from "./type";

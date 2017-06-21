@@ -1,0 +1,1657 @@
+<!doctype html>
+<html class="default no-js">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>Compiler | AssemblyScript API Documentation</title>
+	<meta name="description" content="">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+<header>
+	<div class="tsd-page-toolbar">
+		<div class="container">
+			<div class="table-wrap">
+				<div class="table-cell" id="tsd-search" data-index="../assets/js/search.js" data-base="..">
+					<div class="field">
+						<label for="tsd-search-field" class="tsd-widget search no-caption">Search</label>
+						<input id="tsd-search-field" type="text" />
+					</div>
+					<ul class="results">
+						<li class="state loading">Preparing search index...</li>
+						<li class="state failure">The search index is not available</li>
+					</ul>
+					<a href="../index.html" class="title">AssemblyScript API Documentation</a>
+				</div>
+				<div class="table-cell" id="tsd-widgets">
+					<div id="tsd-filter">
+						<a href="#" class="tsd-widget options no-caption" data-toggle="options">Options</a>
+						<div class="tsd-filter-group">
+							<div class="tsd-select" id="tsd-filter-visibility">
+								<span class="tsd-select-label">All</span>
+								<ul class="tsd-select-list">
+									<li data-value="public">Public</li>
+									<li data-value="protected">Public/Protected</li>
+									<li data-value="private" class="selected">All</li>
+								</ul>
+							</div>
+							<input type="checkbox" id="tsd-filter-inherited" checked />
+							<label class="tsd-widget" for="tsd-filter-inherited">Inherited</label>
+							<input type="checkbox" id="tsd-filter-externals" checked />
+							<label class="tsd-widget" for="tsd-filter-externals">Externals</label>
+						</div>
+					</div>
+					<a href="#" class="tsd-widget menu no-caption" data-toggle="menu">Menu</a>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="tsd-page-title">
+		<div class="container">
+			<ul class="tsd-breadcrumb">
+				<li>
+					<a href="../index.html">Globals</a>
+				</li>
+				<li>
+					<a href="../modules/assemblyscript.html">assemblyscript</a>
+				</li>
+				<li>
+					<a href="assemblyscript.compiler.html">Compiler</a>
+				</li>
+			</ul>
+			<h1>Class Compiler</h1>
+		</div>
+	</div>
+</header>
+<div class="container container-main">
+	<div class="row">
+		<div class="col-8 col-content">
+			<section class="tsd-panel tsd-comment">
+				<div class="tsd-comment tsd-typography">
+					<div class="lead">
+						<p>AssemblyScript compiler.</p>
+					</div>
+				</div>
+			</section>
+			<section class="tsd-panel tsd-hierarchy">
+				<h3>Hierarchy</h3>
+				<ul class="tsd-hierarchy">
+					<li>
+						<span class="target">Compiler</span>
+					</li>
+				</ul>
+			</section>
+			<section class="tsd-panel-group tsd-index-group">
+				<h2>Index</h2>
+				<section class="tsd-panel tsd-index-panel">
+					<div class="tsd-index-content">
+						<section class="tsd-index-section ">
+							<h3>Constructors</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-constructor tsd-parent-kind-class"><a href="assemblyscript.compiler.html#constructor" class="tsd-kind-icon">constructor</a></li>
+							</ul>
+						</section>
+						<section class="tsd-index-section ">
+							<h3>Properties</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="assemblyscript.compiler.html#checker" class="tsd-kind-icon">checker</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="assemblyscript.compiler.html#classtemplates" class="tsd-kind-icon">class<wbr>Templates</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="assemblyscript.compiler.html#classes" class="tsd-kind-icon">classes</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="assemblyscript.compiler.html#currentfunction" class="tsd-kind-icon">current<wbr>Function</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="assemblyscript.compiler.html#diagnostics" class="tsd-kind-icon">diagnostics</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="assemblyscript.compiler.html#entryfile" class="tsd-kind-icon">entry<wbr>File</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="assemblyscript.compiler.html#enums" class="tsd-kind-icon">enums</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="assemblyscript.compiler.html#functiontemplates" class="tsd-kind-icon">function<wbr>Templates</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="assemblyscript.compiler.html#functions" class="tsd-kind-icon">functions</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="assemblyscript.compiler.html#globalinitializers" class="tsd-kind-icon">global<wbr>Initializers</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="assemblyscript.compiler.html#globals" class="tsd-kind-icon">globals</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="assemblyscript.compiler.html#libraryfile" class="tsd-kind-icon">library<wbr>File</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="assemblyscript.compiler.html#memorybase" class="tsd-kind-icon">memory<wbr>Base</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="assemblyscript.compiler.html#memorysegments" class="tsd-kind-icon">memory<wbr>Segments</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="assemblyscript.compiler.html#module" class="tsd-kind-icon">module</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="assemblyscript.compiler.html#options" class="tsd-kind-icon">options</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="assemblyscript.compiler.html#pendingimplementations" class="tsd-kind-icon">pending<wbr>Implementations</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="assemblyscript.compiler.html#profiler" class="tsd-kind-icon">profiler</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="assemblyscript.compiler.html#program" class="tsd-kind-icon">program</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="assemblyscript.compiler.html#signatures" class="tsd-kind-icon">signatures</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="assemblyscript.compiler.html#startfunction" class="tsd-kind-icon">start<wbr>Function</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="assemblyscript.compiler.html#stringpool" class="tsd-kind-icon">string<wbr>Pool</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="assemblyscript.compiler.html#uintptrtype" class="tsd-kind-icon">uintptr<wbr>Type</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="assemblyscript.compiler.html#userstartfunction" class="tsd-kind-icon">user<wbr>Start<wbr>Function</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-static"><a href="assemblyscript.compiler.html#lastdiagnostics" class="tsd-kind-icon">last<wbr>Diagnostics</a></li>
+							</ul>
+						</section>
+						<section class="tsd-index-section ">
+							<h3>Accessors</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-get-signature tsd-parent-kind-class"><a href="assemblyscript.compiler.html#currentbreaklabel" class="tsd-kind-icon">current<wbr>Break<wbr>Label</a></li>
+								<li class="tsd-kind-get-signature tsd-parent-kind-class"><a href="assemblyscript.compiler.html#uintptrsize" class="tsd-kind-icon">uintptr<wbr>Size</a></li>
+							</ul>
+						</section>
+						<section class="tsd-index-section ">
+							<h3>Methods</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="assemblyscript.compiler.html#addglobal" class="tsd-kind-icon">add<wbr>Global</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="assemblyscript.compiler.html#compile" class="tsd-kind-icon">compile</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="assemblyscript.compiler.html#compileclass" class="tsd-kind-icon">compile<wbr>Class</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="assemblyscript.compiler.html#compileexpression" class="tsd-kind-icon">compile<wbr>Expression</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="assemblyscript.compiler.html#compilefunction" class="tsd-kind-icon">compile<wbr>Function</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="assemblyscript.compiler.html#compilestatement" class="tsd-kind-icon">compile<wbr>Statement</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="assemblyscript.compiler.html#createstaticstring" class="tsd-kind-icon">create<wbr>Static<wbr>String</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="assemblyscript.compiler.html#enterbreakcontext" class="tsd-kind-icon">enter<wbr>Break<wbr>Context</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="assemblyscript.compiler.html#error" class="tsd-kind-icon">error</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="assemblyscript.compiler.html#info" class="tsd-kind-icon">info</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="assemblyscript.compiler.html#initialize" class="tsd-kind-icon">initialize</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="assemblyscript.compiler.html#initializeclass" class="tsd-kind-icon">initialize<wbr>Class</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="assemblyscript.compiler.html#initializeenum" class="tsd-kind-icon">initialize<wbr>Enum</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="assemblyscript.compiler.html#initializefunction" class="tsd-kind-icon">initialize<wbr>Function</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="assemblyscript.compiler.html#initializeglobal" class="tsd-kind-icon">initialize<wbr>Global</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="assemblyscript.compiler.html#initializemalloc" class="tsd-kind-icon">initialize<wbr>Malloc</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="assemblyscript.compiler.html#leavebreakcontext" class="tsd-kind-icon">leave<wbr>Break<wbr>Context</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="assemblyscript.compiler.html#mangleglobalname" class="tsd-kind-icon">mangle<wbr>Global<wbr>Name</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="assemblyscript.compiler.html#maybecompilestartfunction" class="tsd-kind-icon">maybe<wbr>Compile<wbr>Start<wbr>Function</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="assemblyscript.compiler.html#maybeconvertvalue" class="tsd-kind-icon">maybe<wbr>Convert<wbr>Value</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="assemblyscript.compiler.html#mayberesolvealias" class="tsd-kind-icon">maybe<wbr>Resolve<wbr>Alias</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="assemblyscript.compiler.html#resolvereference" class="tsd-kind-icon">resolve<wbr>Reference</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="assemblyscript.compiler.html#resolvetype" class="tsd-kind-icon">resolve<wbr>Type</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="assemblyscript.compiler.html#warn" class="tsd-kind-icon">warn</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-static"><a href="assemblyscript.compiler.html#compilefile" class="tsd-kind-icon">compile<wbr>File</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-static"><a href="assemblyscript.compiler.html#compileprogram" class="tsd-kind-icon">compile<wbr>Program</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-static"><a href="assemblyscript.compiler.html#compilestring" class="tsd-kind-icon">compile<wbr>String</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-static"><a href="assemblyscript.compiler.html#splitimportname" class="tsd-kind-icon">split<wbr>Import<wbr>Name</a></li>
+							</ul>
+						</section>
+					</div>
+				</section>
+			</section>
+			<section class="tsd-panel-group tsd-member-group ">
+				<h2>Constructors</h2>
+				<section class="tsd-panel tsd-member tsd-kind-constructor tsd-parent-kind-class">
+					<a name="constructor" class="tsd-anchor"></a>
+					<h3>constructor</h3>
+					<ul class="tsd-signatures tsd-kind-constructor tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">new <wbr>Compiler<span class="tsd-signature-symbol">(</span>program<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">typescript.Program</span>, options<span class="tsd-signature-symbol">?: </span><a href="../interfaces/assemblyscript.compileroptions.html" class="tsd-signature-type">CompilerOptions</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="assemblyscript.compiler.html" class="tsd-signature-type">Compiler</a></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L173">src/compiler.ts:173</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Constructs a new AssemblyScript compiler.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>program: <span class="tsd-signature-type">typescript.Program</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<div class="lead">
+											<p>TypeScript program</p>
+										</div>
+									</div>
+								</li>
+								<li>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> options: <a href="../interfaces/assemblyscript.compileroptions.html" class="tsd-signature-type">CompilerOptions</a></h5>
+									<div class="tsd-comment tsd-typography">
+										<div class="lead">
+											<p>Compiler options</p>
+										</div>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <a href="assemblyscript.compiler.html" class="tsd-signature-type">Compiler</a></h4>
+						</li>
+					</ul>
+				</section>
+			</section>
+			<section class="tsd-panel-group tsd-member-group ">
+				<h2>Properties</h2>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="checker" class="tsd-anchor"></a>
+					<h3>checker</h3>
+					<div class="tsd-signature tsd-kind-icon">checker<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">typescript.TypeChecker</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L50">src/compiler.ts:50</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="classtemplates" class="tsd-anchor"></a>
+					<h3>class<wbr>Templates</h3>
+					<div class="tsd-signature tsd-kind-icon">class<wbr>Templates<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L71">src/compiler.ts:71</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-type-declaration">
+						<h4>Type declaration</h4>
+						<ul class="tsd-parameters">
+							<li class="tsd-parameter-index-signature">
+								<h5><span class="tsd-signature-symbol">[</span>key: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">]: </span><a href="assemblyscript_reflection.classtemplate.html" class="tsd-signature-type">ClassTemplate</a></h5>
+							</li>
+						</ul>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="classes" class="tsd-anchor"></a>
+					<h3>classes</h3>
+					<div class="tsd-signature tsd-kind-icon">classes<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L74">src/compiler.ts:74</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-type-declaration">
+						<h4>Type declaration</h4>
+						<ul class="tsd-parameters">
+							<li class="tsd-parameter-index-signature">
+								<h5><span class="tsd-signature-symbol">[</span>key: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">]: </span><a href="assemblyscript_reflection.class.html" class="tsd-signature-type">Class</a></h5>
+							</li>
+						</ul>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="currentfunction" class="tsd-anchor"></a>
+					<h3>current<wbr>Function</h3>
+					<div class="tsd-signature tsd-kind-icon">current<wbr>Function<span class="tsd-signature-symbol">:</span> <a href="assemblyscript_reflection.function.html" class="tsd-signature-type">Function</a></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L65">src/compiler.ts:65</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="diagnostics" class="tsd-anchor"></a>
+					<h3>diagnostics</h3>
+					<div class="tsd-signature tsd-kind-icon">diagnostics<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">typescript.DiagnosticCollection</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L53">src/compiler.ts:53</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="entryfile" class="tsd-anchor"></a>
+					<h3>entry<wbr>File</h3>
+					<div class="tsd-signature tsd-kind-icon">entry<wbr>File<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">typescript.SourceFile</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L51">src/compiler.ts:51</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="enums" class="tsd-anchor"></a>
+					<h3>enums</h3>
+					<div class="tsd-signature tsd-kind-icon">enums<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L75">src/compiler.ts:75</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-type-declaration">
+						<h4>Type declaration</h4>
+						<ul class="tsd-parameters">
+							<li class="tsd-parameter-index-signature">
+								<h5><span class="tsd-signature-symbol">[</span>key: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">]: </span><a href="assemblyscript_reflection.enum.html" class="tsd-signature-type">Enum</a></h5>
+							</li>
+						</ul>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="functiontemplates" class="tsd-anchor"></a>
+					<h3>function<wbr>Templates</h3>
+					<div class="tsd-signature tsd-kind-icon">function<wbr>Templates<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L70">src/compiler.ts:70</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-type-declaration">
+						<h4>Type declaration</h4>
+						<ul class="tsd-parameters">
+							<li class="tsd-parameter-index-signature">
+								<h5><span class="tsd-signature-symbol">[</span>key: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">]: </span><a href="assemblyscript_reflection.functiontemplate.html" class="tsd-signature-type">FunctionTemplate</a></h5>
+							</li>
+						</ul>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="functions" class="tsd-anchor"></a>
+					<h3>functions</h3>
+					<div class="tsd-signature tsd-kind-icon">functions<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L73">src/compiler.ts:73</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-type-declaration">
+						<h4>Type declaration</h4>
+						<ul class="tsd-parameters">
+							<li class="tsd-parameter-index-signature">
+								<h5><span class="tsd-signature-symbol">[</span>key: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">]: </span><a href="assemblyscript_reflection.function.html" class="tsd-signature-type">Function</a></h5>
+							</li>
+						</ul>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="globalinitializers" class="tsd-anchor"></a>
+					<h3>global<wbr>Initializers</h3>
+					<div class="tsd-signature tsd-kind-icon">global<wbr>Initializers<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">Expression</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> =&nbsp;[]</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L58">src/compiler.ts:58</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="globals" class="tsd-anchor"></a>
+					<h3>globals</h3>
+					<div class="tsd-signature tsd-kind-icon">globals<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L72">src/compiler.ts:72</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-type-declaration">
+						<h4>Type declaration</h4>
+						<ul class="tsd-parameters">
+							<li class="tsd-parameter-index-signature">
+								<h5><span class="tsd-signature-symbol">[</span>key: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">]: </span><a href="assemblyscript_reflection.variable.html" class="tsd-signature-type">Variable</a></h5>
+							</li>
+						</ul>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="libraryfile" class="tsd-anchor"></a>
+					<h3>library<wbr>File</h3>
+					<div class="tsd-signature tsd-kind-icon">library<wbr>File<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">typescript.SourceFile</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L52">src/compiler.ts:52</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="memorybase" class="tsd-anchor"></a>
+					<h3>memory<wbr>Base</h3>
+					<div class="tsd-signature tsd-kind-icon">memory<wbr>Base<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L60">src/compiler.ts:60</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="memorysegments" class="tsd-anchor"></a>
+					<h3>memory<wbr>Segments</h3>
+					<div class="tsd-signature tsd-kind-icon">memory<wbr>Segments<span class="tsd-signature-symbol">:</span> <a href="../interfaces/assemblyscript.memorysegment.html" class="tsd-signature-type">MemorySegment</a><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> =&nbsp;[]</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L61">src/compiler.ts:61</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="module" class="tsd-anchor"></a>
+					<h3>module</h3>
+					<div class="tsd-signature tsd-kind-icon">module<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">Module</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L56">src/compiler.ts:56</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="options" class="tsd-anchor"></a>
+					<h3>options</h3>
+					<div class="tsd-signature tsd-kind-icon">options<span class="tsd-signature-symbol">:</span> <a href="../interfaces/assemblyscript.compileroptions.html" class="tsd-signature-type">CompilerOptions</a></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L46">src/compiler.ts:46</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="pendingimplementations" class="tsd-anchor"></a>
+					<h3>pending<wbr>Implementations</h3>
+					<div class="tsd-signature tsd-kind-icon">pending<wbr>Implementations<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L77">src/compiler.ts:77</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-type-declaration">
+						<h4>Type declaration</h4>
+						<ul class="tsd-parameters">
+							<li class="tsd-parameter-index-signature">
+								<h5><span class="tsd-signature-symbol">[</span>key: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">]: </span><a href="assemblyscript_reflection.classtemplate.html" class="tsd-signature-type">ClassTemplate</a></h5>
+							</li>
+						</ul>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="profiler" class="tsd-anchor"></a>
+					<h3>profiler</h3>
+					<div class="tsd-signature tsd-kind-icon">profiler<span class="tsd-signature-symbol">:</span> <a href="assemblyscript.profiler.html" class="tsd-signature-type">Profiler</a><span class="tsd-signature-symbol"> =&nbsp;new Profiler()</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L64">src/compiler.ts:64</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="program" class="tsd-anchor"></a>
+					<h3>program</h3>
+					<div class="tsd-signature tsd-kind-icon">program<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">typescript.Program</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L49">src/compiler.ts:49</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="signatures" class="tsd-anchor"></a>
+					<h3>signatures</h3>
+					<div class="tsd-signature tsd-kind-icon">signatures<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L57">src/compiler.ts:57</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-type-declaration">
+						<h4>Type declaration</h4>
+						<ul class="tsd-parameters">
+							<li class="tsd-parameter-index-signature">
+								<h5><span class="tsd-signature-symbol">[</span>key: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">]: </span><span class="tsd-signature-type">Signature</span></h5>
+							</li>
+						</ul>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="startfunction" class="tsd-anchor"></a>
+					<h3>start<wbr>Function</h3>
+					<div class="tsd-signature tsd-kind-icon">start<wbr>Function<span class="tsd-signature-symbol">:</span> <a href="assemblyscript_reflection.function.html" class="tsd-signature-type">Function</a></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L76">src/compiler.ts:76</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="stringpool" class="tsd-anchor"></a>
+					<h3>string<wbr>Pool</h3>
+					<div class="tsd-signature tsd-kind-icon">string<wbr>Pool<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L66">src/compiler.ts:66</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-type-declaration">
+						<h4>Type declaration</h4>
+						<ul class="tsd-parameters">
+							<li class="tsd-parameter-index-signature">
+								<h5><span class="tsd-signature-symbol">[</span>key: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">]: </span><a href="../interfaces/assemblyscript.memorysegment.html" class="tsd-signature-type">MemorySegment</a></h5>
+							</li>
+						</ul>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="uintptrtype" class="tsd-anchor"></a>
+					<h3>uintptr<wbr>Type</h3>
+					<div class="tsd-signature tsd-kind-icon">uintptr<wbr>Type<span class="tsd-signature-symbol">:</span> <a href="assemblyscript_reflection.type.html" class="tsd-signature-type">Type</a></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L69">src/compiler.ts:69</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="userstartfunction" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> user<wbr>Start<wbr>Function</h3>
+					<div class="tsd-signature tsd-kind-icon">user<wbr>Start<wbr>Function<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">binaryen.Function</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L59">src/compiler.ts:59</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-static">
+					<a name="lastdiagnostics" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagStatic">Static</span> last<wbr>Diagnostics</h3>
+					<div class="tsd-signature tsd-kind-icon">last<wbr>Diagnostics<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">typescript.Diagnostic</span><span class="tsd-signature-symbol">[]</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L44">src/compiler.ts:44</a></li>
+						</ul>
+					</aside>
+				</section>
+			</section>
+			<section class="tsd-panel-group tsd-member-group ">
+				<h2>Accessors</h2>
+				<section class="tsd-panel tsd-member tsd-kind-get-signature tsd-parent-kind-class">
+					<a name="currentbreaklabel" class="tsd-anchor"></a>
+					<h3>current<wbr>Break<wbr>Label</h3>
+					<ul class="tsd-signatures tsd-kind-get-signature tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> currentBreakLabel<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L767">src/compiler.ts:767</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-get-signature tsd-parent-kind-class">
+					<a name="uintptrsize" class="tsd-anchor"></a>
+					<h3>uintptr<wbr>Size</h3>
+					<ul class="tsd-signatures tsd-kind-get-signature tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> uintptrSize<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L173">src/compiler.ts:173</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Gets the configured byte size of a pointer.</p>
+								</div>
+							</div>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4>
+						</li>
+					</ul>
+				</section>
+			</section>
+			<section class="tsd-panel-group tsd-member-group ">
+				<h2>Methods</h2>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="addglobal" class="tsd-anchor"></a>
+					<h3>add<wbr>Global</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">add<wbr>Global<span class="tsd-signature-symbol">(</span>name<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, type<span class="tsd-signature-symbol">: </span><a href="assemblyscript_reflection.type.html" class="tsd-signature-type">Type</a>, mutable<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span>, initializerNode<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">typescript.Expression</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L354">src/compiler.ts:354</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>name: <span class="tsd-signature-type">string</span></h5>
+								</li>
+								<li>
+									<h5>type: <a href="assemblyscript_reflection.type.html" class="tsd-signature-type">Type</a></h5>
+								</li>
+								<li>
+									<h5>mutable: <span class="tsd-signature-type">boolean</span></h5>
+								</li>
+								<li>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> initializerNode: <span class="tsd-signature-type">typescript.Expression</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="compile" class="tsd-anchor"></a>
+					<h3>compile</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">compile<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L550">src/compiler.ts:550</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="compileclass" class="tsd-anchor"></a>
+					<h3>compile<wbr>Class</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">compile<wbr>Class<span class="tsd-signature-symbol">(</span>instance<span class="tsd-signature-symbol">: </span><a href="assemblyscript_reflection.class.html" class="tsd-signature-type">Class</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L732">src/compiler.ts:732</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>instance: <a href="assemblyscript_reflection.class.html" class="tsd-signature-type">Class</a></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="compileexpression" class="tsd-anchor"></a>
+					<h3>compile<wbr>Expression</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">compile<wbr>Expression<span class="tsd-signature-symbol">(</span>node<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">typescript.Expression</span>, contextualType<span class="tsd-signature-symbol">: </span><a href="assemblyscript_reflection.type.html" class="tsd-signature-type">Type</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Expression</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L817">src/compiler.ts:817</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>node: <span class="tsd-signature-type">typescript.Expression</span></h5>
+								</li>
+								<li>
+									<h5>contextualType: <a href="assemblyscript_reflection.type.html" class="tsd-signature-type">Type</a></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Expression</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="compilefunction" class="tsd-anchor"></a>
+					<h3>compile<wbr>Function</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">compile<wbr>Function<span class="tsd-signature-symbol">(</span>instance<span class="tsd-signature-symbol">: </span><a href="assemblyscript_reflection.function.html" class="tsd-signature-type">Function</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Function</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">null</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L666">src/compiler.ts:666</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>instance: <a href="assemblyscript_reflection.function.html" class="tsd-signature-type">Function</a></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Function</span>
+								<span class="tsd-signature-symbol"> | </span>
+								<span class="tsd-signature-type">null</span>
+							</h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="compilestatement" class="tsd-anchor"></a>
+					<h3>compile<wbr>Statement</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">compile<wbr>Statement<span class="tsd-signature-symbol">(</span>node<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">typescript.Statement</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Statement</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L769">src/compiler.ts:769</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>node: <span class="tsd-signature-type">typescript.Statement</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Statement</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="createstaticstring" class="tsd-anchor"></a>
+					<h3>create<wbr>Static<wbr>String</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">create<wbr>Static<wbr>String<span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L410">src/compiler.ts:410</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Creates or, if it already exists, looks up a static string and returns its offset in linear memory.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>value: <span class="tsd-signature-type">string</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="enterbreakcontext" class="tsd-anchor"></a>
+					<h3>enter<wbr>Break<wbr>Context</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">enter<wbr>Break<wbr>Context<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L754">src/compiler.ts:754</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="error" class="tsd-anchor"></a>
+					<h3>error</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">error<span class="tsd-signature-symbol">(</span>node<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">typescript.Node</span>, message<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, arg1<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L225">src/compiler.ts:225</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Adds an error diagnostic to {@link Compiler#diagnostics} and prints it.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>node: <span class="tsd-signature-type">typescript.Node</span></h5>
+								</li>
+								<li>
+									<h5>message: <span class="tsd-signature-type">string</span></h5>
+								</li>
+								<li>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> arg1: <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="info" class="tsd-anchor"></a>
+					<h3>info</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">info<span class="tsd-signature-symbol">(</span>node<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">typescript.Node</span>, message<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, arg1<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L209">src/compiler.ts:209</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Adds an informative diagnostic to {@link Compiler#diagnostics} and prints it.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>node: <span class="tsd-signature-type">typescript.Node</span></h5>
+								</li>
+								<li>
+									<h5>message: <span class="tsd-signature-type">string</span></h5>
+								</li>
+								<li>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> arg1: <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="initialize" class="tsd-anchor"></a>
+					<h3>initialize</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">initialize<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L245">src/compiler.ts:245</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Scans over the sources and initializes the reflection structure.</p>
+								</div>
+							</div>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="initializeclass" class="tsd-anchor"></a>
+					<h3>initialize<wbr>Class</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">initialize<wbr>Class<span class="tsd-signature-symbol">(</span>node<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">typescript.ClassDeclaration</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L475">src/compiler.ts:475</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>node: <span class="tsd-signature-type">typescript.ClassDeclaration</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="initializeenum" class="tsd-anchor"></a>
+					<h3>initialize<wbr>Enum</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">initialize<wbr>Enum<span class="tsd-signature-symbol">(</span>node<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">typescript.EnumDeclaration</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L537">src/compiler.ts:537</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>node: <span class="tsd-signature-type">typescript.EnumDeclaration</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="initializefunction" class="tsd-anchor"></a>
+					<h3>initialize<wbr>Function</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">initialize<wbr>Function<span class="tsd-signature-symbol">(</span>node<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">typescript.FunctionLikeDeclaration</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">object</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L445">src/compiler.ts:445</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>node: <span class="tsd-signature-type">typescript.FunctionLikeDeclaration</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">object</span></h4>
+							<ul class="tsd-parameters">
+							</ul>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="initializeglobal" class="tsd-anchor"></a>
+					<h3>initialize<wbr>Global</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">initialize<wbr>Global<span class="tsd-signature-symbol">(</span>node<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">typescript.VariableStatement</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L335">src/compiler.ts:335</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>node: <span class="tsd-signature-type">typescript.VariableStatement</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="initializemalloc" class="tsd-anchor"></a>
+					<h3>initialize<wbr>Malloc</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">initialize<wbr>Malloc<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L287">src/compiler.ts:287</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="leavebreakcontext" class="tsd-anchor"></a>
+					<h3>leave<wbr>Break<wbr>Context</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">leave<wbr>Break<wbr>Context<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L761">src/compiler.ts:761</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="mangleglobalname" class="tsd-anchor"></a>
+					<h3>mangle<wbr>Global<wbr>Name</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">mangle<wbr>Global<wbr>Name<span class="tsd-signature-symbol">(</span>name<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, sourceFile<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">typescript.SourceFile</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L233">src/compiler.ts:233</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Mangles a global name (of a function, a class, ...) for use with binaryen.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>name: <span class="tsd-signature-type">string</span></h5>
+								</li>
+								<li>
+									<h5>sourceFile: <span class="tsd-signature-type">typescript.SourceFile</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="maybecompilestartfunction" class="tsd-anchor"></a>
+					<h3>maybe<wbr>Compile<wbr>Start<wbr>Function</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">maybe<wbr>Compile<wbr>Start<wbr>Function<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L603">src/compiler.ts:603</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="maybeconvertvalue" class="tsd-anchor"></a>
+					<h3>maybe<wbr>Convert<wbr>Value</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">maybe<wbr>Convert<wbr>Value<span class="tsd-signature-symbol">(</span>node<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">typescript.Expression</span>, expr<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Expression</span>, fromType<span class="tsd-signature-symbol">: </span><a href="assemblyscript_reflection.type.html" class="tsd-signature-type">Type</a>, toType<span class="tsd-signature-symbol">: </span><a href="assemblyscript_reflection.type.html" class="tsd-signature-type">Type</a>, explicit<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Expression</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L875">src/compiler.ts:875</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>node: <span class="tsd-signature-type">typescript.Expression</span></h5>
+								</li>
+								<li>
+									<h5>expr: <span class="tsd-signature-type">Expression</span></h5>
+								</li>
+								<li>
+									<h5>fromType: <a href="assemblyscript_reflection.type.html" class="tsd-signature-type">Type</a></h5>
+								</li>
+								<li>
+									<h5>toType: <a href="assemblyscript_reflection.type.html" class="tsd-signature-type">Type</a></h5>
+								</li>
+								<li>
+									<h5>explicit: <span class="tsd-signature-type">boolean</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Expression</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="mayberesolvealias" class="tsd-anchor"></a>
+					<h3>maybe<wbr>Resolve<wbr>Alias</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">maybe<wbr>Resolve<wbr>Alias<span class="tsd-signature-symbol">(</span>symbol<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">typescript.Symbol</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">typescript.Symbol</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L1065">src/compiler.ts:1065</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>symbol: <span class="tsd-signature-type">typescript.Symbol</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">typescript.Symbol</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="resolvereference" class="tsd-anchor"></a>
+					<h3>resolve<wbr>Reference</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">resolve<wbr>Reference<span class="tsd-signature-symbol">(</span>node<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">typescript.Identifier</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">typescript.EntityName</span>, preferTemplate<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="assemblyscript_reflection.variable.html" class="tsd-signature-type">Variable</a><span class="tsd-signature-symbol"> | </span><a href="assemblyscript_reflection.enum.html" class="tsd-signature-type">Enum</a><span class="tsd-signature-symbol"> | </span><a href="assemblyscript_reflection.class.html" class="tsd-signature-type">Class</a><span class="tsd-signature-symbol"> | </span><a href="assemblyscript_reflection.classtemplate.html" class="tsd-signature-type">ClassTemplate</a><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">null</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L1183">src/compiler.ts:1183</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>node: <span class="tsd-signature-type">typescript.Identifier</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">typescript.EntityName</span></h5>
+								</li>
+								<li>
+									<h5><span class="tsd-flag ts-flagDefault value">Default value</span> preferTemplate: <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> =&nbsp;false</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <a href="assemblyscript_reflection.variable.html" class="tsd-signature-type">Variable</a>
+								<span class="tsd-signature-symbol"> | </span>
+								<a href="assemblyscript_reflection.enum.html" class="tsd-signature-type">Enum</a>
+								<span class="tsd-signature-symbol"> | </span>
+								<a href="assemblyscript_reflection.class.html" class="tsd-signature-type">Class</a>
+								<span class="tsd-signature-symbol"> | </span>
+								<a href="assemblyscript_reflection.classtemplate.html" class="tsd-signature-type">ClassTemplate</a>
+								<span class="tsd-signature-symbol"> | </span>
+								<span class="tsd-signature-type">null</span>
+							</h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="resolvetype" class="tsd-anchor"></a>
+					<h3>resolve<wbr>Type</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">resolve<wbr>Type<span class="tsd-signature-symbol">(</span>type<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">typescript.TypeNode</span>, acceptVoid<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="assemblyscript_reflection.type.html" class="tsd-signature-type">Type</a></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L1102">src/compiler.ts:1102</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>type: <span class="tsd-signature-type">typescript.TypeNode</span></h5>
+								</li>
+								<li>
+									<h5><span class="tsd-flag ts-flagDefault value">Default value</span> acceptVoid: <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> =&nbsp;false</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <a href="assemblyscript_reflection.type.html" class="tsd-signature-type">Type</a></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="warn" class="tsd-anchor"></a>
+					<h3>warn</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">warn<span class="tsd-signature-symbol">(</span>node<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">typescript.Node</span>, message<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, arg1<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L217">src/compiler.ts:217</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Adds a warning diagnostic to {@link Compiler#diagnostics} and prints it.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>node: <span class="tsd-signature-type">typescript.Node</span></h5>
+								</li>
+								<li>
+									<h5>message: <span class="tsd-signature-type">string</span></h5>
+								</li>
+								<li>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> arg1: <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-static">
+					<a name="compilefile" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagStatic">Static</span> compile<wbr>File</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-static">
+						<li class="tsd-signature tsd-kind-icon">compile<wbr>File<span class="tsd-signature-symbol">(</span>filename<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, options<span class="tsd-signature-symbol">?: </span><a href="../interfaces/assemblyscript.compileroptions.html" class="tsd-signature-type">CompilerOptions</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Module</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">null</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L85">src/compiler.ts:85</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Compiles an AssemblyScript file to WebAssembly.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>filename: <span class="tsd-signature-type">string</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>Entry file name</p>
+									</div>
+								</li>
+								<li>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> options: <a href="../interfaces/assemblyscript.compileroptions.html" class="tsd-signature-type">CompilerOptions</a></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>Compiler options</p>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Module</span>
+								<span class="tsd-signature-symbol"> | </span>
+								<span class="tsd-signature-type">null</span>
+							</h4>
+							<p>Compiled module or <code>null</code> if compilation failed. In case of failure, diagnostics are stored in {@link Compiler#diagnostics}.</p>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-static">
+					<a name="compileprogram" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagStatic">Static</span> compile<wbr>Program</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-static">
+						<li class="tsd-signature tsd-kind-icon">compile<wbr>Program<span class="tsd-signature-symbol">(</span>program<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">typescript.Program</span>, options<span class="tsd-signature-symbol">?: </span><a href="../interfaces/assemblyscript.compileroptions.html" class="tsd-signature-type">CompilerOptions</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Module</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">null</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L119">src/compiler.ts:119</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Compiles a TypeScript program using AssemblyScript syntax to WebAssembly.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>program: <span class="tsd-signature-type">typescript.Program</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>TypeScript program</p>
+									</div>
+								</li>
+								<li>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> options: <a href="../interfaces/assemblyscript.compileroptions.html" class="tsd-signature-type">CompilerOptions</a></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>Compiler options</p>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Module</span>
+								<span class="tsd-signature-symbol"> | </span>
+								<span class="tsd-signature-type">null</span>
+							</h4>
+							<p>Compiled module or <code>null</code> if compilation failed. In case of failure, diagnostics are stored in {@link Compiler#diagnostics}.</p>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-static">
+					<a name="compilestring" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagStatic">Static</span> compile<wbr>String</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-static">
+						<li class="tsd-signature tsd-kind-icon">compile<wbr>String<span class="tsd-signature-symbol">(</span>source<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, options<span class="tsd-signature-symbol">?: </span><a href="../interfaces/assemblyscript.compileroptions.html" class="tsd-signature-type">CompilerOptions</a>, fileName<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Module</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">null</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L103">src/compiler.ts:103</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Compiles an AssemblyScript string to WebAssembly.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>source: <span class="tsd-signature-type">string</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>Source string</p>
+									</div>
+								</li>
+								<li>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> options: <a href="../interfaces/assemblyscript.compileroptions.html" class="tsd-signature-type">CompilerOptions</a></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>Compiler options</p>
+									</div>
+								</li>
+								<li>
+									<h5><span class="tsd-flag ts-flagDefault value">Default value</span> fileName: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> =&nbsp;&quot;module.ts&quot;</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>File to use for the entry file</p>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Module</span>
+								<span class="tsd-signature-symbol"> | </span>
+								<span class="tsd-signature-type">null</span>
+							</h4>
+							<p>Compiled module or <code>null</code> if compilation failed. In case of failure, diagnostics are stored in {@link Compiler#diagnostics}.</p>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-static">
+					<a name="splitimportname" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagStatic">Static</span> split<wbr>Import<wbr>Name</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-static">
+						<li class="tsd-signature tsd-kind-icon">split<wbr>Import<wbr>Name<span class="tsd-signature-symbol">(</span>name<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">object</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/compiler.ts#L652">src/compiler.ts:652</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>name: <span class="tsd-signature-type">string</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">object</span></h4>
+							<ul class="tsd-parameters">
+							</ul>
+						</li>
+					</ul>
+				</section>
+			</section>
+		</div>
+		<div class="col-4 col-menu menu-sticky-wrap menu-highlight">
+			<nav class="tsd-navigation primary">
+				<ul>
+					<li class="globals  ">
+						<a href="../index.html"><em>Globals</em></a>
+					</li>
+					<li class="label tsd-is-external">
+						<span>Internals</span>
+					</li>
+					<li class="current tsd-kind-external-module">
+						<a href="../modules/assemblyscript.html">assemblyscript</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="../modules/assemblyscript_binaryen.html">assemblyscript/binaryen</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="../modules/assemblyscript_builtins.html">assemblyscript/builtins</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="../modules/assemblyscript_expressions.html">assemblyscript/expressions</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="../modules/assemblyscript_library.html">assemblyscript/library</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="../modules/assemblyscript_reflection.html">assemblyscript/reflection</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="../modules/assemblyscript_statements.html">assemblyscript/statements</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="../modules/assemblyscript_typescript.html">assemblyscript/typescript</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="../modules/assemblyscript_wabt.html">assemblyscript/wabt</a>
+					</li>
+					<li class="label tsd-is-external">
+						<span>Externals</span>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="../modules/assemblyscript_loader.html">assemblyscript/loader</a>
+					</li>
+				</ul>
+			</nav>
+			<nav class="tsd-navigation secondary menu-sticky">
+				<ul class="before-current">
+					<li class=" tsd-kind-enum tsd-parent-kind-external-module">
+						<a href="../enums/assemblyscript.compilertarget.html" class="tsd-kind-icon">Compiler<wbr>Target</a>
+					</li>
+				</ul>
+				<ul class="current">
+					<li class="current tsd-kind-class tsd-parent-kind-external-module">
+						<a href="assemblyscript.compiler.html" class="tsd-kind-icon">Compiler</a>
+						<ul>
+							<li class=" tsd-kind-constructor tsd-parent-kind-class">
+								<a href="assemblyscript.compiler.html#constructor" class="tsd-kind-icon">constructor</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="assemblyscript.compiler.html#checker" class="tsd-kind-icon">checker</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="assemblyscript.compiler.html#classtemplates" class="tsd-kind-icon">class<wbr>Templates</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="assemblyscript.compiler.html#classes" class="tsd-kind-icon">classes</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="assemblyscript.compiler.html#currentfunction" class="tsd-kind-icon">current<wbr>Function</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="assemblyscript.compiler.html#diagnostics" class="tsd-kind-icon">diagnostics</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="assemblyscript.compiler.html#entryfile" class="tsd-kind-icon">entry<wbr>File</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="assemblyscript.compiler.html#enums" class="tsd-kind-icon">enums</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="assemblyscript.compiler.html#functiontemplates" class="tsd-kind-icon">function<wbr>Templates</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="assemblyscript.compiler.html#functions" class="tsd-kind-icon">functions</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="assemblyscript.compiler.html#globalinitializers" class="tsd-kind-icon">global<wbr>Initializers</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="assemblyscript.compiler.html#globals" class="tsd-kind-icon">globals</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="assemblyscript.compiler.html#libraryfile" class="tsd-kind-icon">library<wbr>File</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="assemblyscript.compiler.html#memorybase" class="tsd-kind-icon">memory<wbr>Base</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="assemblyscript.compiler.html#memorysegments" class="tsd-kind-icon">memory<wbr>Segments</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="assemblyscript.compiler.html#module" class="tsd-kind-icon">module</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="assemblyscript.compiler.html#options" class="tsd-kind-icon">options</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="assemblyscript.compiler.html#pendingimplementations" class="tsd-kind-icon">pending<wbr>Implementations</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="assemblyscript.compiler.html#profiler" class="tsd-kind-icon">profiler</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="assemblyscript.compiler.html#program" class="tsd-kind-icon">program</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="assemblyscript.compiler.html#signatures" class="tsd-kind-icon">signatures</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="assemblyscript.compiler.html#startfunction" class="tsd-kind-icon">start<wbr>Function</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="assemblyscript.compiler.html#stringpool" class="tsd-kind-icon">string<wbr>Pool</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="assemblyscript.compiler.html#uintptrtype" class="tsd-kind-icon">uintptr<wbr>Type</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="assemblyscript.compiler.html#userstartfunction" class="tsd-kind-icon">user<wbr>Start<wbr>Function</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-static">
+								<a href="assemblyscript.compiler.html#lastdiagnostics" class="tsd-kind-icon">last<wbr>Diagnostics</a>
+							</li>
+							<li class=" tsd-kind-get-signature tsd-parent-kind-class">
+								<a href="assemblyscript.compiler.html#currentbreaklabel" class="tsd-kind-icon">current<wbr>Break<wbr>Label</a>
+							</li>
+							<li class=" tsd-kind-get-signature tsd-parent-kind-class">
+								<a href="assemblyscript.compiler.html#uintptrsize" class="tsd-kind-icon">uintptr<wbr>Size</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="assemblyscript.compiler.html#addglobal" class="tsd-kind-icon">add<wbr>Global</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="assemblyscript.compiler.html#compile" class="tsd-kind-icon">compile</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="assemblyscript.compiler.html#compileclass" class="tsd-kind-icon">compile<wbr>Class</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="assemblyscript.compiler.html#compileexpression" class="tsd-kind-icon">compile<wbr>Expression</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="assemblyscript.compiler.html#compilefunction" class="tsd-kind-icon">compile<wbr>Function</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="assemblyscript.compiler.html#compilestatement" class="tsd-kind-icon">compile<wbr>Statement</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="assemblyscript.compiler.html#createstaticstring" class="tsd-kind-icon">create<wbr>Static<wbr>String</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="assemblyscript.compiler.html#enterbreakcontext" class="tsd-kind-icon">enter<wbr>Break<wbr>Context</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="assemblyscript.compiler.html#error" class="tsd-kind-icon">error</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="assemblyscript.compiler.html#info" class="tsd-kind-icon">info</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="assemblyscript.compiler.html#initialize" class="tsd-kind-icon">initialize</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="assemblyscript.compiler.html#initializeclass" class="tsd-kind-icon">initialize<wbr>Class</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="assemblyscript.compiler.html#initializeenum" class="tsd-kind-icon">initialize<wbr>Enum</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="assemblyscript.compiler.html#initializefunction" class="tsd-kind-icon">initialize<wbr>Function</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="assemblyscript.compiler.html#initializeglobal" class="tsd-kind-icon">initialize<wbr>Global</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="assemblyscript.compiler.html#initializemalloc" class="tsd-kind-icon">initialize<wbr>Malloc</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="assemblyscript.compiler.html#leavebreakcontext" class="tsd-kind-icon">leave<wbr>Break<wbr>Context</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="assemblyscript.compiler.html#mangleglobalname" class="tsd-kind-icon">mangle<wbr>Global<wbr>Name</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="assemblyscript.compiler.html#maybecompilestartfunction" class="tsd-kind-icon">maybe<wbr>Compile<wbr>Start<wbr>Function</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="assemblyscript.compiler.html#maybeconvertvalue" class="tsd-kind-icon">maybe<wbr>Convert<wbr>Value</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="assemblyscript.compiler.html#mayberesolvealias" class="tsd-kind-icon">maybe<wbr>Resolve<wbr>Alias</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="assemblyscript.compiler.html#resolvereference" class="tsd-kind-icon">resolve<wbr>Reference</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="assemblyscript.compiler.html#resolvetype" class="tsd-kind-icon">resolve<wbr>Type</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="assemblyscript.compiler.html#warn" class="tsd-kind-icon">warn</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-static">
+								<a href="assemblyscript.compiler.html#compilefile" class="tsd-kind-icon">compile<wbr>File</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-static">
+								<a href="assemblyscript.compiler.html#compileprogram" class="tsd-kind-icon">compile<wbr>Program</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-static">
+								<a href="assemblyscript.compiler.html#compilestring" class="tsd-kind-icon">compile<wbr>String</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-static">
+								<a href="assemblyscript.compiler.html#splitimportname" class="tsd-kind-icon">split<wbr>Import<wbr>Name</a>
+							</li>
+						</ul>
+					</li>
+				</ul>
+				<ul class="after-current">
+					<li class=" tsd-kind-class tsd-parent-kind-external-module">
+						<a href="assemblyscript.profiler.html" class="tsd-kind-icon">Profiler</a>
+					</li>
+					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
+						<a href="../interfaces/assemblyscript.compileroptions.html" class="tsd-kind-icon">Compiler<wbr>Options</a>
+					</li>
+					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
+						<a href="../interfaces/assemblyscript.memorysegment.html" class="tsd-kind-icon">Memory<wbr>Segment</a>
+					</li>
+					<li class=" tsd-kind-variable tsd-parent-kind-external-module">
+						<a href="../modules/assemblyscript.html#version" class="tsd-kind-icon">version</a>
+					</li>
+				</ul>
+			</nav>
+		</div>
+	</div>
+</div>
+<footer class="with-border-bottom">
+	<div class="container">
+		<h2>Legend</h2>
+		<div class="tsd-legend-group">
+			<ul class="tsd-legend">
+				<li class="tsd-kind-module"><span class="tsd-kind-icon">Module</span></li>
+				<li class="tsd-kind-object-literal"><span class="tsd-kind-icon">Object literal</span></li>
+				<li class="tsd-kind-variable"><span class="tsd-kind-icon">Variable</span></li>
+				<li class="tsd-kind-function"><span class="tsd-kind-icon">Function</span></li>
+				<li class="tsd-kind-function tsd-has-type-parameter"><span class="tsd-kind-icon">Function with type parameter</span></li>
+				<li class="tsd-kind-index-signature"><span class="tsd-kind-icon">Index signature</span></li>
+				<li class="tsd-kind-type-alias"><span class="tsd-kind-icon">Type alias</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-enum"><span class="tsd-kind-icon">Enumeration</span></li>
+				<li class="tsd-kind-enum-member"><span class="tsd-kind-icon">Enumeration member</span></li>
+				<li class="tsd-kind-property tsd-parent-kind-enum"><span class="tsd-kind-icon">Property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-enum"><span class="tsd-kind-icon">Method</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-interface"><span class="tsd-kind-icon">Interface</span></li>
+				<li class="tsd-kind-interface tsd-has-type-parameter"><span class="tsd-kind-icon">Interface with type parameter</span></li>
+				<li class="tsd-kind-constructor tsd-parent-kind-interface"><span class="tsd-kind-icon">Constructor</span></li>
+				<li class="tsd-kind-property tsd-parent-kind-interface"><span class="tsd-kind-icon">Property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-interface"><span class="tsd-kind-icon">Method</span></li>
+				<li class="tsd-kind-index-signature tsd-parent-kind-interface"><span class="tsd-kind-icon">Index signature</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-class"><span class="tsd-kind-icon">Class</span></li>
+				<li class="tsd-kind-class tsd-has-type-parameter"><span class="tsd-kind-icon">Class with type parameter</span></li>
+				<li class="tsd-kind-constructor tsd-parent-kind-class"><span class="tsd-kind-icon">Constructor</span></li>
+				<li class="tsd-kind-property tsd-parent-kind-class"><span class="tsd-kind-icon">Property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-class"><span class="tsd-kind-icon">Method</span></li>
+				<li class="tsd-kind-accessor tsd-parent-kind-class"><span class="tsd-kind-icon">Accessor</span></li>
+				<li class="tsd-kind-index-signature tsd-parent-kind-class"><span class="tsd-kind-icon">Index signature</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-constructor tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited constructor</span></li>
+				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited method</span></li>
+				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited accessor</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected method</span></li>
+				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected accessor</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private method</span></li>
+				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private accessor</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-static"><span class="tsd-kind-icon">Static property</span></li>
+				<li class="tsd-kind-call-signature tsd-parent-kind-class tsd-is-static"><span class="tsd-kind-icon">Static method</span></li>
+			</ul>
+		</div>
+	</div>
+</footer>
+<div class="container tsd-generator">
+	<p>Generated using <a href="http://typedoc.org/" target="_blank">TypeDoc</a></p>
+</div>
+<div class="overlay"></div>
+<script src="../assets/js/main.js"></script>
+<script>if (location.protocol == 'file:') document.write('<script src="../assets/js/search.js"><' + '/script>');</script>
+</body>
+</html>

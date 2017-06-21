@@ -1,3 +1,5 @@
+/** @module assemblyscript/expressions */ /** */
+
 import * as binaryen from "../binaryen";
 import Compiler from "../compiler";
 import compileLoad from "./helpers/load";

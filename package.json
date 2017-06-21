@@ -37,6 +37,8 @@
     "source-map-loader": "^0.2.1",
     "ts-loader": "^2.1.0",
     "tslint": "^5.4.3",
+    "typedoc": "^0.7.1",
+    "typedoc-plugin-external-module-name": "^1.0.9",
     "webassembly": "^0.11.0",
     "webpack": "^2.6.1"
   },
@@ -49,7 +51,8 @@
     "build:bundle": "webpack --config webpack.config.js",
     "build": "npm run lint && npm run build:library && npm run build:bundle",
     "lint": "tslint --config tslint.json src/**/*.ts cli/**/*.ts assembly.d.ts",
-    "test": "node bin/asc tests/test.ts"
+    "test": "node bin/asc tests/test.ts",
+    "docs": "typedoc --tsconfig src/tsconfig.json --mode modules --name \"AssemblyScript API Documentation\" --out docs/documentation/ --readme none --ignoreCompilerErrors --excludeNotExported --excludePrivate"
   },
   "browser": {
     "buffer": false,
@@ -57,5 +60,6 @@
     "fs": false,
     "os": false,
     "source-map-support": false
-  }
+  },
+  "false": {}
 }

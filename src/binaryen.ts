@@ -1,3 +1,14 @@
+/**
+ * A re-exporting wrapper around binaryen.js providing additional functionality.
+ *
+ * Note that the API documentation does not reference any re-exports because this isn't supported
+ * by the documentation generator.
+ *
+ * For additional exports, see: https://github.com/dcodeIO/binaryen.js/blob/master/README.md#api
+ *
+ * @module assemblyscript/binaryen
+ */ /** */
+
 import * as binaryen from "binaryen";
 import * as Long from "long";
 import * as reflection from "./reflection";

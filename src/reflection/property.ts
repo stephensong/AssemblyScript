@@ -1,3 +1,5 @@
+/** @module assemblyscript/reflection */ /** */
+
 import { Type } from "./type";
 import * as typescript from "../typescript";
 

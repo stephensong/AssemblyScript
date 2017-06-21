@@ -1,5 +1,10 @@
 /// <reference path="./types/webassembly.d.ts" />
 
+/**
+ * AssemblyScript's loader component.
+ * @module assemblyscript/loader
+ */ /** */
+
 export interface ILoadOptions {
   initialMemory?: number;
   maximumMemory?: number;

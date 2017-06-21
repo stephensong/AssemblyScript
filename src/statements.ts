@@ -1,3 +1,9 @@
+/**
+ * Compiler components dealing with TypeScript statements.
+ * @module assemblyscript/statements
+ * @preferred
+ */ /** */
+
 export * from "./statements/block";
 export * from "./statements/break";
 export * from "./statements/do";

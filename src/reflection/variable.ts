@@ -1,3 +1,5 @@
+/** @module assemblyscript/reflection */ /** */
+
 import { Type } from "./type";
 
 /** Flags describing the kind of a variable. */

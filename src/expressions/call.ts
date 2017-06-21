@@ -1,3 +1,5 @@
+/** @module assemblyscript/expressions */ /** */
+
 import * as binaryen from "../binaryen";
 import * as builtins from "../builtins";
 import Compiler from "../compiler";

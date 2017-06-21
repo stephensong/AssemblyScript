@@ -1,3 +1,5 @@
+/** @module assemblyscript/reflection */ /** */
+
 import * as binaryen from "../binaryen";
 import { Class, TypeArgument } from "./class";
 import Compiler from "../compiler";

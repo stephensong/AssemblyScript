@@ -1,3 +1,5 @@
+/** @module assemblyscript/reflection */ /** */
+
 import { Class } from "./class";
 
 /** Core type kinds including range aliases. */

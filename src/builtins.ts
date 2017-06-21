@@ -1,3 +1,8 @@
+/**
+ * Compiler components dealing with built-in functions.
+ * @module assemblyscript/builtins
+ */ /** */
+
 import * as binaryen from "./binaryen";
 import * as reflection from "./reflection";
 import * as typescript from "./typescript";

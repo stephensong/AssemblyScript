@@ -1,6 +1,12 @@
 var fs = require("fs");
 
-var out = [];
+var out = [
+  "/**",
+  " * Bundled library components for in-browser usage.",
+  " * @module assemblyscript/library",
+  " */",
+  ""
+];
 out.push(
   "/** AssemblyScript version. */",
   "export const version: string = " + JSON.stringify(require("../package.json").version) + ";",

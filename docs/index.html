@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>AssemblyScript Playground</title>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="description" content="A subset of TypeScript that compiles to WebAssembly. Try it out right in your browser!" />
+<meta property="og:image" content="icon.png" />
+<link rel="shortcut icon" type="image/x-icon" href="favicon.ico" />
+<link rel="stylesheet" type="text/css" href="assets/main.css" />
+</head>
+<body>
+
+<img id="loading-icon" src="assets/loading.gif" alt="Loading..." />
+
+<div id="header">
+  <span class="r">
+    <strong>ProTip:</strong> ↸ Appending a <a href="https://gist.github.com/">Gist</a> as the hash will load it!
+    <span class="divider">·</span>
+    <a href="https://github.com/dcodeIO/AssemblyScript">GitHub</a>
+    <span class="divider">·</span>
+    <a href="./documentation">API Documentation</a>
+  </span>
+  <strong>Assembly</strong>Script Playground
+</div>
+
+<div id="source" class="editor"></div>
+<div id="assembly" class="editor"></div>
+<div style="clear: both" />
+
+<script src="https://rawgit.com/dcodeIO/binaryen.js/master/index.js"></script>
+<script src="https://rawgit.com/dcodeIO/AssemblyScript/master/dist/assemblyscript.min.js"></script>
+<script src="https://unpkg.com/monaco-editor@0.8.3/min/vs/loader.js"></script>
+<script src="assets/main.js"></script>
+
+<button id="compile-button" class="compile">Compile →</button>
+<button id="download-button" class="download">Download ⭳</button>
+</body>
+</html>
