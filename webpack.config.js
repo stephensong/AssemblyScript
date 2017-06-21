@@ -17,7 +17,8 @@ module.exports = {
     ]
   },
   externals: {
-    "binaryen": "Binaryen"
+    "binaryen": "Binaryen",
+    "../lib/wabt": "wabt"
   },
   plugins: [
     new webpack.NoEmitOnErrorsPlugin(),

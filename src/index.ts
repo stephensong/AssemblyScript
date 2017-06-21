@@ -8,6 +8,7 @@ import Profiler from "./profiler";
 import * as reflection from "./reflection";
 import * as typescript from "./typescript";
 import * as statements from "./statements";
+import * as wabt from "./wabt";
 
 /** AssemblyScript namespace. */
 const assemblyscript = {
@@ -21,7 +22,8 @@ const assemblyscript = {
   reflection,
   statements,
   typescript,
-  version: library.version
+  version: library.version,
+  wabt
 };
 
 export = assemblyscript;
