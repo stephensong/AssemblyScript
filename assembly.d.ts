@@ -180,11 +180,11 @@ declare function current_memory(): int;
 declare function grow_memory(value: uint): int;
 /** Returns the byte size of the specified core or class type. Compiles to a constant. */
 declare function sizeof<T>(): uintptr;
-/** Casts a class to a pointer or vice-versa. */
+/** Casts a value of type `T1` to a value of type `T2`. Useful for casting classes to pointers and vice-versa. Does not perform any checks. */
 declare function unsafe_cast<T1,T2>(value: T1): T2;
-/** Tests if a 64-bit float has a NaN bit pattern. */
+/** Tests if a 64-bit float is a NaN. */
 declare function isNaN(value: double): bool;
-/** Tests if a 32-bit float has a NaN bit pattern. */
+/** Tests if a 32-bit float is a NaN. */
 declare function isNaNf(value: float): bool;
 /** Tests if a 64-bit float is finite. */
 declare function isFinite(value: double): bool;
