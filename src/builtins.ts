@@ -383,15 +383,15 @@ export function isNaN(compiler: Compiler, node: typescript.Expression, expr: bin
   if (node.kind === typescript.SyntaxKind.Identifier || node.kind === typescript.SyntaxKind.NumericLiteral)
     return category.ne(expr, expr);
 
-  // Otherwise evaluate the compound expression exactly once through introducing a temporary local because of possible side-effects
+  // Otherwise evaluate the compound expression exactly once through introducing a temporary local
   const tempName = type.tempName;
   const temp = compiler.currentFunction.localsByName[tempName] || compiler.currentFunction.addLocal(tempName, type);
   const tempBinaryenType = binaryen.typeOf(type, compiler.uintptrSize);
 
-  return op.block("", [
-    op.setLocal(temp.index, expr),
-    category.ne(op.getLocal(temp.index, tempBinaryenType), op.getLocal(temp.index, tempBinaryenType))
-  ], binaryen.i32);
+  return category.ne(
+    op.teeLocal(temp.index, expr),
+    op.getLocal(temp.index, tempBinaryenType)
+  );
 }
 
 export function isFinite(compiler: Compiler, node: typescript.Expression, expr: binaryen.Expression): binaryen.Expression {
@@ -416,20 +416,22 @@ export function isFinite(compiler: Compiler, node: typescript.Expression, expr: 
       )
     );
 
-  // Otherwise evaluate the compound expression exactly once through introducing a temporary local because of possible side-effects
+  // Otherwise evaluate the compound expression exactly once through introducing a temporary local
   const tempName = type.tempName;
   const temp = compiler.currentFunction.localsByName[tempName] || compiler.currentFunction.addLocal(tempName, type);
   const tempBinaryenType = binaryen.typeOf(type, compiler.uintptrSize);
 
-  return op.block("", [
-    op.setLocal(temp.index, expr),
-    op.select(
-      category.ne(op.getLocal(temp.index, tempBinaryenType), op.getLocal(temp.index, tempBinaryenType)),
-      op.i32.const(0),
-      category.ne(
-        category.abs(op.getLocal(temp.index, tempBinaryenType)),
-        binaryen.valueOf(type, op, Infinity)
-      )
+  return op.select(
+    category.ne(
+      op.teeLocal(temp.index, expr),
+      op.getLocal(temp.index, tempBinaryenType)
+    ),
+    op.i32.const(0),
+    category.ne(
+      category.abs(
+        op.getLocal(temp.index, tempBinaryenType)
+      ),
+      binaryen.valueOf(type, op, Infinity)
     )
-  ], binaryen.i32);
+  );
 }

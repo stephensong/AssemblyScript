@@ -57,8 +57,8 @@ export function testLong(): double {
   return b as double;
 }
 export function testNaN(value: double): bool {
-  return isNaN(value);
+  return isNaN(-value);
 }
 export function testFinite(value: double): bool {
-  return isFinite(value);
+  return isFinite(-value);
 }

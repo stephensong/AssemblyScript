@@ -355,7 +355,7 @@ export class Compiler {
     if (!mutable)
       flags |= reflection.VariableFlags.constant;
 
-    this.globals[name] = new reflection.Variable(name, type, flags, 0);
+    const global = this.globals[name] = new reflection.Variable(name, type, flags, 0);
 
     if (initializerNode) {
 
@@ -398,6 +398,8 @@ export class Compiler {
           value = Infinity;
           break;
       }
+      if (global.isConstant) // enable inlining so these globals can be eliminated by the optimizer
+        global.value = value;
       op.addGlobal(name, binaryen.typeOf(type, this.uintptrSize), mutable, binaryen.valueOf(type, op, value));
     }
   }

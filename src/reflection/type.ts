@@ -2,26 +2,18 @@ import { Class } from "./class";
 
 /** Core type kinds including range aliases. */
 export enum TypeKind {
-  FirstInteger = 0,
-  FirstUnsigned = 0,
-  byte = 0,
+  byte = 0, FirstInteger = 0, FirstUnsigned = 0,
   ushort = 1,
   uint = 2,
   ulong = 3,
   bool = 4,
-  LastUnsigned = 5,
-  uintptr = 5,
-  FirstSigned = 6,
-  sbyte = 6,
+  uintptr = 5, LastUnsigned = 5,
+  sbyte = 6, FirstSigned = 6,
   short = 7,
   int = 8,
-  LastSigned = 9,
-  LastInteger = 9,
-  long = 9,
-  FirstFloat = 10,
-  float = 10,
-  LastFloat = 11,
-  double = 11,
+  long = 9, LastSigned = 9, LastInteger = 9,
+  float = 10, FirstFloat = 10,
+  double = 11, LastFloat = 11,
   void = 12
 }
 
@@ -100,7 +92,7 @@ export class Type {
   /** Tests if this is a pointer with an underlying string-like class. */
   get isString(): boolean { return this.isClass && (<Class>this.underlyingClass).isString; }
   /** Gets the common name of a temporary variable of this type. */
-  get tempName(): string { return ".temp-" + TypeKind[this.kind]; }
+  get tempName(): string { return "." + TypeKind[this.kind]; }
 
   /** Amends a pointer to reference the specified underlying class. */
   withUnderlyingClass(underlyingClass: Class): Type {

@@ -17,13 +17,16 @@ export class Variable {
   flags: VariableFlags;
   /** Local index, if applicable. */
   index: number;
+  /** Constant value, if applicable. */
+  value?: number | Long;
 
   /** Constructs a new reflected variable. */
-  constructor(name: string, type: Type, flags: VariableFlags, index: number) {
+  constructor(name: string, type: Type, flags: VariableFlags, index: number, value?: number | Long) {
     this.name = name;
     this.type = type;
     this.flags = flags;
     this.index = index;
+    this.value = value;
   }
 
   /** Tests if this variable is declared constant. */

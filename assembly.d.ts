@@ -178,7 +178,8 @@ declare function reinterpretd(value: long): double;
 declare function current_memory(): int;
 /** Grows linear memory by a given unsigned delta of pages. One page is 64kb. Returns the previous memory size in units of pages or `-1` on failure. */
 declare function grow_memory(value: uint): int;
-/** Returns the byte size of the specified core or class type. Compiles to a constant. */
+
+/** Determines the byte size of the specified core or class type. Compiles to a constant. */
 declare function sizeof<T>(): uintptr;
 /** Casts a value of type `T1` to a value of type `T2`. Useful for casting classes to pointers and vice-versa. Does not perform any checks. */
 declare function unsafe_cast<T1,T2>(value: T1): T2;

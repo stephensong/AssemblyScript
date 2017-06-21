@@ -12,6 +12,10 @@ export function compileIdentifier(compiler: Compiler, node: typescript.Identifie
     if (reference instanceof reflection.Variable) {
       const variable = <reflection.Variable>reference;
       typescript.setReflectedType(node, variable.type);
+
+      if (variable.isConstant && variable.value != null) // inline
+        return binaryen.valueOf(variable.type, op, variable.value);
+
       return variable.isGlobal
         ? op.getGlobal(variable.name, binaryen.typeOf(variable.type, compiler.uintptrSize))
         : op.getLocal(variable.index, binaryen.typeOf(variable.type, compiler.uintptrSize));
