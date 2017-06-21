@@ -46,6 +46,10 @@ export function isBuiltin(name: string, isGlobalName: boolean = false): boolean 
     case "reinterpretd":
     case "sizeof":
     case "unsafe_cast":
+    case "isNaN":
+    case "isNaNf":
+    case "isFinite":
+    case "isFinitef":
       return true;
   }
   return false;
@@ -362,4 +366,70 @@ export function sizeof(compiler: Compiler, type: reflection.Type): binaryen.Expr
 
 export function unsafe_cast(expr: binaryen.Expression): binaryen.Expression {
   return expr;
+}
+
+export function isNaN(compiler: Compiler, node: typescript.Expression, expr: binaryen.Expression): binaryen.Expression {
+  const op = compiler.module;
+
+  const type = typescript.getReflectedType(node);
+  if (!type.isAnyFloat)
+    throw Error("unsupported operation");
+
+  const category = <binaryen.F32Operations | binaryen.F64Operations>binaryen.categoryOf(type, op, compiler.uintptrSize);
+
+  // value != value
+
+  // Simplify if the argument is a single identifier or literal
+  if (node.kind === typescript.SyntaxKind.Identifier || node.kind === typescript.SyntaxKind.NumericLiteral)
+    return category.ne(expr, expr);
+
+  // Otherwise evaluate the compound expression exactly once through introducing a temporary local because of possible side-effects
+  const tempName = type.tempName;
+  const temp = compiler.currentFunction.localsByName[tempName] || compiler.currentFunction.addLocal(tempName, type);
+  const tempBinaryenType = binaryen.typeOf(type, compiler.uintptrSize);
+
+  return op.block("", [
+    op.setLocal(temp.index, expr),
+    category.ne(op.getLocal(temp.index, tempBinaryenType), op.getLocal(temp.index, tempBinaryenType))
+  ], binaryen.i32);
+}
+
+export function isFinite(compiler: Compiler, node: typescript.Expression, expr: binaryen.Expression): binaryen.Expression {
+  const op = compiler.module;
+
+  const type = typescript.getReflectedType(node);
+  if (!type.isAnyFloat)
+    throw Error("unsupported operation");
+
+  const category = <binaryen.F32Operations | binaryen.F64Operations>binaryen.categoryOf(type, op, compiler.uintptrSize);
+
+  // !(value != value) && abs(value) != Infinity
+
+  // Simplify if the argument is a single identifier or literal
+  if (node.kind === typescript.SyntaxKind.Identifier || node.kind === typescript.SyntaxKind.NumericLiteral)
+    return op.select(
+      category.ne(expr, expr),
+      op.i32.const(0),
+      category.ne(
+        category.abs(expr),
+        binaryen.valueOf(type, op, Infinity)
+      )
+    );
+
+  // Otherwise evaluate the compound expression exactly once through introducing a temporary local because of possible side-effects
+  const tempName = type.tempName;
+  const temp = compiler.currentFunction.localsByName[tempName] || compiler.currentFunction.addLocal(tempName, type);
+  const tempBinaryenType = binaryen.typeOf(type, compiler.uintptrSize);
+
+  return op.block("", [
+    op.setLocal(temp.index, expr),
+    op.select(
+      category.ne(op.getLocal(temp.index, tempBinaryenType), op.getLocal(temp.index, tempBinaryenType)),
+      op.i32.const(0),
+      category.ne(
+        category.abs(op.getLocal(temp.index, tempBinaryenType)),
+        binaryen.valueOf(type, op, Infinity)
+      )
+    )
+  ], binaryen.i32);
 }

@@ -79,13 +79,16 @@ export function compileBinary(compiler: Compiler, node: typescript.BinaryExpress
       resultType = leftType;
       break;
 
-    // <, <=, >, >=, ==
+    // <, <=, >, >=, ==, !=
     // prefer float over int, otherwise select the larger type, result is bool
     case typescript.SyntaxKind.LessThanToken:
     case typescript.SyntaxKind.LessThanEqualsToken:
     case typescript.SyntaxKind.GreaterThanToken:
     case typescript.SyntaxKind.GreaterThanEqualsToken:
     case typescript.SyntaxKind.EqualsEqualsToken:
+    case typescript.SyntaxKind.EqualsEqualsEqualsToken:
+    case typescript.SyntaxKind.ExclamationEqualsToken:
+    case typescript.SyntaxKind.ExclamationEqualsEqualsToken:
       right = compiler.compileExpression(node.right, leftType);
       rightType = typescript.getReflectedType(node.right);
 
@@ -225,6 +228,8 @@ export function compileBinary(compiler: Compiler, node: typescript.BinaryExpress
         result = category.eq(left, right);
         break;
 
+      case typescript.SyntaxKind.ExclamationEqualsEqualsToken:
+        compiler.warn(node.operatorToken, "Assuming '!='");
       case typescript.SyntaxKind.ExclamationEqualsToken:
         result = category.ne(left, right);
         break;

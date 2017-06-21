@@ -717,7 +717,8 @@ export class Compiler {
     if (!instance.parent && instance.body && typescript.isStartFunction(instance.declaration)) {
       if (this.userStartFunction)
         this.error(<typescript.Identifier>instance.declaration.name, "Duplicate start function");
-      this.userStartFunction = binaryenFunction;
+      else
+        this.userStartFunction = binaryenFunction;
     }
 
     this.currentFunction = previousFunction;

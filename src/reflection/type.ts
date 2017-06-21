@@ -99,6 +99,8 @@ export class Type {
   get isArray(): boolean { return this.isClass && (<Class>this.underlyingClass).isArray; }
   /** Tests if this is a pointer with an underlying string-like class. */
   get isString(): boolean { return this.isClass && (<Class>this.underlyingClass).isString; }
+  /** Gets the common name of a temporary variable of this type. */
+  get tempName(): string { return ".temp-" + TypeKind[this.kind]; }
 
   /** Amends a pointer to reference the specified underlying class. */
   withUnderlyingClass(underlyingClass: Class): Type {

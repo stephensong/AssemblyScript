@@ -42,13 +42,23 @@ export function stringTest(): void {
   // let a: Array<int> = new Array(10);
 }
 */
-export function test(): float32 {
-  return 1;
-}
-export function test2(): double {
+export function testDouble(): double {
   let a: double = 4;
   let b: double = 5;
   if(a == b)
     return a;
   return b;
+}
+export function testLong(): double {
+  let a: long = 4;
+  let b: long = 5;
+  if(a == b)
+    return a as double;
+  return b as double;
+}
+export function testNaN(value: double): bool {
+  return isNaN(value);
+}
+export function testFinite(value: double): bool {
+  return isFinite(value);
 }

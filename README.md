@@ -272,6 +272,8 @@ const wasmFile = module.emitBinary();
 module.dispose();
 ```
 
+Remember to call `Module#dispose()` once you are done with a module to free its resources. This is necessary because binaryen.js has been compiled from C and hence it doesn't provide automatic garbage collection.
+
 Command line
 ------------
 

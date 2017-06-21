@@ -51,6 +51,8 @@ declare type float32 = float;
 /** A 64-bit float. */
 declare type float64 = double;
 
+// Globals
+
 /** NaN (not a number) as a 64-bit float. */
 declare const NaN: double;
 /** NaN (not a number) as a 32-bit float. */
@@ -180,6 +182,14 @@ declare function grow_memory(value: uint): int;
 declare function sizeof<T>(): uintptr;
 /** Casts a class to a pointer or vice-versa. */
 declare function unsafe_cast<T1,T2>(value: T1): T2;
+/** Tests if a 64-bit float has a NaN bit pattern. */
+declare function isNaN(value: double): bool;
+/** Tests if a 32-bit float has a NaN bit pattern. */
+declare function isNaNf(value: float): bool;
+/** Tests if a 64-bit float is finite. */
+declare function isFinite(value: double): bool;
+/** Tests if a 32-bit float is finite. */
+declare function isFinitef(value: float): bool;
 
 // Optional malloc implementation
 

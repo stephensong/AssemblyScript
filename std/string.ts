@@ -1,4 +1,4 @@
-class StringImpl extends String {
+abstract class StringImpl extends String {
 
   /* indexOf(value: string): int {
     if (value.length > this.length)

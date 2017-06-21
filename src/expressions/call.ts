@@ -160,6 +160,14 @@ export function compileCall(compiler: Compiler, node: typescript.CallExpression,
 
     case "unsafe_cast":
       return builtins.unsafe_cast(argumentExpressions[0]);
+
+    case "isNaN":
+    case "isNaNf":
+      return builtins.isNaN(compiler, node.arguments[0], argumentExpressions[0]);
+
+    case "isFinite":
+    case "isFinitef":
+      return builtins.isFinite(compiler, node.arguments[0], argumentExpressions[0]);
   }
 
   // Rewire malloc calls
