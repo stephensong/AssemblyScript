@@ -1,3 +1,5 @@
+// Packages necessary library files for in-browser usage.
+
 var fs = require("fs");
 
 var out = [

@@ -1,3 +1,8 @@
+// This file performs environmental checks before building dependency components.
+//
+// Some of these components rely on Git submodules to be initialized, npm packages to be built or
+// specific development dependencies to be working.
+
 var path = require("path");
 var fs = require("fs");
 

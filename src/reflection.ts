@@ -1,5 +1,5 @@
 /**
- * Reflection components.
+ * Reflection components representing the actual WebAssembly output.
  * @module assemblyscript/reflection
  * @preferred
  */ /** */

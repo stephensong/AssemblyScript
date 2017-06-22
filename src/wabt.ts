@@ -8,13 +8,13 @@
 
 let wabt: any;
 try { // tslint:disable-next-line
-  wabt = require("../lib/wabt");
+  wabt = require("wabt");
 } catch (e) {
   wabt = (<any>global).wabt || null;
 }
 
 /** Options for {@link wasmToWast}. */
-export interface WasmToWastOptions {
+export interface IWasmToWastOptions {
   readDebugNames?: boolean;
   foldExprs?: boolean;
   inlineExport?: boolean;
@@ -22,7 +22,7 @@ export interface WasmToWastOptions {
 }
 
 /** Converts a WebAssembly binary to text format using stack syntax. */
-export function wasmToWast(buffer: Uint8Array, options?: WasmToWastOptions): string {
+export function wasmToWast(buffer: Uint8Array, options?: IWasmToWastOptions): string {
   if (!wabt)
     throw Error("wabt.js is not present");
 
@@ -38,7 +38,7 @@ export function wasmToWast(buffer: Uint8Array, options?: WasmToWastOptions): str
 }
 
 /** Options for {@link wastToWasm}. */
-export interface WastToWasmOptions {
+export interface IWastToWasmOptions {
   filename?: string;
   canonicalizeLebs?: boolean;
   relocatable?: boolean;
@@ -46,7 +46,7 @@ export interface WastToWasmOptions {
 }
 
 /** Converts WebAssembly text format using stack syntax to a binary. */
-export function wastToWasm(text: string, options?: WastToWasmOptions): Uint8Array {
+export function wastToWasm(text: string, options?: IWastToWasmOptions): Uint8Array {
   if (!wabt)
     throw Error("wabt.js is not present");
 

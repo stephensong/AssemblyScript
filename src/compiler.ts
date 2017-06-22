@@ -30,16 +30,26 @@ export interface CompilerOptions {
 
 /** AssemblyScript compiler target. */
 export enum CompilerTarget {
+  /** 32-bit WebAssembly target using uint pointers. */
   WASM32,
+  /** 64-bit WebAssembly target using ulong pointers. */
   WASM64
 }
 
+/** A static memory segment. */
 export interface MemorySegment {
+  /** Offset in linear memory. */
   offset: number;
+  /** Data in linear memory. */
   buffer: Uint8Array;
 }
 
-/** AssemblyScript compiler. */
+/**
+ * The AssemblyScript compiler.
+ *
+ * Common usage is covered by the static methods {@link Compiler.compileFile} and {@link Compiler.compileString}
+ * for convenience. Their diagnostics go to {@link Compiler.lastDiagnostics}.
+ */
 export class Compiler {
   static lastDiagnostics: typescript.Diagnostic[];
 
@@ -169,7 +179,7 @@ export class Compiler {
     return compiler.module;
   }
 
-  /** Gets the configured byte size of a pointer. */
+  /** Gets the configured byte size of a pointer. `4` when compiling for 32-bit WebAssembly, `8` when compiling for 64-bit WebAssembly. */
   get uintptrSize(): number { return this.uintptrType.size; }
 
   /**
@@ -284,6 +294,7 @@ export class Compiler {
       this.initializeMalloc();
   }
 
+  /** Initializes the statically linked malloc implementation. */
   initializeMalloc(): void {
     const op = this.module;
     const binaryenPtrType = binaryen.typeOf(this.uintptrType, this.uintptrSize);
@@ -332,6 +343,7 @@ export class Compiler {
     }
   }
 
+  /** Initializes a global variable. */
   initializeGlobal(node: typescript.VariableStatement): void {
     for (let i = 0, k = node.declarationList.declarations.length; i < k; ++i) {
       const declaration = node.declarationList.declarations[i];
@@ -351,6 +363,7 @@ export class Compiler {
     }
   }
 
+  /** Adds a global variable. */
   addGlobal(name: string, type: reflection.Type, mutable: boolean, initializerNode?: typescript.Expression): void {
     const op = this.module;
     let flags: reflection.VariableFlags = reflection.VariableFlags.global;
@@ -442,6 +455,7 @@ export class Compiler {
     return pooled.offset;
   }
 
+  /** Initializes a function or class method. */
   initializeFunction(node: typescript.FunctionLikeDeclaration): { template: reflection.FunctionTemplate, instance?: reflection.Function } {
     let name: string;
     let parent: reflection.Class | undefined;
@@ -472,6 +486,7 @@ export class Compiler {
     return { template, instance };
   }
 
+  /** Initializes a class. */
   initializeClass(node: typescript.ClassDeclaration): void {
     const simpleName = typescript.getTextOfNode(<typescript.Identifier>node.name);
     const name = this.mangleGlobalName(simpleName, typescript.getSourceFileOfNode(node));
@@ -534,6 +549,7 @@ export class Compiler {
       reflection.patchClassImplementation(this, this.pendingImplementations[simpleName], template);
   }
 
+  /** Initializes an enum. */
   initializeEnum(node: typescript.EnumDeclaration): void {
     const name = this.mangleGlobalName(typescript.getTextOfNode(node.name), typescript.getSourceFileOfNode(node));
 
@@ -547,6 +563,7 @@ export class Compiler {
     instance.initialize(this);
   }
 
+  /** Compiles the module and its components. */
   compile(): void {
 
     const sourceFiles = this.program.getSourceFiles();
@@ -600,6 +617,7 @@ export class Compiler {
     this.maybeCompileStartFunction();
   }
 
+  /** Compiles the start function if either a user-provided start function is or global initializes are present. */
   maybeCompileStartFunction(): void {
     if (this.globalInitializers.length === 0) {
       if (this.userStartFunction)
@@ -649,6 +667,7 @@ export class Compiler {
     this.currentFunction = previousFunction;
   }
 
+  /** Splits an import name possibly separated with a `$` character to a module name and a name. Defaults to `env` as the module name. */
   static splitImportName(name: string): { moduleName: string, name: string } {
     let moduleName;
     const idx = name.indexOf("$");
@@ -663,6 +682,7 @@ export class Compiler {
     };
   }
 
+  /** Compiles a function. */
   compileFunction(instance: reflection.Function): binaryen.Function | null {
     const op = this.module;
 
@@ -729,6 +749,7 @@ export class Compiler {
     return binaryenFunction;
   }
 
+  /** Compiles a class. */
   compileClass(instance: reflection.Class): void {
     for (let i = 0, k = instance.declaration.members.length; i < k; ++i) {
       const member = instance.declaration.members[i];
@@ -751,6 +772,7 @@ export class Compiler {
     }
   }
 
+  /** Amends the current break context when entering a loop, switch or similar. */
   enterBreakContext(): string {
     if (this.currentFunction.breakDepth === 0)
       ++this.currentFunction.breakNumber;
@@ -758,14 +780,17 @@ export class Compiler {
     return this.currentFunction.breakLabel;
   }
 
+  /** Amends the current break context when leaving a loop, switch or similar. */
   leaveBreakContext(): void {
     if (this.currentFunction.breakDepth < 1)
       throw Error("unbalanced break context");
     --this.currentFunction.breakDepth;
   }
 
+  /** Textual break label according to the current break context state. */
   get currentBreakLabel(): string { return this.currentFunction.breakLabel; }
 
+  /** Compiles a statement. */
   compileStatement(node: typescript.Statement): binaryen.Statement {
     const op = this.module;
 
@@ -814,6 +839,7 @@ export class Compiler {
     return op.unreachable();
   }
 
+  /** Compiles an expression. */
   compileExpression(node: typescript.Expression, contextualType: reflection.Type): binaryen.Expression {
     const op = this.module;
 
@@ -872,6 +898,7 @@ export class Compiler {
     return op.unreachable();
   }
 
+  /** Wraps an expression with a conversion where necessary. */
   maybeConvertValue(node: typescript.Expression, expr: binaryen.Expression, fromType: reflection.Type, toType: reflection.Type, explicit: boolean): binaryen.Expression {
     if (fromType.kind === toType.kind)
       return expr;
@@ -1062,6 +1089,7 @@ export class Compiler {
     }
   }
 
+  /** Resolves a TypeScript type alias to the root AssemblyScript type where applicable, by symbol. */
   maybeResolveAlias(symbol: typescript.Symbol): typescript.Symbol {
 
     // Exit early (before hitting 'number') if it's a built in type
@@ -1099,6 +1127,7 @@ export class Compiler {
     return symbol;
   }
 
+  /** Resolves a TypeScript type to a AssemblyScript type. */
   resolveType(type: typescript.TypeNode, acceptVoid: boolean = false): reflection.Type {
 
     switch (type.kind) {
@@ -1180,6 +1209,7 @@ export class Compiler {
     return reflection.voidType;
   }
 
+  /** Resolves an identifier or name to the corresponding reflection object. */
   resolveReference(node: typescript.Identifier | typescript.EntityName, preferTemplate: boolean = false): reflection.Variable | reflection.Enum | reflection.Class | reflection.ClassTemplate | null {
 
     // Locals including 'this'

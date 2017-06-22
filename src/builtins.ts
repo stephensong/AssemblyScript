@@ -1,5 +1,9 @@
 /**
  * Compiler components dealing with built-in functions.
+ *
+ * Functions exported by this module correspond to the respective built-in functions. Each takes
+ * TypeScript AST-objects and compiles them to opcodes directly.
+ *
  * @module assemblyscript/builtins
  */ /** */
 
@@ -60,11 +64,13 @@ export function isBuiltin(name: string, isGlobalName: boolean = false): boolean 
   return false;
 }
 
+/** A pair of TypeScript expressions. */
 export interface TypeScriptExpressionPair {
   0: typescript.Expression;
   1: typescript.Expression;
 }
 
+/** A pair of Binaryen expressions. */
 export interface BinaryenExpressionPair {
   0: binaryen.Expression;
   1: binaryen.Expression;

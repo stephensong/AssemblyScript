@@ -1,3 +1,8 @@
+// Compiles the malloc component from C.
+//
+// This requires the "webassembly" dependency to be properly installed and working, which might not
+// be the case in every environment because it depends on precompiled clang and binaryen binaries.
+
 var util = require("webassembly/cli/util");
 var path = require("path");
 var fs = require("fs");

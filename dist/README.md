@@ -3,7 +3,7 @@ Distributions
 
 This folder contains pre-built browser binaries of AssemblyScript.
 
-Note that Binaryen is not included in the bundle. A compatible version of Binaryen can be obtained [from this binaryen.js repository](https://github.com/dcodeIO/binaryen.js).
+Note that Binaryen and WABT are not included in the bundle. A compatible version of Binaryen can be obtained [from the binaryen.js repository](https://github.com/dcodeIO/binaryen.js) and of WABT [from the wabt.js repository](https://github.com/dcodeIO/wabt.js).
 
 Usage
 -----
@@ -12,6 +12,7 @@ Local:
 
 ```html
 <script src="binaryen.js"></script>
+<script src="wabt.js"></script>
 <script src="assemblyscript.min.js"></script>
 ```
 
@@ -19,6 +20,7 @@ CDN:
 
 ```html
 <script src="//rawgit.com/dcodeIO/binaryen.js/master/index.js"></script>
+<script src="//rawgit.com/dcodeIO/wabt.js/master/index.js"></script>
 <script src="//rawgit.com/dcodeIO/AssemblyScript/master/dist/assemblyscript.min.js"></script>
 ```
 

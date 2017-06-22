@@ -121,12 +121,14 @@ import {
   sys
 } from "../lib/typescript/build";
 
+/** Default format diagnostics host for convenience. */
 export const defaultFormatDiagnosticsHost: FormatDiagnosticsHost = {
   getCurrentDirectory: () => sys.getCurrentDirectory(),
   getNewLine: () => sys.newLine,
   getCanonicalFileName: createGetCanonicalFileName(sys.useCaseSensitiveFileNames)
 };
 
+/** Default compiler options for AssemblyScript compilation. */
 export const defaultCompilerOptions = <CompilerOptions>{
   target: ScriptTarget.Latest,
   module: ModuleKind.None,
@@ -137,6 +139,7 @@ export const defaultCompilerOptions = <CompilerOptions>{
 
 import * as library from "./library";
 
+/** Creates an AssemblyScript-compatible compiler host. */
 export function createCompilerHost(moduleSearchLocations: string[], entryFileSource?: string, entryFileName: string = "module.ts"): CompilerHost {
   const files: { [key: string]: SourceFile } = {};
   if (entryFileSource)
