@@ -32,4 +32,7 @@ export function testFloat(a: float, b: float): void {
   a >= b;
   a < b;
   a <= b;
+
+  // todo: emulate?
+  // a % b;
 }

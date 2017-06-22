@@ -26,57 +26,39 @@
    )
   )
   (drop
-   (i32.and
-    (i32.eq
-     (get_local $0)
-     (get_local $1)
-    )
-    (i32.const 1)
+   (i32.eq
+    (get_local $0)
+    (get_local $1)
    )
   )
   (drop
-   (i32.and
-    (i32.ne
-     (get_local $0)
-     (get_local $1)
-    )
-    (i32.const 1)
+   (i32.ne
+    (get_local $0)
+    (get_local $1)
    )
   )
   (drop
-   (i32.and
-    (i32.gt_u
-     (get_local $0)
-     (get_local $1)
-    )
-    (i32.const 1)
+   (i32.gt_u
+    (get_local $0)
+    (get_local $1)
    )
   )
   (drop
-   (i32.and
-    (i32.ge_u
-     (get_local $0)
-     (get_local $1)
-    )
-    (i32.const 1)
+   (i32.ge_u
+    (get_local $0)
+    (get_local $1)
    )
   )
   (drop
-   (i32.and
-    (i32.lt_u
-     (get_local $0)
-     (get_local $1)
-    )
-    (i32.const 1)
+   (i32.lt_u
+    (get_local $0)
+    (get_local $1)
    )
   )
   (drop
-   (i32.and
-    (i32.le_u
-     (get_local $0)
-     (get_local $1)
-    )
-    (i32.const 1)
+   (i32.le_u
+    (get_local $0)
+    (get_local $1)
    )
   )
   (drop

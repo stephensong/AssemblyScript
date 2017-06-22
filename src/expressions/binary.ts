@@ -14,6 +14,7 @@ export function compileBinary(compiler: Compiler, node: typescript.BinaryExpress
 
   let left: binaryen.Expression = compiler.compileExpression(node.left, contextualType);
   let leftType: reflection.Type = typescript.getReflectedType(node.left);
+
   let right: binaryen.Expression;
   let rightType: reflection.Type;
   let commonType: reflection.Type | undefined;
@@ -361,7 +362,8 @@ export function compileBinary(compiler: Compiler, node: typescript.BinaryExpress
 
     }
 
-    if (result)
+    // sign-extend respectively mask small integer results
+    if (result && (resultType.isByte || resultType.isShort))
       result = compiler.maybeConvertValue(node, result, reflection.intType, resultType, true);
   }
 

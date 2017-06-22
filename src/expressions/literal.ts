@@ -9,6 +9,8 @@ import * as typescript from "../typescript";
 export function compileLiteral(compiler: Compiler, node: typescript.LiteralExpression, contextualType: reflection.Type, negate: boolean = false): binaryen.Expression {
   const op = compiler.module;
 
+  typescript.setReflectedType(node, contextualType);
+
   switch (node.kind) {
     case typescript.SyntaxKind.TrueKeyword:
       negate = !negate;
@@ -25,9 +27,7 @@ export function compileLiteral(compiler: Compiler, node: typescript.LiteralExpre
 
     case typescript.SyntaxKind.NumericLiteral:
     {
-      typescript.setReflectedType(node, contextualType);
-
-      let text = node.text;
+      let text = typescript.getTextOfNode(node); // cannot use 'node.text' because it is preprocessed (breaks longs)
       let intValue: number;
       let intRadix: number = 10;
 
@@ -61,19 +61,39 @@ export function compileLiteral(compiler: Compiler, node: typescript.LiteralExpre
       switch (contextualType) {
 
         case reflection.sbyteType:
-        case reflection.shortType:
-          return op.i32.const(((intValue >>> 0) << <number>contextualType.shift32) >> <number>contextualType.shift32);
+          if (intValue > 127 || intValue < -128)
+            compiler.warn(node, "Literal overflow", "Expected a value in range [-128, 127]");
+          return op.i32.const(intValue << 24 >> 24);
 
         case reflection.byteType:
+          if (intValue > 255 || intValue < 0)
+            compiler.warn(node, "Literal overflow", "Expected a value in range [0, 255]");
+          return op.i32.const(intValue & 0xff);
+
+        case reflection.shortType:
+          if (intValue > 32767 || intValue < -32768)
+            compiler.warn(node, "Literal overflow", "Expected a value in range [-32768, 32767]");
+          return op.i32.const(intValue << 16 >> 16);
+
         case reflection.ushortType:
-          return op.i32.const(intValue & <number>contextualType.mask32);
+          if (intValue > 65535 || intValue < 0)
+            compiler.warn(node, "Literal overflow", "Expected a value in range [0, 65535]");
+          return op.i32.const(intValue & 0xffff);
 
         case reflection.intType:
+          if (intValue > 2147483647 || intValue < -2147483648)
+            compiler.warn(node, "Literal overflow", "Expected a value in range [-2147483648, 2147483647]");
+          return op.i32.const(intValue | 0);
+
         case reflection.uintType:
         case reflection.uintptrType32:
-          return op.i32.const(intValue);
+          if (intValue > 4294967295 || intValue < 0)
+            compiler.warn(node, "Literal overflow", "Expected a value in range [0, 4294967295]");
+          return op.i32.const(intValue | 0);
 
         case reflection.boolType:
+          if (intValue > 1 || intValue < 0)
+            compiler.warn(node, "Literal overflow", "Expected a value in range [0, 1]");
           return op.i32.const(intValue ? 1 : 0);
 
         case reflection.longType:
@@ -101,7 +121,6 @@ export function compileLiteral(compiler: Compiler, node: typescript.LiteralExpre
     }
   }
 
-  typescript.setReflectedType(node, contextualType);
   compiler.error(node, "Unsupported literal", "'" + node.text + "' in " + reflection.TypeKind[contextualType.kind] + " context");
   return op.unreachable();
 }

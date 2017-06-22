@@ -18,12 +18,9 @@
    )
    (loop $continue$1.1
     (if
-     (i32.and
-      (i32.lt_u
-       (get_local $1)
-       (get_local $0)
-      )
-      (i32.const 1)
+     (i32.lt_u
+      (get_local $1)
+      (get_local $0)
      )
      (block
       (block

@@ -3,6 +3,7 @@ import * as path from "path";
 import * as tape from "tape";
 import Compiler from "../src/compiler";
 import * as binaryen from "../src/binaryen";
+import * as typescript from "../src/typescript";
 import * as jsdiff from "diff";
 import * as chalk from "chalk";
 import * as minimist from "minimist";
@@ -36,43 +37,51 @@ tape("fixtures", test => {
       const firstLine = source.split(/\r?\n/, 1)[0];
       let opts = Object.create(options);
 
-      if (firstLine.substring(0, 5) === "//! {") {
-        const config = JSON.parse(firstLine.substring(4));
+      if (firstLine.substring(0, 3) === "//!") {
+        const config = JSON.parse(firstLine.substring(3));
         Object.keys(config).forEach(key => opts[key] = config[key]);
       }
 
       let module: binaryen.Module;
-      let actual: string;
+      let actual: string = "";
 
       test.doesNotThrow(() => {
         module = Compiler.compileFile(file, opts);
+      }, "should compile without throwing");
+
+      const messages = typescript.formatDiagnosticsWithColorAndContext(Compiler.lastDiagnostics);
+      if (messages.length)
+        process.stderr.write(messages.replace(/^/mg, " ") + "\n");
+
+      test.ok(module, "should not fail to compule");
+      if (module) {
         actual = distill(module.emitText());
-      }, "should compile without errors");
 
-      const wastFile = file.replace(/\.ts$/, ".wast");
+        const wastFile = file.replace(/\.ts$/, ".wast");
 
-      if (fs.existsSync(wastFile)) {
-        const expected = distill(fs.readFileSync(wastFile, "utf8"));
-        const diff = jsdiff.diffChars(expected, actual);
-        let changed = false;
-        diff.forEach(part => {
-          if (part.added || part.removed)
-            changed = true;
-        });
-        test.notOk(changed, "should match the precompiled fixture");
-        if (changed) // print a diff
+        if (fs.existsSync(wastFile)) {
+          const expected = distill(fs.readFileSync(wastFile, "utf8"));
+          const diff = jsdiff.diffChars(expected, actual);
+          let changed = false;
           diff.forEach(part => {
             if (part.added || part.removed)
               changed = true;
-            var color = part.added ? 'green' : part.removed ? 'red' : 'grey';
-            process.stderr.write(chalk[color](part.value));
           });
-      } else {
-        if (argv["create"]) {
-          test.comment("creating fixture: " + wastFile);
-          fs.writeFileSync(wastFile, actual, "utf8");
-        } else
-          test.fail("fixture should exist (use --create to create it)");
+          test.notOk(changed, "should match the precompiled fixture");
+          if (changed) // print a diff
+            diff.forEach(part => {
+              if (part.added || part.removed)
+                changed = true;
+              var color = part.added ? 'green' : part.removed ? 'red' : 'grey';
+              process.stderr.write(chalk[color](part.value));
+            });
+        } else {
+          if (argv["create"]) {
+            test.comment("creating fixture: " + wastFile);
+            fs.writeFileSync(wastFile, actual, "utf8");
+          } else
+            test.fail("fixture should exist (use --create to create it)");
+        }
       }
       test.end();
     });
@@ -81,7 +90,7 @@ tape("fixtures", test => {
   test.end();
 });
 
-tape("compile string", test => {
+tape("compileString", test => {
   const module = Compiler.compileString(`
   export function test(a: int): int {
     return a;
