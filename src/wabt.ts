@@ -28,10 +28,10 @@ export function wasmToWast(buffer: Uint8Array, options?: IWasmToWastOptions): st
 
   if (!options) options = {};
   const module = wabt.readWasm(buffer, { readDebugNames: !!options.readDebugNames });
-  if (options.generateNames) {
+  if (options.generateNames)
     module.generateNames();
+  if (options.generateNames || options.readDebugNames)
     module.applyNames();
-  }
   const wast = module.toText({ foldExprs: !!options.foldExprs, inlineExport: !!options.inlineExport });
   module.destroy();
   return wast;

@@ -1,3 +1,5 @@
 #!/usr/bin/env node
 require("ts-node/register");
-require("../cli/asc");
+var ret = require("../cli/asc").main(process.argv.slice(2));
+if (typeof ret === "number")
+  process.exit(ret);

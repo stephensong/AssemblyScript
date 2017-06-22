@@ -298,10 +298,19 @@ The command line compiler `asc` works similar to TypeScript's `tsc`:
 Syntax: asc [options] [entryFile]
 
 Options:
- -o, --out, --outFile   Specifies the output file name.
- -v, --validate         Validates the module.
- -O, --optimize         Runs optimizing binaryen IR passes.
- -t, --text             Emits text format instead of a binary.
+ --out, -o              Specifies the output file name.
+ --validate, -v         Validates the module.
+ --optimize, -O         Runs optimizing binaryen IR passes.
+ --silent               Does not print anything to console.
+ --text                 Emits text format instead of a binary.
+
+                        sexpr    S-Expression syntax (default)
+                        stack    Stack syntax
+
+ --target               Specifies the target architecture.
+
+                        WASM32   Compiles to 32-bit WebAssembly (default)
+                        WASM64   Compiles to 64-bit WebAssembly
 
  --no-malloc            Does not include malloc, free, etc.
  --no-export-malloc     Does not export malloc, free, etc.
