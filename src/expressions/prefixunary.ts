@@ -96,7 +96,7 @@ export function compilePrefixUnary(compiler: Compiler, node: typescript.PrefixUn
           const calculate = (isIncrement ? cat.add : cat.sub).call(cat,
             op.getLocal(
               local.index,
-              binaryen.typeOf(compiler.uintptrType, compiler.uintptrSize)
+              binaryen.typeOf(local.type, compiler.uintptrSize)
             ),
             binaryen.valueOf(local.type, compiler.module, 1)
           );
