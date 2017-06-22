@@ -18,7 +18,7 @@
 #define HAVE_MORECORE 1
 #define USAGE_ERROR_ACTION(m,p)
 #define MALLOC_FAILURE_ACTION
-#define ABORT
+#define ABORT __builtin_unreachable()
 #define ENOMEM 12
 #define EINVAL 22
 #define DLMALLOC_EXPORT
