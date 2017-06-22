@@ -55,6 +55,8 @@ tape("fixtures", test => {
 
       test.ok(module, "should not fail to compule");
       if (module) {
+        test.ok(module.validate(), "should validate");
+
         actual = distill(module.emitText());
 
         const wastFile = file.replace(/\.ts$/, ".wast");

@@ -36,3 +36,19 @@ export function testFloat(a: float, b: float): void {
   // todo: emulate?
   // a % b;
 }
+
+export function testDouble(a: double, b: double): void {
+  a + b;
+  a - b;
+  a * b;
+  a / b;
+  a == b;
+  a != b;
+  a > b;
+  a >= b;
+  a < b;
+  a <= b;
+
+  // todo: emulate?
+  // a % b;
+}

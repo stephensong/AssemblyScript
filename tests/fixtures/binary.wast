@@ -1,5 +1,6 @@
  (export "testInt" (func $testInt))
  (export "testFloat" (func $testFloat))
+ (export "testDouble" (func $testDouble))
  (func $testInt (type $iiv) (param $0 i32) (param $1 i32)
   (drop
    (i32.add
@@ -155,6 +156,68 @@
   )
   (drop
    (f32.le
+    (get_local $0)
+    (get_local $1)
+   )
+  )
+ )
+ (func $testDouble (type $FFv) (param $0 f64) (param $1 f64)
+  (drop
+   (f64.add
+    (get_local $0)
+    (get_local $1)
+   )
+  )
+  (drop
+   (f64.sub
+    (get_local $0)
+    (get_local $1)
+   )
+  )
+  (drop
+   (f64.mul
+    (get_local $0)
+    (get_local $1)
+   )
+  )
+  (drop
+   (f64.div
+    (get_local $0)
+    (get_local $1)
+   )
+  )
+  (drop
+   (f64.eq
+    (get_local $0)
+    (get_local $1)
+   )
+  )
+  (drop
+   (f64.ne
+    (get_local $0)
+    (get_local $1)
+   )
+  )
+  (drop
+   (f64.gt
+    (get_local $0)
+    (get_local $1)
+   )
+  )
+  (drop
+   (f64.ge
+    (get_local $0)
+    (get_local $1)
+   )
+  )
+  (drop
+   (f64.lt
+    (get_local $0)
+    (get_local $1)
+   )
+  )
+  (drop
+   (f64.le
     (get_local $0)
     (get_local $1)
    )
