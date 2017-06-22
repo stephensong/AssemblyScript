@@ -88,8 +88,6 @@ export function main(args: string[]): number {
 
   const output: any = argv.out ? fs.createWriteStream(argv.out) : process.stdout;
 
-  console.log(argv);
-
   if (argv.text !== undefined || output.isTTY) {
     if (argv.text === "stack")
       output.write(wasmToWast(wasmModule.emitBinary(), { readDebugNames: true }), "utf8");

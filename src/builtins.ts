@@ -13,7 +13,7 @@ import * as typescript from "./typescript";
 
 import Compiler from "./compiler";
 
-/** Tests if the specified function name corresponds to a builtin function. */
+/** Tests if the specified function name corresponds to a built-in function. */
 export function isBuiltin(name: string, isGlobalName: boolean = false): boolean {
   if (isGlobalName) {
     // Builtins are declared in assembly.d.ts exclusively

@@ -106,7 +106,7 @@ export function compilePrefixUnary(compiler: Compiler, node: typescript.PrefixUn
             return op.setLocal(local.index, calculate);
           } else {
             typescript.setReflectedType(node, local.type);
-            return compiler.maybeConvertValue(node, op.teeLocal(local.index, calculate), reflection.intType, local.type, true);
+            return op.teeLocal(local.index, calculate);
           }
         }
       }

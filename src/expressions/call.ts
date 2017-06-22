@@ -32,10 +32,8 @@ export function compileCall(compiler: Compiler, node: typescript.CallExpression,
   }
 
   // Compile function if not yet compiled
-  if (!instance.compiled && instance.body) {
-    instance.compiled = true;
-    compiler.compileFunction(instance);
-  }
+  if (!instance.compiled && instance.body)
+    compiler.compileFunction(instance); // sets instance.compiled = true
 
   let argumentCount = instance.parameters.length;
   const argumentExpressions: binaryen.Expression[] = new Array(argumentCount);

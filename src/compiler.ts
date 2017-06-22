@@ -698,6 +698,8 @@ export class Compiler {
     if (!instance.body)
       throw Error("cannot compile a function without a body: " + instance.name);
 
+    instance.compiled = true;
+
     const body: binaryen.Statement[] = [];
     const previousFunction = this.currentFunction;
     this.currentFunction = instance;
@@ -733,7 +735,7 @@ export class Compiler {
       body.push(op.return(op.getLocal(0, binaryen.typeOf(this.uintptrType, this.uintptrSize))));
 
     const additionalLocals = instance.locals.slice(initialLocalsIndex).map(local => binaryen.typeOf(local.type, this.uintptrSize));
-    const binaryenFunction = this.module.addFunction(instance.name, instance.binaryenSignature, additionalLocals, op.block("", body));
+    const binaryenFunction = instance.binaryenFunction = this.module.addFunction(instance.name, instance.binaryenSignature, additionalLocals, op.block("", body));
 
     if (instance.isExport)
       this.module.addExport(instance.name, instance.name);

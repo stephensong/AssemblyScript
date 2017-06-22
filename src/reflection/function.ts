@@ -75,7 +75,7 @@ export class Function extends FunctionBase {
   /** Binaryen signature reference. */
   binaryenSignature: binaryen.Signature;
 
-  // Used in compilation
+  // Set on compilation
 
   /** Whether this function has already been compiled. */
   compiled: boolean = false;
@@ -85,6 +85,8 @@ export class Function extends FunctionBase {
   breakNumber: number = 0;
   /** Depth within the current break context. */
   breakDepth: number = 0;
+  /** Binaryen function reference. */
+  binaryenFunction: binaryen.Function;
 
   /** Constructs a new reflected function instance and binds it to its TypeScript declaration. */
   constructor(name: string, declaration: typescript.FunctionLikeDeclaration, typeArguments: { [key: string]: TypeArgument }, parameters: FunctionParameter[], returnType: Type, parent?: Class, body?: typescript.Block | typescript.Expression) {
