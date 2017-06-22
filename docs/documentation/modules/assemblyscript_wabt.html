@@ -79,8 +79,8 @@
 						<section class="tsd-index-section ">
 							<h3>Interfaces</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-interface tsd-parent-kind-external-module"><a href="../interfaces/assemblyscript_wabt.wasmtowastoptions.html" class="tsd-kind-icon">Wasm<wbr>ToWast<wbr>Options</a></li>
-								<li class="tsd-kind-interface tsd-parent-kind-external-module"><a href="../interfaces/assemblyscript_wabt.wasttowasmoptions.html" class="tsd-kind-icon">Wast<wbr>ToWasm<wbr>Options</a></li>
+								<li class="tsd-kind-interface tsd-parent-kind-external-module"><a href="../interfaces/assemblyscript_wabt.iwasmtowastoptions.html" class="tsd-kind-icon">IWasm<wbr>ToWast<wbr>Options</a></li>
+								<li class="tsd-kind-interface tsd-parent-kind-external-module"><a href="../interfaces/assemblyscript_wabt.iwasttowasmoptions.html" class="tsd-kind-icon">IWast<wbr>ToWasm<wbr>Options</a></li>
 							</ul>
 						</section>
 						<section class="tsd-index-section ">
@@ -99,13 +99,13 @@
 					<a name="wasmtowast" class="tsd-anchor"></a>
 					<h3>wasm<wbr>ToWast</h3>
 					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-external-module">
-						<li class="tsd-signature tsd-kind-icon">wasm<wbr>ToWast<span class="tsd-signature-symbol">(</span>buffer<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Uint8Array</span>, options<span class="tsd-signature-symbol">?: </span><a href="../interfaces/assemblyscript_wabt.wasmtowastoptions.html" class="tsd-signature-type">WasmToWastOptions</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></li>
+						<li class="tsd-signature tsd-kind-icon">wasm<wbr>ToWast<span class="tsd-signature-symbol">(</span>buffer<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Uint8Array</span>, options<span class="tsd-signature-symbol">?: </span><a href="../interfaces/assemblyscript_wabt.iwasmtowastoptions.html" class="tsd-signature-type">IWasmToWastOptions</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/wabt.ts#L25">src/wabt.ts:25</a></li>
+									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/aff98e0/src/wabt.ts#L25">src/wabt.ts:25</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -119,7 +119,7 @@
 									<h5>buffer: <span class="tsd-signature-type">Uint8Array</span></h5>
 								</li>
 								<li>
-									<h5><span class="tsd-flag ts-flagOptional">Optional</span> options: <a href="../interfaces/assemblyscript_wabt.wasmtowastoptions.html" class="tsd-signature-type">WasmToWastOptions</a></h5>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> options: <a href="../interfaces/assemblyscript_wabt.iwasmtowastoptions.html" class="tsd-signature-type">IWasmToWastOptions</a></h5>
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span></h4>
@@ -130,13 +130,13 @@
 					<a name="wasttowasm" class="tsd-anchor"></a>
 					<h3>wast<wbr>ToWasm</h3>
 					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-external-module">
-						<li class="tsd-signature tsd-kind-icon">wast<wbr>ToWasm<span class="tsd-signature-symbol">(</span>text<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, options<span class="tsd-signature-symbol">?: </span><a href="../interfaces/assemblyscript_wabt.wasttowasmoptions.html" class="tsd-signature-type">WastToWasmOptions</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Uint8Array</span></li>
+						<li class="tsd-signature tsd-kind-icon">wast<wbr>ToWasm<span class="tsd-signature-symbol">(</span>text<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, options<span class="tsd-signature-symbol">?: </span><a href="../interfaces/assemblyscript_wabt.iwasttowasmoptions.html" class="tsd-signature-type">IWastToWasmOptions</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Uint8Array</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/wabt.ts#L49">src/wabt.ts:49</a></li>
+									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/aff98e0/src/wabt.ts#L49">src/wabt.ts:49</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -150,7 +150,7 @@
 									<h5>text: <span class="tsd-signature-type">string</span></h5>
 								</li>
 								<li>
-									<h5><span class="tsd-flag ts-flagOptional">Optional</span> options: <a href="../interfaces/assemblyscript_wabt.wasttowasmoptions.html" class="tsd-signature-type">WastToWasmOptions</a></h5>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> options: <a href="../interfaces/assemblyscript_wabt.iwasttowasmoptions.html" class="tsd-signature-type">IWastToWasmOptions</a></h5>
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Uint8Array</span></h4>
@@ -206,10 +206,10 @@
 			<nav class="tsd-navigation secondary menu-sticky">
 				<ul class="before-current">
 					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
-						<a href="../interfaces/assemblyscript_wabt.wasmtowastoptions.html" class="tsd-kind-icon">Wasm<wbr>ToWast<wbr>Options</a>
+						<a href="../interfaces/assemblyscript_wabt.iwasmtowastoptions.html" class="tsd-kind-icon">IWasm<wbr>ToWast<wbr>Options</a>
 					</li>
 					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
-						<a href="../interfaces/assemblyscript_wabt.wasttowasmoptions.html" class="tsd-kind-icon">Wast<wbr>ToWasm<wbr>Options</a>
+						<a href="../interfaces/assemblyscript_wabt.iwasttowasmoptions.html" class="tsd-kind-icon">IWast<wbr>ToWasm<wbr>Options</a>
 					</li>
 					<li class=" tsd-kind-function tsd-parent-kind-external-module">
 						<a href="assemblyscript_wabt.html#wasmtowast" class="tsd-kind-icon">wasm<wbr>ToWast</a>

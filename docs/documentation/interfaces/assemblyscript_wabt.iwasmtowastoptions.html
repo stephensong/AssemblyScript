@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>WastToWasmOptions | AssemblyScript API Documentation</title>
+	<title>IWasmToWastOptions | AssemblyScript API Documentation</title>
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="../assets/css/main.css">
@@ -57,10 +57,10 @@
 					<a href="../modules/assemblyscript_wabt.html">assemblyscript/wabt</a>
 				</li>
 				<li>
-					<a href="assemblyscript_wabt.wasttowasmoptions.html">WastToWasmOptions</a>
+					<a href="assemblyscript_wabt.iwasmtowastoptions.html">IWasmToWastOptions</a>
 				</li>
 			</ul>
-			<h1>Interface WastToWasmOptions</h1>
+			<h1>Interface IWasmToWastOptions</h1>
 		</div>
 	</div>
 </header>
@@ -70,7 +70,7 @@
 			<section class="tsd-panel tsd-comment">
 				<div class="tsd-comment tsd-typography">
 					<div class="lead">
-						<p>Options for <a href="../modules/assemblyscript_wabt.html#wasttowasm">wastToWasm</a>.</p>
+						<p>Options for <a href="../modules/assemblyscript_wabt.html#wasmtowast">wasmToWast</a>.</p>
 					</div>
 				</div>
 			</section>
@@ -78,7 +78,7 @@
 				<h3>Hierarchy</h3>
 				<ul class="tsd-hierarchy">
 					<li>
-						<span class="target">WastToWasmOptions</span>
+						<span class="target">IWasmToWastOptions</span>
 					</li>
 				</ul>
 			</section>
@@ -89,10 +89,10 @@
 						<section class="tsd-index-section ">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="assemblyscript_wabt.wasttowasmoptions.html#canonicalizelebs" class="tsd-kind-icon">canonicalize<wbr>Lebs</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="assemblyscript_wabt.wasttowasmoptions.html#filename" class="tsd-kind-icon">filename</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="assemblyscript_wabt.wasttowasmoptions.html#relocatable" class="tsd-kind-icon">relocatable</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="assemblyscript_wabt.wasttowasmoptions.html#writedebugnames" class="tsd-kind-icon">write<wbr>Debug<wbr>Names</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="assemblyscript_wabt.iwasmtowastoptions.html#foldexprs" class="tsd-kind-icon">fold<wbr>Exprs</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="assemblyscript_wabt.iwasmtowastoptions.html#generatenames" class="tsd-kind-icon">generate<wbr>Names</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="assemblyscript_wabt.iwasmtowastoptions.html#inlineexport" class="tsd-kind-icon">inline<wbr>Export</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="assemblyscript_wabt.iwasmtowastoptions.html#readdebugnames" class="tsd-kind-icon">read<wbr>Debug<wbr>Names</a></li>
 							</ul>
 						</section>
 					</div>
@@ -101,42 +101,42 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Properties</h2>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="canonicalizelebs" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagOptional">Optional</span> canonicalize<wbr>Lebs</h3>
-					<div class="tsd-signature tsd-kind-icon">canonicalize<wbr>Lebs<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">true</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">false</span></div>
+					<a name="foldexprs" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> fold<wbr>Exprs</h3>
+					<div class="tsd-signature tsd-kind-icon">fold<wbr>Exprs<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">true</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">false</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/wabt.ts#L43">src/wabt.ts:43</a></li>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/aff98e0/src/wabt.ts#L19">src/wabt.ts:19</a></li>
 						</ul>
 					</aside>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="filename" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagOptional">Optional</span> filename</h3>
-					<div class="tsd-signature tsd-kind-icon">filename<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span></div>
+					<a name="generatenames" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> generate<wbr>Names</h3>
+					<div class="tsd-signature tsd-kind-icon">generate<wbr>Names<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">true</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">false</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/wabt.ts#L42">src/wabt.ts:42</a></li>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/aff98e0/src/wabt.ts#L21">src/wabt.ts:21</a></li>
 						</ul>
 					</aside>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="relocatable" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagOptional">Optional</span> relocatable</h3>
-					<div class="tsd-signature tsd-kind-icon">relocatable<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">true</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">false</span></div>
+					<a name="inlineexport" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> inline<wbr>Export</h3>
+					<div class="tsd-signature tsd-kind-icon">inline<wbr>Export<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">true</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">false</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/wabt.ts#L44">src/wabt.ts:44</a></li>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/aff98e0/src/wabt.ts#L20">src/wabt.ts:20</a></li>
 						</ul>
 					</aside>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="writedebugnames" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagOptional">Optional</span> write<wbr>Debug<wbr>Names</h3>
-					<div class="tsd-signature tsd-kind-icon">write<wbr>Debug<wbr>Names<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">true</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">false</span></div>
+					<a name="readdebugnames" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> read<wbr>Debug<wbr>Names</h3>
+					<div class="tsd-signature tsd-kind-icon">read<wbr>Debug<wbr>Names<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">true</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">false</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/dad15c7/src/wabt.ts#L45">src/wabt.ts:45</a></li>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/aff98e0/src/wabt.ts#L18">src/wabt.ts:18</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -188,30 +188,30 @@
 			</nav>
 			<nav class="tsd-navigation secondary menu-sticky">
 				<ul class="before-current">
-					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
-						<a href="assemblyscript_wabt.wasmtowastoptions.html" class="tsd-kind-icon">Wasm<wbr>ToWast<wbr>Options</a>
-					</li>
 				</ul>
 				<ul class="current">
 					<li class="current tsd-kind-interface tsd-parent-kind-external-module">
-						<a href="assemblyscript_wabt.wasttowasmoptions.html" class="tsd-kind-icon">Wast<wbr>ToWasm<wbr>Options</a>
+						<a href="assemblyscript_wabt.iwasmtowastoptions.html" class="tsd-kind-icon">IWasm<wbr>ToWast<wbr>Options</a>
 						<ul>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="assemblyscript_wabt.wasttowasmoptions.html#canonicalizelebs" class="tsd-kind-icon">canonicalize<wbr>Lebs</a>
+								<a href="assemblyscript_wabt.iwasmtowastoptions.html#foldexprs" class="tsd-kind-icon">fold<wbr>Exprs</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="assemblyscript_wabt.wasttowasmoptions.html#filename" class="tsd-kind-icon">filename</a>
+								<a href="assemblyscript_wabt.iwasmtowastoptions.html#generatenames" class="tsd-kind-icon">generate<wbr>Names</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="assemblyscript_wabt.wasttowasmoptions.html#relocatable" class="tsd-kind-icon">relocatable</a>
+								<a href="assemblyscript_wabt.iwasmtowastoptions.html#inlineexport" class="tsd-kind-icon">inline<wbr>Export</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="assemblyscript_wabt.wasttowasmoptions.html#writedebugnames" class="tsd-kind-icon">write<wbr>Debug<wbr>Names</a>
+								<a href="assemblyscript_wabt.iwasmtowastoptions.html#readdebugnames" class="tsd-kind-icon">read<wbr>Debug<wbr>Names</a>
 							</li>
 						</ul>
 					</li>
 				</ul>
 				<ul class="after-current">
+					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
+						<a href="assemblyscript_wabt.iwasttowasmoptions.html" class="tsd-kind-icon">IWast<wbr>ToWasm<wbr>Options</a>
+					</li>
 					<li class=" tsd-kind-function tsd-parent-kind-external-module">
 						<a href="../modules/assemblyscript_wabt.html#wasmtowast" class="tsd-kind-icon">wasm<wbr>ToWast</a>
 					</li>
