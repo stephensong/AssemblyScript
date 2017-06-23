@@ -1230,7 +1230,7 @@ declare namespace ts {
         variableDeclaration: VariableDeclaration;
         block: Block;
     }
-    type DeclarationWithTypeParameters = SignatureDeclaration | ClassLikeDeclaration | InterfaceDeclaration | TypeAliasDeclaration | JSDocTemplateTag;
+    type DeclarationWithTypeParameters = SignatureDeclaration | ClassLikeDeclaration | InterfaceDeclaration | TypeAliasDeclaration;
     interface ClassLikeDeclaration extends NamedDeclaration {
         name?: Identifier;
         typeParameters?: NodeArray<TypeParameterDeclaration>;
@@ -2741,12 +2741,13 @@ declare namespace ts {
     interface ResolvedModuleFull extends ResolvedModule {
         extension: Extension;
     }
-    const enum Extension {
-        Ts = ".ts",
-        Tsx = ".tsx",
-        Dts = ".d.ts",
-        Js = ".js",
-        Jsx = ".jsx",
+    enum Extension {
+        Ts = 0,
+        Tsx = 1,
+        Dts = 2,
+        Js = 3,
+        Jsx = 4,
+        LastTypeScriptExtension = 2,
     }
     interface ResolvedModuleWithFailedLookupLocations {
         resolvedModule: ResolvedModuleFull | undefined;
@@ -3204,9 +3205,9 @@ declare namespace ts {
     function matchFiles(path: string, extensions: string[], excludes: string[], includes: string[], useCaseSensitiveFileNames: boolean, currentDirectory: string, getFileSystemEntries: (path: string) => FileSystemEntries): string[];
     function ensureScriptKind(fileName: string, scriptKind?: ScriptKind): ScriptKind;
     function getScriptKindFromFileName(fileName: string): ScriptKind;
-    const supportedTypeScriptExtensions: Extension[];
-    const supportedTypescriptExtensionsForExtractExtension: Extension[];
-    const supportedJavascriptExtensions: Extension[];
+    const supportedTypeScriptExtensions: string[];
+    const supportedTypescriptExtensionsForExtractExtension: string[];
+    const supportedJavascriptExtensions: string[];
     function getSupportedExtensions(options?: CompilerOptions, extraFileExtensions?: JsFileExtensionInfo[]): string[];
     function hasJavaScriptFileExtension(fileName: string): boolean;
     function hasTypeScriptFileExtension(fileName: string): boolean;
@@ -8965,14 +8966,10 @@ declare namespace ts {
     function getJSDocs(node: Node): (JSDoc | JSDocTag)[];
     function getJSDocParameterTags(param: ParameterDeclaration): JSDocParameterTag[];
     function getParameterFromJSDoc(node: JSDocParameterTag): ParameterDeclaration | undefined;
-    function getTypeParameterFromJsDoc(node: TypeParameterDeclaration & {
-        parent: JSDocTemplateTag;
-    }): TypeParameterDeclaration | undefined;
     function getJSDocType(node: Node): JSDocType;
     function getJSDocAugmentsTag(node: Node): JSDocAugmentsTag;
     function getJSDocClassTag(node: Node): JSDocClassTag;
     function getJSDocReturnTag(node: Node): JSDocReturnTag;
-    function getJSDocReturnType(node: Node): JSDocType;
     function getJSDocTemplateTag(node: Node): JSDocTemplateTag;
     function hasRestParameter(s: SignatureDeclaration): boolean;
     function hasDeclaredRestParameter(s: SignatureDeclaration): boolean;
@@ -9073,9 +9070,6 @@ declare namespace ts {
         setAccessor: AccessorDeclaration;
     }
     function getAllAccessorDeclarations(declarations: NodeArray<Declaration>, accessor: AccessorDeclaration): AllAccessorDeclarations;
-    function getEffectiveTypeAnnotationNode(node: VariableLikeDeclaration): TypeNode;
-    function getEffectiveReturnTypeNode(node: SignatureDeclaration): TypeNode;
-    function getEffectiveSetAccessorTypeAnnotationNode(node: SetAccessorDeclaration): TypeNode;
     function emitNewLineBeforeLeadingComments(lineMap: number[], writer: EmitTextWriter, node: TextRange, leadingComments: CommentRange[]): void;
     function emitNewLineBeforeLeadingCommentsOfPosition(lineMap: number[], writer: EmitTextWriter, pos: number, leadingComments: CommentRange[]): void;
     function emitNewLineBeforeLeadingCommentOfPosition(lineMap: number[], writer: EmitTextWriter, pos: number, commentPos: number): void;
@@ -9343,8 +9337,6 @@ declare namespace ts {
     function isJSDocLiteralType(node: Node): node is JSDocLiteralType;
 }
 declare namespace ts {
-    function isNode(node: Node): boolean;
-    function isNodeKind(kind: SyntaxKind): boolean;
     function isToken(n: Node): boolean;
     function isNodeArray<T extends Node>(array: T[]): array is NodeArray<T>;
     function isLiteralKind(kind: SyntaxKind): boolean;
@@ -9405,7 +9397,6 @@ declare namespace ts {
     function isJsxOpeningLikeElement(node: Node): node is JsxOpeningLikeElement;
     function isCaseOrDefaultClause(node: Node): node is CaseOrDefaultClause;
     function isJSDocNode(node: Node): boolean;
-    function isJSDocCommentContainingNode(node: Node): boolean;
     function isJSDocTag(node: Node): boolean;
 }
 declare namespace ts {
@@ -9923,7 +9914,6 @@ declare namespace ts {
         const assertOptionalNode: (node: Node, test: (node: Node) => boolean, message?: string) => void;
         const assertOptionalToken: (node: Node, kind: SyntaxKind, message?: string) => void;
         const assertMissingNode: (node: Node, message?: string) => void;
-        function enableDebugInfo(): void;
     }
 }
 declare namespace ts {

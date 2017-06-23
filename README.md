@@ -6,7 +6,7 @@ Be warned that this is an early prototype and that it cannot do anything useful 
 
 An initial playground to mess with the current state of the compiler is available at [dcode.io/AssemblyScript](http://dcode.io/AssemblyScript/).
 
-[![Build Status](https://travis-ci.org/dcodeIO/AssemblyScript.svg?branch=master)](https://travis-ci.org/dcodeIO/AssemblyScript) [![npm](https://img.shields.io/npm/v/assemblyscript.svg)](https://www.npmjs.com/package/assemblyscript) [![npm](https://img.shields.io/npm/dm/assemblyscript.svg)](https://www.npmjs.com/package/assemblyscript)
+[![npm](https://img.shields.io/npm/v/assemblyscript.svg)](https://www.npmjs.com/package/assemblyscript) [![Build Status](https://travis-ci.org/dcodeIO/AssemblyScript.svg?branch=master)](https://travis-ci.org/dcodeIO/AssemblyScript) [![npm](https://img.shields.io/npm/dm/assemblyscript.svg)](https://www.npmjs.com/package/assemblyscript)
 
 Example
 -------

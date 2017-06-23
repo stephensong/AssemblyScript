@@ -6,8 +6,8 @@ ts.getScriptKindFromFileName = function getScriptKindFromFileNameEx(fileName) {
     return ts.ScriptKind.TS;
   return getScriptKindFromFileName_original(fileName);
 };
-ts.supportedTypeScriptExtensions.unshift(<ts.Extension>".as");
-ts.supportedTypescriptExtensionsForExtractExtension.push(<ts.Extension>".as");
+ts.supportedTypeScriptExtensions.unshift(".as");
+ts.supportedTypescriptExtensionsForExtractExtension.push(".as");
 
 // Polyfill 'sys' in browsers
 if (!ts.sys) {
