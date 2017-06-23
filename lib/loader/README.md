@@ -1,4 +1,4 @@
-AssemblyScript loader
+AssemblyScript Loader
 =====================
 
 [AssemblyScript](https://github.com/dcodeIO/AssemblyScript)'s loader component to run and work with compiled WebAssembly modules, as a stand-alone module.
@@ -6,8 +6,12 @@ AssemblyScript loader
 Usage
 -----
 
+```
+$> npm install assemblyscript-loader
+```
+
 ```ts
-import load from "assemblyscript/loader";
+import load from "assemblyscript-loader";
 
 load("path/to/module.wasm", {
   imports: {

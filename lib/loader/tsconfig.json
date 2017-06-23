@@ -10,10 +10,10 @@
       "es6",
       "dom"
     ],
-    "outDir": "./build",
+    "outDir": "./dist",
     "declaration": true
   },
   "files": [
-    "./index.ts"
+    "./assemblyscript-loader.ts"
   ]
 }

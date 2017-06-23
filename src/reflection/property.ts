@@ -1,6 +1,6 @@
 /** @module assemblyscript/reflection */ /** */
 
-import { Type } from "./type";
+import Type from "./type";
 import * as typescript from "../typescript";
 
 /** A reflected property. Also used to describe enum values. */

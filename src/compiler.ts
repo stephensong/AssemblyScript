@@ -217,7 +217,7 @@ export class Compiler {
 
   /** Adds an informative diagnostic to {@link Compiler#diagnostics} and prints it. */
   info(node: typescript.Node, message: string, arg1?: string): void {
-    const diagnostic = typescript.createDiagnosticForNodeEx(node, typescript.DiagnosticCategory.Message, message, arg1);
+    const diagnostic = typescript.createDiagnosticForNode(node, typescript.DiagnosticCategory.Message, message, arg1);
     this.diagnostics.add(diagnostic);
     if (!(this.options && this.options.silent))
       typescript.printDiagnostic(diagnostic);
@@ -225,7 +225,7 @@ export class Compiler {
 
   /** Adds a warning diagnostic to {@link Compiler#diagnostics} and prints it. */
   warn(node: typescript.Node, message: string, arg1?: string): void {
-    const diagnostic = typescript.createDiagnosticForNodeEx(node, typescript.DiagnosticCategory.Warning, message, arg1);
+    const diagnostic = typescript.createDiagnosticForNode(node, typescript.DiagnosticCategory.Warning, message, arg1);
     this.diagnostics.add(diagnostic);
     if (!(this.options && this.options.silent))
       typescript.printDiagnostic(diagnostic);
@@ -233,7 +233,7 @@ export class Compiler {
 
   /** Adds an error diagnostic to {@link Compiler#diagnostics} and prints it. */
   error(node: typescript.Node, message: string, arg1?: string): void {
-    const diagnostic = typescript.createDiagnosticForNodeEx(node, typescript.DiagnosticCategory.Error, message, arg1);
+    const diagnostic = typescript.createDiagnosticForNode(node, typescript.DiagnosticCategory.Error, message, arg1);
     this.diagnostics.add(diagnostic);
     if (!(this.options && this.options.silent))
       typescript.printDiagnostic(diagnostic);

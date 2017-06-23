@@ -1,9 +1,4 @@
-/// <reference path="./types/webassembly.d.ts" />
-
-/**
- * AssemblyScript's loader component.
- * @module assemblyscript/loader
- */ /** */
+/// <reference types="webassembly-js-api" />
 
 /** Options to set up the environment created by {@link load}. */
 export interface ILoadOptions {

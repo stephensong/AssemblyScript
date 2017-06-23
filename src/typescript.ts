@@ -11,115 +11,86 @@
 
 import * as path from "path";
 import * as reflection from "./reflection";
+import * as ts from "../lib/typescript/build";
+import * as library from "./library";
 
-// Reasoning behind this file is that it's just too easy to lose track of this stuff so
-// having a clear overview of / a handle on things becomes something valuable quickly.
+// With a little help from "Find all references" the following list aims to provide an answer to
+// the interesting question "Which parts of TypeScript do we actually use, and where?".
 
-export {
+export import ArrayTypeNode = ts.ArrayTypeNode;
+export import AsExpression = ts.AsExpression;
+export import BinaryExpression = ts.BinaryExpression;
+export import Block = ts.Block;
+export import BreakStatement = ts.BreakStatement;
+export import CallExpression = ts.CallExpression;
+export import ClassDeclaration = ts.ClassDeclaration;
+       import CompilerHost = ts.CompilerHost;
+       import CompilerOptions = ts.CompilerOptions;
+export import ConditionalExpression = ts.ConditionalExpression;
+export import ConstructorDeclaration = ts.ConstructorDeclaration;
+export import ContinueStatement = ts.ContinueStatement;
+export import DiagnosticCategory = ts.DiagnosticCategory;
+export import DiagnosticCollection = ts.DiagnosticCollection;
+export import DiagnosticMessage = ts.DiagnosticMessage;
+export import Diagnostic = ts.Diagnostic;
+export import DoStatement = ts.DoStatement;
+export import ElementAccessExpression = ts.ElementAccessExpression;
+export import EnumDeclaration = ts.EnumDeclaration;
+export import EnumMember = ts.EnumMember;
+export import EntityName = ts.EntityName;
+export import ExpressionStatement = ts.ExpressionStatement;
+export import Expression = ts.Expression;
+       import FormatDiagnosticsHost = ts.FormatDiagnosticsHost;
+export import ForStatement = ts.ForStatement;
+export import FunctionBody = ts.FunctionBody;
+export import FunctionLikeDeclaration = ts.FunctionLikeDeclaration;
+export import FunctionDeclaration = ts.FunctionDeclaration;
+export import Identifier = ts.Identifier;
+export import IfStatement = ts.IfStatement;
+export import LiteralExpression = ts.LiteralExpression;
+export import MethodDeclaration = ts.MethodDeclaration;
+       import ModifierFlags = ts.ModifierFlags;
+       import ModuleKind = ts.ModuleKind;
+export import NewExpression = ts.NewExpression;
+export import NodeArray = ts.NodeArray;
+export import NodeFlags = ts.NodeFlags;
+export import Node = ts.Node;
+export import ParameterDeclaration = ts.ParameterDeclaration;
+export import ParenthesizedExpression = ts.ParenthesizedExpression;
+export import PostfixUnaryExpression = ts.PostfixUnaryExpression;
+export import PrefixUnaryExpression = ts.PrefixUnaryExpression;
+export import Program = ts.Program;
+export import PropertyAccessExpression = ts.PropertyAccessExpression;
+export import PropertyDeclaration = ts.PropertyDeclaration;
+export import TypeAliasDeclaration = ts.TypeAliasDeclaration;
+export import TypeChecker = ts.TypeChecker;
+export import TypeNode = ts.TypeNode;
+export import TypeParameterDeclaration = ts.TypeParameterDeclaration;
+export import TypeReferenceNode = ts.TypeReferenceNode;
+export import TypeReference = ts.TypeReference;
+export import Type = ts.Type;
+export import VariableDeclaration = ts.VariableDeclaration;
+export import VariableDeclarationList = ts.VariableDeclarationList;
+export import VariableStatement = ts.VariableStatement;
+export import ReturnStatement = ts.ReturnStatement;
+       import ResolvedModule = ts.ResolvedModule;
+export import ScriptTarget = ts.ScriptTarget;
+export import SourceFile = ts.SourceFile;
+export import Statement = ts.Statement;
+export import SwitchStatement = ts.SwitchStatement;
+export import Symbol = ts.Symbol;
+export import SyntaxKind = ts.SyntaxKind;
+export import WhileStatement = ts.WhileStatement;
 
-  // Classes and interfaces
-  ArrayTypeNode,
-  AsExpression,
-  BinaryExpression,
-  Block,
-  BreakStatement,
-  CallExpression,
-  ClassDeclaration,
-  CompilerHost,
-  CompilerOptions,
-  ConditionalExpression,
-  ConstructorDeclaration,
-  ContinueStatement,
-  DiagnosticCategory,
-  DiagnosticCollection,
-  DiagnosticMessage,
-  Declaration,
-  Diagnostic,
-  DoStatement,
-  ElementAccessExpression,
-  EnumDeclaration,
-  EnumMember,
-  EntityName,
-  ExpressionStatement,
-  Expression,
-  FormatDiagnosticsHost,
-  ForStatement,
-  FunctionBody,
-  FunctionLikeDeclaration,
-  FunctionDeclaration,
-  Identifier,
-  IfStatement,
-  LiteralExpression,
-  MethodDeclaration,
-  Modifier,
-  ModuleKind,
-  NewExpression,
-  NodeArray,
-  NodeFlags,
-  Node,
-  ParameterDeclaration,
-  ParenthesizedExpression,
-  PostfixUnaryExpression,
-  PrefixUnaryExpression,
-  Program,
-  PropertyAccessExpression,
-  PropertyDeclaration,
-  TypeAliasDeclaration,
-  TypeChecker,
-  TypeNode,
-  TypeParameterDeclaration,
-  TypeReferenceNode,
-  TypeReference,
-  Type,
-  VariableDeclaration,
-  VariableDeclarationList,
-  VariableStatement,
-  ReturnStatement,
-  ScriptTarget,
-  SourceFile,
-  Statement,
-  SwitchStatement,
-  Symbol,
-  SyntaxKind,
-  System,
-  WhileStatement,
-
-  // Global functions
-  getPreEmitDiagnostics,
-  getSourceFileOfNode,
-  getTextOfNode,
-  createDiagnosticCollection,
-  createProgram,
-  createSourceFile
-
-} from "../lib/typescript/build";
-
-import {
-  ClassDeclaration,
-  CompilerHost,
-  CompilerOptions,
-  Diagnostic,
-  DiagnosticCategory,
-  Expression,
-  FormatDiagnosticsHost,
-  FunctionLikeDeclaration,
-  ModifierFlags,
-  ModuleKind,
-  Node,
-  NodeFlags,
-  ResolvedModule,
-  ScriptTarget,
-  SourceFile,
-  SyntaxKind,
-  getTextOfNode,
-  createDiagnosticForNode,
-  createGetCanonicalFileName,
-  createSourceFile,
-  formatDiagnostics as formatDiagnostics_default,
-  formatDiagnosticsWithColorAndContext as formatDiagnosticsWithColorAndContext_default,
-  resolveModuleName,
-  sys
-} from "../lib/typescript/build";
+export import getPreEmitDiagnostics = ts.getPreEmitDiagnostics;
+export import getSourceFileOfNode = ts.getSourceFileOfNode;
+export import getTextOfNode = ts.getTextOfNode;
+export import createDiagnosticCollection = ts.createDiagnosticCollection;
+       import createGetCanonicalFileName = ts.createGetCanonicalFileName;
+export import createProgram = ts.createProgram;
+export import createSourceFile = ts.createSourceFile;
+       import resolveModuleName = ts.resolveModuleName;
+       import sys = ts.sys;
 
 /** Default format diagnostics host for convenience. */
 export const defaultFormatDiagnosticsHost: FormatDiagnosticsHost = {
@@ -136,8 +107,6 @@ export const defaultCompilerOptions = <CompilerOptions>{
   experimentalDecorators: true,
   types: []
 };
-
-import * as library from "./library";
 
 /** Creates an AssemblyScript-compatible compiler host. */
 export function createCompilerHost(moduleSearchLocations: string[], entryFileSource?: string, entryFileName: string = "module.ts"): CompilerHost {
@@ -197,11 +166,11 @@ export function createCompilerHost(moduleSearchLocations: string[], entryFileSou
 }
 
 /** Creates a diagnostic message referencing a node. */
-export function createDiagnosticForNodeEx(node: Node, category: DiagnosticCategory, message: string, arg1?: string) {
+export function createDiagnosticForNode(node: Node, category: DiagnosticCategory, message: string, arg1?: string) {
   let realMessage = message;
   if (arg1 != null)
     realMessage += ": " + arg1;
-  return createDiagnosticForNode(node, {
+  return /* override */ ts.createDiagnosticForNode(node, {
     key: message.toLowerCase().replace(/\s+/g, "_").replace(/[^\w]/g, ""),
     category: category,
     code: <any>"-AS",
@@ -211,12 +180,12 @@ export function createDiagnosticForNodeEx(node: Node, category: DiagnosticCatego
 
 /** Formats a diagnostic message in plain text. */
 export function formatDiagnostics(diagnostics: Diagnostic[], host?: FormatDiagnosticsHost) {
-  return formatDiagnostics_default(diagnostics, host || defaultFormatDiagnosticsHost);
+  return /* override */ ts.formatDiagnostics(diagnostics, host || defaultFormatDiagnosticsHost);
 }
 
 /** Formats a diagnostic message with terminal colors and source context. */
 export function formatDiagnosticsWithColorAndContext(diagnostics: Diagnostic[], host?: FormatDiagnosticsHost) {
-  return formatDiagnosticsWithColorAndContext_default(diagnostics, host || defaultFormatDiagnosticsHost);
+  return /* override */ ts.formatDiagnosticsWithColorAndContext(diagnostics, host || defaultFormatDiagnosticsHost);
 }
 
 /** Prints a diagnostic message to console. */

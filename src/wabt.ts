@@ -13,6 +13,11 @@ try { // tslint:disable-next-line
   wabt = (<any>global).wabt || null;
 }
 
+/** Indicates whether WABT-specific functionality is available. */
+export const available = !!wabt;
+
+const notAvailable = "wabt.js could not be found. While it is an optional dependency, using WABT-specific functionality requires it.";
+
 /** Options for {@link wasmToWast}. */
 export interface IWasmToWastOptions {
   readDebugNames?: boolean;
@@ -23,8 +28,8 @@ export interface IWasmToWastOptions {
 
 /** Converts a WebAssembly binary to text format using stack syntax. */
 export function wasmToWast(buffer: Uint8Array, options?: IWasmToWastOptions): string {
-  if (!wabt)
-    throw Error("wabt.js is not present");
+  if (!available)
+    throw Error(notAvailable);
 
   if (!options) options = {};
   const module = wabt.readWasm(buffer, { readDebugNames: !!options.readDebugNames });
@@ -47,8 +52,8 @@ export interface IWastToWasmOptions {
 
 /** Converts WebAssembly text format using stack syntax to a binary. */
 export function wastToWasm(text: string, options?: IWastToWasmOptions): Uint8Array {
-  if (!wabt)
-    throw Error("wabt.js is not present");
+  if (!available)
+    throw Error(notAvailable);
 
   if (!options) options = {};
   const module = wabt.parseWast(options.filename || "module.wast", text);

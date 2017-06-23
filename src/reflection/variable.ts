@@ -1,6 +1,6 @@
 /** @module assemblyscript/reflection */ /** */
 
-import { Type } from "./type";
+import Type from "./type";
 
 /** Flags describing the kind of a variable. */
 export enum VariableFlags {

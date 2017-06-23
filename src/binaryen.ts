@@ -13,33 +13,27 @@ import * as binaryen from "binaryen";
 import * as Long from "long";
 import * as reflection from "./reflection";
 
-export {
-  none,
-  i32,
-  i64,
-  f32,
-  f64,
-
-  I32Operations,
-  I64Operations,
-  F32Operations,
-  F64Operations,
-
-  Type,
-  Statement,
-  Signature,
-  Function,
-  Expression,
-  I32Expression,
-  I64Expression,
-  F32Expression,
-  F64Expression,
-
-  MemorySegment,
-  Module,
-  readBinary
-
-} from "binaryen";
+export import none = binaryen.none;
+export import i32 = binaryen.i32;
+export import i64 = binaryen.i64;
+export import f32 = binaryen.f32;
+export import f64 = binaryen.f64;
+export import Type = binaryen.Type;
+export import Signature = binaryen.Signature;
+export import Function = binaryen.Function;
+export import Expression = binaryen.Expression;
+export import Statement = binaryen.Statement;
+export import MemorySegment = binaryen.MemorySegment;
+export import Module = binaryen.Module;
+export import I32Expression = binaryen.I32Expression;
+export import I64Expression = binaryen.I64Expression;
+export import F32Expression = binaryen.F32Expression;
+export import F64Expression = binaryen.F64Expression;
+export import I32Operations = binaryen.I32Operations;
+export import I64Operations = binaryen.I64Operations;
+export import F32Operations = binaryen.F32Operations;
+export import F64Operations = binaryen.F64Operations;
+export import readBinary = binaryen.readBinary;
 
 /** Computes a human readable signature identifier of a reflected type. */
 export function identifierOf(type: reflection.Type, uintptrSize: number): string {
@@ -74,7 +68,7 @@ export function identifierOf(type: reflection.Type, uintptrSize: number): string
 }
 
 /** Computes the binaryen type of a reflected type. */
-export function typeOf(type: reflection.Type, uintptrSize: number): binaryen.Type {
+export function typeOf(type: reflection.Type, uintptrSize: number): Type {
   switch (type.kind) {
 
     case reflection.TypeKind.sbyte:
@@ -84,29 +78,29 @@ export function typeOf(type: reflection.Type, uintptrSize: number): binaryen.Typ
     case reflection.TypeKind.int:
     case reflection.TypeKind.uint:
     case reflection.TypeKind.bool:
-      return binaryen.i32;
+      return i32;
 
     case reflection.TypeKind.long:
     case reflection.TypeKind.ulong:
-      return binaryen.i64;
+      return i64;
 
     case reflection.TypeKind.float:
-      return binaryen.f32;
+      return f32;
 
     case reflection.TypeKind.double:
-      return binaryen.f64;
+      return f64;
 
     case reflection.TypeKind.uintptr:
-      return uintptrSize === 4 ? binaryen.i32 : binaryen.i64;
+      return uintptrSize === 4 ? i32 : i64;
 
     case reflection.TypeKind.void:
-      return binaryen.none;
+      return none;
   }
   throw Error("unexpected type");
 }
 
 /** Computes the binaryen opcode category (i32, i64, f32, f64) of a reflected type. */
-export function categoryOf(type: reflection.Type, module: binaryen.Module, uintptrSize: number): binaryen.I32Operations | binaryen.I64Operations | binaryen.F32Operations | binaryen.F64Operations {
+export function categoryOf(type: reflection.Type, module: Module, uintptrSize: number): I32Operations | I64Operations | F32Operations | F64Operations {
   switch (type.kind) {
 
     case reflection.TypeKind.sbyte:
@@ -135,7 +129,7 @@ export function categoryOf(type: reflection.Type, module: binaryen.Module, uintp
 }
 
 /** Computes the constant value expression of the specified reflected type. */
-export function valueOf(type: reflection.Type, module: binaryen.Module, value: number | Long) {
+export function valueOf(type: reflection.Type, module: Module, value: number | Long) {
   const op = module;
 
   if (type.isLong) {

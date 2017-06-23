@@ -22,7 +22,8 @@
     "trailing-comma": [ true, { "multiline": "never", "singleline": "never" } ],
     "whitespace": [ true, "check-branch", "check-decl", "check-module", "check-type", "check-preblock" ],
     "member-access": [ true, "no-public" ],
-    "max-classes-per-file": false
+    "max-classes-per-file": false,
+    "align": false
   },
   "rulesDirectory": []
 }

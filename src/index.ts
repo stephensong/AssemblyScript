@@ -7,7 +7,6 @@
  *   <li class="tsd-kind-module"><span class="tsd-kind-icon" /> {@link assemblyscript/builtins|builtins}</li>
  *   <li class="tsd-kind-module"><span class="tsd-kind-icon" /> {@link assemblyscript/expressions|expressions}</li>
  *   <li class="tsd-kind-module"><span class="tsd-kind-icon" /> {@link assemblyscript/library|library}</li>
- *   <li class="tsd-kind-module"><span class="tsd-kind-icon" /> {@link assemblyscript/loader|loader}</li>
  *   <li class="tsd-kind-module"><span class="tsd-kind-icon" /> {@link assemblyscript/reflection|reflection}</li>
  *   <li class="tsd-kind-module"><span class="tsd-kind-icon" /> {@link assemblyscript/statements|statements}</li>
  *   <li class="tsd-kind-module"><span class="tsd-kind-icon" /> {@link assemblyscript/typescript|typescript}</li>
@@ -23,7 +22,6 @@ import * as builtins from "./builtins";
 import Compiler from "./compiler";
 import * as expressions from "./expressions";
 import * as library from "./library";
-import * as loader from "../lib/loader";
 import Profiler from "./profiler";
 import * as reflection from "./reflection";
 import * as typescript from "./typescript";
@@ -39,7 +37,6 @@ export {
   Compiler,
   expressions,
   library,
-  loader,
   Profiler,
   reflection,
   statements,
@@ -53,7 +50,6 @@ export {
   Compiler,
   expressions,
   library,
-  loader,
   Profiler,
   reflection,
   statements,

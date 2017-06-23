@@ -1,0 +1,32 @@
+{
+  "name": "assemblyscript-loader",
+  "description": "AssemblyScript's loader component as a stand-alone module.",
+  "version": "0.0.2",
+  "author": "Daniel Wirtz <dcode+assemblyscript@dcode.io>",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dcodeIO/AssemblyScript.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dcodeIO/AssemblyScript/issues"
+  },
+  "keywords": [
+    "webassembly",
+    "wasm",
+    "typescript",
+    "loader"
+  ],
+  "main": "dist/assemblyscript-loader.js",
+  "typings": "dist/assemblyscript-loader.d.ts",
+  "files": [
+    "package.json",
+    "package-lock.json",
+    "dist/assemblyscript-loader.js",
+    "dist/assemblyscript-loader.js.map",
+    "dist/assemblyscript-loader.d.ts"
+  ],
+  "dependencies": {
+    "@types/webassembly-js-api": "0.0.1"
+  }
+}
