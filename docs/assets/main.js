@@ -81,8 +81,8 @@ function compile() {
   var source = sourceEditor.getValue();
   currentModule = assemblyscript.Compiler.compileString(source, {
     silent: true,
-    malloc: /\bnew\b/.test(source),
-    exportMalloc: false
+    target: assemblyscript.CompilerTarget.WASM32,
+    memoryModel: /\bnew\b/.test(source) ? assemblyscript.CompilerMemoryModel.MALLOC : assemblyscript.CompilerMemoryModel.BARE
   });
 
   var diagnostics = assemblyscript.typescript.formatDiagnostics(assemblyscript.Compiler.lastDiagnostics).trim();

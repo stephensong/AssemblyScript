@@ -70,7 +70,7 @@
 			<section class="tsd-panel tsd-comment">
 				<div class="tsd-comment tsd-typography">
 					<div class="lead">
-						<p>AssemblyScript compiler options.</p>
+						<p>Compiler options.</p>
 					</div>
 				</div>
 			</section>
@@ -89,8 +89,7 @@
 						<section class="tsd-index-section ">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="assemblyscript.compileroptions.html#exportmalloc" class="tsd-kind-icon">export<wbr>Malloc</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="assemblyscript.compileroptions.html#malloc" class="tsd-kind-icon">malloc</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="assemblyscript.compileroptions.html#memorymodel" class="tsd-kind-icon">memory<wbr>Model</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="assemblyscript.compileroptions.html#silent" class="tsd-kind-icon">silent</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="assemblyscript.compileroptions.html#target" class="tsd-kind-icon">target</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="assemblyscript.compileroptions.html#treeshaking" class="tsd-kind-icon">tree<wbr>Shaking</a></li>
@@ -102,32 +101,17 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Properties</h2>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="exportmalloc" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagOptional">Optional</span> export<wbr>Malloc</h3>
-					<div class="tsd-signature tsd-kind-icon">export<wbr>Malloc<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">true</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">false</span></div>
+					<a name="memorymodel" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> memory<wbr>Model</h3>
+					<div class="tsd-signature tsd-kind-icon">memory<wbr>Model<span class="tsd-signature-symbol">:</span> <a href="../enums/assemblyscript.compilermemorymodel.html" class="tsd-signature-type">CompilerMemoryModel</a><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/8a00ed0/src/compiler.ts#L28">compiler.ts:28</a></li>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/2677b83/src/compiler.ts#L26">compiler.ts:26</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
 						<div class="lead">
-							<p>Whether to export malloc, free, etc. Defaults to <code>true</code>. Disable this if you want malloc etc. to be dead-code-eliminated later on.</p>
-						</div>
-					</div>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="malloc" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagOptional">Optional</span> malloc</h3>
-					<div class="tsd-signature tsd-kind-icon">malloc<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">true</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">false</span></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/8a00ed0/src/compiler.ts#L26">compiler.ts:26</a></li>
-						</ul>
-					</aside>
-					<div class="tsd-comment tsd-typography">
-						<div class="lead">
-							<p>Whether to include malloc, free, etc. Defaults to <code>true</code>. Note that malloc is required when using the <code>new</code> operator.</p>
+							<p>Specifies the memory model to use. Defaults to <a href="../enums/assemblyscript.compilermemorymodel.html#malloc">CompilerMemoryModel.MALLOC</a>.</p>
 						</div>
 					</div>
 				</section>
@@ -137,7 +121,7 @@
 					<div class="tsd-signature tsd-kind-icon">silent<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">true</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">false</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/8a00ed0/src/compiler.ts#L22">compiler.ts:22</a></li>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/2677b83/src/compiler.ts#L20">compiler.ts:20</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -149,15 +133,15 @@
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
 					<a name="target" class="tsd-anchor"></a>
 					<h3><span class="tsd-flag ts-flagOptional">Optional</span> target</h3>
-					<div class="tsd-signature tsd-kind-icon">target<span class="tsd-signature-symbol">:</span> <a href="../enums/assemblyscript.compilertarget.html" class="tsd-signature-type">CompilerTarget</a></div>
+					<div class="tsd-signature tsd-kind-icon">target<span class="tsd-signature-symbol">:</span> <a href="../enums/assemblyscript.compilertarget.html" class="tsd-signature-type">CompilerTarget</a><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/8a00ed0/src/compiler.ts#L20">compiler.ts:20</a></li>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/2677b83/src/compiler.ts#L24">compiler.ts:24</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
 						<div class="lead">
-							<p>Specifies the target architecture. Defaults to <code>WASM32</code>.</p>
+							<p>Specifies the target architecture. Defaults to <a href="../enums/assemblyscript.compilertarget.html#wasm32">CompilerTarget.WASM32</a>.</p>
 						</div>
 					</div>
 				</section>
@@ -167,7 +151,7 @@
 					<div class="tsd-signature tsd-kind-icon">tree<wbr>Shaking<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">true</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">false</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/8a00ed0/src/compiler.ts#L24">compiler.ts:24</a></li>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/2677b83/src/compiler.ts#L22">compiler.ts:22</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -216,6 +200,9 @@
 			<nav class="tsd-navigation secondary menu-sticky">
 				<ul class="before-current">
 					<li class=" tsd-kind-enum tsd-parent-kind-external-module">
+						<a href="../enums/assemblyscript.compilermemorymodel.html" class="tsd-kind-icon">Compiler<wbr>Memory<wbr>Model</a>
+					</li>
+					<li class=" tsd-kind-enum tsd-parent-kind-external-module">
 						<a href="../enums/assemblyscript.compilertarget.html" class="tsd-kind-icon">Compiler<wbr>Target</a>
 					</li>
 					<li class=" tsd-kind-class tsd-parent-kind-external-module">
@@ -230,10 +217,7 @@
 						<a href="assemblyscript.compileroptions.html" class="tsd-kind-icon">Compiler<wbr>Options</a>
 						<ul>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="assemblyscript.compileroptions.html#exportmalloc" class="tsd-kind-icon">export<wbr>Malloc</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="assemblyscript.compileroptions.html#malloc" class="tsd-kind-icon">malloc</a>
+								<a href="assemblyscript.compileroptions.html#memorymodel" class="tsd-kind-icon">memory<wbr>Model</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
 								<a href="assemblyscript.compileroptions.html#silent" class="tsd-kind-icon">silent</a>

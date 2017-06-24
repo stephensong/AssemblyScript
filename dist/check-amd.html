@@ -3,9 +3,8 @@
 
 <script>
 requirejs.config({
-  shim: { // these don't support AMD natively yet
-    "binaryen": { exports: "Binaryen" },
-    "wabt": { exports: "wabt" }
+  shim: {
+    "binaryen": { exports: "Binaryen" } // does not support AMD yet
   },
   paths: {
     "binaryen": "https://rawgit.com/dcodeIO/binaryen.js/master/index",

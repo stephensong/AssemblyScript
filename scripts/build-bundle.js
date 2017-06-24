@@ -46,7 +46,7 @@ browserify({
 .pipe( source("assemblyscript.js") )
 .pipe( buffer() )
 .pipe( sourcemaps.init({ loadMaps: true }) )
-// .pipe( uglify() )
+.pipe( uglify() )
 .pipe( header(banner) )
 .pipe( sourcemaps.write(".") )
 .pipe( vfs.dest(__dirname + "/../dist") )

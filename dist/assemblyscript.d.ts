@@ -24,7 +24,7 @@ declare module 'assemblyscript' {
     */ /** */
   import * as binaryen from "assemblyscript/binaryen";
   import * as builtins from "assemblyscript/builtins";
-  import Compiler from "assemblyscript/compiler";
+  import { Compiler, CompilerTarget, CompilerMemoryModel } from "assemblyscript/compiler";
   import * as expressions from "assemblyscript/expressions";
   import * as library from "assemblyscript/library";
   import Profiler from "assemblyscript/profiler";
@@ -34,7 +34,7 @@ declare module 'assemblyscript' {
   import * as wabt from "assemblyscript/wabt";
   /** AssemblyScript version. */
   export const version: string;
-  export { binaryen, builtins, Compiler, expressions, library, Profiler, reflection, statements, typescript, wabt };
+  export { binaryen, builtins, Compiler, CompilerTarget, CompilerMemoryModel, expressions, library, Profiler, reflection, statements, typescript, wabt };
 }
 
 declare module 'assemblyscript/binaryen' {

@@ -19,7 +19,7 @@
 
 import * as binaryen from "./binaryen";
 import * as builtins from "./builtins";
-import Compiler from "./compiler";
+import { Compiler, CompilerTarget, CompilerMemoryModel } from "./compiler";
 import * as expressions from "./expressions";
 import * as library from "./library";
 import Profiler from "./profiler";
@@ -35,6 +35,8 @@ export {
   binaryen,
   builtins,
   Compiler,
+  CompilerTarget,
+  CompilerMemoryModel,
   expressions,
   library,
   Profiler,

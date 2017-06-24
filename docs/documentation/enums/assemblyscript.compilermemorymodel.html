@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>CompilerTarget | AssemblyScript API Documentation</title>
+	<title>CompilerMemoryModel | AssemblyScript API Documentation</title>
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="../assets/css/main.css">
@@ -57,10 +57,10 @@
 					<a href="../modules/assemblyscript.html">assemblyscript</a>
 				</li>
 				<li>
-					<a href="assemblyscript.compilertarget.html">CompilerTarget</a>
+					<a href="assemblyscript.compilermemorymodel.html">CompilerMemoryModel</a>
 				</li>
 			</ul>
-			<h1>Enumeration CompilerTarget</h1>
+			<h1>Enumeration CompilerMemoryModel</h1>
 		</div>
 	</div>
 </header>
@@ -70,7 +70,7 @@
 			<section class="tsd-panel tsd-comment">
 				<div class="tsd-comment tsd-typography">
 					<div class="lead">
-						<p>Compiler target.</p>
+						<p>Compiler memory model.</p>
 					</div>
 				</div>
 			</section>
@@ -81,8 +81,10 @@
 						<section class="tsd-index-section ">
 							<h3>Enumeration members</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-enum-member tsd-parent-kind-enum"><a href="assemblyscript.compilertarget.html#wasm32" class="tsd-kind-icon">WASM32</a></li>
-								<li class="tsd-kind-enum-member tsd-parent-kind-enum"><a href="assemblyscript.compilertarget.html#wasm64" class="tsd-kind-icon">WASM64</a></li>
+								<li class="tsd-kind-enum-member tsd-parent-kind-enum"><a href="assemblyscript.compilermemorymodel.html#bare" class="tsd-kind-icon">BARE</a></li>
+								<li class="tsd-kind-enum-member tsd-parent-kind-enum"><a href="assemblyscript.compilermemorymodel.html#export_malloc" class="tsd-kind-icon">EXPORT_<wbr>MALLOC</a></li>
+								<li class="tsd-kind-enum-member tsd-parent-kind-enum"><a href="assemblyscript.compilermemorymodel.html#import_malloc" class="tsd-kind-icon">IMPORT_<wbr>MALLOC</a></li>
+								<li class="tsd-kind-enum-member tsd-parent-kind-enum"><a href="assemblyscript.compilermemorymodel.html#malloc" class="tsd-kind-icon">MALLOC</a></li>
 							</ul>
 						</section>
 					</div>
@@ -91,32 +93,62 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Enumeration members</h2>
 				<section class="tsd-panel tsd-member tsd-kind-enum-member tsd-parent-kind-enum">
-					<a name="wasm32" class="tsd-anchor"></a>
-					<h3>WASM32</h3>
-					<div class="tsd-signature tsd-kind-icon">WASM32<span class="tsd-signature-symbol">:</span> </div>
+					<a name="bare" class="tsd-anchor"></a>
+					<h3>BARE</h3>
+					<div class="tsd-signature tsd-kind-icon">BARE<span class="tsd-signature-symbol">:</span> </div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/2677b83/src/compiler.ts#L32">compiler.ts:32</a></li>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/2677b83/src/compiler.ts#L40">compiler.ts:40</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
 						<div class="lead">
-							<p>32-bit WebAssembly target using uint pointers.</p>
+							<p>Does not bundle any memory management routines.</p>
 						</div>
 					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-enum-member tsd-parent-kind-enum">
-					<a name="wasm64" class="tsd-anchor"></a>
-					<h3>WASM64</h3>
-					<div class="tsd-signature tsd-kind-icon">WASM64<span class="tsd-signature-symbol">:</span> </div>
+					<a name="export_malloc" class="tsd-anchor"></a>
+					<h3>EXPORT_<wbr>MALLOC</h3>
+					<div class="tsd-signature tsd-kind-icon">EXPORT_<wbr>MALLOC<span class="tsd-signature-symbol">:</span> </div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/2677b83/src/compiler.ts#L34">compiler.ts:34</a></li>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/2677b83/src/compiler.ts#L44">compiler.ts:44</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
 						<div class="lead">
-							<p>64-bit WebAssembly target using ulong pointers.</p>
+							<p>Bundles malloc, free, etc. and exports it to the embedder.</p>
+						</div>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-enum-member tsd-parent-kind-enum">
+					<a name="import_malloc" class="tsd-anchor"></a>
+					<h3>IMPORT_<wbr>MALLOC</h3>
+					<div class="tsd-signature tsd-kind-icon">IMPORT_<wbr>MALLOC<span class="tsd-signature-symbol">:</span> </div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/2677b83/src/compiler.ts#L46">compiler.ts:46</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>Imports malloc, free, etc. as provided by the embedder.</p>
+						</div>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-enum-member tsd-parent-kind-enum">
+					<a name="malloc" class="tsd-anchor"></a>
+					<h3>MALLOC</h3>
+					<div class="tsd-signature tsd-kind-icon">MALLOC<span class="tsd-signature-symbol">:</span> </div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/2677b83/src/compiler.ts#L42">compiler.ts:42</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>Bundles malloc, free, etc.</p>
 						</div>
 					</div>
 				</section>
@@ -159,24 +191,30 @@
 			</nav>
 			<nav class="tsd-navigation secondary menu-sticky">
 				<ul class="before-current">
-					<li class=" tsd-kind-enum tsd-parent-kind-external-module">
-						<a href="assemblyscript.compilermemorymodel.html" class="tsd-kind-icon">Compiler<wbr>Memory<wbr>Model</a>
-					</li>
 				</ul>
 				<ul class="current">
 					<li class="current tsd-kind-enum tsd-parent-kind-external-module">
-						<a href="assemblyscript.compilertarget.html" class="tsd-kind-icon">Compiler<wbr>Target</a>
+						<a href="assemblyscript.compilermemorymodel.html" class="tsd-kind-icon">Compiler<wbr>Memory<wbr>Model</a>
 						<ul>
 							<li class=" tsd-kind-enum-member tsd-parent-kind-enum">
-								<a href="assemblyscript.compilertarget.html#wasm32" class="tsd-kind-icon">WASM32</a>
+								<a href="assemblyscript.compilermemorymodel.html#bare" class="tsd-kind-icon">BARE</a>
 							</li>
 							<li class=" tsd-kind-enum-member tsd-parent-kind-enum">
-								<a href="assemblyscript.compilertarget.html#wasm64" class="tsd-kind-icon">WASM64</a>
+								<a href="assemblyscript.compilermemorymodel.html#export_malloc" class="tsd-kind-icon">EXPORT_<wbr>MALLOC</a>
+							</li>
+							<li class=" tsd-kind-enum-member tsd-parent-kind-enum">
+								<a href="assemblyscript.compilermemorymodel.html#import_malloc" class="tsd-kind-icon">IMPORT_<wbr>MALLOC</a>
+							</li>
+							<li class=" tsd-kind-enum-member tsd-parent-kind-enum">
+								<a href="assemblyscript.compilermemorymodel.html#malloc" class="tsd-kind-icon">MALLOC</a>
 							</li>
 						</ul>
 					</li>
 				</ul>
 				<ul class="after-current">
+					<li class=" tsd-kind-enum tsd-parent-kind-external-module">
+						<a href="assemblyscript.compilertarget.html" class="tsd-kind-icon">Compiler<wbr>Target</a>
+					</li>
 					<li class=" tsd-kind-class tsd-parent-kind-external-module">
 						<a href="../classes/assemblyscript.compiler.html" class="tsd-kind-icon">Compiler</a>
 					</li>
