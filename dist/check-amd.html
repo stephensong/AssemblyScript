@@ -1,0 +1,18 @@
+<meta http-equiv="content-type" content="text/html;charset=utf-8" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.3/require.min.js"></script>
+
+<script>
+requirejs.config({
+  shim: { // these don't support AMD natively yet
+    "binaryen": { exports: "Binaryen" },
+    "wabt": { exports: "wabt" }
+  },
+  paths: {
+    "binaryen": "https://rawgit.com/dcodeIO/binaryen.js/master/index",
+    "wabt": "https://rawgit.com/dcodeIO/wabt.js/master/index"
+  }
+});
+requirejs(["assemblyscript"], function(assemblyscript) {
+  console.log(assemblyscript);
+});
+</script>

@@ -48,13 +48,22 @@ See the pre-configured [example project](./examples/project) for a quickstart.
 
 ### Running a module
 
-The package also provides a convenient [stand-alone loader component](./lib/loader) to run and work with compiled WebAssembly modules:
+The stand-alone [loader component](./lib/loader) provides an easy way to run and work with compiled WebAssembly modules:
+
+```
+$> npm install assemblyscript-loader
+```
 
 ```ts
-import load from "assemblyscript/loader"; // JS: var load = require("assemblyscript/loader").load;
+import load from "assemblyscript-loader"; // JS: var load = require("assemblyscript-loader").load;
 
-load("path/to/module.wasm").then(module => {
+load("path/to/module.wasm", {
+  imports: {
+    ...
+  }
+}).then(module => {
   ...
+  // i.e. call module.exports.main()
 });
 ```
 
@@ -179,7 +188,7 @@ These constants are present as immutable globals (note that optimizers might inl
 * **Infinityf**: `float`<br />
   Positive infinity as a 32-bit float.
 
-By default (i.e. if `--no-malloc` isn't specified), standard memory management routines based on [dlmalloc](http://g.oswego.edu/dl/html/malloc.html) and [musl](http://www.musl-libc.org/) will be linked statically and exported to the embedder:
+By default, standard memory management routines based on [dlmalloc](http://g.oswego.edu/dl/html/malloc.html) and [musl](http://www.musl-libc.org/) will be linked statically and can be configured to be exported to the embedder:
 
 * **malloc**(size: `uintptr`): `uintptr`<br />
   Allocates a chunk of memory of the specified size and returns a pointer to it.
@@ -245,16 +254,34 @@ API
 * **CompilerOptions**<br />
   AssemblyScript compiler options.
 
-  * **uintptrSize**: `number`<br />
-    Specifies the byte size of a pointer. 32-bit WebAssembly expects `4`, 64-bit WebAssembly expects `8`. Defaults to `4`.
   * **silent**: `boolean`<br />
     Whether compilation shall be performed in silent mode without writing to console. Defaults to `false`.
   * **treeShaking**: `boolean`<br />
     Whether to use built-in tree-shaking. Defaults to `true`. Disable this when building a dynamically linked library.
-  * **malloc**: `boolean`<br />
-    Whether to include malloc, free, etc. Defaults to `true`. Note that malloc is required when using the `new` operator.
-  * **exportMalloc**: `boolean`<br />
-    Whether to export malloc, free, etc. Defaults to `true`. Disable this if you want malloc etc. to be dead-code-eliminated later on.
+  * **target**: `CompilerTarget | string`<br />
+    Specifies the target architecture. Defaults to `CompilerTarget.WASM32`.
+  * **memoryModel**: `CompilerMemoryModel | string`<br />
+    Specifies the memory model to use. Defaults to `CompilerMemoryModel.MALLOC`.
+
+ * **CompilerTarget**<br />
+   Compiler target.
+
+   * **WASM32**<br />
+     32-bit WebAssembly target using uint pointers.
+   * **WASM64**<br />
+     64-bit WebAssembly target using ulong pointers.
+
+  * **CompilerMemoryModel**<br />
+    Compiler memory model.
+
+    * **BARE**<br />
+      Does not bundle any memory management routines.
+    * **MALLOC**<br />
+      Bundles malloc, free, etc.
+    * **EXPORT_MALLOC**<br />
+      Bundles malloc, free, etc. and exports it to the embedder.
+    * **IMPORT_MALLOC**<br />
+      Imports malloc, free, etc. as provided by the embedder.
 
 See the [API documentation](http://dcode.io/AssemblyScript/documentation) for all the details.
 
@@ -297,25 +324,29 @@ Command line
 The command line compiler `asc` works similar to TypeScript's `tsc`:
 
 ```
-Syntax: asc [options] [entryFile]
+Syntax: asc [options] entryFile
 
 Options:
- --out, -o              Specifies the output file name.
+ --out, -o, --outFile   Specifies the output file name.
  --validate, -v         Validates the module.
  --optimize, -O         Runs optimizing binaryen IR passes.
  --silent               Does not print anything to console.
  --text                 Emits text format instead of a binary.
 
-                        sexpr    S-Expression syntax (default)
-                        stack    Stack syntax
+                        sexpr   Emits s-expression syntax as produced by Binaryen. [default]
+                        stack   Emits stack syntax / official text format.
 
- --target               Specifies the target architecture.
+ --target, -t           Specifies the target architecture.
 
-                        WASM32   Compiles to 32-bit WebAssembly (default)
-                        WASM64   Compiles to 64-bit WebAssembly
+                        wasm32  Compiles to 32-bit WebAssembly. [default]
+                        wasm64  Compiles to 64-bit WebAssembly.
 
- --no-malloc            Does not include malloc, free, etc.
- --no-export-malloc     Does not export malloc, free, etc.
+ --memorymodel, -mm     Specifies the memory model to use.
+
+                        malloc        Bundles malloc, free, etc. [default]
+                        exportmalloc  Bundles malloc, free, etc. and exports each to the embedder.
+                        importmalloc  Imports malloc, free, etc. as provided by the embedder within 'env'.
+                        bare          Excludes malloc, free, etc. entirely.
 ```
 
 ---

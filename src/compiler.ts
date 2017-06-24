@@ -14,26 +14,37 @@ import * as typescript from "./typescript";
 // Malloc, free, etc. is present as a base64 encoded blob and prepared once when required.
 let mallocWasm: Uint8Array;
 
-/** AssemblyScript compiler options. */
+/** Compiler options. */
 export interface CompilerOptions {
-  /** Specifies the target architecture. Defaults to `WASM32`. */
-  target?: CompilerTarget;
   /** Whether compilation shall be performed in silent mode without writing to console. Defaults to `false`. */
   silent?: boolean;
   /** Whether to use built-in tree-shaking. Defaults to `true`. Disable this when building a dynamically linked library. */
   treeShaking?: boolean;
-  /** Whether to include malloc, free, etc. Defaults to `true`. Note that malloc is required when using the `new` operator. */
-  malloc?: boolean;
-  /** Whether to export malloc, free, etc. Defaults to `true`. Disable this if you want malloc etc. to be dead-code-eliminated later on. */
-  exportMalloc?: boolean;
+  /** Specifies the target architecture. Defaults to {@link CompilerTarget.WASM32}. */
+  target?: CompilerTarget | string;
+  /** Specifies the memory model to use. Defaults to {@link CompilerMemoryModel.MALLOC}. */
+  memoryModel?: CompilerMemoryModel | string;
 }
 
-/** AssemblyScript compiler target. */
+/** Compiler target. */
 export enum CompilerTarget {
   /** 32-bit WebAssembly target using uint pointers. */
   WASM32,
   /** 64-bit WebAssembly target using ulong pointers. */
   WASM64
+}
+
+/** Compiler memory model. */
+export enum CompilerMemoryModel {
+  /** Does not bundle any memory management routines. */
+  BARE,
+  /** Bundles malloc, free, etc. */
+  MALLOC,
+  /** Bundles malloc, free, etc. and exports it to the embedder. */
+  EXPORT_MALLOC,
+  /** Imports malloc, free, etc. as provided by the embedder. */
+  IMPORT_MALLOC
+  // TODO: GC, once natively supported
 }
 
 /** A static memory segment. */
@@ -193,12 +204,34 @@ export class Compiler {
     this.checker = program.getDiagnosticsProducingTypeChecker();
     this.diagnostics = typescript.createDiagnosticCollection();
 
-    if (this.options.malloc !== false && !mallocWasm) {
-      mallocWasm = new Uint8Array(base64.length(library.malloc));
-      base64.decode(library.malloc, mallocWasm, 0);
+    if (typeof this.options.target === "string") {
+      if (this.options.target.toLowerCase() === "wasm64")
+        this.options.target = CompilerTarget.WASM64;
+      else
+        this.options.target = CompilerTarget.WASM32;
     }
 
-    this.module = this.options.malloc === false ? new binaryen.Module() : binaryen.readBinary(mallocWasm);
+    if (typeof this.options.memoryModel === "string") {
+      const memoryModelLower = this.options.memoryModel.toLowerCase().replace(/_/g, "");
+      if (memoryModelLower === "exportmalloc")
+        this.options.memoryModel = CompilerMemoryModel.EXPORT_MALLOC;
+      else if (memoryModelLower === "importmalloc")
+        this.options.memoryModel = CompilerMemoryModel.IMPORT_MALLOC;
+      else if (memoryModelLower === "bare")
+        this.options.memoryModel = CompilerMemoryModel.BARE;
+      else
+        this.options.memoryModel = CompilerMemoryModel.MALLOC;
+    }
+
+    if (this.options.memoryModel === CompilerMemoryModel.MALLOC || this.options.memoryModel === CompilerMemoryModel.EXPORT_MALLOC) {
+      if (!mallocWasm) {
+        mallocWasm = new Uint8Array(base64.length(library.malloc));
+        base64.decode(library.malloc, mallocWasm, 0);
+      }
+      this.module = binaryen.readBinary(mallocWasm);
+    } else
+      this.module = new binaryen.Module();
+
     this.uintptrType = this.options.target === CompilerTarget.WASM64 ? reflection.uintptrType64 : reflection.uintptrType32;
     this.memoryBase = this.uintptrSize; // leave space for NULL
 
@@ -290,56 +323,90 @@ export class Compiler {
       }
     }
 
-    if (this.options.malloc !== false)
+    if (
+      this.options.memoryModel === CompilerMemoryModel.MALLOC ||
+      this.options.memoryModel === CompilerMemoryModel.EXPORT_MALLOC ||
+      this.options.memoryModel === CompilerMemoryModel.IMPORT_MALLOC
+    ) {
       this.initializeMalloc();
+    }
   }
 
-  /** Initializes the statically linked malloc implementation. */
+  /** Gets an existing signature if it exists and otherwise creates it. */
+  getOrAddSignature(argumentTypes: reflection.Type[], returnType: reflection.Type): binaryen.Signature {
+    const identifiers: string[] = [];
+    argumentTypes.forEach(type => identifiers.push(binaryen.identifierOf(type, this.uintptrSize)));
+    identifiers.push(binaryen.identifierOf(returnType, this.uintptrSize));
+    const identifier = identifiers.join("");
+    let signature = this.signatures[identifier];
+    if (!signature) {
+      const binaryenArgumentTypes: binaryen.Type[] = argumentTypes.map(type => binaryen.typeOf(type, this.uintptrSize));
+      const binaryenReturnType = binaryen.typeOf(returnType, this.uintptrSize);
+      signature = this.signatures[identifier] = this.module.getFunctionTypeBySignature(binaryenReturnType, binaryenArgumentTypes)
+        || this.module.addFunctionType(identifier, binaryenReturnType, binaryenArgumentTypes);
+    }
+    return signature;
+  }
+
+  /** Initializes the statically linked or imported malloc implementation. */
   initializeMalloc(): void {
     const op = this.module;
     const binaryenPtrType = binaryen.typeOf(this.uintptrType, this.uintptrSize);
 
-    // initialize mspace'd malloc on start and remember the mspace within `.msp`:
-    op.addGlobal(".msp", binaryenPtrType, true, binaryen.valueOf(this.uintptrType, op, 0));
-    this.globalInitializers.unshift( // must be initialized before other global initializers use 'new'
-      op.setGlobal(".msp", op.call("mspace_init", [
-        binaryen.valueOf(this.uintptrType, op, this.uintptrSize) // Leave space for null
-      ], binaryenPtrType))
-    );
+    // these are required in any case
+    const mallocSignature = this.getOrAddSignature([this.uintptrType], this.uintptrType); // void *malloc(size_t)
+    const freeSignature   = this.getOrAddSignature([this.uintptrType], reflection.voidType); // void free(void *)
+    const memsetSignature = this.getOrAddSignature([this.uintptrType, reflection.intType, this.uintptrType], this.uintptrType); // void *memset(void *, int, size_t)
+    const memcpySignature = this.getOrAddSignature([this.uintptrType, this.uintptrType, this.uintptrType], this.uintptrType); // void *memcpy(void *, void *, size_t)
+    const memcmpSignature = this.getOrAddSignature([this.uintptrType, this.uintptrType, this.uintptrType], reflection.intType); // void *memcmp(void *, void *, size_t)
 
-    // now, instead of exposing mspace'd functions ...
-    this.module.removeExport("mspace_init");
-    this.module.removeExport("mspace_malloc");
-    this.module.removeExport("mspace_free");
+    if (this.options.memoryModel === CompilerMemoryModel.IMPORT_MALLOC) {
 
-    // ... wrap each in a non-mspace'd version ...
-    const mallocSignatureIdentifier = this.uintptrSize === 4 ? "ii" : "II";
-    let mallocSignature = this.signatures[mallocSignatureIdentifier];
-    if (!mallocSignature)
-      mallocSignature = this.signatures[mallocSignatureIdentifier] = this.module.getFunctionTypeBySignature(binaryenPtrType, [ binaryenPtrType ])
-                     || this.module.addFunctionType(mallocSignatureIdentifier, binaryenPtrType, [ binaryenPtrType ]);
-    this.module.addFunction("malloc", mallocSignature, [], op.block("", [
-      op.return(
-        op.call("mspace_malloc", [ op.getGlobal(".msp", binaryenPtrType), op.getLocal(0, binaryenPtrType) ], binaryenPtrType)
-      )
-    ]));
-    const freeSignatureIdentifier = this.uintptrSize === 4 ? "iv" : "Iv";
-    let freeSignature = this.signatures[freeSignatureIdentifier];
-    if (!freeSignature)
-      freeSignature = this.signatures[freeSignatureIdentifier] = this.module.getFunctionTypeBySignature(binaryen.none, [ binaryenPtrType ])
-                   || this.module.addFunctionType(freeSignatureIdentifier, binaryen.none, [ binaryenPtrType ]);
-    this.module.addFunction("free", freeSignature, [], op.block("", [
-      op.call("mspace_free", [ op.getGlobal(".msp", binaryenPtrType), op.getLocal(0, binaryenPtrType) ], binaryen.none)
-    ]));
+      const initSignature = this.getOrAddSignature([this.uintptrType], reflection.voidType); // void init(void *)
 
-    // ... and expose these to the embedder for convenience, if configured
-    if (this.options.exportMalloc !== false) {
-      this.module.addExport("malloc", "malloc");
-      this.module.addExport("free", "free");
+      op.addImport("malloc_init", "env", "malloc_init", initSignature);
+      op.addImport("malloc", "env", "malloc", mallocSignature);
+      op.addImport("free", "env", "free", freeSignature);
+      op.addImport("memcpy", "env", "memcpy", memcpySignature);
+      op.addImport("memset", "env", "memset", memsetSignature);
+      op.addImport("memcmp", "env", "memcmp", memcmpSignature);
+
     } else {
-      this.module.removeExport("memset");
-      this.module.removeExport("memcpy");
-      this.module.removeExport("memcmp");
+
+      // initialize mspace'd malloc on start and remember the mspace within `.msp`:
+      op.addGlobal(".msp", binaryenPtrType, true, binaryen.valueOf(this.uintptrType, op, 0));
+      this.globalInitializers.unshift( // must be initialized before other global initializers use 'new'
+        op.setGlobal(".msp", op.call("mspace_init", [
+          binaryen.valueOf(this.uintptrType, op, this.uintptrSize) // Leave space for null
+        ], binaryenPtrType))
+      );
+
+      // now, instead of exposing mspace'd functions ...
+      this.module.removeExport("mspace_init");
+      this.module.removeExport("mspace_malloc");
+      this.module.removeExport("mspace_free");
+
+      // ... wrap each in a non-mspace'd version
+      this.module.addFunction("malloc", mallocSignature, [], op.block("", [
+        op.return(
+          op.call("mspace_malloc", [ op.getGlobal(".msp", binaryenPtrType), op.getLocal(0, binaryenPtrType) ], binaryenPtrType)
+        )
+      ]));
+      this.module.addFunction("free", freeSignature, [], op.block("", [
+        op.call("mspace_free", [ op.getGlobal(".msp", binaryenPtrType), op.getLocal(0, binaryenPtrType) ], binaryen.none)
+      ]));
+
+      if (this.options.memoryModel === CompilerMemoryModel.MALLOC) {
+
+        this.module.removeExport("memset");
+        this.module.removeExport("memcpy");
+        this.module.removeExport("memcmp");
+
+      } else /* CompilerMemoryModel.MALLOC_EXPORT */ {
+
+        this.module.addExport("malloc", "malloc");
+        this.module.addExport("free", "free");
+      }
     }
   }
 
@@ -619,7 +686,9 @@ export class Compiler {
 
   /** Compiles the start function if either a user-provided start function is or global initializes are present. */
   maybeCompileStartFunction(): void {
-    if (this.globalInitializers.length === 0) {
+
+    // just use the user start function, if declared, if there is no other initialization to perform
+    if (this.globalInitializers.length === 0 && !(this.options.memoryModel === CompilerMemoryModel.IMPORT_MALLOC)) {
       if (this.userStartFunction)
         this.module.setStart(this.userStartFunction);
       return;
@@ -627,41 +696,52 @@ export class Compiler {
 
     const op = this.module;
 
-    if (this.options.malloc !== false) { // Override malloc initializer with actual static offset
+    // if malloc is bundled, override malloc initializer with actual static offset
+    if (
+      this.options.memoryModel === CompilerMemoryModel.MALLOC ||
+      this.options.memoryModel === CompilerMemoryModel.EXPORT_MALLOC
+    ) {
       this.globalInitializers[0] = op.setGlobal(".msp", op.call("mspace_init", [
         binaryen.valueOf(this.uintptrType, op, this.memoryBase) // memoryBase is aligned at this point
       ], binaryen.typeOf(this.uintptrType, this.uintptrSize)));
     }
 
+    // create a blank start function if there isn't one yet
     if (!this.startFunction)
       (this.startFunction = new reflection.Function(".start", <typescript.FunctionLikeDeclaration>{}, {}, [], reflection.voidType))
         .initialize(this);
-
     const previousFunction = this.currentFunction;
     this.currentFunction = this.startFunction;
 
-    const body: binaryen.Statement[] = new Array(this.globalInitializers.length + (this.userStartFunction ? 1 : 0));
+    const body: binaryen.Statement[] = [];
 
-    let i = 0;
-    for (const k = this.globalInitializers.length; i < k; ++i)
-      body[i] = this.globalInitializers[i]; // setGlobal
-    if (this.userStartFunction)
-      body[i] = op.call("start", [], binaryen.none);
-
-    const startSignatureIdentifier = "v";
-    let signature = this.signatures[startSignatureIdentifier];
-    if (!signature) {
-      signature = this.signatures[startSignatureIdentifier] = this.module.getFunctionTypeBySignature(binaryen.none, []);
-      if (!signature)
-        signature = this.signatures[startSignatureIdentifier] = this.module.addFunctionType(startSignatureIdentifier, binaryen.none, []);
+    // first of all, call imported malloc_init with memoryBase if applicable
+    if (
+      this.options.memoryModel === CompilerMemoryModel.IMPORT_MALLOC
+    ) {
+      body.push(op.call("malloc_init", [
+        binaryen.valueOf(this.uintptrType, op, this.memoryBase)
+      ], binaryen.none));
     }
 
+    // include global initializes
+    let i = 0;
+    for (const k = this.globalInitializers.length; i < k; ++i)
+      body.push(this.globalInitializers[i]); // usually a setGlobal
+
+    // call the user's start function, if applicable
+    if (this.userStartFunction)
+      body.push(op.call("start", [], binaryen.none));
+
+    // make sure to check for additional locals
     const additionalLocals: binaryen.Type[] = [];
     for (i = 0; i < this.startFunction.locals.length; ++i)
       additionalLocals.push(binaryen.typeOf(this.startFunction.locals[i].type, this.uintptrSize));
 
+    // and finally add the function
+    const startSignature = this.getOrAddSignature([], reflection.voidType);
     this.module.setStart(
-      this.module.addFunction(this.startFunction.name, signature, additionalLocals, op.block("", body))
+      this.module.addFunction(this.startFunction.name, startSignature, additionalLocals, op.block("", body))
     );
 
     this.currentFunction = previousFunction;

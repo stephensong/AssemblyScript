@@ -43,17 +43,3 @@ export {
   typescript,
   wabt
 };
-
-(<any>global).assemblyscript = {
-  binaryen,
-  builtins,
-  Compiler,
-  expressions,
-  library,
-  Profiler,
-  reflection,
-  statements,
-  typescript,
-  version,
-  wabt
-};

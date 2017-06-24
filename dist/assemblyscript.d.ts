@@ -135,25 +135,34 @@ declare module 'assemblyscript/compiler' {
   import Profiler from "assemblyscript/profiler";
   import * as reflection from "assemblyscript/reflection";
   import * as typescript from "assemblyscript/typescript";
-  /** AssemblyScript compiler options. */
+  /** Compiler options. */
   export interface CompilerOptions {
-      /** Specifies the target architecture. Defaults to `WASM32`. */
-      target?: CompilerTarget;
       /** Whether compilation shall be performed in silent mode without writing to console. Defaults to `false`. */
       silent?: boolean;
       /** Whether to use built-in tree-shaking. Defaults to `true`. Disable this when building a dynamically linked library. */
       treeShaking?: boolean;
-      /** Whether to include malloc, free, etc. Defaults to `true`. Note that malloc is required when using the `new` operator. */
-      malloc?: boolean;
-      /** Whether to export malloc, free, etc. Defaults to `true`. Disable this if you want malloc etc. to be dead-code-eliminated later on. */
-      exportMalloc?: boolean;
+      /** Specifies the target architecture. Defaults to {@link CompilerTarget.WASM32}. */
+      target?: CompilerTarget | string;
+      /** Specifies the memory model to use. Defaults to {@link CompilerMemoryModel.MALLOC}. */
+      memoryModel?: CompilerMemoryModel | string;
   }
-  /** AssemblyScript compiler target. */
+  /** Compiler target. */
   export enum CompilerTarget {
       /** 32-bit WebAssembly target using uint pointers. */
       WASM32 = 0,
       /** 64-bit WebAssembly target using ulong pointers. */
       WASM64 = 1,
+  }
+  /** Compiler memory model. */
+  export enum CompilerMemoryModel {
+      /** Does not bundle any memory management routines. */
+      BARE = 0,
+      /** Bundles malloc, free, etc. */
+      MALLOC = 1,
+      /** Bundles malloc, free, etc. and exports it to the embedder. */
+      EXPORT_MALLOC = 2,
+      /** Imports malloc, free, etc. as provided by the embedder. */
+      IMPORT_MALLOC = 3,
   }
   /** A static memory segment. */
   export interface MemorySegment {
@@ -252,7 +261,9 @@ declare module 'assemblyscript/compiler' {
       mangleGlobalName(name: string, sourceFile: typescript.SourceFile): string;
       /** Scans over the sources and initializes the reflection structure. */
       initialize(): void;
-      /** Initializes the statically linked malloc implementation. */
+      /** Gets an existing signature if it exists and otherwise creates it. */
+      getOrAddSignature(argumentTypes: reflection.Type[], returnType: reflection.Type): binaryen.Signature;
+      /** Initializes the statically linked or imported malloc implementation. */
       initializeMalloc(): void;
       /** Initializes a global variable. */
       initializeGlobal(node: typescript.VariableStatement): void;
@@ -512,6 +523,8 @@ declare module 'assemblyscript/statements' {
 declare module 'assemblyscript/wabt' {
   /** Indicates whether WABT-specific functionality is available. */
   export const available: boolean;
+  /** A reusable error message in case wabt.js is not available. */
+  export const ENOTAVAILABLE = "wabt.js could not be found. While it is an optional dependency, using WABT-specific functionality requires it.";
   /** Options for {@link wasmToWast}. */
   export interface IWasmToWastOptions {
     readDebugNames?: boolean;
@@ -555,7 +568,7 @@ declare module 'assemblyscript/expressions/binary' {
 declare module 'assemblyscript/expressions/call' {
   /** @module assemblyscript/expressions */ /** */
   import * as binaryen from "assemblyscript/binaryen";
-  import Compiler from "assemblyscript/compiler";
+  import { Compiler } from "assemblyscript/compiler";
   import * as reflection from "assemblyscript/reflection";
   import * as typescript from "assemblyscript/typescript";
   export function compileCall(compiler: Compiler, node: typescript.CallExpression, contextualType: reflection.Type): binaryen.Expression;

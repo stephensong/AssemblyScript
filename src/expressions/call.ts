@@ -2,7 +2,7 @@
 
 import * as binaryen from "../binaryen";
 import * as builtins from "../builtins";
-import Compiler from "../compiler";
+import { Compiler, CompilerMemoryModel } from "../compiler";
 import * as reflection from "../reflection";
 import * as typescript from "../typescript";
 
@@ -171,7 +171,11 @@ export function compileCall(compiler: Compiler, node: typescript.CallExpression,
   }
 
   // Rewire malloc calls
-  if (compiler.options.malloc !== false) {
+  if (
+    compiler.options.memoryModel === CompilerMemoryModel.MALLOC ||
+    compiler.options.memoryModel === CompilerMemoryModel.EXPORT_MALLOC ||
+    compiler.options.memoryModel === CompilerMemoryModel.IMPORT_MALLOC
+  ) {
     switch (instance.name) {
       case "assembly.d.ts/malloc":
       case "assembly.d.ts/free":

@@ -11,7 +11,7 @@ $> npm install assemblyscript-loader
 ```
 
 ```ts
-import load from "assemblyscript-loader";
+import load from "assemblyscript-loader"; // JS: var load = require("assemblyscript-loader").load;
 
 load("path/to/module.wasm", {
   imports: {
