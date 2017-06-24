@@ -108,27 +108,29 @@ tape("compileString", test => {
       module.optimize();
       const text = module.emitText();
       test.ok(typeof text === "string" && text.length, "should emit a non-empty string");
-    }, "should optimize and emit without errors");
+    }, "should optimize and emit without throwing");
   }
 
   test.end();
 });
 
-// TODO: Let this parse an exemplary wast
-/* import * as wabt from "../src/wabt";
+import * as wabt from "../src/wabt";
 
 tape("wabt", test => {
+  const source = `(module
+  (type (;0;) (func (param i32 i32) (result i32)))
+  (func $add (type 0) (param i32 i32) (result i32)
+    get_local 0
+    get_local 1
+    i32.add)
+  (memory (;0;) 1)
+  (export "add" (func $add)))
+`.replace(/\r?\n/g, "\n");
   test.doesNotThrow(() => {
-    let buffer = Uint8Array.from(fs.readFileSync(__dirname + "/test.wasm"));
-    // console.log("Buffer (from file): " + buffer);
-    let wast = wabt.wasmToWast(buffer, { readDebugNames: true });
-    // console.log("Wast: " + wast);
-    buffer = wabt.wastToWasm(wast, { filename: "fib.wasm", writeDebugNames: true });
-    // console.log("Buffer (from output): " + buffer);
-    wast = wabt.wasmToWast(buffer, { readDebugNames: true });
-    // console.log("Wast: " + wast);
-    test.ok(typeof wast === "string" && wast.length, "result should be a non-empty string");
-  });
+    const wasm = wabt.wastToWasm(source, { filename: "test.wasm", writeDebugNames: true });
+    const wast = wabt.wasmToWast(wasm, { readDebugNames: true });
+    test.equal(wast, source, "should convert from wast to wasm and back");
+  }, "should convert between wast and wasm without throwing");
 
   test.end();
-}); */
+});

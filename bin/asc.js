@@ -6,7 +6,6 @@ var pkg = require("../package.json");
 var assemblyscript;
 
 var isDev = fs.existsSync(__dirname + "/../src/index.ts") && path.basename(path.join(__dirname, "..", "..")) !== "node_modules";
-isDev = false;
 
 if (isDev) {
   require("ts-node/register");

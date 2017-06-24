@@ -190,7 +190,7 @@ export function formatDiagnosticsWithColorAndContext(diagnostics: Diagnostic[], 
 
 /** Prints a diagnostic message to console. */
 export function printDiagnostic(diagnostic: Diagnostic): void {
-  if (!(<any>sys).browser) {
+  if (typeof process !== "undefined" && process && process.stderr) {
     if (diagnostic.category === DiagnosticCategory.Message)
       process.stderr.write(formatDiagnostics([ diagnostic ], defaultFormatDiagnosticsHost));
     else

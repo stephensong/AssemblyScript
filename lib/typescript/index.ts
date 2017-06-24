@@ -55,7 +55,6 @@ if (!ts.sys) {
       throw Error("not implemented");
     }
   };
-  (<any>ts.sys).browser = true;
 }
 
 module.exports = ts;
