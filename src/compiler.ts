@@ -231,7 +231,7 @@ export class Compiler {
       else
         this.memoryModel = CompilerMemoryModel.MALLOC;
     } else
-      this.memoryModel = CompilerMemoryModel.MALLOC;
+      this.memoryModel = this.options.memoryModel;
 
     if (
       this.memoryModel === CompilerMemoryModel.MALLOC ||
