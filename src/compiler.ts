@@ -48,7 +48,7 @@ export enum CompilerMemoryModel {
 }
 
 /** A static memory segment. */
-export interface MemorySegment {
+export interface CompilerMemorySegment {
   /** Offset in linear memory. */
   offset: number;
   /** Data in linear memory. */
@@ -81,14 +81,14 @@ export class Compiler {
   globalInitializers: binaryen.Expression[] = [];
   userStartFunction?: binaryen.Function;
   memoryBase: number;
-  memorySegments: MemorySegment[] = [];
+  memorySegments: CompilerMemorySegment[] = [];
 
   // Codegen
   target: CompilerTarget;
   memoryModel: CompilerMemoryModel;
   profiler = new Profiler();
   currentFunction: reflection.Function;
-  stringPool: { [key: string]: MemorySegment } = {};
+  stringPool: { [key: string]: CompilerMemorySegment } = {};
 
   // Reflection
   uintptrType: reflection.Type;
@@ -208,19 +208,17 @@ export class Compiler {
     this.checker = program.getDiagnosticsProducingTypeChecker();
     this.diagnostics = typescript.createDiagnosticCollection();
 
-    if (this.options.target === undefined)
-      this.target = CompilerTarget.WASM32;
-    else if (typeof this.options.target === "string") {
+    if (typeof this.options.target === "string") {
       if (this.options.target.toLowerCase() === "wasm64")
         this.target = CompilerTarget.WASM64;
       else
         this.target = CompilerTarget.WASM32;
-    } else
+    } else if (typeof this.options.target === "number" && CompilerTarget[this.options.target])
       this.target = this.options.target;
+    else
+      this.target = CompilerTarget.WASM32;
 
-    if (this.options.memoryModel === undefined)
-      this.memoryModel = CompilerMemoryModel.MALLOC;
-    else if (typeof this.options.memoryModel === "string") {
+    if (typeof this.options.memoryModel === "string") {
       const memoryModelLower = this.options.memoryModel.toLowerCase().replace(/_/g, "");
       if (memoryModelLower === "exportmalloc")
         this.memoryModel = CompilerMemoryModel.EXPORT_MALLOC;
@@ -230,8 +228,10 @@ export class Compiler {
         this.memoryModel = CompilerMemoryModel.BARE;
       else
         this.memoryModel = CompilerMemoryModel.MALLOC;
-    } else
+    } else if (typeof this.options.memoryModel === "number" && CompilerMemoryModel[this.options.memoryModel])
       this.memoryModel = this.options.memoryModel;
+    else
+      this.memoryModel = CompilerMemoryModel.MALLOC;
 
     if (
       this.memoryModel === CompilerMemoryModel.MALLOC ||
@@ -521,7 +521,7 @@ export class Compiler {
         buffer[offset++] = (charCode >>> 8) & 0xff;
       }
 
-      const memorySegment = <MemorySegment>{
+      const memorySegment = <CompilerMemorySegment>{
         offset: this.memoryBase,
         buffer: buffer
       };

@@ -165,7 +165,7 @@ declare module 'assemblyscript/compiler' {
       IMPORT_MALLOC = 3,
   }
   /** A static memory segment. */
-  export interface MemorySegment {
+  export interface CompilerMemorySegment {
       /** Offset in linear memory. */
       offset: number;
       /** Data in linear memory. */
@@ -193,13 +193,13 @@ declare module 'assemblyscript/compiler' {
       globalInitializers: binaryen.Expression[];
       userStartFunction?: binaryen.Function;
       memoryBase: number;
-      memorySegments: MemorySegment[];
+      memorySegments: CompilerMemorySegment[];
       target: CompilerTarget;
       memoryModel: CompilerMemoryModel;
       profiler: Profiler;
       currentFunction: reflection.Function;
       stringPool: {
-          [key: string]: MemorySegment;
+          [key: string]: CompilerMemorySegment;
       };
       uintptrType: reflection.Type;
       functionTemplates: {

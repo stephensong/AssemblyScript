@@ -55,6 +55,7 @@ browserify({
   console.log("\nbundling DTS files ...");
 
   var seen = {};
+  var dtsOut = __dirname + "/../dist/assemblyscript.d.ts";
   dts.bundle({
     name: "assemblyscript",
     main: __dirname + "/../out/index.d.ts",
@@ -65,7 +66,7 @@ browserify({
       seen[file] = true;
       return excluded;
     },
-    out: __dirname + "/../dist/assemblyscript.d.ts",
+    out: dtsOut,
     indent: "  ",
     externals: false,
     referenceExternals: false
