@@ -1,4 +1,4 @@
-//! { "malloc": false }
+//! { "memoryModel": "bare" }
 
 export function testIntToFloat(a: int): float {
   return reinterpretf(a);

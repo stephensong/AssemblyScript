@@ -1,4 +1,4 @@
-//! { "malloc": false }
+//! { "memoryModel": "bare" }
 
 export function testSbyte(): sbyte {
   return -1 + 1;

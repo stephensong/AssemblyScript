@@ -1,4 +1,4 @@
-//! { "malloc": false }
+//! { "memoryModel": "bare" }
 
 export function test(a: int, b: int): int {
   return a > b

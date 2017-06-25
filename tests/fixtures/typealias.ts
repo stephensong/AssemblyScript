@@ -1,4 +1,4 @@
-//! { "malloc": false }
+//! { "memoryModel": "bare" }
 
 type f64 = double;
 

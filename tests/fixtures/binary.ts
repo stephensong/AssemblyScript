@@ -1,4 +1,4 @@
-//! { "malloc": false }
+//! { "memoryModel": "bare" }
 
 export function testInt(a: int, b: int): void {
   a + b;
