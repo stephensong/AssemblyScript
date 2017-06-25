@@ -111,7 +111,7 @@ export const defaultCompilerOptions = <CompilerOptions>{
 /** Creates an AssemblyScript-compatible compiler host. */
 export function createCompilerHost(moduleSearchLocations: string[], entryFileSource?: string, entryFileName: string = "module.ts"): CompilerHost {
   const files: { [key: string]: SourceFile } = {};
-  if (entryFileSource)
+  if (typeof entryFileSource === "string")
     files[entryFileName] = createSourceFile(entryFileName, <string>entryFileSource, ScriptTarget.Latest);
   Object.keys(library.files).forEach(name => {
     files[name] = createSourceFile(name, library.files[name], ScriptTarget.Latest);
