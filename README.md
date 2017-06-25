@@ -341,7 +341,7 @@ Options:
                         wasm32  Compiles to 32-bit WebAssembly. [default]
                         wasm64  Compiles to 64-bit WebAssembly.
 
- --memorymodel, -mm     Specifies the memory model to use.
+ --memorymodel, -m      Specifies the memory model to use.
 
                         malloc        Bundles malloc, free, etc. [default]
                         exportmalloc  Bundles malloc, free, etc. and exports each to the embedder.

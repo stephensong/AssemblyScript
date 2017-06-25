@@ -170,11 +170,11 @@ export function compileCall(compiler: Compiler, node: typescript.CallExpression,
       return builtins.isFinite(compiler, node.arguments[0], argumentExpressions[0]);
   }
 
-  // Rewire malloc calls
+  // Rewire internal library calls
   if (
-    compiler.options.memoryModel === CompilerMemoryModel.MALLOC ||
-    compiler.options.memoryModel === CompilerMemoryModel.EXPORT_MALLOC ||
-    compiler.options.memoryModel === CompilerMemoryModel.IMPORT_MALLOC
+    compiler.memoryModel === CompilerMemoryModel.MALLOC ||
+    compiler.memoryModel === CompilerMemoryModel.EXPORT_MALLOC ||
+    compiler.memoryModel === CompilerMemoryModel.IMPORT_MALLOC
   ) {
     switch (instance.name) {
       case "assembly.d.ts/malloc":

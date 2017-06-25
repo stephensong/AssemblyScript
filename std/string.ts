@@ -1,21 +1,21 @@
-abstract class StringImpl extends String {
+export abstract class String extends Array<ushort> implements IDisposable {
 
-  /* indexOf(value: string): int {
+  indexOfString(value: string): int { // FIXME: any way to overload this?
     if (value.length > this.length)
       return -1;
-    const thisPtr: uintptr = unsafe_cast<StringImpl,uintptr>(this) + sizeof<int>();
+    const thisPtr: uintptr = unsafe_cast<String,uintptr>(this) + sizeof<int>();
     const valuePtr: uintptr = unsafe_cast<string,uintptr>(value) + sizeof<int>();
     const limitPtr: uintptr = this.length - value.length;
     for (let offsetPtr: uintptr = 0; offsetPtr < limitPtr; offsetPtr += sizeof<ushort>())
-      if (memcmp(thisPtr + offsetPtr, valuePtr, value.length) === 0)
+      if (memcmp(thisPtr + offsetPtr, valuePtr, value.length) == 0)
         return offsetPtr as int;
     return -1;
-  } */
+  }
 
   startsWith(value: string): bool {
     if (value.length > this.length)
       return false;
-    const thisPtr: uintptr = unsafe_cast<StringImpl,uintptr>(this) + sizeof<int>();
+    const thisPtr: uintptr = unsafe_cast<String,uintptr>(this) + sizeof<int>();
     const valuePtr: uintptr = unsafe_cast<string,uintptr>(value) + sizeof<int>();
     return memcmp(thisPtr, valuePtr, value.length << 1) == 0;
   }
@@ -23,7 +23,7 @@ abstract class StringImpl extends String {
   endsWith(value: string): bool {
     if (value.length > this.length)
       return false;
-    const thisPtr: uintptr = unsafe_cast<StringImpl,uintptr>(this) + sizeof<int>();
+    const thisPtr: uintptr = unsafe_cast<String,uintptr>(this) + sizeof<int>();
     const valuePtr: uintptr = unsafe_cast<string,uintptr>(value) + sizeof<int>();
     return memcmp(thisPtr + (this.length - value.length) << 1, valuePtr, value.length) == 0;
   }

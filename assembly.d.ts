@@ -65,13 +65,10 @@ declare const Infinityf: float;
 // Arrays
 
 /** A fixed-size array. */
-@__impl("ArrayImpl")
 declare class Array<T> implements IDisposable {
   readonly length: int;
   constructor(size: int);
   dispose(): void;
-
-  // implemented in std/array.ts
   indexOf(value: T, startOffset: uintptr): uintptr;
 }
 
@@ -99,11 +96,9 @@ declare class Float64Array extends Array<double> {}
 // Strings
 
 /** A fixed-size UTF-16LE encoded string. */
-@__impl("StringImpl")
 declare class String extends Array<ushort> implements IDisposable {
   constructor(size: int);
-
-  // implemented in std/string.ts
+  indexOfString(value: string): int;
   startsWith(value: string): bool;
   endsWidth(value: string): bool;
 }
@@ -204,6 +199,8 @@ declare function memcmp(left: uintptr, right: uintptr, size: uintptr): int;
 declare function malloc(size: uintptr): uintptr;
 /** Frees a previously allocated chunk of memory by its pointer. */
 declare function free(ptr: uintptr): void;
+/** Called to initialize malloc if imported. */
+declare function malloc_init(offset: uintptr): void;
 
 // Temporary fillers
 
@@ -216,10 +213,7 @@ declare interface RegExp {}
 
 // Interfaces
 
-/** An internal decorator specifying the implementation of a declared class. */
-declare function __impl(path: string);
-
-/** Marks a class as being disposable (can be freed from memory manually). */
+/** Marks a class as being disposable (can be free'd from memory manually). */
 declare interface IDisposable {
   dispose(): void;
 }

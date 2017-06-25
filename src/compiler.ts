@@ -572,7 +572,9 @@ export class Compiler {
     if (this.classTemplates[name])
       return; // already initialized
 
-    if (typescript.getSourceFileOfNode(node) === this.entryFile && typescript.isExport(node))
+    const sourceFile = typescript.getSourceFileOfNode(node);
+
+    if (sourceFile === this.entryFile && typescript.isExport(node))
       this.warn(<typescript.Identifier>node.name, "Exporting entire classes is not supported yet");
 
     let base: reflection.ClassTemplate | undefined;
@@ -598,19 +600,6 @@ export class Compiler {
       }
     }
 
-    // Determine @__impl argument, if annotated
-    let impl: string | undefined;
-    if (node.decorators)
-      for (let i = 0, k = node.decorators.length; i < k; ++i) {
-        const decorator = node.decorators[i];
-        if (decorator.expression.kind === typescript.SyntaxKind.CallExpression) {
-          const call = <typescript.CallExpression>decorator.expression;
-          if (call.expression.kind === typescript.SyntaxKind.Identifier && typescript.getTextOfNode(call.expression) === "__impl") {
-            impl = (<typescript.LiteralExpression>call.arguments[0]).text;
-          }
-        }
-      }
-
     const template = this.classTemplates[name] = new reflection.ClassTemplate(name, node, base, baseTypeArguments);
     let instance: reflection.Class | undefined;
     if (!template.isGeneric) {
@@ -618,9 +607,10 @@ export class Compiler {
       instance.initialize(this);
     }
 
-    // Remember that this is a declaration that needs to be implemented
-    if (impl)
-      this.pendingImplementations[impl] = template;
+    // Remember that this is a declaration that needs to be implemented. The way this works is by
+    // patching in the first class matching this declaration's name as the super class later on.
+    if (sourceFile === this.libraryFile)
+      this.pendingImplementations[simpleName] = template;
 
     // Replace the declaration with the implementation later on
     else if (this.pendingImplementations[simpleName])

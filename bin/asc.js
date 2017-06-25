@@ -46,9 +46,9 @@ function main(args) {
   if (argv.help || files.length !== 1) {
     process.stderr.write([
       "Version " + pkg.version + (isDev ? "-dev" : ""),
-      "Syntax: "+ chalk.cyan.bold("asc") + " [options] entryFile",
+      "Syntax: "+ chalk.reset.cyan.bold("asc") + " [options] entryFile",
       "",
-      "Options:",
+      chalk.reset.white.bold("Options:"),
       " --out, -o, --outFile   Specifies the output file name.",
       " --validate, -v         Validates the module.",
       " --optimize, -O         Runs optimizing binaryen IR passes.",
@@ -83,6 +83,9 @@ function main(args) {
   if (!wasmModule)
     return EFAILURE;
 
+  if (argv.optimize)
+    wasmModule.optimize();
+
   if (argv.validate) {
     var result = wasmModule.validate(); // FIXME: this always prints to console on error
     if (!result) {
@@ -91,9 +94,6 @@ function main(args) {
       return EINVALID;
     }
   }
-
-  if (argv.optimize)
-    wasmModule.optimize();
 
   if (argv.out && /\.wast$/.test(argv.out))
     argv.text = true;

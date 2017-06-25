@@ -1,6 +1,5 @@
-abstract class ArrayImpl<T> extends Array<T> {
-  abstract readonly length: uintptr;
-  abstract dispose(): void;
+export abstract class Array<T> implements IDisposable {
+  readonly length: uintptr;
 
   indexOf(value: T, startOffset: uintptr = 0): uintptr {
     const length: uintptr = this.length;
@@ -11,4 +10,6 @@ abstract class ArrayImpl<T> extends Array<T> {
     }
     return -1;
   }
+
+  abstract dispose(): void;
 }
