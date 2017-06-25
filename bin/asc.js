@@ -28,7 +28,7 @@ function main(args) {
       validate: [ "v" ],
       optimize: [ "O" ],
       target: [ "t" ],
-      memorymodel: [ "mm", "memoryModel", "memory-model" ],
+      memorymodel: [ "m", "memoryModel", "memory-model" ],
       help: [ "h" ]
     },
     default: {
@@ -63,7 +63,7 @@ function main(args) {
       "                        wasm32  Compiles to 32-bit WebAssembly. " + chalk.gray("[default]"),
       "                        wasm64  Compiles to 64-bit WebAssembly.",
       "",
-      " --memorymodel, -mm     Specifies the memory model to use.",
+      " --memorymodel, -m      Specifies the memory model to use.",
       "",
       "                        malloc        Bundles malloc, free, etc. " + chalk.gray("[default]"),
       "                        exportmalloc  Bundles malloc, free, etc. and exports each to the embedder.",

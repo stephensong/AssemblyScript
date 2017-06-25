@@ -1,9 +1,9 @@
 Distributions
 =============
 
-This folder contains pre-built browser binaries of AssemblyScript.
+This folder contains pre-built bundles of AssemblyScript. Bundles are compatible with CommonJS and AMD loaders and export globally as `assemblyscript` if neither is present.
 
-Note that Binaryen and WABT are not included in the bundle. A compatible version of Binaryen can be obtained [from the binaryen.js repository](https://github.com/dcodeIO/binaryen.js) and of WABT [from the wabt.js repository](https://github.com/dcodeIO/wabt.js).
+Note that [binaryen.js](https://github.com/dcodeIO/binaryen.js) (required) and [wabt.js]((https://github.com/dcodeIO/wabt.js)) (optional) are not included in the bundle because these are rather large asm.js compilations. Compatible versions of both dependencies can be obtained from their [respective](https://github.com/dcodeIO/binaryen.js/tags) [repositories](https://github.com/dcodeIO/wabt.js/tags).
 
 Usage
 -----
@@ -24,7 +24,7 @@ CDN:
 <script src="//rawgit.com/dcodeIO/AssemblyScript/master/dist/assemblyscript.js"></script>
 ```
 
-When using the CDN, remember to replace `master` with the exact versions / tags your application depends upon, if applicable.
+When using the CDN, remember to replace `master` with the exact versions / tags your application depends upon. In case of doubt, check the `package.json`-file of the AssemblyScript package you are using for the respective versions. If you however insist to use bleeding edge master versions, be prepared that your application might break whenever changes are pushed to master.
 
 Example
 -------

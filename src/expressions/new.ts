@@ -81,30 +81,36 @@ export function compileNewClass(compiler: Compiler, node: typescript.NewExpressi
 
   if (clazz.ctor) {
 
-    // return ClassConstructor(ptr, arguments...)
+    // ClassConstructor(ptr, arguments...)
+
+    if (!clazz.ctor.compiled && clazz.ctor.body)
+      compiler.compileFunction(clazz.ctor);
 
     const parameterCount = clazz.ctor.parameters.length - 1;
     const argumentCount = node.arguments && node.arguments.length || 0;
-    const args = new Array(parameterCount + 1);
-    args[0] = ptr; // first constructor parameter is 'this'
-    let i = 0;
+    if (argumentCount > parameterCount)
+       compiler.error(node, "Too many arguments", "Expected " + parameterCount + " but saw " + argumentCount);
+
+    const binaryenArguments = [ ptr ]; // first constructor parameter is 'this'
     let tooFewDiagnosed = false;
-    for (; i < parameterCount; ++i) {
-      const parameter = clazz.ctor.parameters[i];
+    for (let i = 0; i < parameterCount; ++i) {
+      const parameter = clazz.ctor.parameters[i + 1]; // skip over 'this'
       if (argumentCount > i) {
         const argumentNode = (<typescript.NodeArray<typescript.Expression>>node.arguments)[i];
-        args[i + 1] = compiler.maybeConvertValue(argumentNode, compiler.compileExpression(argumentNode, parameter.type), typescript.getReflectedType(argumentNode), parameter.type, false);
+        binaryenArguments.push(
+          compiler.maybeConvertValue(argumentNode, compiler.compileExpression(argumentNode, parameter.type), typescript.getReflectedType(argumentNode), parameter.type, false)
+        );
       } else { // TODO: use default value if defined
         if (!tooFewDiagnosed) {
           tooFewDiagnosed = true;
           compiler.error(node, "Too few arguments", "Expected " + parameterCount + " but saw " + argumentCount);
         }
-        args[i + 1] = compiler.module.unreachable();
+        binaryenArguments.push(
+          compiler.module.unreachable()
+        );
       }
     }
-    if (argumentCount > i)
-      compiler.error(node, "Too many arguments", "Expected " + parameterCount + " but saw " + argumentCount);
-    ptr = op.call(clazz.ctor.name, args, binaryen.typeOf(clazz.ctor.returnType, compiler.uintptrSize));
+    ptr = op.call(clazz.ctor.name, binaryenArguments, binaryen.typeOf(clazz.ctor.returnType, compiler.uintptrSize));
   }
 
   return ptr;

@@ -142,9 +142,9 @@ declare module 'assemblyscript/compiler' {
       /** Whether to use built-in tree-shaking. Defaults to `true`. Disable this when building a dynamically linked library. */
       treeShaking?: boolean;
       /** Specifies the target architecture. Defaults to {@link CompilerTarget.WASM32}. */
-      target?: CompilerTarget | string;
+      target?: CompilerTarget | "wasm32" | "wasm64";
       /** Specifies the memory model to use. Defaults to {@link CompilerMemoryModel.MALLOC}. */
-      memoryModel?: CompilerMemoryModel | string;
+      memoryModel?: CompilerMemoryModel | "malloc" | "exportmalloc" | "importmalloc" | "bare";
   }
   /** Compiler target. */
   export enum CompilerTarget {
@@ -178,6 +178,7 @@ declare module 'assemblyscript/compiler' {
     * for convenience. Their diagnostics go to {@link Compiler.lastDiagnostics}.
     */
   export class Compiler {
+      /** Diagnostic messages produced by the last invocation of {@link Compiler.compileFile} or {@link Compiler.compileString}. */
       static lastDiagnostics: typescript.Diagnostic[];
       options: CompilerOptions;
       program: typescript.Program;
@@ -193,6 +194,8 @@ declare module 'assemblyscript/compiler' {
       userStartFunction?: binaryen.Function;
       memoryBase: number;
       memorySegments: MemorySegment[];
+      target: CompilerTarget;
+      memoryModel: CompilerMemoryModel;
       profiler: Profiler;
       currentFunction: reflection.Function;
       stringPool: {

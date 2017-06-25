@@ -21,9 +21,9 @@ export interface CompilerOptions {
   /** Whether to use built-in tree-shaking. Defaults to `true`. Disable this when building a dynamically linked library. */
   treeShaking?: boolean;
   /** Specifies the target architecture. Defaults to {@link CompilerTarget.WASM32}. */
-  target?: CompilerTarget | string;
+  target?: CompilerTarget | "wasm32" | "wasm64";
   /** Specifies the memory model to use. Defaults to {@link CompilerMemoryModel.MALLOC}. */
-  memoryModel?: CompilerMemoryModel | string;
+  memoryModel?: CompilerMemoryModel | "malloc" | "exportmalloc" | "importmalloc" | "bare";
 }
 
 /** Compiler target. */
@@ -62,6 +62,8 @@ export interface MemorySegment {
  * for convenience. Their diagnostics go to {@link Compiler.lastDiagnostics}.
  */
 export class Compiler {
+
+  /** Diagnostic messages produced by the last invocation of {@link Compiler.compileFile} or {@link Compiler.compileString}. */
   static lastDiagnostics: typescript.Diagnostic[];
 
   options: CompilerOptions;
@@ -82,6 +84,8 @@ export class Compiler {
   memorySegments: MemorySegment[] = [];
 
   // Codegen
+  target: CompilerTarget;
+  memoryModel: CompilerMemoryModel;
   profiler = new Profiler();
   currentFunction: reflection.Function;
   stringPool: { [key: string]: MemorySegment } = {};
@@ -204,35 +208,42 @@ export class Compiler {
     this.checker = program.getDiagnosticsProducingTypeChecker();
     this.diagnostics = typescript.createDiagnosticCollection();
 
-    if (typeof this.options.target === "string") {
+    if (this.options.target === undefined)
+      this.target = CompilerTarget.WASM32;
+    else if (typeof this.options.target === "string") {
       if (this.options.target.toLowerCase() === "wasm64")
-        this.options.target = CompilerTarget.WASM64;
+        this.target = CompilerTarget.WASM64;
       else
-        this.options.target = CompilerTarget.WASM32;
-    }
+        this.target = CompilerTarget.WASM32;
+    } else
+      this.target = this.options.target;
 
-    if (typeof this.options.memoryModel === "string") {
+    if (this.options.memoryModel === undefined)
+      this.memoryModel = CompilerMemoryModel.MALLOC;
+    else if (typeof this.options.memoryModel === "string") {
       const memoryModelLower = this.options.memoryModel.toLowerCase().replace(/_/g, "");
       if (memoryModelLower === "exportmalloc")
-        this.options.memoryModel = CompilerMemoryModel.EXPORT_MALLOC;
+        this.memoryModel = CompilerMemoryModel.EXPORT_MALLOC;
       else if (memoryModelLower === "importmalloc")
-        this.options.memoryModel = CompilerMemoryModel.IMPORT_MALLOC;
+        this.memoryModel = CompilerMemoryModel.IMPORT_MALLOC;
       else if (memoryModelLower === "bare")
-        this.options.memoryModel = CompilerMemoryModel.BARE;
+        this.memoryModel = CompilerMemoryModel.BARE;
       else
-        this.options.memoryModel = CompilerMemoryModel.MALLOC;
-    }
+        this.memoryModel = CompilerMemoryModel.MALLOC;
+    } else
+      this.memoryModel = CompilerMemoryModel.MALLOC;
 
-    if (this.options.memoryModel === CompilerMemoryModel.MALLOC || this.options.memoryModel === CompilerMemoryModel.EXPORT_MALLOC) {
-      if (!mallocWasm) {
-        mallocWasm = new Uint8Array(base64.length(library.malloc));
-        base64.decode(library.malloc, mallocWasm, 0);
-      }
+    if (
+      this.memoryModel === CompilerMemoryModel.MALLOC ||
+      this.memoryModel === CompilerMemoryModel.EXPORT_MALLOC
+    ) {
+      if (!mallocWasm)
+        base64.decode(library.malloc, mallocWasm = new Uint8Array(base64.length(library.malloc)), 0);
       this.module = binaryen.readBinary(mallocWasm);
     } else
       this.module = new binaryen.Module();
 
-    this.uintptrType = this.options.target === CompilerTarget.WASM64 ? reflection.uintptrType64 : reflection.uintptrType32;
+    this.uintptrType = this.target === CompilerTarget.WASM64 ? reflection.uintptrType64 : reflection.uintptrType32;
     this.memoryBase = this.uintptrSize; // leave space for NULL
 
     const sourceFiles = program.getSourceFiles();
@@ -324,9 +335,9 @@ export class Compiler {
     }
 
     if (
-      this.options.memoryModel === CompilerMemoryModel.MALLOC ||
-      this.options.memoryModel === CompilerMemoryModel.EXPORT_MALLOC ||
-      this.options.memoryModel === CompilerMemoryModel.IMPORT_MALLOC
+      this.memoryModel === CompilerMemoryModel.MALLOC ||
+      this.memoryModel === CompilerMemoryModel.EXPORT_MALLOC ||
+      this.memoryModel === CompilerMemoryModel.IMPORT_MALLOC
     ) {
       this.initializeMalloc();
     }
@@ -360,7 +371,7 @@ export class Compiler {
     const memcpySignature = this.getOrAddSignature([this.uintptrType, this.uintptrType, this.uintptrType], this.uintptrType); // void *memcpy(void *, void *, size_t)
     const memcmpSignature = this.getOrAddSignature([this.uintptrType, this.uintptrType, this.uintptrType], reflection.intType); // void *memcmp(void *, void *, size_t)
 
-    if (this.options.memoryModel === CompilerMemoryModel.IMPORT_MALLOC) {
+    if (this.memoryModel === CompilerMemoryModel.IMPORT_MALLOC) {
 
       const initSignature = this.getOrAddSignature([this.uintptrType], reflection.voidType); // void init(void *)
 
@@ -396,7 +407,7 @@ export class Compiler {
         op.call("mspace_free", [ op.getGlobal(".msp", binaryenPtrType), op.getLocal(0, binaryenPtrType) ], binaryen.none)
       ]));
 
-      if (this.options.memoryModel === CompilerMemoryModel.MALLOC) {
+      if (this.memoryModel === CompilerMemoryModel.MALLOC) {
 
         this.module.removeExport("memset");
         this.module.removeExport("memcpy");
@@ -688,7 +699,7 @@ export class Compiler {
   maybeCompileStartFunction(): void {
 
     // just use the user start function, if declared, if there is no other initialization to perform
-    if (this.globalInitializers.length === 0 && !(this.options.memoryModel === CompilerMemoryModel.IMPORT_MALLOC)) {
+    if (this.globalInitializers.length === 0 && !(this.memoryModel === CompilerMemoryModel.IMPORT_MALLOC)) {
       if (this.userStartFunction)
         this.module.setStart(this.userStartFunction);
       return;
@@ -698,8 +709,8 @@ export class Compiler {
 
     // if malloc is bundled, override malloc initializer with actual static offset
     if (
-      this.options.memoryModel === CompilerMemoryModel.MALLOC ||
-      this.options.memoryModel === CompilerMemoryModel.EXPORT_MALLOC
+      this.memoryModel === CompilerMemoryModel.MALLOC ||
+      this.memoryModel === CompilerMemoryModel.EXPORT_MALLOC
     ) {
       this.globalInitializers[0] = op.setGlobal(".msp", op.call("mspace_init", [
         binaryen.valueOf(this.uintptrType, op, this.memoryBase) // memoryBase is aligned at this point
@@ -717,7 +728,7 @@ export class Compiler {
 
     // first of all, call imported malloc_init with memoryBase if applicable
     if (
-      this.options.memoryModel === CompilerMemoryModel.IMPORT_MALLOC
+      this.memoryModel === CompilerMemoryModel.IMPORT_MALLOC
     ) {
       body.push(op.call("malloc_init", [
         binaryen.valueOf(this.uintptrType, op, this.memoryBase)

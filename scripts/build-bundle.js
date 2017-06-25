@@ -31,14 +31,14 @@ browserify({
 })
 .add("./index.js")
 .exclude("binaryen") // required
-.exclude("buffer")   // optional...
+.exclude("wabt")     // optional...
+.exclude("buffer")
 .exclude("crypto")
 .exclude("fs")
 .exclude("os")
 .exclude("process")
-.exclude("_process")
 .exclude("source-map-support")
-.exclude("wabt")
+.exclude("_process") // replaced (see lib/prelude.js)
 .on("dep", function(dep) {
   console.log("- " + path.relative(basedir, dep.file) + " [" + dep.id + "]");
 })
