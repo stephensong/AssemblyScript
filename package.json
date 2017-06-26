@@ -49,6 +49,7 @@
     "@types/node": "^8.0.2",
     "@types/rimraf": "0.0.28",
     "@types/tape": "^4.2.30",
+    "@types/webassembly-js-api": "0.0.1",
     "browserify": "^14.4.0",
     "diff": "^3.2.0",
     "dts-bundle": "^0.7.3",

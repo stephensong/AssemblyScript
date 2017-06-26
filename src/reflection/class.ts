@@ -220,7 +220,7 @@ export class ClassTemplate extends ClassBase {
   }
 }
 
-/** Patches a @__impl-annotated declaration to inherit from its actual implementation. */
+/** Patches a declaration to inherit from its actual implementation. */
 export function patchClassImplementation(compiler: Compiler, declTemplate: ClassTemplate, implTemplate: ClassTemplate): void {
 
   // Make the declaration and extend the implementation. New instances will automatically inherit this change from the template.
