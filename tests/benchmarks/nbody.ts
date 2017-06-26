@@ -75,12 +75,10 @@ function Sun(): Body {
   );
 }
 
-// TODO: Working arrays
-/*
 class NBodySystem {
-  bodies: Array<Body>;
+  bodies: Body[];
 
-  constructor(bodies: Array<Body>) {
+  constructor(bodies: Body[]) {
     let px: double = 0.0;
     let py: double = 0.0;
     let pz: double = 0.0;
@@ -93,7 +91,9 @@ class NBodySystem {
       pz += b.vz * m;
     }
     this.bodies = bodies;
-    this.bodies[0].offsetMomentum(px, py, pz);
+    const firstBody: Body = bodies[0];
+    firstBody.offsetMomentum(px, py, pz);
+    // FIXME: this.bodies[0].offsetMomentum does not work
   }
 
   advance(dt: double): void {
@@ -109,10 +109,10 @@ class NBodySystem {
         distance: double,
         mag: double;
 
-    let bodies: Array<Body> = this.bodies;
-    let size: uint32 = bodies.length;
+    let bodies: Body[] = this.bodies;
+    let size: uint = bodies.length;
 
-    for (let i = 0; i < size; ++i) {
+    for (let i: uint = 0; i < size; ++i) {
       let bodyi: Body = bodies[i];
 
       ix = bodyi.x;
@@ -124,18 +124,18 @@ class NBodySystem {
       bivz = bodyi.vz;
 
       let bodyim: double = bodyi.mass;
-      for (let j: uint32 = i + 1; j < size; ++j) {
+      for (let j: uint = i + 1; j < size; ++j) {
         let bodyj: Body = bodies[j];
         dx = ix - bodyj.x;
         dy = iy - bodyj.y;
         dz = iz - bodyj.z;
 
-        let distanceSq = dx * dx + dy * dy + dz * dz;
+        let distanceSq: double = dx * dx + dy * dy + dz * dz;
         distance = sqrt(distanceSq);
         mag = dt / (distanceSq * distance);
 
-        let bim = bodyim * mag;
-        let bjm = bodyj.mass * mag;
+        let bim: double = bodyim * mag;
+        let bjm: double = bodyj.mass * mag;
 
         bivx -= dx * bjm;
         bivy -= dy * bjm;
@@ -160,10 +160,10 @@ class NBodySystem {
     let dx: double, dy: double, dz: double, distance: double;
     let ix: double, iy: double, iz: double, vx: double, vy: double, vz: double, bim: double;
     let e : double = 0.0;
-    let bodies: Array<Body> = this.bodies;
-    let size: uint32 = bodies.length;
+    let bodies: Body[] = this.bodies;
+    let size: uint = bodies.length;
 
-    for (let i: uint32 = 0; i < size; ++i) {
+    for (let i: uint = 0; i < size; ++i) {
       let bodyi: Body = bodies[i];
 
       ix = bodyi.x;
@@ -178,7 +178,7 @@ class NBodySystem {
 
       e += 0.5 * bim * (vx * vx + vy * vy + vz * vz);
 
-      for (let j = i + 1; j < size; ++j) {
+      for (let j: uint = i + 1; j < size; ++j) {
         let bodyj: Body = bodies[j];
         dx = ix - bodyj.x;
         dy = iy - bodyj.y;
@@ -192,17 +192,15 @@ class NBodySystem {
   }
 }
 
-export function test(n: uint32): double {
-  let bodies = new Array<Body>(5);
+export function test(n: uint): double {
+  let bodies: Body[] = new Array(5);
   bodies[0] = Sun();
   bodies[1] = Jupiter();
   bodies[2] = Saturn();
   bodies[3] = Uranus();
   bodies[4] = Neptune();
   const system: NBodySystem = new NBodySystem(bodies);
-  for (let i: uint32 = 0; i < n; i++) {
+  for (let i: uint = 0; i < n; i++)
     system.advance(0.01);
-  }
   return system.energy();
 }
-*/

@@ -108,12 +108,13 @@ function main(args) {
         return EFAILURE;
       }
       output.write(assemblyscript.wabt.wasmToWast(wasmModule.emitBinary(), { readDebugNames: true }), "utf8");
-    } else
+    } else {
       output.write(wasmModule.emitText(), "utf8");
+    }
   } else
     output.write(Buffer.from(wasmModule.emitBinary()));
 
-  wasmModule.dispose();
+  // wasmModule.dispose();
   return ESUCCESS;
 }
 

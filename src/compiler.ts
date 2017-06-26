@@ -786,7 +786,7 @@ export class Compiler {
     this.currentFunction = instance;
     const initialLocalsIndex = instance.locals.length;
 
-    for (let i = 0; i < instance.parameters.length; ++i) {
+    for (let i = 1; i < instance.parameters.length; ++i) {
       const param = instance.parameters[i];
       if (param.isAlsoProperty) {
         const property = (<reflection.Class>instance.parent).properties[param.name];
