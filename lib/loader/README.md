@@ -27,13 +27,14 @@ API
 ---
 
 * **load**(file: `ArrayBuffer | Uint8Array | string`, options: `ILoadOptions`): `Promise<IModule>`<br />
-  Loads a WebAssembly module either from a buffer or from a file and returns a promise for an `IModule`.
+  Loads a WebAssembly module either from a buffer or from a file and returns a promise for an
+  `IModule`.
 
 * **ILoadOptions**<br />
   Options to set up the environment created by `load`.
 
   * **memory**: `WebAssembly.Memory`<br />
-    Memory instance to use, if applicable.
+    Memory instance to import, if applicable.
   * **imports**: `{ [key: string]: any }`<br />
     Import elements. Usually functions.
 
@@ -43,7 +44,8 @@ API
   * **memory**: `WebAssembly.Memory`<br />
     A reference to the underlying memory instance
   * **buffer**: `Uint8Array`<br />
-    An unsigned byte view on the underlying memory.
+    An unsigned byte view on the underlying memory. Note that this view is updated when memory
+    grows, hence make sure to always access it on the module instance directly.
   * **imports**: `{ [key: string]: any }`<br />
     Imported elements. Usually functions.
   * **exports**: `{ [key: string]: any }`<br />
@@ -52,4 +54,56 @@ API
     Gets the current size of the memory in 64kb pages.
   * **growMemory**(numPages: `number`): `number`<br />
     Grows the memory by the specified number of 64kb pages.
-  * Various accessors for **byte**, **int**, **string** etc. (todo)
+
+  Accessors provided for typed memory access:
+
+  * **sbyte** / **s8**: `INumberMemoryAccessor`<br />
+    Signed 8-bit integer accessors.
+  * **byte** / **u8**: `INumberMemoryAccessor`<br />
+    Unsigned 8-bit integer accessors.
+  * **short** / **s16**: `INumberMemoryAccessor`<br />
+    Signed 16-bit integer accessors.
+  * **ushort** / **u16**: `INumberMemoryAccessor`<br />
+    Unsigned 16-bit integer accessors.
+  * **int** / **s32**: `INumberMemoryAccessor`<br />
+    Signed 32-bit integer accessors.
+  * **uint** / **u32**: `INumberMemoryAccessor`<br />
+    Unsigned 32-bit integer accessors.
+  * **float** / **f32**: `INumberMemoryAccessor`<br />
+    32-bit float accessors.
+  * **double** / **f64**: `INumberMemoryAccessor`<br />
+    64-bit float accessors.
+  * **array**: `IArrayMemoryAccessor`<br />
+    Array accessors.
+  * **string**: `IStringMemoryAccessor`<br />
+    String accessors.
+
+* **INumberMemoryAccessor**<br />
+  Number memory accessor.
+
+  * **get**(ptr: `number`): `number`<br />
+    Gets a value of the underlying type from memory at the specified pointer.
+  * **set**(ptr: `number`, value: `number`): `void`<br />
+    Sets a value of the underlying type in memory at the specified pointer.
+
+* **IArrayMemoryAccessor**<br />
+  Array memory accessor.
+
+  * **get**(ptr: `number`): `{ length: number, base: number }`<br />
+    Gets an array from memory at the specified pointer and returns its length and element base
+    pointer.
+  * **create**(length: `number`, elementByteSize: `number`): `{ ptr: number, base: number }`<br />
+    Creates an array in memory and returns its pointer and element base pointer.
+
+* **IStringMemoryAccessor**<br />
+  String memory accessor.
+
+  * **get**(ptr: `number`): `string`<br />
+    Gets a string from memory at the specified pointer.
+  * **create**(value: `string`): `number`<br />
+    Creates a string in memory and returns its pointer.
+
+Note that the `create` method of array and string accessors requires an implementation of `malloc`,
+`free` etc. to be present and exported. Also remember that memory is unmanaged here and that `free`
+must be called manually to clean up memory, just like in C. Once WebAssembly exposes the garbage
+collector natively, there will be other options as well.

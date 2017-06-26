@@ -2,7 +2,7 @@
 
 /** Options to set up the environment created by {@link load}. */
 export interface ILoadOptions {
-  /** Memory instance to use, if applicable. */
+  /** Memory instance to import, if applicable. */
   memory?: WebAssembly.Memory;
   /** Imported elements. Usually functions. */
   imports?: { [key: string]: any }
@@ -10,8 +10,6 @@ export interface ILoadOptions {
 
 /** Number memory accessor. */
 export interface INumberMemoryAccessor {
-  /** Logarithmic alignment. */
-  align: number;
   /** Gets a value from memory at the specified pointer. */
   get(ptr: number): number;
   /** Sets a value in memory at the specified pointer. */
@@ -20,7 +18,7 @@ export interface INumberMemoryAccessor {
 
 /** Array memory accessor. */
 export interface IArrayMemoryAccessor {
-  /** Gets an array from memory at the specified pointer and returns its leength and element base pointer. */
+  /** Gets an array from memory at the specified pointer and returns its length and element base pointer. */
   get(ptr: number): { length: number, base: number };
   /** Creates an array in memory and returns its pointer and element base pointer. */
   create(length: number, elementByteSize: number): { ptr: number, base: number };
@@ -39,7 +37,7 @@ export interface IModule {
 
   /** A reference to the underlying memory instance. */
   memory: WebAssembly.Memory;
-  /** An unsigned byte view on the underlying memory. */
+  /** An unsigned byte view on the underlying memory. Note that this view is updated when memory grows, hence make sure to always access it on the module instance directly. */
   buffer: Uint8Array;
   /** Imported elements. Usually functions. */
   imports: { [key: string]: any };
@@ -51,50 +49,50 @@ export interface IModule {
   /** Grows the memory by the specified number of 64kb pages. */
   growMemory(numPages: number): number;
 
-  /** Signed 8-bit integer value accessors. */
+  /** Signed 8-bit integer accessors. */
   sbyte: INumberMemoryAccessor;
-  /** Signed 8-bit integer value accessors. Alias of `sbyte`. */
+  /** Signed 8-bit integer accessors. Alias of `sbyte`. */
   s8: INumberMemoryAccessor;
 
-  /** Unsigned 8-bit integer value accessors. */
+  /** Unsigned 8-bit integer accessors. */
   byte: INumberMemoryAccessor;
-  /** Unsigned 8-bit integer value accessors. Alias of `byte`. */
+  /** Unsigned 8-bit integer accessors. Alias of `byte`. */
   u8: INumberMemoryAccessor;
 
-  /** Signed 16-bit integer value accessors. */
+  /** Signed 16-bit integer accessors. */
   short: INumberMemoryAccessor;
   /** Signed 16-bit integer value accessors. Alias of `short`. */
   s16: INumberMemoryAccessor;
 
-  /** Unsigned 16-bit integer value accessors. */
+  /** Unsigned 16-bit integer accessors. */
   ushort: INumberMemoryAccessor;
-  /** Unsigned 16-bit integer value accessors. Alias of `ushort`. */
+  /** Unsigned 16-bit integer accessors. Alias of `ushort`. */
   u16: INumberMemoryAccessor;
 
-  /** Signed 32-bit integer value accessors. */
+  /** Signed 32-bit integer accessors. */
   int: INumberMemoryAccessor;
-  /** Signed 32-bit integer value accessors. Alias of `int`. */
+  /** Signed 32-bit integer accessors. Alias of `int`. */
   s32: INumberMemoryAccessor;
 
-  /** Unsigned 32-bit integer value accessors. */
+  /** Unsigned 32-bit integer accessors. */
   uint: INumberMemoryAccessor;
-  /** Unsigned 32-bit integer value accessors. Alias of `uint`. */
+  /** Unsigned 32-bit integer accessors. Alias of `uint`. */
   u32: INumberMemoryAccessor;
 
-  /** 32-bit float value accessors. */
+  /** 32-bit float accessors. */
   float: INumberMemoryAccessor;
-  /** 32-bit float value accessors. Alias of `float`. */
+  /** 32-bit float accessors. Alias of `float`. */
   f32: INumberMemoryAccessor;
 
-  /** 64-bit float value accessors. */
+  /** 64-bit float accessors. */
   double: INumberMemoryAccessor;
-  /** 64-bit float value accessors. Alias of `double`. */
+  /** 64-bit float accessors. Alias of `double`. */
   f64: INumberMemoryAccessor;
 
-  /** Array value accessors. */
+  /** Array accessors. */
   array: IArrayMemoryAccessor;
 
-  /** String value accessors. */
+  /** String accessors. */
   string: IStringMemoryAccessor;
 }
 
