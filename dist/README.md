@@ -3,7 +3,7 @@ Distributions
 
 This folder contains pre-built bundles of AssemblyScript. Bundles are compatible with CommonJS and AMD loaders and export globally as `assemblyscript` if neither is present.
 
-Note that [binaryen.js](https://github.com/dcodeIO/binaryen.js) (required) and [wabt.js]((https://github.com/dcodeIO/wabt.js)) (optional) are not included in the bundle because these are rather large asm.js compilations. Compatible versions of both dependencies can be obtained from their [respective](https://github.com/dcodeIO/binaryen.js/tags) [repositories](https://github.com/dcodeIO/wabt.js/tags).
+Note that [binaryen.js](https://github.com/dcodeIO/binaryen.js) (required) and [wabt.js](https://github.com/dcodeIO/wabt.js) (optional) are not included in the bundle because these are rather large asm.js compilations. Compatible versions of both dependencies can be obtained from their [respective](https://github.com/dcodeIO/binaryen.js/tags) [repositories](https://github.com/dcodeIO/wabt.js/tags).
 
 Usage
 -----

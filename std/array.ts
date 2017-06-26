@@ -1,8 +1,8 @@
 export abstract class Array<T> implements IDisposable {
-  readonly length: uintptr;
+  readonly length: int;
 
-  indexOf(value: T, startOffset: uintptr = 0): uintptr {
-    const length: uintptr = this.length;
+  indexOf(value: T, startOffset: int = 0): int {
+    const length: int = this.length;
     while (startOffset < length) {
       if (this[startOffset] == value)
         return startOffset;
