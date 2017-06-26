@@ -4,27 +4,30 @@ import * as tape from "tape";
 import * as jsdiff from "diff";
 import * as chalk from "chalk";
 import * as minimist from "minimist";
+import * as util from "./util";
 
 const argv = minimist(process.argv.slice(2), {
-  default: {
-    "create": false
-  },
+  default: { "create": false },
   boolean: [ "create" ]
 });
 
-/** Strips everything before the first export. */
-function distill(text: string): string {
-  const match = /^ *\(export/m.exec(text);
-  if (match)
-    return text.substring(match.index).replace(/\r?\n\)\r?\n?$/, "\n");
-  return text;
-}
+// test sources
+import Compiler from "../src/compiler";
+import * as binaryen from "../src/binaryen";
+import * as typescript from "../src/typescript";
+import * as wabt from "../src/wabt";
+runTests("src", Compiler, binaryen, typescript, wabt);
 
+// test distribution
+import * as dist from "..";
+runTests("dist", dist.Compiler, dist.binaryen, dist.typescript, dist.wabt);
+
+// common test runner for both source and the distribution files
 function runTests(kind, Compiler, binaryen, typescript, wabt) {
 
+  // 1) test compiler results to match fictures
   tape(kind + " - fixtures", test => {
     const basedir = path.join(__dirname, "fixtures");
-    const options = { "silent": true };
 
     fs.readdirSync(basedir).forEach(file => {
       if (!/\.ts$/.test(file)) return;
@@ -33,24 +36,18 @@ function runTests(kind, Compiler, binaryen, typescript, wabt) {
         file = path.join(basedir, file);
 
         const source = fs.readFileSync(file, "utf8");
-        const firstLine = source.split(/\r?\n/, 1)[0];
-        let opts = Object.create(options);
-
-        if (firstLine.substring(0, 3) === "//!") {
-          const config = JSON.parse(firstLine.substring(3));
-          Object.keys(config).forEach(key => opts[key] = config[key]);
-        }
+        const options = getOptions(source);
 
         let module: binaryen.Module;
         let actual: string = "";
 
         test.doesNotThrow(() => {
-          module = Compiler.compileFile(file, opts);
+          module = Compiler.compileFile(file, options);
         }, "should compile without throwing");
 
         const messages = typescript.formatDiagnosticsWithColorAndContext(Compiler.lastDiagnostics);
         if (messages.length)
-          process.stderr.write(messages.replace(/^/mg, " ") + "\n");
+          process.stderr.write(messages.replace(/^/mg, "> ") + "\n");
 
         test.ok(module, "should not fail to compule");
         if (module) {
@@ -91,6 +88,55 @@ function runTests(kind, Compiler, binaryen, typescript, wabt) {
     test.end();
   });
 
+  // 2) run interop tests
+  tape(kind + " - interop", test => {
+    if (typeof WebAssembly === "undefined") {
+      test.comment("Skipping interop tests: WebAssembly is not supported on node " + process.version);
+      test.end();
+      return;
+    }
+    const basedir = path.join(__dirname, "interop");
+    const options = { "silent": true };
+
+    fs.readdirSync(basedir).forEach(file => {
+      if (!/\.test\.ts$/.test(file)) return;
+
+      const runner = require("./interop/" + file).test;
+      const name = file.substring(0, file.length - 8);
+      file = __dirname + "/interop/" + name + ".ts";
+
+      const source = fs.readFileSync(file, "utf8");
+      const options = getOptions(source);
+
+      let module: binaryen.Module;
+
+      test.doesNotThrow(() => {
+        module = Compiler.compileFile(file, options);
+      }, name + ".ts should compile without throwing");
+
+      const messages = typescript.formatDiagnosticsWithColorAndContext(Compiler.lastDiagnostics);
+      if (messages.length)
+        process.stderr.write(messages.replace(/^/mg, "> ") + "\n");
+
+      test.ok(module, name + ".ts should not fail to compule");
+      if (!module) {
+        test.end();
+        return;
+      }
+
+      const buffer = module.emitBinary();
+      util.load(buffer).then(module => {
+        test.test(kind + " - interop - " + name, test => runner(test, module));
+      }).catch(err => {
+        test.fail("loading " + name + ".wasm should not be rejected (" + err.message + ")");
+        test.end();
+      });
+    });
+  });
+
+  // 3) other tests
+
+  // test that Compiler.compileString works as well
   tape(kind + " - compileString", test => {
     const module = Compiler.compileString(`
     export function test(a: int): int {
@@ -113,7 +159,7 @@ function runTests(kind, Compiler, binaryen, typescript, wabt) {
     test.end();
   });
 
-
+  // test that official text format (uses WABT) is working
   tape(kind + " - wabt", test => {
     const source = [
       "(module",
@@ -136,27 +182,25 @@ function runTests(kind, Compiler, binaryen, typescript, wabt) {
   });
 }
 
-import Compiler from "../src/compiler";
-import * as binaryen from "../src/binaryen";
-import * as typescript from "../src/typescript";
-import * as wabt from "../src/wabt";
+// utility
 
-// test sources
-runTests("src", Compiler, binaryen, typescript, wabt);
+/** Strips everything before the first export. */
+function distill(text: string): string {
+  const match = /^ *\(export/m.exec(text);
+  if (match)
+    return text.substring(match.index).replace(/\r?\n\)\r?\n?$/, "\n");
+  return text;
+}
 
-import * as dist from "..";
+const baseOptions = { "silent": true };
 
-// test distribution
-runTests("dist", dist.Compiler, dist.binaryen, dist.typescript, dist.wabt);
-
-// test interop
-
-import * as interop from "./interop";
-
-if (typeof WebAssembly !== "undefined")
-  Object.keys(interop).forEach(name => tape("interop - " + name, interop[name]));
-else
-  tape("interop", test => {
-    test.comment("Skipping interop tests: WebAssembly is not supported on node " + process.version);
-    test.end();
-  });
+/** Gets additional options of a source file. */
+function getOptions(source: string): string {
+  const firstLine = source.split(/\r?\n/, 1)[0];
+  let opts = Object.create(baseOptions);
+  if (firstLine.substring(0, 3) === "//!") {
+    const config = JSON.parse(firstLine.substring(3));
+    Object.keys(config).forEach(key => opts[key] = config[key]);
+  }
+  return opts;
+}

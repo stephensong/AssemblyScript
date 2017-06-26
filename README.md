@@ -87,7 +87,7 @@ The environment is configured by either referencing [assembly.d.ts](./assembly.d
 }
 ```
 
-The `tsconfig.json`-approach is recommended to also inherit other important settings.
+The `tsconfig.json`-approach is recommended to inherit other important settings as well.
 
 Once configured, the following AssemblyScript-specific types become available:
 
@@ -334,7 +334,7 @@ const wasmFile = module.emitBinary();
 module.dispose();
 ```
 
-Remember to call `Module#dispose()` once you are done with a module to free its resources. This is necessary because binaryen.js has been compiled from C and hence it doesn't provide automatic garbage collection.
+Remember to call `Module#dispose()` once you are done with a module to free its resources. This is necessary because binaryen.js has been compiled from C and hence doesn't provide automatic garbage collection.
 
 Command line
 ------------
