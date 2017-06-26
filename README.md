@@ -1,12 +1,20 @@
 ![AssemblyScript](https://raw.githubusercontent.com/dcodeIO/AssemblyScript/master/logo.png)
 ==============
-AssemblyScript defines a subset of [TypeScript](https://github.com/Microsoft/TypeScript) that it compiles to [WebAssembly](http://webassembly.org/). The compiler itself is written in TypeScript and no binary dependencies are required to get started. Under the hood, it rewires TypeScript's [compiler API](https://github.com/Microsoft/TypeScript-wiki/blob/master/Using-the-Compiler-API.md) to [Binaryen](https://github.com/WebAssembly/binaryen)'s compiler backend.
 
-Be warned that this is an early prototype and that it cannot do anything useful yet.
+[AssemblyScript](https://github.com/dcodeIO/AssemblyScript) defines a subset of [TypeScript](https://github.com/Microsoft/TypeScript) that it compiles to [WebAssembly](http://webassembly.org/). It aims to provide everyone with an existing background in TypeScript and standard JavaScript-APIs with a comfortable way to compile to WebAssembly, eliminating the need to switch between languages or to learn new ones just for this purpose.
 
-An initial playground to mess with the current state of the compiler is available at [dcode.io/AssemblyScript](http://dcode.io/AssemblyScript/).
+Try it out in your browser: [dcode.io/AssemblyScript](http://dcode.io/AssemblyScript/)
 
 [![npm](https://img.shields.io/npm/v/assemblyscript.svg)](https://www.npmjs.com/package/assemblyscript) [![Build Status](https://travis-ci.org/dcodeIO/AssemblyScript.svg?branch=master)](https://travis-ci.org/dcodeIO/AssemblyScript) [![npm](https://img.shields.io/npm/dm/assemblyscript.svg)](https://www.npmjs.com/package/assemblyscript)
+
+How it works
+------------
+
+Under the hood, AssemblyScript rewires TypeScript's [compiler API](https://github.com/Microsoft/TypeScript-wiki/blob/master/Using-the-Compiler-API.md) to [Binaryen](https://github.com/WebAssembly/binaryen)'s compiler backend. The compiler itself is written in (and based upon) TypeScript and no binary dependencies are required to get started.
+
+Every AssemblyScript program is valid TypeScript syntactically, but not necessarily semantically. The definitions required to start developing in AssemblyScript are provided by [assembly.d.ts](./assembly.d.ts). See also: [Usage](#usage)
+
+The compiler is able to produce WebAssembly binaries (.wasm) as well as their corresponding text format (.wast). Both Binaryen's s-expression format and, with a little help of [WABT](https://github.com/WebAssembly/wabt), official stack-based text format are supported. See also: [Command line](#command-line)
 
 Example
 -------
@@ -69,9 +77,19 @@ load("path/to/module.wasm", {
 
 Usage
 -----
-An AssemblyScript program is valid TypeScript syntactically, but not necessarily semantically.
 
-WebAssembly-specific types are obtained by referencing [assembly.d.ts](./assembly.d.ts):
+The environment is configured by either referencing [assembly.d.ts](./assembly.d.ts) directly or by using a `tsconfig.json` that simply extends [tsconfig.assembly.json](https://github.com/dcodeIO/AssemblyScript/blob/master/tsconfig.assembly.json), like so:
+
+```json
+{
+  "extends": "./node_modules/assemblyscript/tsconfig.assembly.json",
+  ...
+}
+```
+
+The `tsconfig.json`-approach is recommended to also inherit other important settings.
+
+Once configured, the following AssemblyScript-specific types become available:
 
 Type      | Alias     | Native type | sizeof | Description
 ----------|-----------|-------------|--------|-------------

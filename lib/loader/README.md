@@ -104,6 +104,6 @@ API
     Creates a string in memory and returns its pointer.
 
 Note that the `create` method of array and string accessors requires an implementation of `malloc`,
-`free` etc. to be present and exported. Also remember that memory is unmanaged here and that `free`
-must be called manually to clean up memory, just like in C. Once WebAssembly exposes the garbage
-collector natively, there will be other options as well.
+`free` etc. to be present and either exported or imported. Also remember that memory is unmanaged
+here and that `free` must be called manually to clean up memory, just like in C. Once WebAssembly
+exposes the garbage collector natively, there will be other options as well.
