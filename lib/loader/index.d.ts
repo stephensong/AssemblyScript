@@ -2,11 +2,9 @@
 
 /** Options to set up the environment created by {@link load}. */
 export interface ILoadOptions {
-  /** Initial size of the memory in 64kb pages. */
-  initialMemory?: number;
-  /** Maximum size of the memory in 64kb pages. */
-  maximumMemory?: number;
-  /** Import elements. Usually functions. */
+  /** Memory instance to use, if applicable. */
+  memory?: WebAssembly.Memory;
+  /** Imported elements. Usually functions. */
   imports?: { [key: string]: any }
 }
 
@@ -25,7 +23,7 @@ export interface IArrayMemoryAccessor {
   /** Gets an array from memory at the specified pointer and returns its leength and element base pointer. */
   get(ptr: number): { length: number, base: number };
   /** Creates an array in memory and returns its pointer and element base pointer. */
-  create(value: string): { ptr: number, base: number };
+  create(length: number, elementByteSize: number): { ptr: number, base: number };
 }
 
 /** String memory accessor. */
@@ -101,6 +99,6 @@ export interface IModule {
 }
 
 /** Loads a WebAssembly module either from a buffer or from a file and returns a promise for an {@link IModule}. */
-declare function load(file: ArrayBuffer | Uint8Array | string, options?: ILoadOptions): Promise<IModule>;
+export function load(file: ArrayBuffer | Uint8Array | string, options?: ILoadOptions): Promise<IModule>;
 
-export = load;
+export { load as default };

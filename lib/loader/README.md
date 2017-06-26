@@ -32,10 +32,8 @@ API
 * **ILoadOptions**<br />
   Options to set up the environment created by `load`.
 
-  * **initialMemory**: `number`<br />
-    Initial size of the memory in 64kb pages.
-  * **maximumMemory**: `number`<br />
-    Maximum size of the memory in 64kb pages.
+  * **memory**: `WebAssembly.Memory`<br />
+    Memory instance to use, if applicable.
   * **imports**: `{ [key: string]: any }`<br />
     Import elements. Usually functions.
 

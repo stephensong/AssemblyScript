@@ -4,7 +4,7 @@
  */
 
 /** AssemblyScript version. */
-export const version: string = "0.0.2";
+export const version: string = "0.0.3";
 
 /** Library sources for in-browser usage. */
 export const files: { [key: string]: string } = {

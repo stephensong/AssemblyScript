@@ -761,7 +761,7 @@ declare module 'assemblyscript/reflection/class' {
       /** Resolves this possibly generic class against the provided type arguments. */
       resolve(compiler: Compiler, typeArgumentNodes: typescript.TypeNode[]): Class;
   }
-  /** Patches a @__impl-annotated declaration to inherit from its actual implementation. */
+  /** Patches a declaration to inherit from its actual implementation. */
   export function patchClassImplementation(compiler: Compiler, declTemplate: ClassTemplate, implTemplate: ClassTemplate): void;
 }
 

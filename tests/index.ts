@@ -148,3 +148,15 @@ import * as dist from "..";
 
 // test distribution
 runTests("dist", dist.Compiler, dist.binaryen, dist.typescript, dist.wabt);
+
+// test interop
+
+import * as interop from "./interop";
+
+if (typeof WebAssembly !== "undefined")
+  Object.keys(interop).forEach(name => tape("interop - " + name, interop[name]));
+else
+  tape("interop", test => {
+    test.comment("Skipping interop tests: WebAssembly is not supported on node " + process.version);
+    test.end();
+  });
