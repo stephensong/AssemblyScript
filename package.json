@@ -25,8 +25,7 @@
   "scripts": {
     "build:malloc": "node scripts/build-malloc",
     "build:typescript": "tsc -P lib/typescript && echo export = ts; >> lib/typescript/build/index.d.ts",
-    "build:loader": "cd lib/loader && webpack --config webpack.config.js && cd ../..",
-    "build:alldeps": "node scripts/build-check && npm run build:loader && npm run build:malloc && npm run build:typescript",
+    "build:alldeps": "node scripts/build-check && npm run build:malloc && npm run build:typescript",
     "build:library": "node scripts/build-library",
     "build:bundle": "tsc -P src && node scripts/build-bundle",
     "build": "npm run lint && npm run build:library && npm run build:bundle",
