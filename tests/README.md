@@ -1,7 +1,7 @@
 AssemblyScript Tests
 ====================
 
-The test process consists of multiple steps, in the following order. Both the source compiler (src) and the bundled distribution (dist) is tested.
+The test process consists of multiple steps, in the following order. Both the source compiler (src) and the bundled distribution (dist) are tested.
 
 Fixtures
 --------

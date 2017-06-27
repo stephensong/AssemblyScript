@@ -69,6 +69,10 @@ API
     Signed 32-bit integer accessors.
   * **uint** / **u32**: `INumberMemoryAccessor`<br />
     Unsigned 32-bit integer accessors.
+  * **long** / **s64**: `ILongMemoryAccessor`<br />
+    Signed 64-bit integer accessors.
+  * **ulong** / **u64**: `ILongMemoryAccessor`<br />
+    Unsigned 64-bit integer accessors.
   * **float** / **f32**: `INumberMemoryAccessor`<br />
     32-bit float accessors.
   * **double** / **f64**: `INumberMemoryAccessor`<br />
@@ -85,6 +89,14 @@ API
     Gets a value of the underlying type from memory at the specified pointer.
   * **set**(ptr: `number`, value: `number`): `void`<br />
     Sets a value of the underlying type in memory at the specified pointer.
+
+* **ILongMemoryAccessor**<br />
+  Long memory accessor. See also: [long.js](https://github.com/dcodeIO/long.js)
+
+  * **get**(ptr: `number`): `Long`<br />
+    Gets a Long from memory at the specified pointer.
+  * **set**(ptr: `number`, value: `Long`): `void`<br />
+    Sets a Long in memory at the specified pointer.
 
 * **IArrayMemoryAccessor**<br />
   Array memory accessor.

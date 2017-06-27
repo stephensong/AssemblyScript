@@ -99,6 +99,7 @@ function main(args, callback) {
     argv.text = true;
 
   var output = argv.out ? fs.createWriteStream(argv.out) : process.stdout;
+  var ended = output === process.stdout;
 
   if (argv.text !== undefined || output.isTTY) {
     if (argv.text === "stack") {
@@ -114,9 +115,9 @@ function main(args, callback) {
   } else
     output.write(Buffer.from(wasmModule.emitBinary()), finish);
 
-  var ended = output === process.stdout;
-
-  function finish() {
+  function finish(err) {
+    if (err)
+      return callback(EFAILURE);
     if (!ended) {
       ended = true;
       output.end(finish);

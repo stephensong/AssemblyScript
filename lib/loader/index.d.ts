@@ -1,5 +1,7 @@
 /// <reference types="webassembly-js-api" />
 
+import * as Long from "long";
+
 /** Options to set up the environment created by {@link load}. */
 export interface ILoadOptions {
   /** Memory instance to import, if applicable. */
@@ -10,10 +12,18 @@ export interface ILoadOptions {
 
 /** Number memory accessor. */
 export interface INumberMemoryAccessor {
-  /** Gets a value from memory at the specified pointer. */
+  /** Gets a value of the underlying type from memory at the specified pointer. */
   get(ptr: number): number;
-  /** Sets a value in memory at the specified pointer. */
+  /** Sets a value of the underlying type in memory at the specified pointer. */
   set(ptr: number, value: number): void;
+}
+
+/** Long memory accessor. */
+export interface ILongMemoryAccessor {
+  /** Gets a Long from memory at the specified pointer. */
+  get(ptr: number): Long;
+  /** Sets a Long in memory at the specified pointer. */
+  set(ptr: number, value: Long): void;
 }
 
 /** Array memory accessor. */
@@ -78,6 +88,16 @@ export interface IModule {
   uint: INumberMemoryAccessor;
   /** Unsigned 32-bit integer accessors. Alias of `uint`. */
   u32: INumberMemoryAccessor;
+
+  /** Signed 64-bit integer accessors. */
+  long: ILongMemoryAccessor;
+  /** Signed 64-bit integer accessors. Alias of `long`. */
+  s64: ILongMemoryAccessor;
+
+  /** Unsigned 64-bit integer accessors. */
+  ulong: ILongMemoryAccessor;
+  /** Unsigned 64-bit integer accessors. Alias of `ulong`. */
+  u64: ILongMemoryAccessor;
 
   /** 32-bit float accessors. */
   float: INumberMemoryAccessor;
