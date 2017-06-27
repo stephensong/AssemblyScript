@@ -14,6 +14,8 @@ export function compileCall(compiler: Compiler, node: typescript.CallExpression,
     return op.unreachable();
   }
 
+  // TODO: evaluate node.expression (i.e. 'a[0].someFunc') to obtain the function
+
   // Initialize generic function from type arguments
   const declaration = <typescript.FunctionLikeDeclaration>signature.declaration; // FunctionLikeDeclaration extends SignatureDeclaration
   let instance = typescript.getReflectedFunction(declaration);

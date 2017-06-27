@@ -75,7 +75,7 @@ export function compilePropertyAccess(compiler: Compiler, node: typescript.Prope
     }
   }
 
-  compiler.error(node, "Unsupported property access");
+  compiler.error(node, "Unsupported property access", "SyntaxKind " + node.expression.kind);
   typescript.setReflectedType(node, contextualType);
   return op.unreachable();
 }

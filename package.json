@@ -31,7 +31,7 @@
     "build": "npm run lint && npm run build:library && npm run build:bundle",
     "lint": "tslint --config tslint.json src/**/*.ts cli/**/*.ts assembly.d.ts",
     "test": "ts-node tests | tap-spec",
-    "docs": "typedoc --tsconfig src/tsconfig.json --mode modules --name \"AssemblyScript API Documentation\" --out docs/documentation/ --readme none --ignoreCompilerErrors --excludeNotExported --excludePrivate"
+    "docs": "typedoc --tsconfig src/tsconfig.json --mode modules --name \"AssemblyScript API Documentation\" --out docs/api/ --readme none --ignoreCompilerErrors --excludeNotExported --excludePrivate"
   },
   "dependencies": {
     "binaryen": "1.37.14",

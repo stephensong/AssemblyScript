@@ -301,7 +301,7 @@ API
     * **IMPORT_MALLOC**<br />
       Imports malloc, free, etc. as provided by the embedder.
 
-See the [API documentation](http://dcode.io/AssemblyScript/documentation) for all the details.
+See the [API documentation](http://dcode.io/AssemblyScript/api) for all the details.
 
 ### Example
 
@@ -365,6 +365,35 @@ Options:
                         exportmalloc  Bundles malloc, free, etc. and exports each to the embedder.
                         importmalloc  Imports malloc, free, etc. as provided by the embedder within 'env'.
                         bare          Excludes malloc, free, etc. entirely.
+```
+
+Building
+--------
+
+Clone the GitHub repository and install the development dependencies:
+
+```
+$> git clone https://github.com/dcodeIO/AssemblyScript.git
+$> cd AssemblyScript
+$> npm install
+```
+
+Afterwards, to build the distribution files to [dist/](./dist), run:
+
+```
+$> npm run build
+```
+
+To build the documentation to [docs/api/](./docs/api), run:
+
+```
+$> npm run docs
+```
+
+Running the [tests](./tests) (ideally on node.js >= 8):
+
+```
+$> npm test
 ```
 
 ---

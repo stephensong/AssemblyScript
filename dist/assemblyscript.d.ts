@@ -527,7 +527,7 @@ declare module 'assemblyscript/wabt' {
   /** Indicates whether WABT-specific functionality is available. */
   export const available: boolean;
   /** A reusable error message in case wabt.js is not available. */
-  export const ENOTAVAILABLE = "wabt.js could not be found. While it is an optional dependency, using WABT-specific functionality requires it.";
+  export const ENOTAVAILABLE: string;
   /** Options for {@link wasmToWast}. */
   export interface IWasmToWastOptions {
     readDebugNames?: boolean;

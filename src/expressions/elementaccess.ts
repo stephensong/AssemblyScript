@@ -69,7 +69,7 @@ export function compileElementAccess(compiler: Compiler, node: typescript.Elemen
     }
   }
 
-  compiler.error(node, "Unsupported element access");
+  compiler.error(node, "Unsupported element access", "SyntaxKind " + node.expression.kind);
   typescript.setReflectedType(node, contextualType);
   return op.unreachable();
 }
