@@ -20,7 +20,7 @@ var EUSAGE = 1;
 var EINVALID = 2;
 var EFAILURE = 3;
 
-function main(args) {
+function main(args, callback) {
 
   var argv = minimist(args, {
     alias: {
@@ -71,7 +71,7 @@ function main(args) {
       "                        bare          Excludes malloc, free, etc. entirely.",
       ""
     ].join("\n"));
-    return EUSAGE;
+    return callback(EUSAGE);
   }
 
   var wasmModule = Compiler.compileFile(files[0], {
@@ -81,7 +81,7 @@ function main(args) {
   });
 
   if (!wasmModule)
-    return EFAILURE;
+    return callback(EFAILURE);
 
   if (argv.optimize)
     wasmModule.optimize();
@@ -91,7 +91,7 @@ function main(args) {
     if (!result) {
       if (!argv.silent)
         process.stderr.write("\nValidation failed. See above for details.\n");
-      return EINVALID;
+      return callback(EINVALID);
     }
   }
 
@@ -105,17 +105,26 @@ function main(args) {
       if (!assemblyscript.wabt.available) {
         if (!argv.silent)
           process.stderr.write("\n" + assemblyscript.wabt.ENOTAVAILABLE + "\n");
-        return EFAILURE;
+        return callback(EFAILURE);
       }
-      output.write(assemblyscript.wabt.wasmToWast(wasmModule.emitBinary(), { readDebugNames: true }), "utf8");
+      output.write(assemblyscript.wabt.wasmToWast(wasmModule.emitBinary(), { readDebugNames: true }), "utf8", finish);
     } else {
-      output.write(wasmModule.emitText(), "utf8");
+      output.write(wasmModule.emitText(), "utf8", finish);
     }
   } else
-    output.write(Buffer.from(wasmModule.emitBinary()));
+    output.write(Buffer.from(wasmModule.emitBinary()), finish);
 
-  // wasmModule.dispose();
-  return ESUCCESS;
+  var ended = output === process.stdout;
+
+  function finish() {
+    if (!ended) {
+      ended = true;
+      output.end(finish);
+      return;
+    }
+    wasmModule.dispose();
+    callback(ESUCCESS);
+  }
 }
 
 exports.main = main;

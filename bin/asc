@@ -1,5 +1,2 @@
 #!/usr/bin/env node
-var asc = require("./asc.js");
-var ret = asc.main(process.argv.slice(2));
-if (typeof ret === "number")
-  process.exitCode = ret; // wait for I/O to complete
+require("./asc.js").main(process.argv.slice(2), process.exit);
