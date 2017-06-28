@@ -9,7 +9,11 @@ import * as typescript from "../typescript";
 export function compilePropertyAccess(compiler: Compiler, node: typescript.PropertyAccessExpression, contextualType: reflection.Type): binaryen.Expression {
   const op = compiler.module;
 
+  typescript.setReflectedType(node, contextualType);
+
   const propertyName = typescript.getTextOfNode(node.name);
+
+  // TODO: see elementaccess.ts for possible improvements
 
   // this.identifier
   if (node.expression.kind === typescript.SyntaxKind.ThisKeyword) {
