@@ -2,11 +2,12 @@
 
 import * as binaryen from "../binaryen";
 import Compiler from "../compiler";
-import compileLoad from "./helpers/load";
+import compileLoadOrStore from "./helpers/loadorstore";
 import * as reflection from "../reflection";
 import * as typescript from "../typescript";
 
-export function compilePropertyAccess(compiler: Compiler, node: typescript.PropertyAccessExpression, contextualType: reflection.Type): binaryen.Expression {
+/** Compiles a property access expression. Sets the property's value to `valueNode` if specified, otherwise gets it. */
+export function compilePropertyAccess(compiler: Compiler, node: typescript.PropertyAccessExpression, contextualType: reflection.Type, valueNode?: typescript.Expression): binaryen.Expression {
   const op = compiler.module;
 
   typescript.setReflectedType(node, contextualType);
@@ -19,6 +20,9 @@ export function compilePropertyAccess(compiler: Compiler, node: typescript.Prope
 
     // enum values are constants
     if (reference instanceof reflection.Enum) {
+      if (valueNode)
+        compiler.error(valueNode, "Cannot assign to a constant");
+
       const enm = <reflection.Enum>reference;
       const property = enm.values[propertyName];
 
@@ -40,20 +44,37 @@ export function compilePropertyAccess(compiler: Compiler, node: typescript.Prope
       if (property && !property.isInstance) {
 
         if (property.isConstant) { // TODO: currently unused
+          if (valueNode)
+            compiler.error(valueNode, "Cannot assign to a constant");
           typescript.setReflectedType(node, property.type);
           return binaryen.valueOf(property.type, op, property.constantValue);
         }
 
         const global = compiler.globals[clazz.name + "." + propertyName];
         if (global) {
-          typescript.setReflectedType(node, global.type);
-          return op.getGlobal(global.name, binaryen.typeOf(global.type, compiler.uintptrSize));
+
+          if (valueNode) {
+            const valueExpression = compiler.maybeConvertValue(valueNode, compiler.compileExpression(valueNode, global.type), typescript.getReflectedType(valueNode), global.type, false);
+
+            if (contextualType === reflection.voidType)
+              return op.setGlobal(global.name, valueExpression);
+
+            typescript.setReflectedType(node, global.type);
+            const binaryenType = binaryen.typeOf(global.type, compiler.uintptrSize);
+            return op.block("", [ // emulate tee_global
+              op.setGlobal(global.name, valueExpression),
+              op.getGlobal(global.name, binaryenType)
+            ], binaryenType);
+
+          } else {
+            typescript.setReflectedType(node, global.type);
+            return op.getGlobal(global.name, binaryen.typeOf(global.type, compiler.uintptrSize));
+          }
         } else
           throw Error("unexpected uninitialized global");
 
       } else {
         compiler.error(node, "No such static property", "'" + propertyName + "' on " + clazz.name);
-        typescript.setReflectedType(node, contextualType);
         return op.unreachable();
       }
     }
@@ -71,10 +92,17 @@ export function compilePropertyAccess(compiler: Compiler, node: typescript.Prope
   const property = clazz.properties[propertyName];
   if (property) {
     typescript.setReflectedType(node, property.type);
-    return compileLoad(compiler, node, property.type, expression, property.offset);
+
+    let valueExpression: binaryen.Expression | undefined;
+    if (valueNode)
+      valueExpression = compiler.maybeConvertValue(valueNode, compiler.compileExpression(valueNode, property.type), typescript.getReflectedType(valueNode), property.type, false);
+
+    return compileLoadOrStore(compiler, node, property.type, expression, property.offset, valueExpression, contextualType);
   }
 
   compiler.error(node, "Unsupported property access", "SyntaxKind " + node.expression.kind);
   typescript.setReflectedType(node, contextualType);
   return op.unreachable();
 }
+
+export { compilePropertyAccess as default };

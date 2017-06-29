@@ -330,6 +330,7 @@ declare module 'assemblyscript/expressions' {
   export * from "assemblyscript/expressions/conditional";
   export * from "assemblyscript/expressions/elementaccess";
   export * from "assemblyscript/expressions/helpers/load";
+  export * from "assemblyscript/expressions/helpers/loadorstore";
   export * from "assemblyscript/expressions/helpers/store";
   export * from "assemblyscript/expressions/identifier";
   export * from "assemblyscript/expressions/literal";
@@ -607,7 +608,9 @@ declare module 'assemblyscript/expressions/elementaccess' {
   import Compiler from "assemblyscript/compiler";
   import * as reflection from "assemblyscript/reflection";
   import * as typescript from "assemblyscript/typescript";
-  export function compileElementAccess(compiler: Compiler, node: typescript.ElementAccessExpression, contextualType: reflection.Type): binaryen.Expression;
+  /** Compiles an element access expression. Sets the element's value to `valueNode` if specified, otherwise gets it. */
+  export function compileElementAccess(compiler: Compiler, node: typescript.ElementAccessExpression, contextualType: reflection.Type, valueNode?: typescript.Expression): binaryen.Expression;
+  export { compileElementAccess as default };
 }
 
 declare module 'assemblyscript/expressions/helpers/load' {
@@ -621,6 +624,17 @@ declare module 'assemblyscript/expressions/helpers/load' {
   export { compileLoad as default };
 }
 
+declare module 'assemblyscript/expressions/helpers/loadorstore' {
+  /** @module assemblyscript/expressions */ /** */
+  import * as binaryen from "assemblyscript/binaryen";
+  import Compiler from "assemblyscript/compiler";
+  import * as reflection from "assemblyscript/reflection";
+  import * as typescript from "assemblyscript/typescript";
+  /** Helper compiling a load operation if `valueToSet` has been omitted, otherwise a store operation. */
+  export function compileLoadOrStore(compiler: Compiler, node: typescript.Expression, type: reflection.Type, ptr: binaryen.Expression, offset: number, valueToSet?: binaryen.Expression, valueToSetContextualType?: reflection.Type): binaryen.Expression;
+  export { compileLoadOrStore as default };
+}
+
 declare module 'assemblyscript/expressions/helpers/store' {
   /** @module assemblyscript/expressions */ /** */
   import * as binaryen from "assemblyscript/binaryen";
@@ -628,7 +642,7 @@ declare module 'assemblyscript/expressions/helpers/store' {
   import * as reflection from "assemblyscript/reflection";
   import * as typescript from "assemblyscript/typescript";
   /** Helper compiling a store operation. */
-  export function compileStore(compiler: Compiler, node: typescript.Expression, type: reflection.Type, ptr: binaryen.Expression, value: binaryen.Expression, offset: number): binaryen.Expression;
+  export function compileStore(compiler: Compiler, node: typescript.Expression, type: reflection.Type, ptr: binaryen.Expression, offset: number, value: binaryen.Expression): binaryen.Expression;
   export { compileStore as default };
 }
 
@@ -695,7 +709,9 @@ declare module 'assemblyscript/expressions/propertyaccess' {
   import Compiler from "assemblyscript/compiler";
   import * as reflection from "assemblyscript/reflection";
   import * as typescript from "assemblyscript/typescript";
-  export function compilePropertyAccess(compiler: Compiler, node: typescript.PropertyAccessExpression, contextualType: reflection.Type): binaryen.Expression;
+  /** Compiles a property access expression. Sets the property's value to `valueNode` if specified, otherwise gets it. */
+  export function compilePropertyAccess(compiler: Compiler, node: typescript.PropertyAccessExpression, contextualType: reflection.Type, valueNode?: typescript.Expression): binaryen.Expression;
+  export { compilePropertyAccess as default };
 }
 
 declare module 'assemblyscript/reflection/class' {

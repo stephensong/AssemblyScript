@@ -2,8 +2,8 @@
 
 import * as binaryen from "../binaryen";
 import Compiler from "../compiler";
-import compileLoad from "./helpers/load";
-import compileStore from "./helpers/store";
+import compileElementAccess from "./elementaccess";
+import compilePropertyAccess from "./propertyaccess";
 import * as reflection from "../reflection";
 import * as typescript from "../typescript";
 
@@ -412,158 +412,12 @@ export function compileAssignmentWithValue(compiler: Compiler, node: typescript.
 
     }
 
-  } else if (node.left.kind === typescript.SyntaxKind.ElementAccessExpression) {
-    const accessNode = <typescript.ElementAccessExpression>node.left;
-    const reference = compiler.resolveReference(<typescript.Identifier>accessNode.expression);
-    const binaryenPtrType = binaryen.typeOf(compiler.uintptrType, compiler.uintptrSize);
-    const uintptrCategory = <binaryen.I32Operations | binaryen.I64Operations>binaryen.categoryOf(compiler.uintptrType, op, compiler.uintptrSize);
-    const argumentNode = <typescript.Expression>accessNode.argumentExpression;
-    const argument = compiler.maybeConvertValue(argumentNode, compiler.compileExpression(argumentNode, compiler.uintptrType), typescript.getReflectedType(argumentNode), compiler.uintptrType, false);
+  } else if (node.left.kind === typescript.SyntaxKind.ElementAccessExpression)
+    return compileElementAccess(compiler, <typescript.ElementAccessExpression>node.left, contextualType, node.right);
 
-    // this[argument] = expression
-    if (accessNode.expression.kind === typescript.SyntaxKind.ThisKeyword) {
-      const clazz = compiler.currentFunction && compiler.currentFunction.parent || null;
-      if (clazz && compiler.currentFunction.isInstance) {
-        if (clazz.type.isArray) {
-          const underlyingType = (<reflection.Class>clazz.type.underlyingClass).typeArguments.T.type;
-          const storeOp = compileStore(compiler, accessNode, underlyingType,
-            uintptrCategory.add(
-              op.getLocal(0, binaryenPtrType),
-              uintptrCategory.mul(
-                argument,
-                binaryen.valueOf(compiler.uintptrType, op, underlyingType.size)
-              )
-            ), value, compiler.uintptrSize
-          );
+  else if (node.left.kind === typescript.SyntaxKind.PropertyAccessExpression)
+    return compilePropertyAccess(compiler, <typescript.PropertyAccessExpression>node.left, contextualType, node.right);
 
-          if (contextualType === reflection.voidType)
-            return storeOp;
-
-          typescript.setReflectedType(node, underlyingType);
-          // TODO
-
-        } else {
-          compiler.error(accessNode, "Array access used on non-array object");
-          return op.unreachable();
-        }
-      } else {
-        compiler.error(accessNode.expression, "'this' keyword used in non-instance context");
-        return op.unreachable();
-      }
-
-    // identifier[argument] = expression
-    } else if (accessNode.expression.kind === typescript.SyntaxKind.Identifier) {
-
-      if (reference instanceof reflection.Variable) {
-        const variable = <reflection.Variable>reference;
-        if (variable.type.isArray) {
-          const underlyingType = (<reflection.Class>variable.type.underlyingClass).typeArguments.T.type;
-          const storeOp = compileStore(compiler, accessNode, underlyingType,
-            uintptrCategory.add(
-              compiler.compileExpression(accessNode.expression, compiler.uintptrType),
-              uintptrCategory.mul(
-                argument,
-                binaryen.valueOf(compiler.uintptrType, op, underlyingType.size)
-              )
-            ), value, compiler.uintptrSize
-          );
-
-          if (contextualType === reflection.voidType)
-            return storeOp;
-
-          typescript.setReflectedType(node, variable.type);
-          // TODO
-
-        } else {
-          compiler.error(accessNode, "Array access used on non-array object");
-          return op.unreachable();
-        }
-      }
-    }
-
-  } else if (node.left.kind === typescript.SyntaxKind.PropertyAccessExpression) {
-    const accessNode = <typescript.PropertyAccessExpression>node.left;
-    const propertyName = typescript.getTextOfNode(accessNode.name);
-
-    // this.identifier = expression
-    if (accessNode.expression.kind === typescript.SyntaxKind.ThisKeyword) {
-      const clazz = compiler.currentFunction && compiler.currentFunction.parent || null;
-      if (clazz) {
-        const property = clazz.properties[propertyName];
-        if (property) {
-          const storeOp = compileStore(compiler, accessNode, property.type,
-            op.getLocal(0, binaryen.typeOf(compiler.uintptrType, compiler.uintptrSize)), // ^= this
-            compiler.maybeConvertValue(node.right, value, typescript.getReflectedType(node.right), property.type, false),
-            property.offset
-          );
-
-          if (contextualType === reflection.voidType)
-            return storeOp;
-
-          typescript.setReflectedType(node, property.type);
-          return op.block("", [
-            storeOp,
-            compileLoad(compiler, accessNode, property.type, op.getLocal(0, binaryen.typeOf(compiler.uintptrType, compiler.uintptrSize)), property.offset)
-          ], binaryen.typeOf(property.type, compiler.uintptrSize));
-        } else {
-          compiler.error(node, "No such instance property", "'" + propertyName + "' on " + clazz.name);
-          return op.unreachable();
-        }
-      } else {
-        compiler.error(accessNode, "'this' keyword used in non-instance context");
-        return op.unreachable();
-      }
-
-    // identifier.identifier = expression
-    } else if (accessNode.expression.kind === typescript.SyntaxKind.Identifier) {
-      const reference = compiler.resolveReference(<typescript.Identifier>accessNode.expression);
-
-      if (reference instanceof reflection.Class) {
-        const clazz = <reflection.Class>reference;
-        const property = clazz.properties[propertyName];
-        if (property && !property.isInstance) {
-          if (property.isConstant) {
-            compiler.error(node, "Cannot assign to constant static property", "'" + propertyName + "' on " + clazz.name);
-            return op.unreachable();
-          } else {
-            // const global = compiler.globals[clazz.name + "." + propertyName];
-            // TODO: a static property is a global
-          }
-        } else {
-          compiler.error(node, "No such static property", "'" + propertyName + "' on " + clazz.name);
-          return op.unreachable();
-        }
-
-      } else if (reference instanceof reflection.Variable) {
-        const variable = <reflection.Variable>reference;
-
-        if (variable.type.isClass) {
-          const clazz = <reflection.Class>variable.type.underlyingClass;
-          const property = clazz.properties[propertyName];
-          if (property && property.isInstance) {
-            const storeOp = compileStore(compiler, accessNode, property.type,
-              op.getLocal(variable.index, binaryen.typeOf(compiler.uintptrType, compiler.uintptrSize)), // ^= this
-              compiler.maybeConvertValue(node.right, value, typescript.getReflectedType(node.right), property.type, false),
-              property.offset
-            );
-
-            if (contextualType === reflection.voidType)
-              return storeOp;
-
-            typescript.setReflectedType(node, property.type);
-            return op.block("", [
-              storeOp,
-              compileLoad(compiler, accessNode, property.type, op.getLocal(variable.index, binaryen.typeOf(compiler.uintptrType, compiler.uintptrSize)), property.offset)
-            ], binaryen.typeOf(property.type, compiler.uintptrSize));
-          } else {
-            compiler.error(node, "No such instance property", "'" + propertyName + "' on " + clazz.name);
-            return op.unreachable();
-          }
-        }
-      }
-    }
-  }
-
-  compiler.error(node.operatorToken, "Unsupported assignment");
+  compiler.error(node.operatorToken, "Unsupported assignment operation", "SyntaxKind " + node.operatorToken.kind);
   return op.unreachable();
 }

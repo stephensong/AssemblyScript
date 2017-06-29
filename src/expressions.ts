@@ -10,6 +10,7 @@ export * from "./expressions/call";
 export * from "./expressions/conditional";
 export * from "./expressions/elementaccess";
 export * from "./expressions/helpers/load";
+export * from "./expressions/helpers/loadorstore";
 export * from "./expressions/helpers/store";
 export * from "./expressions/identifier";
 export * from "./expressions/literal";

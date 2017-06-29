@@ -297,7 +297,7 @@ API
     * **MALLOC**<br />
       Bundles malloc, free, etc.
     * **EXPORT_MALLOC**<br />
-      Bundles malloc, free, etc. and exports it to the embedder.
+      Bundles malloc, free, etc. and exports each to the embedder.
     * **IMPORT_MALLOC**<br />
       Imports malloc, free, etc. as provided by the embedder.
 

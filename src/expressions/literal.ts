@@ -110,7 +110,7 @@ export function compileLiteral(compiler: Compiler, node: typescript.LiteralExpre
         case reflection.doubleType:
           return op.f64.const(intValue);
       }
-      throw Error("unexpected type");
+      throw Error("unexpected type: " + contextualType);
     }
 
     case typescript.SyntaxKind.StringLiteral:
