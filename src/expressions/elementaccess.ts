@@ -23,10 +23,10 @@ export function compileElementAccess(compiler: Compiler, node: typescript.Elemen
     return op.unreachable();
   }
 
-  const underlyingType = (<reflection.Class>expressionType.underlyingClass).typeArguments.T.type;
+  const elementType = (<reflection.Class>expressionType.underlyingClass).typeArguments.T.type;
   const uintptrCategory = <binaryen.I32Operations | binaryen.I64Operations>binaryen.categoryOf(compiler.uintptrType, op, compiler.uintptrSize);
 
-  typescript.setReflectedType(node, underlyingType);
+  typescript.setReflectedType(node, elementType);
 
   // simplyfy / precalculate access to a constant index
   if (argumentNode.kind === typescript.SyntaxKind.NumericLiteral) {
@@ -34,26 +34,26 @@ export function compileElementAccess(compiler: Compiler, node: typescript.Elemen
     const literalText = literalNode.text; // (usually) preprocessed by TypeScript to a base10 string
 
     if (literalText === "0")
-      return compileLoad(compiler, node, underlyingType, expression, compiler.uintptrSize);
+      return compileLoad(compiler, node, elementType, expression, compiler.uintptrSize);
 
     if (/^[1-9][0-9]*$/.test(literalText)) {
       const value = Long.fromString(literalText, true, 10);
-      return compileLoad(compiler, node, underlyingType,
+      return compileLoad(compiler, node, elementType,
         uintptrCategory.add(
           expression,
-          binaryen.valueOf(compiler.uintptrType, op, value.mul(underlyingType.size))
+          binaryen.valueOf(compiler.uintptrType, op, value.mul(elementType.size))
         ), compiler.uintptrSize
       );
     }
   }
 
   // otherwise evaluate at runtime
-  return compileLoad(compiler, node, underlyingType,
+  return compileLoad(compiler, node, elementType,
     uintptrCategory.add(
       expression,
       uintptrCategory.mul(
         argument,
-        binaryen.valueOf(compiler.uintptrType, op, underlyingType.size)
+        binaryen.valueOf(compiler.uintptrType, op, elementType.size)
       )
     ), compiler.uintptrSize
   );
