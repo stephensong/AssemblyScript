@@ -35,6 +35,14 @@ export interface ClassMethod {
   instance?: Function;
 }
 
+export function isInternalArray(globalName: string) {
+  return /^assembly\.d\.ts\/Array<|^std\/array\.ts\/Array</.test(globalName);
+}
+
+export function isInternalString(globalName: string) {
+  return globalName === "assembly.d.ts/String";
+}
+
 /** A class instance with generic parameters resolved. */
 export class Class extends ClassBase {
 
@@ -67,9 +75,9 @@ export class Class extends ClassBase {
     this.base = base;
     typescript.setReflectedClass(declaration, this);
 
-    if (/^assembly\.d\.ts\/Array<|^std\/array\.ts\/ArrayImpl</.test(this.name) || (!!this.base && this.base.isArray))
+    if (isInternalArray(this.name) || (!!this.base && this.base.isArray))
       this.isArray = true;
-    if (this.name === "assembly.d.ts/String" || (!!this.base && this.base.isString))
+    if (isInternalString(this.name) || (!!this.base && this.base.isString))
       this.isString = true;
   }
 
