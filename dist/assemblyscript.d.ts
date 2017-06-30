@@ -591,6 +591,7 @@ declare module 'assemblyscript/expressions/call' {
   import * as typescript from "assemblyscript/typescript";
   /** Compiles a function call expression. */
   export function compileCall(compiler: Compiler, node: typescript.CallExpression, contextualType: reflection.Type): binaryen.Expression;
+  export { compileCall as default };
 }
 
 declare module 'assemblyscript/expressions/conditional' {
@@ -848,6 +849,10 @@ declare module 'assemblyscript/reflection/function' {
       readonly isInstance: boolean;
       /** Tests if this function is the constructor of a class. */
       readonly isConstructor: boolean;
+      /** Tests if this function is a getter. */
+      readonly isGetter: boolean;
+      /** Tests if this function is a setter. */
+      readonly isSetter: boolean;
       toString(): string;
   }
   /** Interface describing a reflected function parameter. */

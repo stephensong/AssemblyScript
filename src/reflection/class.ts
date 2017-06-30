@@ -141,11 +141,13 @@ export class Class extends ClassBase {
         }
 
         case typescript.SyntaxKind.MethodDeclaration:
+        case typescript.SyntaxKind.GetAccessor:
+        case typescript.SyntaxKind.SetAccessor:
           this.initializeMethod(compiler, <typescript.MethodDeclaration>member);
           break;
 
         default:
-          compiler.error(member, "Unsupported class member");
+          compiler.error(member, "Unsupported class member", "SyntaxKind " + member.kind);
       }
     }
   }

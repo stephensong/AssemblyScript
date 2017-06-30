@@ -98,10 +98,20 @@ export function compilePropertyAccess(compiler: Compiler, node: typescript.Prope
       valueExpression = compiler.maybeConvertValue(valueNode, compiler.compileExpression(valueNode, property.type), typescript.getReflectedType(valueNode), property.type, false);
 
     return compileLoadOrStore(compiler, node, property.type, expression, property.offset, valueExpression, contextualType);
+  } else {
+    const method = clazz.methods[propertyName];
+    if (method) {
+      // TODO
+      if (method.template.isGetter) {
+        compiler.error(node, "Using getters as properties is not supported yet");
+      } else if (method.template.isSetter) {
+        compiler.error(node, "Using setters as properties is not supported yet");
+      }
+      return op.unreachable();
+    }
   }
 
   compiler.error(node, "Unsupported property access", "SyntaxKind " + node.expression.kind);
-  typescript.setReflectedType(node, contextualType);
   return op.unreachable();
 }
 

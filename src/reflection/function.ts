@@ -27,9 +27,13 @@ export abstract class FunctionBase {
   /** Tests if this function is exported to the embedder. */
   get isExport(): boolean { return typescript.isExport(this.declaration); }
   /** Tests if this function is an instance member / not static. */
-  get isInstance(): boolean { return !typescript.isStatic(this.declaration) && (this.declaration.kind === typescript.SyntaxKind.Constructor || this.declaration.kind === typescript.SyntaxKind.MethodDeclaration); }
+  get isInstance(): boolean { return !typescript.isStatic(this.declaration) && this.declaration.kind !== typescript.SyntaxKind.FunctionDeclaration; }
   /** Tests if this function is the constructor of a class. */
   get isConstructor(): boolean { return this.declaration.kind === typescript.SyntaxKind.Constructor; }
+  /** Tests if this function is a getter. */
+  get isGetter(): boolean { return this.declaration.kind === typescript.SyntaxKind.GetAccessor; }
+  /** Tests if this function is a setter. */
+  get isSetter(): boolean { return this.declaration.kind === typescript.SyntaxKind.SetAccessor; }
 
   toString(): string { return this.name; }
 }
@@ -220,7 +224,7 @@ export class FunctionTemplate extends FunctionBase {
       returnType = typeArguments[returnTypeName] && typeArguments[returnTypeName].type || compiler.resolveType(this.declaration.type, true);
     } else {
       returnType = voidType;
-      if (typescript.getSourceFileOfNode(this.declaration) !== compiler.libraryFile) // library may use 'any'
+      if (typescript.getSourceFileOfNode(this.declaration) !== compiler.libraryFile && this.declaration.kind !== typescript.SyntaxKind.SetAccessor) // library may use 'any'
         compiler.warn(<typescript.Identifier>this.declaration.name, "Assuming return type 'void'");
     }
 
