@@ -30,16 +30,21 @@ export interface TypeArgument {
   node: typescript.TypeNode;
 }
 
+/** Interface describing a reflected class method. */
 export interface ClassMethod {
+  /** Class template with possibly unresolved type parameters. */
   template: FunctionTemplate;
+  /** Class instance with type parameters resolved, if initialized yet. */
   instance?: Function;
 }
 
-export function isInternalArray(globalName: string) {
+/** Tests if the specified global name references a built-in array. */
+export function isBuiltinArray(globalName: string) {
   return /^assembly\.d\.ts\/Array<|^std\/array\.ts\/Array</.test(globalName);
 }
 
-export function isInternalString(globalName: string) {
+/** Tests if the specified global name references a built-in string. */
+export function isBuiltinString(globalName: string) {
   return globalName === "assembly.d.ts/String";
 }
 
@@ -75,9 +80,9 @@ export class Class extends ClassBase {
     this.base = base;
     typescript.setReflectedClass(declaration, this);
 
-    if (isInternalArray(this.name) || (!!this.base && this.base.isArray))
+    if (isBuiltinArray(this.name) || (!!this.base && this.base.isArray))
       this.isArray = true;
-    if (isInternalString(this.name) || (!!this.base && this.base.isString))
+    if (isBuiltinString(this.name) || (!!this.base && this.base.isString))
       this.isString = true;
   }
 

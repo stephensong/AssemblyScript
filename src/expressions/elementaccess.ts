@@ -11,11 +11,14 @@ import * as typescript from "../typescript";
 export function compileElementAccess(compiler: Compiler, node: typescript.ElementAccessExpression, contextualType: reflection.Type, valueNode?: typescript.Expression): binaryen.Expression {
   const op = compiler.module;
 
+  // fall back to contextual type on error
   typescript.setReflectedType(node, contextualType);
 
+  // compile the index argument
   const argumentNode = <typescript.Expression>node.argumentExpression;
   const argument = compiler.maybeConvertValue(argumentNode, compiler.compileExpression(argumentNode, compiler.uintptrType), typescript.getReflectedType(argumentNode), compiler.uintptrType, false);
 
+  // compile the expression and verify that it references an array
   const expression = compiler.compileExpression(node.expression, compiler.uintptrType);
   const expressionType = typescript.getReflectedType(node.expression);
 
@@ -24,14 +27,15 @@ export function compileElementAccess(compiler: Compiler, node: typescript.Elemen
     return op.unreachable();
   }
 
+  // obtain the reflected element type
   const elementType = (<reflection.Class>expressionType.underlyingClass).typeArguments.T.type;
   const uintptrCategory = <binaryen.I32Operations | binaryen.I64Operations>binaryen.categoryOf(compiler.uintptrType, op, compiler.uintptrSize);
+  typescript.setReflectedType(node, elementType);
 
+  // if this is a store instead of a load, compile the value expression
   let valueExpression: binaryen.Expression | undefined;
   if (valueNode)
     valueExpression = compiler.maybeConvertValue(valueNode, compiler.compileExpression(valueNode, elementType), typescript.getReflectedType(valueNode), elementType, false);
-
-  typescript.setReflectedType(node, elementType);
 
   // simplify / precalculate access to a constant index
   if (argumentNode.kind === typescript.SyntaxKind.NumericLiteral) {

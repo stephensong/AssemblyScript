@@ -10,8 +10,10 @@ import * as typescript from "../typescript";
 export function compilePropertyAccess(compiler: Compiler, node: typescript.PropertyAccessExpression, contextualType: reflection.Type, valueNode?: typescript.Expression): binaryen.Expression {
   const op = compiler.module;
 
+  // fall back to contextual type on error
   typescript.setReflectedType(node, contextualType);
 
+  // obtain the property's name
   const propertyName = typescript.getTextOfNode(node.name);
 
   // handle special cases
@@ -106,13 +108,14 @@ export function compilePropertyAccess(compiler: Compiler, node: typescript.Prope
         compiler.error(node, "Using getters as properties is not supported yet");
       } else if (method.template.isSetter) {
         compiler.error(node, "Using setters as properties is not supported yet");
-      }
+      } else
+        compiler.error(node, "Cannot use a method as a property");
+      return op.unreachable();
+    } else {
+      compiler.error(node, "No such property");
       return op.unreachable();
     }
   }
-
-  compiler.error(node, "Unsupported property access", "SyntaxKind " + node.expression.kind);
-  return op.unreachable();
 }
 
 export { compilePropertyAccess as default };

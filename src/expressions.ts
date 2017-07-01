@@ -39,7 +39,7 @@ import {
   compilePropertyAccess
 } from "./expressions";
 
-/** Compiles an expression. */
+/** Compiles any supported expression. */
 export function compile(compiler: Compiler, node: typescript.Expression, contextualType: reflection.Type): binaryen.Expression {
   const op = compiler.module;
 

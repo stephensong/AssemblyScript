@@ -51,29 +51,29 @@ function main(args, callback) {
       "Syntax: "+ chalk.reset.cyan.bold("asc") + " [options] entryFile",
       "",
       chalk.reset.white.bold("Options:"),
-      " --out, -o, --outFile   Specifies the output file name.",
+      " --out, -o, --outFile   Specifies the output file name. Also recognizes .wast / .wat",
       " --validate, -v         Validates the module.",
       " --optimize, -O         Runs optimizing binaryen IR passes.",
       " --silent               Does not print anything to console.",
       "",
-      " --target, -t           Specifies the target architecture.",
+      " --target, -t           Specifies the target architecture:",
       "",
-      "                        wasm32  Compiles to 32-bit WebAssembly. " + chalk.gray("[default]"),
-      "                        wasm64  Compiles to 64-bit WebAssembly.",
+      "                        wasm32  Compiles to 32-bit WebAssembly " + chalk.gray("[default]"),
+      "                        wasm64  Compiles to 64-bit WebAssembly",
       "",
-      " --memory-model, -m     Specifies the memory model to use.",
+      " --memory-model, -m     Specifies the memory model to use / how to proceed with malloc etc.:",
       "",
-      "                        malloc        Bundles malloc, free, etc. " + chalk.gray("[default]"),
-      "                        exportmalloc  Bundles malloc, free, etc. and exports each to the embedder.",
-      "                        importmalloc  Imports malloc, free, etc. as provided by the embedder within 'env'.",
-      "                        bare          Excludes malloc, free, etc. entirely.",
+      "                        malloc        Bundles malloc etc. " + chalk.gray("[default]"),
+      "                        exportmalloc  Bundles malloc etc. and exports each",
+      "                        importmalloc  Imports malloc etc. from 'env'",
+      "                        bare          Excludes malloc etc. entirely",
       "",
-      " --text                 Emits text format instead of a binary.",
+      " --text                 Specifies the text output format:",
       "",
-      "                        sexpr   Emits s-expression syntax as produced by Binaryen. " + chalk.gray("[default]"),
-      "                        stack   Emits stack syntax / official text format.",
+      "                        sexpr   Emits s-expression syntax / .wast " + chalk.gray("[default]"),
+      "                        stack   Emits linear stack syntax / .wat",
       "",
-      " --text-out             Outputs text format alongside a binary using the given file name.",
+      " --text-out             Outputs text format alongside a binary.",
       ""
     ].join("\n"));
     return callback(EUSAGE);
@@ -102,38 +102,29 @@ function main(args, callback) {
     }
   }
 
-  if (argv.out && /\.was?t$/.test(argv.out) && !argv.text)
-    argv.text = "sexpr";
-
-  // Output to file
-  if (argv.out) {
-    if (argv.text !== undefined) // text to file only
-      writeText(wasmModule, argv.text, fs.createWriteStream(argv.out), finish);
-    else if (!argv.textout) // binary to file only
-      writeBinary(wasmModule, fs.createWriteStream(argv.out), finish);
-    else // text to file alongside binary to file
-      writeBinary(wasmModule, fs.createWriteStream(argv.out), function(err) {
-        if (err) return finish(err);
-        writeText(wasmModule, argv.text, fs.createWriteStream(argv.textout), finish);
-      });
-
-  // Output to stdout
-  } else {
-    if (argv.text !== undefined || (process.stdout.isTTY && !argv.textout)) // text to stdout only
-      writeText(wasmModule, argv.text, process.stdout, finish);
-    else if (!argv.textout) // binary to stdout only
-      writeBinary(wasmModule, process.stdout, finish);
-    else // text to file alongside binary to stdout
-      writeBinary(wasmModule, process.stdout, function(err) {
-        if (err) return finish(err);
-        writeText(wasmModule, argv.text, fs.createWriteStream(argv.textout), finish);
-      });
+  // Default to text format if --out references a .wast or .wat
+  if (argv.out && !argv.text) {
+    if (/\.wast$/.test(argv.out))
+      argv.text = "sexpr";
+    else if (/\.wat$/.test(argv.out))
+      argv.text = "stack";
   }
+
+  var output = argv.out ? fs.createWriteStream(argv.out) : process.stdout;
+
+  if (argv.textout) // text to file alongside binary
+    writeBinary(wasmModule, output, function(err) {
+      if (err) return finish(err);
+      writeText(wasmModule, argv.text || /\.wat$/.test(argv.textout) && "stack" || /\.wast$/.test(argv.textout) && "sexpr", fs.createWriteStream(argv.textout), finish);
+    });
+  else if (argv.text !== undefined) // text only
+    writeText(wasmModule, argv.text, output, finish);
+  else // binary only
+    writeBinary(wasmModule, output, finish);
 
   function finish(err) {
     wasmModule.dispose();
-    if (err) return callback(err ? EFAILURE : ESUCCESS);
-    callback(ESUCCESS);
+    return callback(err ? EFAILURE : ESUCCESS);
   }
 }
 
@@ -141,7 +132,7 @@ exports.main = main;
 
 /** Writes text format of the specified module, using the specified format. */
 function writeText(wasmModule, format, output, callback) {
-  if (format === "stack") {
+  if (format === "stack" || format === "linear") {
     if (!assemblyscript.wabt.available) {
       if (!argv.silent)
         process.stderr.write("\n" + assemblyscript.wabt.ENOTAVAILABLE + "\n");

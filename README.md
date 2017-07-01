@@ -345,29 +345,29 @@ The command line compiler `asc` works similar to TypeScript's `tsc`:
 Syntax: asc [options] entryFile
 
 Options:
- --out, -o, --outFile   Specifies the output file name.
+ --out, -o, --outFile   Specifies the output file name. Also recognizes .wast / .wat
  --validate, -v         Validates the module.
  --optimize, -O         Runs optimizing binaryen IR passes.
  --silent               Does not print anything to console.
 
- --target, -t           Specifies the target architecture.
+ --target, -t           Specifies the target architecture:
 
-                        wasm32  Compiles to 32-bit WebAssembly. [default]
-                        wasm64  Compiles to 64-bit WebAssembly.
+                        wasm32  Compiles to 32-bit WebAssembly [default]
+                        wasm64  Compiles to 64-bit WebAssembly
 
- --memory-model, -m     Specifies the memory model to use.
+ --memory-model, -m     Specifies the memory model to use / how to proceed with malloc etc.:
 
-                        malloc        Bundles malloc, free, etc. [default]
-                        exportmalloc  Bundles malloc, free, etc. and exports each to the embedder.
-                        importmalloc  Imports malloc, free, etc. as provided by the embedder within 'env'.
-                        bare          Excludes malloc, free, etc. entirely.
+                        malloc        Bundles malloc etc. [default]
+                        exportmalloc  Bundles malloc etc. and exports each
+                        importmalloc  Imports malloc etc. from 'env'
+                        bare          Excludes malloc etc. entirely
 
- --text                 Emits text format instead of a binary.
+ --text                 Specifies the text output format:
 
-                        sexpr   Emits s-expression syntax as produced by Binaryen. [default]
-                        stack   Emits stack syntax / official text format.
+                        sexpr   Emits s-expression syntax / .wast [default]
+                        stack   Emits linear stack syntax / .wat
 
- --text-out             Outputs text format alongside a binary using the given file name.
+ --text-out             Outputs text format alongside a binary.
 ```
 
 Building
