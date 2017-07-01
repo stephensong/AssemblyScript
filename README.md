@@ -14,7 +14,7 @@ Under the hood, AssemblyScript rewires TypeScript's [compiler API](https://githu
 
 Every AssemblyScript program is valid TypeScript syntactically, but not necessarily semantically. The definitions required to start developing in AssemblyScript are provided by [assembly.d.ts](./assembly.d.ts). See also: [Usage](#usage)
 
-The compiler is able to produce WebAssembly binaries (.wasm) as well as their corresponding text format (.wast). Both Binaryen's s-expression format and, with a little help of [WABT](https://github.com/WebAssembly/wabt), official stack-based text format are supported. See also: [Command line](#command-line)
+The compiler is able to produce WebAssembly binaries (.wasm) as well as their corresponding text format (.wast). Both Binaryen's s-expression format and, with a little help of [WABT](https://github.com/WebAssembly/wabt), official linear text format are supported. See also: [Command line](#command-line)
 
 Example
 -------
@@ -365,7 +365,7 @@ Options:
  --text                 Specifies the text output format:
 
                         sexpr   Emits s-expression syntax / .wast [default]
-                        stack   Emits linear stack syntax / .wat
+                        linear  Emits official linear syntax / .wat
 
  --text-out             Outputs text format alongside a binary.
 ```

@@ -71,7 +71,7 @@ function main(args, callback) {
       " --text                 Specifies the text output format:",
       "",
       "                        sexpr   Emits s-expression syntax / .wast " + chalk.gray("[default]"),
-      "                        stack   Emits linear stack syntax / .wat",
+      "                        linear  Emits official linear syntax / .wat",
       "",
       " --text-out             Outputs text format alongside a binary.",
       ""
@@ -107,7 +107,7 @@ function main(args, callback) {
     if (/\.wast$/.test(argv.out))
       argv.text = "sexpr";
     else if (/\.wat$/.test(argv.out))
-      argv.text = "stack";
+      argv.text = "linear";
   }
 
   var output = argv.out ? fs.createWriteStream(argv.out) : process.stdout;
@@ -115,7 +115,7 @@ function main(args, callback) {
   if (argv.textout) // text to file alongside binary
     writeBinary(wasmModule, output, function(err) {
       if (err) return finish(err);
-      writeText(wasmModule, argv.text || /\.wat$/.test(argv.textout) && "stack" || /\.wast$/.test(argv.textout) && "sexpr", fs.createWriteStream(argv.textout), finish);
+      writeText(wasmModule, argv.text || /\.wat$/.test(argv.textout) && "linear" || /\.wast$/.test(argv.textout) && "sexpr", fs.createWriteStream(argv.textout), finish);
     });
   else if (argv.text !== undefined) // text only
     writeText(wasmModule, argv.text, output, finish);
@@ -132,7 +132,7 @@ exports.main = main;
 
 /** Writes text format of the specified module, using the specified format. */
 function writeText(wasmModule, format, output, callback) {
-  if (format === "stack" || format === "linear") {
+  if (format === "linear" || format === "stack") {
     if (!assemblyscript.wabt.available) {
       if (!argv.silent)
         process.stderr.write("\n" + assemblyscript.wabt.ENOTAVAILABLE + "\n");
