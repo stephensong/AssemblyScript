@@ -379,11 +379,13 @@ export function compileBinary(compiler: Compiler, node: typescript.BinaryExpress
 
 export { compileBinary as default };
 
+/** Compiles a binary assignment expression. */
 export function compileAssignment(compiler: Compiler, node: typescript.BinaryExpression, contextualType: reflection.Type): binaryen.Expression {
   compiler.compileExpression(node.left, contextualType); // determines left type (usually an identifier anyway)
   return compileAssignmentWithValue(compiler, node, compiler.compileExpression(node.right, typescript.getReflectedType(node.left)), contextualType);
 }
 
+/** Compiles a binary assignment expression with a pre-computed value. */
 export function compileAssignmentWithValue(compiler: Compiler, node: typescript.BinaryExpression, value: binaryen.Expression, contextualType: reflection.Type): binaryen.Expression {
   const op = compiler.module;
 
