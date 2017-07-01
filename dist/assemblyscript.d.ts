@@ -606,6 +606,10 @@ declare module 'assemblyscript/expressions/binary' {
   export function compileAssignment(compiler: Compiler, node: typescript.BinaryExpression, contextualType: reflection.Type): binaryen.Expression;
   /** Compiles a binary assignment expression with a pre-computed value. */
   export function compileAssignmentWithValue(compiler: Compiler, node: typescript.BinaryExpression, value: binaryen.Expression, contextualType: reflection.Type): binaryen.Expression;
+  /** Compiles a binary logical AND or OR expression. */
+  export function compileLogicalAndOr(compiler: Compiler, node: typescript.BinaryExpression): binaryen.Expression;
+  /** Compiles any expression so that it evaluates to a boolean result indicating whether it is true-ish. */
+  export function compileIsTrueish(compiler: Compiler, node: typescript.Expression): binaryen.Expression;
 }
 
 declare module 'assemblyscript/expressions/call' {

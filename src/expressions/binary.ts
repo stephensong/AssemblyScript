@@ -13,6 +13,9 @@ export function compileBinary(compiler: Compiler, node: typescript.BinaryExpress
   if (node.operatorToken.kind === typescript.SyntaxKind.EqualsToken)
     return compileAssignment(compiler, node, contextualType);
 
+  if (node.operatorToken.kind === typescript.SyntaxKind.AmpersandAmpersandToken || node.operatorToken.kind === typescript.SyntaxKind.BarBarToken)
+    return compileLogicalAndOr(compiler, node);
+
   let left: binaryen.Expression = compiler.compileExpression(node.left, contextualType);
   let leftType: reflection.Type = typescript.getReflectedType(node.left);
 
@@ -156,11 +159,6 @@ export function compileBinary(compiler: Compiler, node: typescript.BinaryExpress
 
       resultType = commonType;
       break;
-
-    // &&, ||
-    // TODO: decide how to handle these
-    // case typescript.SyntaxKind.AmpersandAmpersandToken:
-    // case typescript.SyntaxKind.BarBarToken:
 
     // +=, -=, **=, *=, /=, %=, &=, |=, ^=
     // prioritize left type, result is left type
@@ -423,5 +421,76 @@ export function compileAssignmentWithValue(compiler: Compiler, node: typescript.
     return compilePropertyAccess(compiler, <typescript.PropertyAccessExpression>node.left, contextualType, node.right);
 
   compiler.error(node.operatorToken, "Unsupported assignment operation", "SyntaxKind " + node.operatorToken.kind);
+  return op.unreachable();
+}
+
+/** Compiles a binary logical AND or OR expression. */
+export function compileLogicalAndOr(compiler: Compiler, node: typescript.BinaryExpression): binaryen.Expression {
+  const op = compiler.module;
+
+  typescript.setReflectedType(node, reflection.boolType);
+
+  const left = compileIsTrueish(compiler, node.left);
+  const right = compileIsTrueish(compiler, node.right);
+
+  // &&
+  if (node.operatorToken.kind === typescript.SyntaxKind.AmpersandAmpersandToken)
+    return op.select(
+      left,
+      /* ? */ right,
+      /* : */ binaryen.valueOf(reflection.intType, op, 0)
+    );
+
+  // ||
+  else if (node.operatorToken.kind === typescript.SyntaxKind.BarBarToken)
+    return op.select(
+      left,
+      /* ? */ binaryen.valueOf(reflection.intType, op, 1),
+      /* : */ right
+    );
+
+  compiler.error(node.operatorToken, "Unsupported logical operation", "SyntaxKind " + node.operatorToken.kind);
+  return op.unreachable();
+}
+
+/** Compiles any expression so that it evaluates to a boolean result indicating whether it is true-ish. */
+export function compileIsTrueish(compiler: Compiler, node: typescript.Expression): binaryen.Expression {
+  const op = compiler.module;
+
+  const expr = compiler.compileExpression(node, reflection.intType);
+  const type = typescript.getReflectedType(node);
+  const zero = binaryen.valueOf(type, op, 0);
+
+  typescript.setReflectedType(node, reflection.boolType);
+
+  switch (type.kind) {
+    case reflection.TypeKind.byte:
+    case reflection.TypeKind.sbyte:
+    case reflection.TypeKind.short:
+    case reflection.TypeKind.ushort:
+    case reflection.TypeKind.int:
+    case reflection.TypeKind.uint:
+    case reflection.TypeKind.bool:
+      return op.i32.ne(expr, zero);
+
+    case reflection.TypeKind.long:
+    case reflection.TypeKind.ulong:
+    case reflection.TypeKind.uintptr:
+      return op.i64.ne(expr, zero);
+
+    case reflection.TypeKind.float:
+      return op.f32.ne(expr, zero);
+
+    case reflection.TypeKind.double:
+      return op.f64.ne(expr, zero);
+
+    case reflection.TypeKind.uintptr: // TODO: special handling of strings?
+      if (compiler.uintptrSize === 4)
+        return op.i32.ne(expr, zero);
+      else
+        return op.i64.ne(expr, zero);
+  }
+
+  compiler.error(node, "Unsupported logical operand", "SyntaxKind " + node.kind);
   return op.unreachable();
 }
