@@ -104,7 +104,7 @@ Type      | Alias     | Native type | sizeof | Description
 `uintptr` | -         | i32 / i64   | 4 / 8  | A 32-bit unsigned integer when targeting 32-bit WebAssembly.<br />A 64-bit unsigned integer when targeting 64-bit WebAssembly.
 `float`   | `float32` | f32         | 4      | A 32-bit float.
 `double`  | `float64` | f64         | 8      | A 64-bit float.
-`bool`    | -         | i32         | 1      | A 1-bit unsigned _integer_.
+`bool`    | -         | i32         | 1      | A 1-bit unsigned integer.
 `void`    | -         | none        | -      | No return type
 
 While generating a warning to avoid type confusion, the JavaScript types `number` and `boolean` resolve to `double` and `bool` respectively.
@@ -349,22 +349,25 @@ Options:
  --validate, -v         Validates the module.
  --optimize, -O         Runs optimizing binaryen IR passes.
  --silent               Does not print anything to console.
- --text                 Emits text format instead of a binary.
-
-                        sexpr   Emits s-expression syntax as produced by Binaryen. [default]
-                        stack   Emits stack syntax / official text format.
 
  --target, -t           Specifies the target architecture.
 
                         wasm32  Compiles to 32-bit WebAssembly. [default]
                         wasm64  Compiles to 64-bit WebAssembly.
 
- --memorymodel, -m      Specifies the memory model to use.
+ --memory-model, -m     Specifies the memory model to use.
 
                         malloc        Bundles malloc, free, etc. [default]
                         exportmalloc  Bundles malloc, free, etc. and exports each to the embedder.
                         importmalloc  Imports malloc, free, etc. as provided by the embedder within 'env'.
                         bare          Excludes malloc, free, etc. entirely.
+
+ --text                 Emits text format instead of a binary.
+
+                        sexpr   Emits s-expression syntax as produced by Binaryen. [default]
+                        stack   Emits stack syntax / official text format.
+
+ --text-out             Outputs text format alongside a binary using the given file name.
 ```
 
 Building

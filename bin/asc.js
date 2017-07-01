@@ -20,6 +20,7 @@ var EUSAGE = 1;
 var EINVALID = 2;
 var EFAILURE = 3;
 
+/** Runs the command line compiler using the specified command line arguments. */
 function main(args, callback) {
 
   var argv = minimist(args, {
@@ -28,7 +29,8 @@ function main(args, callback) {
       validate: [ "v" ],
       optimize: [ "O" ],
       target: [ "t" ],
-      memorymodel: [ "m", "memoryModel", "memory-model" ],
+      memorymodel: [ "m", "memory-model" ],
+      textout: [ "text-out" ],
       help: [ "h" ]
     },
     default: {
@@ -37,7 +39,7 @@ function main(args, callback) {
       "silent": false,
       "memory": "malloc"
     },
-    string: [ "out", "text", "memorymodel" ],
+    string: [ "out", "text", "memorymodel", "textout"],
     boolean: [ "optimize", "validate", "silent", "help" ]
   });
 
@@ -53,22 +55,25 @@ function main(args, callback) {
       " --validate, -v         Validates the module.",
       " --optimize, -O         Runs optimizing binaryen IR passes.",
       " --silent               Does not print anything to console.",
-      " --text                 Emits text format instead of a binary.",
-      "",
-      "                        sexpr   Emits s-expression syntax as produced by Binaryen. " + chalk.gray("[default]"),
-      "                        stack   Emits stack syntax / official text format.",
       "",
       " --target, -t           Specifies the target architecture.",
       "",
       "                        wasm32  Compiles to 32-bit WebAssembly. " + chalk.gray("[default]"),
       "                        wasm64  Compiles to 64-bit WebAssembly.",
       "",
-      " --memorymodel, -m      Specifies the memory model to use.",
+      " --memory-model, -m     Specifies the memory model to use.",
       "",
       "                        malloc        Bundles malloc, free, etc. " + chalk.gray("[default]"),
       "                        exportmalloc  Bundles malloc, free, etc. and exports each to the embedder.",
       "                        importmalloc  Imports malloc, free, etc. as provided by the embedder within 'env'.",
       "                        bare          Excludes malloc, free, etc. entirely.",
+      "",
+      " --text                 Emits text format instead of a binary.",
+      "",
+      "                        sexpr   Emits s-expression syntax as produced by Binaryen. " + chalk.gray("[default]"),
+      "                        stack   Emits stack syntax / official text format.",
+      "",
+      " --text-out             Outputs text format alongside a binary using the given file name.",
       ""
     ].join("\n"));
     return callback(EUSAGE);
@@ -83,6 +88,8 @@ function main(args, callback) {
   if (!wasmModule)
     return callback(EFAILURE);
 
+  // from this point on the module must be disposed (finish does this implicitly)
+
   if (argv.optimize)
     wasmModule.optimize();
 
@@ -91,41 +98,76 @@ function main(args, callback) {
     if (!result) {
       if (!argv.silent)
         process.stderr.write("\nValidation failed. See above for details.\n");
-      return callback(EINVALID);
+      return finish(Error("validation failed"));
     }
   }
 
-  if (argv.out && /\.wast$/.test(argv.out))
-    argv.text = true;
+  if (argv.out && /\.was?t$/.test(argv.out) && !argv.text)
+    argv.text = "sexpr";
 
-  var output = argv.out ? fs.createWriteStream(argv.out) : process.stdout;
-  var ended = output === process.stdout;
+  // Output to file
+  if (argv.out) {
+    if (argv.text !== undefined) // text to file only
+      writeText(wasmModule, argv.text, fs.createWriteStream(argv.out), finish);
+    else if (!argv.textout) // binary to file only
+      writeBinary(wasmModule, fs.createWriteStream(argv.out), finish);
+    else // text to file alongside binary to file
+      writeBinary(wasmModule, fs.createWriteStream(argv.out), function(err) {
+        if (err) return finish(err);
+        writeText(wasmModule, argv.text, fs.createWriteStream(argv.textout), finish);
+      });
 
-  if (argv.text !== undefined || output.isTTY) {
-    if (argv.text === "stack") {
-      if (!assemblyscript.wabt.available) {
-        if (!argv.silent)
-          process.stderr.write("\n" + assemblyscript.wabt.ENOTAVAILABLE + "\n");
-        return callback(EFAILURE);
-      }
-      output.write(assemblyscript.wabt.wasmToWast(wasmModule.emitBinary(), { readDebugNames: true }), "utf8", finish);
-    } else {
-      output.write(wasmModule.emitText(), "utf8", finish);
-    }
-  } else
-    output.write(Buffer.from(wasmModule.emitBinary()), finish);
+  // Output to stdout
+  } else {
+    if (argv.text !== undefined || (process.stdout.isTTY && !argv.textout)) // text to stdout only
+      writeText(wasmModule, argv.text, process.stdout, finish);
+    else if (!argv.textout) // binary to stdout only
+      writeBinary(wasmModule, process.stdout, finish);
+    else // text to file alongside binary to stdout
+      writeBinary(wasmModule, process.stdout, function(err) {
+        if (err) return finish(err);
+        writeText(wasmModule, argv.text, fs.createWriteStream(argv.textout), finish);
+      });
+  }
 
   function finish(err) {
-    if (err)
-      return callback(EFAILURE);
-    if (!ended) {
-      ended = true;
-      output.end(finish);
-      return;
-    }
     wasmModule.dispose();
+    if (err) return callback(err ? EFAILURE : ESUCCESS);
     callback(ESUCCESS);
   }
 }
 
 exports.main = main;
+
+/** Writes text format of the specified module, using the specified format. */
+function writeText(wasmModule, format, output, callback) {
+  if (format === "stack") {
+    if (!assemblyscript.wabt.available) {
+      if (!argv.silent)
+        process.stderr.write("\n" + assemblyscript.wabt.ENOTAVAILABLE + "\n");
+      return callback(EFAILURE);
+    }
+    var binary = wasmModule.ascCurrentBinary || (wasmModule.ascCurrentBinary = wasmModule.emitBinary()); // reuse
+    output.write(assemblyscript.wabt.wasmToWast(binary, { readDebugNames: true }), "utf8", end);
+  } else
+    output.write(wasmModule.emitText(), "utf8", end);
+
+  function end(err) {
+    if (err || output === process.stdout) return callback(err);
+    output.end(callback);
+  }
+}
+
+exports.writeText = writeText;
+
+/** Writes a binary of the specified module. */
+function writeBinary(wasmModule, output, callback) {
+  output.write(Buffer.from(wasmModule.emitBinary()), end);
+
+  function end(err) {
+    if (err || output === process.stdout) return callback(err);
+    output.end(callback);
+  }
+}
+
+exports.writeBinary = writeBinary;
