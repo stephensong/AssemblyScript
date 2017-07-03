@@ -53,6 +53,9 @@ export function isBuiltin(name: string, isGlobalName: boolean = false): boolean 
     case "reinterpretl":
     case "reinterpretf":
     case "reinterpretd":
+    case "current_memory":
+    case "grow_memory":
+    case "unreachable":
     case "sizeof":
     case "unsafe_cast":
     case "isNaN":
@@ -382,6 +385,12 @@ export function grow_memory(compiler: Compiler, node: typescript.Expression, exp
     return op.growMemory(expr);
 
   throw Error("unsupported operation");
+}
+
+/** Compiles an unreachable operation. */
+export function unreachable(compiler: Compiler): binaryen.Expression {
+  const op = compiler.module;
+  return op.unreachable();
 }
 
 /** Compiles a sizeof operation determining the byte size of a type. */

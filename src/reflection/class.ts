@@ -19,6 +19,22 @@ export abstract class ClassBase {
     this.declaration = declaration;
   }
 
+  hasDecorator(name: string): boolean {
+    const decorators = this.declaration.decorators;
+    if (!decorators)
+      return false;
+    for (let i = 0, k = decorators.length; i < k; ++i) {
+      const decorator = decorators[i];
+      if (
+        decorator.expression.kind === typescript.SyntaxKind.CallExpression &&
+        (<typescript.CallExpression>decorator.expression).expression.kind === typescript.SyntaxKind.Identifier &&
+        (<typescript.Identifier>(<typescript.CallExpression>decorator.expression).expression).text === name
+      )
+        return true;
+    }
+    return false;
+  }
+
   toString(): string { return this.name; }
 }
 
@@ -28,6 +44,11 @@ export interface TypeArgument {
   type: Type;
   /** TypeScript type node. */
   node: typescript.TypeNode;
+}
+
+/** Interface describing a reflected type arguments map. */
+export interface TypeArgumentsMap {
+  [key: string]: TypeArgument;
 }
 
 /** Interface describing a reflected class method. */
@@ -71,8 +92,10 @@ export class Class extends ClassBase {
   size: number = 0;
   /** Whether array access is supported on this class. */
   isArray: boolean = false;
-  // TODO
+  /** Whether this is a string-like class. */
   isString: boolean = false;
+  /** Whether memory must be allocated implicitly. */
+  implicitMalloc: boolean = false;
 
   /** Constructs a new reflected class and binds it to its TypeScript declaration. */
   constructor(name: string, template: ClassTemplate, uintptrType: Type, typeArguments: { [key: string]: TypeArgument } , base?: Class) {
@@ -81,12 +104,15 @@ export class Class extends ClassBase {
     this.type = uintptrType.withUnderlyingClass(this);
     this.typeArguments = typeArguments;
     this.base = base;
+
     typescript.setReflectedClass(template.declaration, this);
 
     if (isBuiltinArray(this.name) || (!!this.base && this.base.isArray))
       this.isArray = true;
     if (isBuiltinString(this.name) || (!!this.base && this.base.isString))
       this.isString = true;
+
+    this.implicitMalloc = !this.hasDecorator("no_implicit_malloc");
   }
 
   /** Initializes the class, its properties, methods and constructor. */
@@ -253,7 +279,7 @@ export class ClassTemplate extends ClassBase {
 /** Patches a declaration to inherit from its actual implementation. */
 export function patchClassImplementation(compiler: Compiler, declTemplate: ClassTemplate, implTemplate: ClassTemplate): void {
 
-  // Make the declaration and extend the implementation. New instances will automatically inherit this change from the template.
+  // Make the declaration extend the implementation. New instances will automatically inherit this change from the template.
   implTemplate.base = declTemplate.base; // overrides inheritance from declaration
   declTemplate.base = implTemplate;
   if (implTemplate.declaration.typeParameters) {

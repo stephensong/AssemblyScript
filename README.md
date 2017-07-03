@@ -179,6 +179,8 @@ WebAssembly-specific operations are available as built-in functions that transla
   Returns the current memory size in units of pages. One page is 64kb.
 * **grow_memory**(value: `uint`): `int`<br />
   Grows linear memory by a given unsigned delta of pages. One page is 64kb. Returns the previous memory size in units of pages or `-1` on failure.
+* **unreachable**(): `void`<br />
+  Emits an unreachable operation that results in a runtime error when executed.
 
 The following AssemblyScript-specific operations are implemented as built-ins as well:
 

@@ -16,7 +16,7 @@ export function compileCall(compiler: Compiler, node: typescript.CallExpression,
   // Try to resolve the signature of the node: works if it's a call to a global or static function
   const signature = compiler.checker.getResolvedSignature(node);
   if (signature && (declaration = <typescript.FunctionLikeDeclaration>signature.declaration)) {
-    //                             ^ FunctionLikeDeclaration extends SignatureDeclaration
+    // FunctionLikeDeclaration extends SignatureDeclaration
 
   // Instance method call consisting of thisExpression.methodName
   } else if (node.expression.kind === typescript.SyntaxKind.PropertyAccessExpression) {
@@ -41,12 +41,21 @@ export function compileCall(compiler: Compiler, node: typescript.CallExpression,
     return op.unreachable();
   }
 
+  // Inherit type arguments from current class and function
+  const typeArgumentsMap: reflection.TypeArgumentsMap = {};
+  const currentFunction = compiler.currentFunction;
+  if (currentFunction) {
+    if (currentFunction.parent)
+      Object.keys(currentFunction.parent.typeArguments).forEach(key => typeArgumentsMap[key] = (<reflection.Class>currentFunction.parent).typeArguments[key]);
+    Object.keys(currentFunction.typeArguments).forEach(key => typeArgumentsMap[key] = currentFunction.typeArguments[key]);
+  }
+
   // Initialize generic function from type arguments
   let instance = typescript.getReflectedFunction(declaration);
   if (!instance) {
     const template = typescript.getReflectedFunctionTemplate(declaration);
     if (template) {
-      instance = template.resolve(compiler, node.typeArguments || []);
+      instance = template.resolve(compiler, node.typeArguments || [], typeArgumentsMap);
       instance.initialize(compiler);
       if (!template.isGeneric)
         typescript.setReflectedFunction(declaration, instance);
@@ -101,8 +110,7 @@ export function compileCall(compiler: Compiler, node: typescript.CallExpression,
     typeArguments = new Array(node.typeArguments.length);
     for (const k = declaration.typeParameters.length; i < k; ++i) {
       const argument = node.typeArguments[i];
-      const argumentName = typescript.getTextOfNode(argument);
-      const resolvedType = compiler.currentFunction && compiler.currentFunction.typeArguments[argumentName] && compiler.currentFunction.typeArguments[argumentName].type || compiler.resolveType(argument);
+      const resolvedType = compiler.resolveType(argument, false, typeArgumentsMap);
       if (!resolvedType) {
         compiler.error(node.typeArguments[i], "Unresolvable type");
         return op.unreachable();
@@ -186,6 +194,9 @@ export function compileCall(compiler: Compiler, node: typescript.CallExpression,
 
     case "grow_memory":
       return builtins.grow_memory(compiler, node.arguments[0], argumentExpressions[0]);
+
+    case "unreachable":
+      return builtins.unreachable(compiler);
 
     case "sizeof":
       return builtins.sizeof(compiler, typeArguments[0]);

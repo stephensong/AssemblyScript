@@ -173,6 +173,8 @@ declare function reinterpretd(value: long): double;
 declare function current_memory(): int;
 /** Grows linear memory by a given unsigned delta of pages. One page is 64kb. Returns the previous memory size in units of pages or `-1` on failure. */
 declare function grow_memory(value: uint): int;
+/** Emits an unreachable operation that results in a runtime error when executed. */
+declare function unreachable(): void;
 
 /** Determines the byte size of the specified core or class type. Compiles to a constant. */
 declare function sizeof<T>(): uintptr;
@@ -218,3 +220,6 @@ declare interface Symbol {}
 declare interface IDisposable {
   dispose(): void;
 }
+
+// Internal decorators
+declare function no_implicit_malloc();
