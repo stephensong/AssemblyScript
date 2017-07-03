@@ -459,8 +459,7 @@ export class Compiler {
         op.addGlobal(name, binaryen.typeOf(type, this.uintptrSize), mutable, binaryen.valueOf(type, op, 0));
 
         if (!this.startFunction)
-          (this.startFunction = new reflection.Function(".start", <typescript.FunctionLikeDeclaration>{}, {}, [], reflection.voidType))
-            .initialize(this);
+          (this.startFunction = createStartFunction()).initialize(this);
 
         const previousFunction = this.currentFunction;
         this.currentFunction = this.startFunction;
@@ -555,7 +554,7 @@ export class Compiler {
       template = this.functionTemplates[name] = new reflection.FunctionTemplate(name, node);
       if (template.isGeneric) {
         if (builtins.isBuiltin(name)) // generic builtins evaluate type parameters dynamically and have a known return type
-          typescript.setReflectedFunction(node, new reflection.Function(name, node, {}, [], this.resolveType(<typescript.TypeNode>template.declaration.type, true)));
+          typescript.setReflectedFunction(node, new reflection.Function(name, template, {}, [], this.resolveType(<typescript.TypeNode>template.declaration.type, true)));
       } else {
         instance = this.functions[name] = template.resolve(this, [], parent);
         instance.initialize(this);
@@ -709,8 +708,7 @@ export class Compiler {
 
     // create a blank start function if there isn't one yet
     if (!this.startFunction)
-      (this.startFunction = new reflection.Function(".start", <typescript.FunctionLikeDeclaration>{}, {}, [], reflection.voidType))
-        .initialize(this);
+      (this.startFunction = createStartFunction()).initialize(this);
     const previousFunction = this.currentFunction;
     this.currentFunction = this.startFunction;
 
@@ -1115,7 +1113,7 @@ export class Compiler {
   }
 
   /** Resolves a TypeScript type to a AssemblyScript type. */
-  resolveType(type: typescript.TypeNode, acceptVoid: boolean = false): reflection.Type {
+  resolveType(type: typescript.TypeNode, acceptVoid: boolean = false, typeArgumentsMap?: { [key: string]: reflection.TypeArgument }): reflection.Type {
 
     switch (type.kind) {
 
@@ -1132,8 +1130,18 @@ export class Compiler {
         this.warn(type, "Assuming 'double'");
         return reflection.doubleType;
 
+      case typescript.SyntaxKind.ThisKeyword:
+      case typescript.SyntaxKind.ThisType:
+        if (this.currentFunction && this.currentFunction.parent)
+          return this.currentFunction.parent.type;
+        // fallthrough
+
       case typescript.SyntaxKind.TypeReference:
       {
+        const typeName = typescript.getTextOfNode(type);
+        if (typeArgumentsMap && typeArgumentsMap[typeName])
+          return typeArgumentsMap[typeName].type;
+
         const referenceNode = <typescript.TypeReferenceNode>type;
         const symbolAtLocation = this.checker.getSymbolAtLocation(referenceNode.typeName);
         if (symbolAtLocation) {
@@ -1164,7 +1172,7 @@ export class Compiler {
 
             if (reference instanceof reflection.ClassTemplate && referenceNode.typeArguments) {
               const template = <reflection.ClassTemplate>reference;
-              const instance = template.resolve(this, referenceNode.typeArguments);
+              const instance = template.resolve(this, referenceNode.typeArguments, typeArgumentsMap);
               if (!this.classes[instance.name]) {
                 this.classes[instance.name] = instance;
                 instance.initialize(this);
@@ -1192,7 +1200,7 @@ export class Compiler {
       }
     }
 
-    this.error(type, "Unsupported type");
+    this.error(type, "Unsupported type", typescript.getTextOfNode(type));
     return reflection.voidType;
   }
 
@@ -1230,3 +1238,8 @@ export class Compiler {
 }
 
 export { Compiler as default };
+
+/** Creates a new reflected start function. */
+function createStartFunction(): reflection.Function {
+  return new reflection.Function(".start", new reflection.FunctionTemplate(".start", <typescript.FunctionLikeDeclaration>{}), {}, [], reflection.voidType);
+}

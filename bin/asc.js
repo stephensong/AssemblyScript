@@ -117,7 +117,7 @@ function main(args, callback) {
       if (err) return finish(err);
       writeText(wasmModule, argv.text || /\.wat$/.test(argv.textout) && "linear" || /\.wast$/.test(argv.textout) && "sexpr", fs.createWriteStream(argv.textout), finish);
     });
-  else if (argv.text !== undefined) // text only
+  else if (argv.text !== undefined || output.isTTY) // text only
     writeText(wasmModule, argv.text, output, finish);
   else // binary only
     writeBinary(wasmModule, output, finish);

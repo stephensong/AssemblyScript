@@ -332,7 +332,9 @@ declare module 'assemblyscript/compiler' {
       /** Resolves a TypeScript type alias to the root AssemblyScript type where applicable, by symbol. */
       maybeResolveAlias(symbol: typescript.Symbol): typescript.Symbol;
       /** Resolves a TypeScript type to a AssemblyScript type. */
-      resolveType(type: typescript.TypeNode, acceptVoid?: boolean): reflection.Type;
+      resolveType(type: typescript.TypeNode, acceptVoid?: boolean, typeArgumentsMap?: {
+          [key: string]: reflection.TypeArgument;
+      }): reflection.Type;
       /** Resolves an identifier or name to the corresponding reflection object. */
       resolveReference(node: typescript.Identifier | typescript.EntityName, preferTemplate?: boolean): reflection.Variable | reflection.Enum | reflection.Class | reflection.ClassTemplate | null;
   }
@@ -795,6 +797,8 @@ declare module 'assemblyscript/reflection/class' {
   export function isBuiltinString(globalName: string): boolean;
   /** A class instance with generic parameters resolved. */
   export class Class extends ClassBase {
+      /** Corresponding class template. */
+      template: ClassTemplate;
       /** Reflected class type. */
       type: Type;
       /** Concrete type arguments. */
@@ -821,7 +825,7 @@ declare module 'assemblyscript/reflection/class' {
       isArray: boolean;
       isString: boolean;
       /** Constructs a new reflected class and binds it to its TypeScript declaration. */
-      constructor(name: string, declaration: typescript.ClassDeclaration, uintptrType: Type, typeArguments: {
+      constructor(name: string, template: ClassTemplate, uintptrType: Type, typeArguments: {
           [key: string]: TypeArgument;
       }, base?: Class);
       /** Initializes the class, its properties, methods and constructor. */
@@ -840,12 +844,16 @@ declare module 'assemblyscript/reflection/class' {
       base?: ClassTemplate;
       /** Base type arguments. */
       baseTypeArguments: typescript.TypeNode[];
+      /** Type arguments string postfix. */
+      typeArgumentsString: string;
       /** Constructs a new reflected class template and binds it to is TypeScript declaration. */
       constructor(name: string, declaration: typescript.ClassDeclaration, base?: ClassTemplate, baseTypeArguments?: typescript.TypeNode[]);
       /** Tests if this class requires type arguments. */
       readonly isGeneric: boolean;
       /** Resolves this possibly generic class against the provided type arguments. */
-      resolve(compiler: Compiler, typeArgumentNodes: typescript.TypeNode[]): Class;
+      resolve(compiler: Compiler, typeArgumentNodes: typescript.TypeNode[], typeArgumentsMap?: {
+          [key: string]: TypeArgument;
+      }): Class;
   }
   /** Patches a declaration to inherit from its actual implementation. */
   export function patchClassImplementation(compiler: Compiler, declTemplate: ClassTemplate, implTemplate: ClassTemplate): void;
@@ -919,6 +927,8 @@ declare module 'assemblyscript/reflection/function' {
   }
   /** A function instance with generic parameters resolved. */
   export class Function extends FunctionBase {
+      /** Corresponding function template. */
+      template: FunctionTemplate;
       /** Resolved type arguments. */
       typeArguments: {
           [key: string]: TypeArgument;
@@ -956,7 +966,7 @@ declare module 'assemblyscript/reflection/function' {
       /** Binaryen function reference. */
       binaryenFunction: binaryen.Function;
       /** Constructs a new reflected function instance and binds it to its TypeScript declaration. */
-      constructor(name: string, declaration: typescript.FunctionLikeDeclaration, typeArguments: {
+      constructor(name: string, template: FunctionTemplate, typeArguments: {
           [key: string]: TypeArgument;
       }, parameters: FunctionParameter[], returnType: Type, parent?: Class, body?: typescript.Block | typescript.Expression);
       /** Gets the current break label for use with binaryen loops and blocks. */

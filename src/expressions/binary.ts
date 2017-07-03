@@ -459,7 +459,6 @@ export function compileIsTrueish(compiler: Compiler, node: typescript.Expression
 
   const expr = compiler.compileExpression(node, reflection.intType);
   const type = typescript.getReflectedType(node);
-  const zero = binaryen.valueOf(type, op, 0);
 
   typescript.setReflectedType(node, reflection.boolType);
 
@@ -471,24 +470,23 @@ export function compileIsTrueish(compiler: Compiler, node: typescript.Expression
     case reflection.TypeKind.int:
     case reflection.TypeKind.uint:
     case reflection.TypeKind.bool:
-      return op.i32.ne(expr, zero);
+      return op.i32.ne(expr, op.i32.const(0));
 
     case reflection.TypeKind.long:
     case reflection.TypeKind.ulong:
-    case reflection.TypeKind.uintptr:
-      return op.i64.ne(expr, zero);
+      return op.i64.ne(expr, op.i64.const(0, 0));
 
     case reflection.TypeKind.float:
-      return op.f32.ne(expr, zero);
+      return op.f32.ne(expr, op.f32.const(0));
 
     case reflection.TypeKind.double:
-      return op.f64.ne(expr, zero);
+      return op.f64.ne(expr, op.f64.const(0));
 
     case reflection.TypeKind.uintptr: // TODO: special handling of strings?
       if (compiler.uintptrSize === 4)
-        return op.i32.ne(expr, zero);
+        return op.i32.ne(expr, op.i32.const(0));
       else
-        return op.i64.ne(expr, zero);
+        return op.i64.ne(expr, op.i64.const(0, 0));
   }
 
   compiler.error(node, "Unsupported logical operand", "SyntaxKind " + node.kind);
