@@ -294,29 +294,41 @@ The command line compiler `asc` works similar to TypeScript's `tsc`:
 Syntax: asc [options] entryFile
 
 Options:
- --out, -o, --outFile   Specifies the output file name. Also recognizes .wast / .wat
- --validate, -v         Validates the module.
- --optimize, -O         Runs optimizing binaryen IR passes.
- --silent               Does not print anything to console.
 
- --target, -t           Specifies the target architecture:
+ --config, -c       Specifies a JSON configuration file with command line options.
+                    Will look for 'asconfig.json' in the entry's directory if omitted.
 
-                        wasm32  Compiles to 32-bit WebAssembly [default]
-                        wasm64  Compiles to 64-bit WebAssembly
+ --outFile, -o      Specifies the output file name. Emits text format if ending with .wast
+                    (sexpr) or .wat (linear). Prints to stdout if omitted.
 
- --memory-model, -m     Specifies the memory model to use / how to proceed with malloc etc.:
+ --optimize, -O     Runs optimizing binaryen IR passes.
 
-                        malloc        Bundles malloc etc. [default]
-                        exportmalloc  Bundles malloc etc. and exports each
-                        importmalloc  Imports malloc etc. from 'env'
-                        bare          Excludes malloc etc. entirely
+ --validate, -v     Validates the module.
 
- --text                 Specifies the text output format:
+ --quiet, -q        Runs in quiet mode, not printing anything to console.
 
-                        sexpr   Emits s-expression syntax / .wast [default]
-                        linear  Emits official linear syntax / .wat
+ --target, -t       Specifies the target architecture:
 
- --text-out             Outputs text format alongside a binary.
+                    wasm32  Compiles to 32-bit WebAssembly [default]
+                    wasm64  Compiles to 64-bit WebAssembly
+
+ --memoryModel, -m  Specifies the memory model to use / how to proceed with malloc etc.:
+
+                    malloc        Bundles malloc etc. [default]
+                    exportmalloc  Bundles malloc etc. and exports each
+                    importmalloc  Imports malloc etc. from 'env'
+                    bare          Excludes malloc etc. entirely
+
+ --textFormat, -f   Specifies the format to use for text output:
+
+                    sexpr   Emits s-expression syntax (.wast) [default]
+                    linear  Emits official linear syntax (.wat)
+
+                    Text format only is emitted when used without --textFile.
+
+ --textFile         Can be used to save text format alongside a binary in one command.
+
+ --help, -h         Displays this help message.
 ```
 
 API
