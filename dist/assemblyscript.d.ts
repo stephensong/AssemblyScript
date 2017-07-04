@@ -621,7 +621,7 @@ declare module 'assemblyscript/expressions/binary' {
 declare module 'assemblyscript/expressions/call' {
   /** @module assemblyscript/expressions */ /** */
   import * as binaryen from "assemblyscript/binaryen";
-  import { Compiler } from "assemblyscript/compiler";
+  import Compiler from "assemblyscript/compiler";
   import * as reflection from "assemblyscript/reflection";
   import * as typescript from "assemblyscript/typescript";
   /** Compiles a function call expression. */

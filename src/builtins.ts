@@ -19,6 +19,9 @@ export function isBuiltin(name: string, isGlobalName: boolean = false): boolean 
     // Builtins are declared in assembly.d.ts exclusively
     if (name.substring(0, 14) !== "assembly.d.ts/") return false;
     name = name.substring(14);
+    const p = name.indexOf("<");
+    if (p > -1)
+      name = name.substring(0, p);
   }
   switch (name) {
     case "rotl":

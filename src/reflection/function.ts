@@ -178,7 +178,19 @@ export class Function extends FunctionBase {
       }
       operands.push(expr);
     }
-    return op.call(this.name, operands, binaryen.typeOf(this.returnType, compiler.uintptrSize));
+
+    // Rewire internal library calls
+    let internalName = this.name;
+    switch (internalName) {
+      case "assembly.d.ts/malloc":
+      case "assembly.d.ts/free":
+      case "assembly.d.ts/memcpy":
+      case "assembly.d.ts/memset":
+      case "assembly.d.ts/memcmp":
+        internalName = this.simpleName;
+        break;
+    }
+    return op.call(internalName, operands, binaryen.typeOf(this.returnType, compiler.uintptrSize));
   }
 }
 
