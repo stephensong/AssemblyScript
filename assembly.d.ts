@@ -66,10 +66,22 @@ declare const Infinityf: float;
 
 /** A fixed-size array. */
 declare class Array<T> implements IDisposable {
+  /** Property returns the number of elements in an array **/
   readonly length: int;
-  constructor(size: int);
+
+  /** Create array object with number of elements passed to arrayLength. For destroing object call dispose() method. **/
+  constructor(arrayLength: int);
+  /** Method release internal resources. **/
   dispose(): void;
-  indexOf(value: T, startOffset: uintptr): uintptr;
+
+  /** Method returns the first index at which a given element can be found in the array, or -1 if it is not present. The array is searched forward, starting at fromIndex. **/
+  indexOf(searchElement: T, fromIndex?: int): int;
+  /** Method returns the last index at which a given element can be found in the array, or -1 if it is not present. The array is searched backwards, starting at fromIndex. **/
+  lastIndexOf(searchElement: T, fromIndex?: int): int;
+  /** Method returns a shallow copy of a portion of an array into a new array object selected from begin to end (end not included). The original array will not be modified. **/
+  slice(begin?: int, end?: int): Array<T>;
+  /** Method reverses an array in place. The first array element becomes the last, and the last array element becomes the first. **/
+  reverse(): this;
 }
 
 /** A fixed-size 8-bit signed integer array. */

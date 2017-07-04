@@ -88,7 +88,6 @@ export class Array<T> implements IDisposable {
   }
 
   reverse(): this {
-
     // transposes the elements of the calling array object in place, mutating the array
     for (let i: int = 0, j: int = this.length - 1, t: int; i < j; ++i, --j) {
       t = this[i];
