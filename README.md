@@ -303,7 +303,10 @@ API
     * **IMPORT_MALLOC**<br />
       Imports malloc, free, etc. as provided by the embedder.
 
-See the [API documentation](http://dcode.io/AssemblyScript/api) for all the details.
+### Additional documentation
+
+* [Standard Library Documentation](http://dcode.io/AssemblyScript/std)
+* [API Documentation](http://dcode.io/AssemblyScript/api)
 
 ### Example
 

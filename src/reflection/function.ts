@@ -164,6 +164,8 @@ export class Function extends FunctionBase {
       } else { // omitted
         const initializer = this.parameters[i].initializer;
         if (initializer) {
+          // FIXME: initializers are currently compiled in the context of the calling function,
+          // preventing proper usage of 'this', for example.
           expr = compiler.maybeConvertValue(
             initializer,
             compiler.compileExpression(initializer, this.parameters[i].type),

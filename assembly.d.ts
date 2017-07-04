@@ -1,5 +1,9 @@
-// TypeScript definition file for AssemblyScript compilation.
-// see: https://github.com/dcodeIO/AssemblyScript for details
+/**
+ * TypeScript definition file for AssemblyScript compilation.
+ * see: https://github.com/dcodeIO/AssemblyScript for details
+ *
+ * @module assembly
+ */
 
 // Core types
 
@@ -66,22 +70,23 @@ declare const Infinityf: float;
 
 /** A fixed-size array. */
 declare class Array<T> implements IDisposable {
-  /** Property returns the number of elements in an array **/
+  /** Number of array elements. */
   readonly length: int;
 
-  /** Create array object with number of elements passed to arrayLength. For destroing object call dispose() method. **/
+  /** Constructs a new array with the specified number of elements. */
   constructor(arrayLength: int);
-  /** Method release internal resources. **/
-  dispose(): void;
 
-  /** Method returns the first index at which a given element can be found in the array, or -1 if it is not present. The array is searched forward, starting at fromIndex. **/
+  /** Returns the first index at which a given element can be found in the array, or `-1` if it is not present. The array is searched forward, starting at `fromIndex`. */
   indexOf(searchElement: T, fromIndex?: int): int;
-  /** Method returns the last index at which a given element can be found in the array, or -1 if it is not present. The array is searched backwards, starting at fromIndex. **/
+  /** Returns the last index at which a given element can be found in the array, or `-1` if it is not present. The array is searched backwards, starting at `fromIndex`. */
   lastIndexOf(searchElement: T, fromIndex?: int): int;
-  /** Method returns a shallow copy of a portion of an array into a new array object selected from begin to end (end not included). The original array will not be modified. **/
-  slice(begin?: int, end?: int): Array<T>;
-  /** Method reverses an array in place. The first array element becomes the last, and the last array element becomes the first. **/
+  /** Creates a shallow copy of a portion of the array as a new array object selected from `begin` to `end` (`end` not included). The original array will not be modified. */
+  slice(begin?: int, end?: int): this;
+  /** Reverses the array's elements in place. The first array element becomes the last, and the last array element becomes the first. */
   reverse(): this;
+
+  // implemented
+  dispose(): void;
 }
 
 /** A fixed-size 8-bit signed integer array. */
@@ -108,10 +113,15 @@ declare class Float64Array extends Array<double> {}
 // Strings
 
 /** A fixed-size UTF-16LE encoded string. */
-declare class String extends Array<ushort> implements IDisposable {
+declare class String extends Array<ushort> {
+  /** Constructs a new string with the specified number of characters. */
   constructor(size: int);
+
+  /** Returns the index within the string of the first occurrence of the specified value or `-1` if the value is not found. */
   indexOfString(value: string): int;
+  /** Determines whether the string begins with the specified value. */
   startsWith(value: string): bool;
+  /** Determines whether the string ends with the specified value. */
   endsWidth(value: string): bool;
 }
 
@@ -218,18 +228,19 @@ declare function malloc_init(offset: uintptr): void;
 
 // Temporary fillers
 
-declare interface Boolean {}
-declare interface Function {}
-declare interface IArguments {}
-declare interface Number {}
-declare interface Object {}
-declare interface RegExp {}
-declare interface Symbol {}
+/** @private */ declare interface Boolean {}
+/** @private */ declare interface Function {}
+/** @private */ declare interface IArguments {}
+/** @private */ declare interface Number {}
+/** @private */ declare interface Object {}
+/** @private */ declare interface RegExp {}
+/** @private */ declare interface Symbol {}
 
 // Interfaces
 
 /** Marks a class as being disposable (can be free'd from memory manually). */
 declare interface IDisposable {
+  /** Releases this instance's memory by calling `free`. The instance or a reference to it must not be used anymore afterwards. */
   dispose(): void;
 }
 

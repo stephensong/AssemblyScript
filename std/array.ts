@@ -59,7 +59,7 @@ export class Array<T> implements IDisposable {
     return -1;
   }
 
-  slice(begin: int = 0, end: int = 0x7fffffff): Array<T> {
+  slice(begin: int = 0, end: int = 0x7fffffff): this {
     const length: int = this.length;
 
     if (begin < 0) {
