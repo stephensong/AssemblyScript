@@ -7,6 +7,30 @@ Try it out in your browser: [dcode.io/AssemblyScript](http://dcode.io/AssemblySc
 
 [![npm](https://img.shields.io/npm/v/assemblyscript.svg)](https://www.npmjs.com/package/assemblyscript) [![Build Status](https://travis-ci.org/dcodeIO/AssemblyScript.svg?branch=master)](https://travis-ci.org/dcodeIO/AssemblyScript) [![npm](https://img.shields.io/npm/dm/assemblyscript.svg)](https://www.npmjs.com/package/assemblyscript)
 
+Contents
+--------
+
+* [How it works](#how-it-works)<br />
+  A few insights to get an initial idea.
+
+* [Example](#example)<br />
+  Basic examples to get you started.
+
+* [Usage](#usage)<br />
+  An introduction to the environment and its provided functionality.
+
+* [Command line](#command-line)<br />
+  How to use the command line utility.
+
+* [API](#api)<br />
+  How to use the API programmatically.
+
+* [Additional documentation](#additional-documentation)<br />
+  A list of available documentation resources.
+
+* [Building](#building)<br />
+  How to build the compiler and its components yourself.
+
 How it works
 ------------
 
@@ -35,8 +59,8 @@ Compiles to:
  (export "add" (func $add))
  (func $add (type $iFi) (param $0 i32) (param $1 f64) (result i32)
   (return
-   (i32.shl
-    (i32.shr_s
+   (i32.shr_s
+    (i32.shl
      (i32.add
       (get_local $0)
       (i32.trunc_s/f64
@@ -83,7 +107,9 @@ The environment is configured by either referencing [assembly.d.ts](./assembly.d
 ```json
 {
   "extends": "./node_modules/assemblyscript/tsconfig.assembly.json",
-  ...
+  "include": [
+    "./*.ts"
+  ]
 }
 ```
 
@@ -259,8 +285,44 @@ function start(): void {
 }
 ```
 
+Command line
+------------
+
+The command line compiler `asc` works similar to TypeScript's `tsc`:
+
+```
+Syntax: asc [options] entryFile
+
+Options:
+ --out, -o, --outFile   Specifies the output file name. Also recognizes .wast / .wat
+ --validate, -v         Validates the module.
+ --optimize, -O         Runs optimizing binaryen IR passes.
+ --silent               Does not print anything to console.
+
+ --target, -t           Specifies the target architecture:
+
+                        wasm32  Compiles to 32-bit WebAssembly [default]
+                        wasm64  Compiles to 64-bit WebAssembly
+
+ --memory-model, -m     Specifies the memory model to use / how to proceed with malloc etc.:
+
+                        malloc        Bundles malloc etc. [default]
+                        exportmalloc  Bundles malloc etc. and exports each
+                        importmalloc  Imports malloc etc. from 'env'
+                        bare          Excludes malloc etc. entirely
+
+ --text                 Specifies the text output format:
+
+                        sexpr   Emits s-expression syntax / .wast [default]
+                        linear  Emits official linear syntax / .wat
+
+ --text-out             Outputs text format alongside a binary.
+```
+
 API
 ---
+
+It's also possible to use the API programmatically:
 
 * **Compiler.compileFile**(filename: `string`, options?: `CompilerOptions`): `binaryen.Module | null`<br />
   Compiles the specified entry file to a WebAssembly module. Returns `null` on failure.
@@ -303,22 +365,18 @@ API
     * **IMPORT_MALLOC**<br />
       Imports malloc, free, etc. as provided by the embedder.
 
-### Additional documentation
-
-* [Standard Library Documentation](http://dcode.io/AssemblyScript/std)
-* [API Documentation](http://dcode.io/AssemblyScript/api)
-
 ### Example
 
 ```ts
-import { Compiler, typescript } from "assemblyscript";
+import { Compiler, CompilerTarget, CompilerMemoryModel, typescript } from "assemblyscript";
 
 const module = Compiler.compileString(`
 export function add(a: int, b: int): int {
   return a + b;
 }
 `, {
-  uintptrSize: 4,
+  target: CompilerTarget.WASM32,
+  memoryModel: CompilerMemoryModel.MALLOC,
   silent: true
 });
 
@@ -339,41 +397,19 @@ const wasmFile = module.emitBinary();
 module.dispose();
 ```
 
-Remember to call `Module#dispose()` once you are done with a module to free its resources. This is necessary because binaryen.js has been compiled from C and hence doesn't provide automatic garbage collection.
+Remember to call `binaryen.Module#dispose()` once you are done with a module to free its resources. This is necessary because binaryen.js has been compiled from C/C++ and doesn't provide automatic garbage collection.
 
-Command line
-------------
+Additional documentation
+------------------------
 
-The command line compiler `asc` works similar to TypeScript's `tsc`:
+#### AssemblyScript
 
-```
-Syntax: asc [options] entryFile
+* [Standard Library Documentation](http://dcode.io/AssemblyScript/std)
+* [API Documentation](http://dcode.io/AssemblyScript/api)
 
-Options:
- --out, -o, --outFile   Specifies the output file name. Also recognizes .wast / .wat
- --validate, -v         Validates the module.
- --optimize, -O         Runs optimizing binaryen IR passes.
- --silent               Does not print anything to console.
+#### WebAssembly
 
- --target, -t           Specifies the target architecture:
-
-                        wasm32  Compiles to 32-bit WebAssembly [default]
-                        wasm64  Compiles to 64-bit WebAssembly
-
- --memory-model, -m     Specifies the memory model to use / how to proceed with malloc etc.:
-
-                        malloc        Bundles malloc etc. [default]
-                        exportmalloc  Bundles malloc etc. and exports each
-                        importmalloc  Imports malloc etc. from 'env'
-                        bare          Excludes malloc etc. entirely
-
- --text                 Specifies the text output format:
-
-                        sexpr   Emits s-expression syntax / .wast [default]
-                        linear  Emits official linear syntax / .wat
-
- --text-out             Outputs text format alongside a binary.
-```
+* [WebAssembly Design Documents](https://github.com/WebAssembly/design)
 
 Building
 --------
