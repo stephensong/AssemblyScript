@@ -47,7 +47,7 @@
   "textFile": {
     "desc": "Can be used to save text format alongside a binary in one command.",
     "type": "string",
-    "aliases": [ "textfile", "text-file", "text-out" ]
+    "aliases": [ "textfile", "text-file", "textOut", "textout", "text-out" ]
   },
   "help": {
     "desc": "Displays this help message.",

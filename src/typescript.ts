@@ -14,7 +14,7 @@ import * as reflection from "./reflection";
 import * as ts from "../lib/typescript/build";
 import * as library from "./library";
 
-// With a little help from "Find all references" the following list aims to provide an answer to
+// With a little help of "Find all references" the following list aims to provide an answer to
 // the interesting question "Which parts of TypeScript do we actually use, and where?".
 
 export import ArrayTypeNode = ts.ArrayTypeNode;
