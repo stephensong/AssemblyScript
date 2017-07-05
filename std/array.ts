@@ -23,9 +23,6 @@ export class Array<T> implements IDisposable {
 
   indexOf(searchElement: T, fromIndex: int = 0): int {
     let length: int = this.length;
-
-    if (length < 0)
-      return -1;
     if (length > this.capacity)
       length = this.capacity;
 
@@ -50,9 +47,6 @@ export class Array<T> implements IDisposable {
 
   lastIndexOf(searchElement: T, fromIndex: int = 0x7fffffff): int {
     let length: int = this.length;
-
-    if (length < 0)
-      return -1;
     if (length > this.capacity)
       length = this.capacity;
 
@@ -75,9 +69,6 @@ export class Array<T> implements IDisposable {
 
   slice(begin: int = 0, end: int = 0x7fffffff): this {
     let length: int = this.length;
-
-    if (length < 0)
-      return unsafe_cast<Array<T>,this>(new Array<T>(0));
     if (length > this.capacity)
       length = this.capacity;
 
@@ -107,7 +98,9 @@ export class Array<T> implements IDisposable {
   }
 
   reverse(): this {
-    const length: int = this.length;
+    let length: int = this.length;
+    if (length > this.capacity)
+      length = this.capacity;
 
     // transposes the elements of the calling array object in place, mutating the array
     for (let i: int = 0, j: int = length - 1, t: int; i < j; ++i, --j) {
