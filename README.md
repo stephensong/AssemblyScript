@@ -123,6 +123,10 @@ load("path/to/module.wasm", {
 Usage
 -----
 
+```
+$> npm install assemblyscript --save-dev
+```
+
 The environment is configured by either referencing [assembly.d.ts](./assembly.d.ts) directly or by using a `tsconfig.json` that simply extends [tsconfig.assembly.json](https://github.com/dcodeIO/AssemblyScript/blob/master/tsconfig.assembly.json), like so:
 
 ```json
