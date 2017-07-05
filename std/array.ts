@@ -1,24 +1,33 @@
 @no_implicit_malloc()
 export class Array<T> implements IDisposable {
-  readonly length: int;
+  readonly capacity: int;
+  length: int; // can be any user-provided value
 
-  constructor(arrayLength: int) {
+  constructor(capacity: int) {
 
     // if the argument is any other number, a RangeError exception is thrown
-    if (arrayLength < 0)
+    if (capacity < 0)
       unreachable();
 
-    const elementsByteSize: uintptr = (arrayLength as uintptr) * sizeof<T>();
+    const elementsByteSize: uintptr = (capacity as uintptr) * sizeof<T>();
     const ptr: uintptr = malloc(4 + elementsByteSize);
+    const struct: ArrayStruct = unsafe_cast<uintptr,ArrayStruct>(ptr);
 
-    unsafe_cast<uintptr,ArrayStruct>(ptr).length = arrayLength;
+    struct.capacity = capacity;
+    struct.length = capacity;
+
     memset(ptr + 4, 0, elementsByteSize);
 
     return unsafe_cast<uintptr,this>(ptr);
   }
 
   indexOf(searchElement: T, fromIndex: int = 0): int {
-    const length: int = this.length;
+    let length: int = this.length;
+
+    if (length < 0)
+      return -1;
+    if (length > this.capacity)
+      length = this.capacity;
 
     // if negative, it is taken as the offset from the end of the array
     if (fromIndex < 0) {
@@ -40,7 +49,12 @@ export class Array<T> implements IDisposable {
   }
 
   lastIndexOf(searchElement: T, fromIndex: int = 0x7fffffff): int {
-    const length: int = this.length;
+    let length: int = this.length;
+
+    if (length < 0)
+      return -1;
+    if (length > this.capacity)
+      length = this.capacity;
 
      // if negative, it is taken as the offset from the end of the array
     if (fromIndex < 0)
@@ -60,7 +74,12 @@ export class Array<T> implements IDisposable {
   }
 
   slice(begin: int = 0, end: int = 0x7fffffff): this {
-    const length: int = this.length;
+    let length: int = this.length;
+
+    if (length < 0)
+      return unsafe_cast<Array<T>,this>(new Array<T>(0));
+    if (length > this.capacity)
+      length = this.capacity;
 
     if (begin < 0) {
       begin = length + begin;
@@ -88,8 +107,10 @@ export class Array<T> implements IDisposable {
   }
 
   reverse(): this {
+    const length: int = this.length;
+
     // transposes the elements of the calling array object in place, mutating the array
-    for (let i: int = 0, j: int = this.length - 1, t: int; i < j; ++i, --j) {
+    for (let i: int = 0, j: int = length - 1, t: int; i < j; ++i, --j) {
       t = this[i];
       this[i] = this[j];
       this[j] = t;
@@ -106,5 +127,6 @@ export class Array<T> implements IDisposable {
 
 // transient helper struct used to set the otherwise readonly length property
 class ArrayStruct {
+  capacity: int;
   length: int;
 }
