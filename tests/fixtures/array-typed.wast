@@ -8527,7 +8527,7 @@
   (set_local $2
    (call $malloc
     (i32.add
-     (i32.const 4)
+     (i32.const 8)
      (get_local $1)
     )
    )
@@ -8547,7 +8547,7 @@
    (call $memset
     (i32.add
      (get_local $2)
-     (i32.const 4)
+     (i32.const 8)
     )
     (i32.const 0)
     (get_local $1)
@@ -8577,7 +8577,7 @@
   (set_local $2
    (call $malloc
     (i32.add
-     (i32.const 4)
+     (i32.const 8)
      (get_local $1)
     )
    )
@@ -8597,7 +8597,7 @@
    (call $memset
     (i32.add
      (get_local $2)
-     (i32.const 4)
+     (i32.const 8)
     )
     (i32.const 0)
     (get_local $1)
@@ -8627,7 +8627,7 @@
   (set_local $2
    (call $malloc
     (i32.add
-     (i32.const 4)
+     (i32.const 8)
      (get_local $1)
     )
    )
@@ -8647,7 +8647,7 @@
    (call $memset
     (i32.add
      (get_local $2)
-     (i32.const 4)
+     (i32.const 8)
     )
     (i32.const 0)
     (get_local $1)
@@ -8677,7 +8677,7 @@
   (set_local $2
    (call $malloc
     (i32.add
-     (i32.const 4)
+     (i32.const 8)
      (get_local $1)
     )
    )
@@ -8697,7 +8697,7 @@
    (call $memset
     (i32.add
      (get_local $2)
-     (i32.const 4)
+     (i32.const 8)
     )
     (i32.const 0)
     (get_local $1)
@@ -8727,7 +8727,7 @@
   (set_local $2
    (call $malloc
     (i32.add
-     (i32.const 4)
+     (i32.const 8)
      (get_local $1)
     )
    )
@@ -8747,7 +8747,7 @@
    (call $memset
     (i32.add
      (get_local $2)
-     (i32.const 4)
+     (i32.const 8)
     )
     (i32.const 0)
     (get_local $1)
@@ -8777,7 +8777,7 @@
   (set_local $2
    (call $malloc
     (i32.add
-     (i32.const 4)
+     (i32.const 8)
      (get_local $1)
     )
    )
@@ -8797,7 +8797,7 @@
    (call $memset
     (i32.add
      (get_local $2)
-     (i32.const 4)
+     (i32.const 8)
     )
     (i32.const 0)
     (get_local $1)
@@ -8827,7 +8827,7 @@
   (set_local $2
    (call $malloc
     (i32.add
-     (i32.const 4)
+     (i32.const 8)
      (get_local $1)
     )
    )
@@ -8847,7 +8847,7 @@
    (call $memset
     (i32.add
      (get_local $2)
-     (i32.const 4)
+     (i32.const 8)
     )
     (i32.const 0)
     (get_local $1)
@@ -8877,7 +8877,7 @@
   (set_local $2
    (call $malloc
     (i32.add
-     (i32.const 4)
+     (i32.const 8)
      (get_local $1)
     )
    )
@@ -8897,7 +8897,7 @@
    (call $memset
     (i32.add
      (get_local $2)
-     (i32.const 4)
+     (i32.const 8)
     )
     (i32.const 0)
     (get_local $1)
@@ -8927,7 +8927,7 @@
   (set_local $2
    (call $malloc
     (i32.add
-     (i32.const 4)
+     (i32.const 8)
      (get_local $1)
     )
    )
@@ -8947,7 +8947,7 @@
    (call $memset
     (i32.add
      (get_local $2)
-     (i32.const 4)
+     (i32.const 8)
     )
     (i32.const 0)
     (get_local $1)
@@ -8977,7 +8977,7 @@
   (set_local $2
    (call $malloc
     (i32.add
-     (i32.const 4)
+     (i32.const 8)
      (get_local $1)
     )
    )
@@ -8997,7 +8997,7 @@
    (call $memset
     (i32.add
      (get_local $2)
-     (i32.const 4)
+     (i32.const 8)
     )
     (i32.const 0)
     (get_local $1)

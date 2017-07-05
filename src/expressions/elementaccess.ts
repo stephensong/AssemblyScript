@@ -28,7 +28,8 @@ export function compileElementAccess(compiler: Compiler, node: typescript.Elemen
   }
 
   // obtain the reflected element type
-  const elementType = (<reflection.Class>expressionType.underlyingClass).typeArguments.T.type;
+  const arrayClass = expressionType.underlyingClass;
+  const elementType = arrayClass.typeArguments.T.type;
   const uintptrCategory = <binaryen.I32Operations | binaryen.I64Operations>binaryen.categoryOf(compiler.uintptrType, op, compiler.uintptrSize);
   typescript.setReflectedType(node, elementType);
 
@@ -43,7 +44,7 @@ export function compileElementAccess(compiler: Compiler, node: typescript.Elemen
     const literalText = literalNode.text; // (usually) preprocessed by TypeScript to a base10 string
 
     if (literalText === "0")
-      return compileLoadOrStore(compiler, node, elementType, expression, compiler.uintptrSize, valueExpression, contextualType);
+      return compileLoadOrStore(compiler, node, elementType, expression, arrayClass.size, valueExpression, contextualType);
 
     if (/^[1-9][0-9]*$/.test(literalText)) {
       const value = Long.fromString(literalText, true, 10);
@@ -51,7 +52,7 @@ export function compileElementAccess(compiler: Compiler, node: typescript.Elemen
         uintptrCategory.add(
           expression,
           binaryen.valueOf(compiler.uintptrType, op, value.mul(elementType.size))
-        ), compiler.uintptrSize, valueExpression, contextualType
+        ), arrayClass.size, valueExpression, contextualType
       );
     }
   }
@@ -64,7 +65,7 @@ export function compileElementAccess(compiler: Compiler, node: typescript.Elemen
         argument,
         binaryen.valueOf(compiler.uintptrType, op, elementType.size)
       )
-    ), compiler.uintptrSize, valueExpression, contextualType
+    ), arrayClass.size, valueExpression, contextualType
   );
 }
 

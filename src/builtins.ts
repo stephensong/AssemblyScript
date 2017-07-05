@@ -399,10 +399,11 @@ export function unreachable(compiler: Compiler): binaryen.Expression {
 /** Compiles a sizeof operation determining the byte size of a type. */
 export function sizeof(compiler: Compiler, type: reflection.Type): binaryen.Expression {
   const op = compiler.module;
+  const size = type.underlyingClass ? type.underlyingClass.size : type.size;
 
   return compiler.uintptrType === reflection.uintptrType32
-    ? op.i32.const(type.size)
-    : op.i64.const(type.size, 0);
+    ? op.i32.const(size)
+    : op.i64.const(size, 0); // TODO: long?
 }
 
 /** Compiles an unsafe cast operation casting a value from one type to another. */

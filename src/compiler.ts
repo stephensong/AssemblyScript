@@ -502,16 +502,18 @@ export class Compiler {
     if (!pooled) {
       if (this.memoryBase & 3) this.memoryBase = (this.memoryBase | 3) + 1; // align to 4 bytes (length is an int)
       const length = value.length;
-      const buffer = new Uint8Array(4 + 2 * length);
+      const buffer = new Uint8Array(8 + 2 * length);
       if (length < 0 || length > 0x7fffffff)
         throw Error("string length exceeds INTMAX");
 
-      // Prepend length
+      // Prepend header (capacity = length)
       let offset = 0;
       buffer[offset++] =  length         & 0xff;
       buffer[offset++] = (length >>>  8) & 0xff;
       buffer[offset++] = (length >>> 16) & 0xff;
       buffer[offset++] = (length >>> 24) & 0xff;
+      for (let i = 0; i < 4; ++i)
+        buffer[offset++] = buffer[i];
 
       // Append UTF-16LE chars
       for (let i = 0; i < length; ++i) {

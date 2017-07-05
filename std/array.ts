@@ -10,13 +10,13 @@ export class Array<T> implements IDisposable {
       unreachable();
 
     const elementsByteSize: uintptr = (capacity as uintptr) * sizeof<T>();
-    const ptr: uintptr = malloc(4 + elementsByteSize);
+    const ptr: uintptr = malloc(sizeof<ArrayStruct>() + elementsByteSize);
     const struct: ArrayStruct = unsafe_cast<uintptr,ArrayStruct>(ptr);
 
     struct.capacity = capacity;
     struct.length = capacity;
 
-    memset(ptr + 4, 0, elementsByteSize);
+    memset(ptr + sizeof<ArrayStruct>(), 0, elementsByteSize);
 
     return unsafe_cast<uintptr,this>(ptr);
   }
@@ -89,10 +89,10 @@ export class Array<T> implements IDisposable {
 
     const arrayLength: int = end - begin;
     const elementsByteSize: uintptr = (arrayLength as uintptr) * sizeof<T>();
-    const ptr: uintptr = malloc(4 + elementsByteSize);
+    const ptr: uintptr = malloc(sizeof<ArrayStruct>() + elementsByteSize);
 
     unsafe_cast<uintptr,ArrayStruct>(ptr).length = arrayLength;
-    memcpy(ptr + 4, unsafe_cast<this,uintptr>(this) + 4 + begin * sizeof<T>(), elementsByteSize);
+    memcpy(ptr + sizeof<ArrayStruct>(), unsafe_cast<this,uintptr>(this) + sizeof<ArrayStruct>() + begin * sizeof<T>(), elementsByteSize);
 
     return unsafe_cast<uintptr,this>(ptr);
   }
