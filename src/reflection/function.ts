@@ -258,6 +258,8 @@ export class FunctionTemplate extends FunctionBase {
     const parameters: FunctionParameter[] = new Array(this.declaration.parameters.length);
     for (let i = 0, k = this.declaration.parameters.length; i < k; ++i) {
       const parameter = this.declaration.parameters[i];
+      if (parameter.questionToken && !typescript.isDeclare(this.declaration) && !parameter.initializer)
+        compiler.error(parameter.questionToken, "Initializer expected");
       parameters[i] = {
         node: parameter,
         name: typescript.getTextOfNode(parameter.name),

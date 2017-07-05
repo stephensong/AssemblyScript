@@ -507,7 +507,7 @@ declare module 'assemblyscript/typescript' {
   export function printDiagnostic(diagnostic: Diagnostic): void;
   /** Tests if the specified node has an 'export' modifier. */
   export function isExport(node: Node): boolean;
-  /** Tests if the specified node has a 'declare' modifier. */
+  /** Tests if the specified node has a 'declare' modifier or is part of a class with a 'declare' modifier. */
   export function isDeclare(node: Node): boolean;
   /** Tests if the specified node has a 'static' modifier or is otherwise part of a static context. */
   export function isStatic(node: Node): boolean;
@@ -772,6 +772,8 @@ declare module 'assemblyscript/reflection/class' {
   export abstract class ClassBase {
       /** Global name. */
       name: string;
+      /** Simple name. */
+      simpleName: string;
       /** Declaration reference. */
       declaration: typescript.ClassDeclaration;
       protected constructor(name: string, declaration: typescript.ClassDeclaration);
@@ -836,6 +838,10 @@ declare module 'assemblyscript/reflection/class' {
       constructor(name: string, template: ClassTemplate, uintptrType: Type, typeArguments: {
           [key: string]: TypeArgument;
       }, base?: Class);
+      /** Tests if this class extends another class. */
+      extends(base: Class): boolean;
+      /** Tests if this class is assignable to the specified (class) type. */
+      isAssignableTo(type: Class): boolean;
       /** Initializes the class, its properties, methods and constructor. */
       initialize(compiler: Compiler): void;
       /** Initializes a single method. */

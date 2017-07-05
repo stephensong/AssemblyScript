@@ -11,4 +11,6 @@ export function test(): void {
   let u64: Uint64Array = new Uint64Array(8);
   let f32: Float32Array = new Float32Array(9);
   let f64: Float64Array = new Float64Array(10);
+
+  let s8_sub: Array<sbyte> = new Int8Array(11);
 }

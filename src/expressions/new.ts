@@ -12,13 +12,13 @@ export function compileNew(compiler: Compiler, node: typescript.NewExpression, c
   typescript.setReflectedType(node, contextualType);
 
   if (node.expression.kind !== typescript.SyntaxKind.Identifier) {
-    compiler.error(node, "Unsupported use of 'new'", "Identifier expected");
+    compiler.error(node.expression, "Unsupported use of 'new'", "Identifier expected");
     return op.unreachable();
   }
 
   const identifierNode = <typescript.Identifier>node.expression;
-  if (!contextualType.isClass) {
-    compiler.error(node, "Unsupported use of 'new'", "Not a class context");
+  if (contextualType !== reflection.voidType && !contextualType.underlyingClass) {
+    compiler.error(node, "Unsupported use of 'new'", "Not a void or class context");
     return op.unreachable();
   }
 
@@ -42,6 +42,9 @@ export function compileNew(compiler: Compiler, node: typescript.NewExpression, c
     compiler.error(node, "Unresolvable call target", typescript.getTextOfNode(identifierNode));
     return op.unreachable();
   }
+
+  if (contextualType.underlyingClass && !instance.isAssignableTo(contextualType.underlyingClass))
+    compiler.error(node.expression, "Incompatible types", "Expected " + contextualType.underlyingClass.simpleName + " or a compatible subclass");
 
   // Find the first implemented constructor
   let current: reflection.Class = instance;

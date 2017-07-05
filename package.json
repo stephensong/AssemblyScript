@@ -1,7 +1,7 @@
 {
   "name": "assemblyscript",
   "description": "A subset of TypeScript that compiles to WebAssembly.",
-  "version": "0.0.3",
+  "version": "0.1.0",
   "author": "Daniel Wirtz <dcode+assemblyscript@dcode.io>",
   "license": "Apache-2.0",
   "repository": {
@@ -85,6 +85,7 @@
     "assembly.d.ts",
     "bin/asc",
     "bin/asc.js",
+    "bin/asc.json",
     "dist/assemblyscript.d.ts",
     "dist/assemblyscript.js",
     "dist/assemblyscript.js.map",
@@ -93,7 +94,8 @@
     "package.json",
     "package-lock.json",
     "README.md",
-    "tsconfig.assembly.json"
+    "tsconfig.assembly.json",
+    "tsconfig.base.json"
   ],
   "false": {}
 }

@@ -354,7 +354,7 @@ export class Compiler {
       const binaryenArgumentTypes: binaryen.Type[] = argumentTypes.map(type => binaryen.typeOf(type, this.uintptrSize));
       const binaryenReturnType = binaryen.typeOf(returnType, this.uintptrSize);
       signature = this.signatures[identifier] = this.module.getFunctionTypeBySignature(binaryenReturnType, binaryenArgumentTypes)
-        || this.module.addFunctionType(identifier, binaryenReturnType, binaryenArgumentTypes);
+                                             || this.module.addFunctionType(identifier, binaryenReturnType, binaryenArgumentTypes);
     }
     return signature;
   }

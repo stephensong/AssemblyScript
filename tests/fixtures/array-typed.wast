@@ -8938,6 +8938,7 @@
   (local $7 i32)
   (local $8 i32)
   (local $9 i32)
+  (local $10 i32)
   (set_local $0
    (call $std/array.ts/Array<sbyte>
     (i32.const 1)
@@ -8986,6 +8987,11 @@
   (set_local $9
    (call $std/array.ts/Array<double>
     (i32.const 10)
+   )
+  )
+  (set_local $10
+   (call $std/array.ts/Array<sbyte>
+    (i32.const 11)
    )
   )
  )

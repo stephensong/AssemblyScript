@@ -61,7 +61,7 @@ function main(args, callback) {
         delete config.file;
       }
       Object.keys(config).forEach(key => {
-        if (options[key])
+        if (options[key] && key !== "config")
           argv[key] = config[key];
       });
     } catch (e) {

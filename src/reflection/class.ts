@@ -11,12 +11,16 @@ export abstract class ClassBase {
 
   /** Global name. */
   name: string;
+  /** Simple name. */
+  simpleName: string;
   /** Declaration reference. */
   declaration: typescript.ClassDeclaration;
 
   protected constructor(name: string, declaration: typescript.ClassDeclaration) {
     this.name = name;
     this.declaration = declaration;
+    const p = name.lastIndexOf("/");
+    this.simpleName = p > -1 ? name.substring(p + 1) : name;
   }
 
   hasDecorator(name: string): boolean {
@@ -113,6 +117,22 @@ export class Class extends ClassBase {
       this.isString = true;
 
     this.implicitMalloc = !this.hasDecorator("no_implicit_malloc");
+  }
+
+  /** Tests if this class extends another class. */
+  extends(base: Class): boolean {
+    let current = this.base;
+    while (current) {
+      if (current === base)
+        return true;
+      current = current.base;
+    }
+    return false;
+  }
+
+  /** Tests if this class is assignable to the specified (class) type. */
+  isAssignableTo(type: Class): boolean {
+    return this === type || this.extends(type);
   }
 
   /** Initializes the class, its properties, methods and constructor. */
