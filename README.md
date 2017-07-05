@@ -13,6 +13,9 @@ Contents
 * [How it works](#how-it-works)<br />
   A few insights to get an initial idea.
 
+* [What to expect](#what-to-expect)<br />
+  General remarks on design decisions and trade-offs.
+
 * [Example](#example)<br />
   Basic examples to get you started.
 
@@ -39,6 +42,22 @@ Under the hood, AssemblyScript rewires TypeScript's [compiler API](https://githu
 Every AssemblyScript program is valid TypeScript syntactically, but not necessarily semantically. The definitions required to start developing in AssemblyScript are provided by [assembly.d.ts](./assembly.d.ts). See also: [Usage](#usage)
 
 The compiler is able to produce WebAssembly binaries (.wasm) as well as their corresponding text format (.wast). Both Binaryen's s-expression format and, with a little help of [WABT](https://github.com/WebAssembly/wabt), official linear text format are supported. See also: [Command line](#command-line)
+
+What to expect
+--------------
+
+<details><p>
+The most prominent difference of JavaScript and any strictly typed language is that, in JavaScript, a variable can reference a value of any type. This implies that a JavaScript VM has to conduct additional book-keeping of a value's type in addition to its value and that it has to perform additional checks everytime a variable is accessed. Modern JavaScript JITs shortcut the overhead introduced by this and similar dynamic features by generating case-specific code based on statistical information collected at runtime, effectively reducing the amount of checks to perform implicitly while speeding up execution dramatically. Similarily, developers shortcut the overhead of remembering each variable's type by using TypeScript. The combination of both also makes a good match because it potentially aids the JIT compiler.
+
+Nonetheless, TypeScript isn't a *strictly* typed language after all because it allows specific constructs to resort to JavaScript's dynamic features. For example, TypeScript allows annotating function parameters as omittable (i.e. `someParameter?: number`), effectively resulting in a union type `number | undefined` at runtime, just like it also allows declaring union types explicitly. Conceptionally, these constructs are incompatible with a strict, AOT-compiled type system unless relatively expensive work-arounds are introduced. Hence...
+</p><summary><strong>TL;DR</strong></summary></details>
+
+Instead of trying to mimic TypeScript/JavaScript as closely as possible at the expense of performance (recap that: slower than the same code running in a JIT), AssemblyScript tries to mimic TypeScript/JavaScript as closely as reasonable, not supporting certain dynamic constructs intentionally:
+
+* All types must be annotated to avoid possibly unwanted implicit type conversions
+* Optional function parameters require an initializer and cannot just be omittable
+* Union types, `any` and `undefined` are not supported
+* The result of logical AND / OR expressions is always a `bool`
 
 Example
 -------
