@@ -193,6 +193,7 @@ export class Function extends FunctionBase {
         break;
     }
     return op.call(internalName, operands, binaryen.typeOf(this.returnType, compiler.uintptrSize));
+    // once binaryen.js has been updated, change to: (this.isImport ? op.callImport : op.call)
   }
 }
 

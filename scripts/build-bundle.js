@@ -72,10 +72,5 @@ browserify({
     referenceExternals: false
   });
 
-  console.log("\ncleaning up ...");
-  rimraf(__dirname + "/../out", function(err) {
-    if (err) throw err;
-    console.log("\ncomplete.");
-  });
-
+  console.log("\ncomplete.");
 });
