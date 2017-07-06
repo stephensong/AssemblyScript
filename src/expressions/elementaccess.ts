@@ -16,7 +16,7 @@ export function compileElementAccess(compiler: Compiler, node: typescript.Elemen
 
   // compile the index argument
   const argumentNode = <typescript.Expression>node.argumentExpression;
-  const argument = compiler.maybeConvertValue(argumentNode, compiler.compileExpression(argumentNode, compiler.uintptrType), typescript.getReflectedType(argumentNode), compiler.uintptrType, false);
+  const argument = compiler.compileExpression(argumentNode, reflection.intType, reflection.intType, false);
 
   // compile the expression and verify that it references an array
   const expression = compiler.compileExpression(node.expression, compiler.uintptrType);
@@ -36,7 +36,7 @@ export function compileElementAccess(compiler: Compiler, node: typescript.Elemen
   // if this is a store instead of a load, compile the value expression
   let valueExpression: binaryen.Expression | undefined;
   if (valueNode)
-    valueExpression = compiler.maybeConvertValue(valueNode, compiler.compileExpression(valueNode, elementType), typescript.getReflectedType(valueNode), elementType, false);
+    valueExpression = compiler.compileExpression(valueNode, elementType, elementType, false);
 
   // simplify / precalculate access to a constant index
   if (argumentNode.kind === typescript.SyntaxKind.NumericLiteral) {

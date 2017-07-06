@@ -1,4 +1,4 @@
-export abstract class String extends Array<ushort> {
+export class String extends Array<ushort> {
 
   indexOfString(value: string): int { // FIXME: any way to overload this?
     if (value.length > this.length)

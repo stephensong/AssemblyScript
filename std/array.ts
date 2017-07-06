@@ -1,9 +1,10 @@
 @no_implicit_malloc()
-export class Array<T> implements IDisposable {
+export class Array<T> extends Disposable {
   readonly capacity: int;
   length: int; // can be any user-provided value
 
   constructor(capacity: int) {
+    super();
 
     // if the argument is any other number, a RangeError exception is thrown
     if (capacity < 0)
@@ -111,10 +112,6 @@ export class Array<T> implements IDisposable {
 
     // and returning a reference to the array
     return this;
-  }
-
-  dispose(): void {
-    free(unsafe_cast<this,uintptr>(this));
   }
 }
 
