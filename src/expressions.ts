@@ -75,7 +75,7 @@ export function compile(compiler: Compiler, node: typescript.Expression, context
       return compileConditional(compiler, <typescript.ConditionalExpression>node, contextualType);
 
     case typescript.SyntaxKind.CallExpression:
-      return compileCall(compiler, <typescript.CallExpression>node, contextualType);
+      return compileCall(compiler, <typescript.CallExpression>node/*, contextualType*/);
 
     case typescript.SyntaxKind.NewExpression:
       return compileNew(compiler, <typescript.NewExpression>node, contextualType);
@@ -84,7 +84,7 @@ export function compile(compiler: Compiler, node: typescript.Expression, context
       if (compiler.currentFunction.isInstance && compiler.currentFunction.parent)
         typescript.setReflectedType(node, compiler.currentFunction.parent.type);
       else
-        compiler.error(node, typescript.Diagnostics.this_cannot_be_referenced_in_current_location);
+        compiler.report(node, typescript.DiagnosticsEx.Identifier_0_is_invalid_in_this_context, "this");
       return op.getLocal(0, binaryen.typeOf(compiler.uintptrType, compiler.uintptrSize));
 
     case typescript.SyntaxKind.TrueKeyword:
@@ -95,7 +95,7 @@ export function compile(compiler: Compiler, node: typescript.Expression, context
       return compileLiteral(compiler, <typescript.LiteralExpression>node, contextualType);
   }
 
-  compiler.error(node, "Unsupported expression node", "SyntaxKind " + node.kind);
+  compiler.report(node, typescript.DiagnosticsEx.Unsupported_node_kind_0_in_1, node.kind, "expressions.compile");
   typescript.setReflectedType(node, contextualType);
   return op.unreachable();
 }

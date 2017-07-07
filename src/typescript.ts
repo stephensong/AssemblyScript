@@ -7,6 +7,7 @@
  * For additional exports, see: https://github.com/dcodeIO/AssemblyScript/blob/master/src/typescript.ts
  *
  * @module assemblyscript/typescript
+ * @preferred
  */ /** */
 
 import * as path from "path";
@@ -33,7 +34,6 @@ export import DiagnosticCategory = ts.DiagnosticCategory;
 export import DiagnosticCollection = ts.DiagnosticCollection;
 export import DiagnosticMessage = ts.DiagnosticMessage;
 export import Diagnostic = ts.Diagnostic;
-export import Diagnostics = ts.Diagnostics;
 export import DoStatement = ts.DoStatement;
 export import ElementAccessExpression = ts.ElementAccessExpression;
 export import EnumDeclaration = ts.EnumDeclaration;
@@ -94,6 +94,8 @@ export import createProgram = ts.createProgram;
 export import createSourceFile = ts.createSourceFile;
        import resolveModuleName = ts.resolveModuleName;
        import sys = ts.sys;
+
+export { DiagnosticsEx } from "./typescript/diagnosticMessages.generated";
 
 /** Default format diagnostics host for convenience. */
 export const defaultFormatDiagnosticsHost: FormatDiagnosticsHost = {
@@ -166,19 +168,6 @@ export function createCompilerHost(moduleSearchLocations: string[], entryFileSou
       return undefined;
     });
   }
-}
-
-/** Creates a diagnostic message referencing a node. */
-export function createDiagnosticForNodeEx(node: Node, category: DiagnosticCategory, message: string, arg1?: string) {
-  let realMessage = message;
-  if (arg1 != null)
-    realMessage += ": " + arg1;
-  return /* override */ ts.createDiagnosticForNode(node, {
-    key: message.toLowerCase().replace(/\s+/g, "_").replace(/[^\w]/g, ""),
-    category: category,
-    code: <any>"-AS",
-    message: realMessage
-  });
 }
 
 /** Formats a diagnostic message in plain text. */
@@ -313,19 +302,3 @@ export function setReflectedClassTemplate(node: ClassDeclaration, template: refl
     throw Error("template cannot be null");
   (<any>node).reflectedClassTemplate = template;
 }
-
-function AS(code: number, message: string, category = DiagnosticCategory.Error): DiagnosticMessage {
-  return {
-    code: <number><any>"/AS" + code,
-    category,
-    key: message.toLowerCase(),
-    message: message
-  };
-}
-
-// TODO: decide if we need something like this
-export const DiagnosticsEx = {
-
-  Unresolvable_type: AS(1000, "Unresolvable type.")
-
-};

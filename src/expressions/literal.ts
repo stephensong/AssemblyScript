@@ -51,7 +51,7 @@ export function compileLiteral(compiler: Compiler, node: typescript.LiteralExpre
             return op.f64.const(floatValue);
           }
         } else {
-          compiler.error(node, "Unsupported numeric literal", "'" + text + "' in " + reflection.TypeKind[contextualType.kind] + " context");
+          compiler.report(node, typescript.DiagnosticsEx.Unsupported_literal_0, typescript.getTextOfNode(node));
           return op.unreachable();
         }
       }
@@ -63,44 +63,44 @@ export function compileLiteral(compiler: Compiler, node: typescript.LiteralExpre
 
         case reflection.sbyteType:
           if (intValue > 127 || intValue < -128)
-            compiler.warn(node, "Literal overflow", "Expected a value in range [-128, 127]");
+            compiler.report(node, typescript.DiagnosticsEx.Literal_overflow_Compiling_to_a_value_in_range_0_to_1_instead, -128, 127);
           return op.i32.const(intValue << 24 >> 24);
 
         case reflection.byteType:
           if (intValue > 255 || intValue < 0)
-            compiler.warn(node, "Literal overflow", "Expected a value in range [0, 255]");
+            compiler.report(node, typescript.DiagnosticsEx.Literal_overflow_Compiling_to_a_value_in_range_0_to_1_instead, 0, 255);
           return op.i32.const(intValue & 0xff);
 
         case reflection.shortType:
           if (intValue > 32767 || intValue < -32768)
-            compiler.warn(node, "Literal overflow", "Expected a value in range [-32768, 32767]");
+            compiler.report(node, typescript.DiagnosticsEx.Literal_overflow_Compiling_to_a_value_in_range_0_to_1_instead, -32768, 32767);
           return op.i32.const(intValue << 16 >> 16);
 
         case reflection.ushortType:
           if (intValue > 65535 || intValue < 0)
-            compiler.warn(node, "Literal overflow", "Expected a value in range [0, 65535]");
+            compiler.report(node, typescript.DiagnosticsEx.Literal_overflow_Compiling_to_a_value_in_range_0_to_1_instead, 0, 65535);
           return op.i32.const(intValue & 0xffff);
 
         case reflection.intType:
           if (intValue > 2147483647 || intValue < -2147483648)
-            compiler.warn(node, "Literal overflow", "Expected a value in range [-2147483648, 2147483647]");
+            compiler.report(node, typescript.DiagnosticsEx.Literal_overflow_Compiling_to_a_value_in_range_0_to_1_instead, -2147483648, 2147483647);
           return op.i32.const(intValue | 0);
 
         case reflection.uintType:
         case reflection.uintptrType32:
           if (intValue > 4294967295 || intValue < 0)
-            compiler.warn(node, "Literal overflow", "Expected a value in range [0, 4294967295]");
+            compiler.report(node, typescript.DiagnosticsEx.Literal_overflow_Compiling_to_a_value_in_range_0_to_1_instead, 0, 4294967295);
           return op.i32.const(intValue | 0);
 
         case reflection.boolType:
           if (intValue > 1 || intValue < 0)
-            compiler.warn(node, "Literal overflow", "Expected a value in range [0, 1]");
+            compiler.report(node, typescript.DiagnosticsEx.Literal_overflow_Compiling_to_a_value_in_range_0_to_1_instead, 0, 1);
           return op.i32.const(intValue ? 1 : 0);
 
         case reflection.longType:
         case reflection.ulongType:
         case reflection.uintptrType64:
-          let long = Long.fromString(text, !contextualType.isSigned, intRadix);
+          let long = Long.fromString(text, !contextualType.isSigned, intRadix); // TODO: check overflow?
           if (negate)
             long = long.negate();
           return op.i64.const(long.low, long.high);
@@ -111,7 +111,7 @@ export function compileLiteral(compiler: Compiler, node: typescript.LiteralExpre
         case reflection.doubleType:
           return op.f64.const(intValue);
       }
-      throw Error("unexpected type: " + contextualType);
+      throw Error("unexpected type: " + contextualType); // should have handled all possible types above
     }
 
     case typescript.SyntaxKind.StringLiteral:
@@ -122,7 +122,7 @@ export function compileLiteral(compiler: Compiler, node: typescript.LiteralExpre
     }
   }
 
-  compiler.error(node, "Unsupported literal", "'" + node.text + "' in " + reflection.TypeKind[contextualType.kind] + " context");
+  compiler.report(node, typescript.DiagnosticsEx.Unsupported_literal_0, typescript.getTextOfNode(node));
   return op.unreachable();
 }
 

@@ -9,6 +9,8 @@ import * as typescript from "../typescript";
 export function compilePostfixUnary(compiler: Compiler, node: typescript.PostfixUnaryExpression, contextualType: reflection.Type): binaryen.Expression {
   const op = compiler.module;
 
+  typescript.setReflectedType(node, contextualType);
+
   if (node.operand.kind === typescript.SyntaxKind.Identifier) {
 
     const local = compiler.currentFunction.localsByName[(<typescript.Identifier>node.operand).text];
@@ -42,12 +44,14 @@ export function compilePostfixUnary(compiler: Compiler, node: typescript.Postfix
             return (isIncrement ? cat.sub : cat.add).call(cat, op.teeLocal(local.index, calculate), one);
           }
         }
+        default:
+          compiler.report(node, typescript.DiagnosticsEx.Unsupported_node_kind_0_in_1, node.operator, "expressions.compilePostfixUnary/1");
+          return op.unreachable();
       }
     }
   }
 
-  compiler.error(node, "Unsupported unary postfix operator");
-  typescript.setReflectedType(node, contextualType);
+  compiler.report(node, typescript.DiagnosticsEx.Unsupported_node_kind_0_in_1, node.operand.kind, "expressions.compilePostfixUnary/2");
   return op.unreachable();
 }
 

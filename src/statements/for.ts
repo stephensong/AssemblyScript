@@ -69,8 +69,8 @@ export function compileFor(compiler: Compiler, node: typescript.ForStatement): b
 
   } else {
 
-    if (ifTrue.length === 1) // binaryen errors here
-      compiler.error(node, "Illegal endless loop");
+    if (ifTrue.length === 1)
+      compiler.report(node, typescript.DiagnosticsEx.Unconditional_endless_loop_detected); // this is an error because binaryen throws here
 
     context.push(
       op.loop("continue$" + label,

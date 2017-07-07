@@ -219,13 +219,13 @@ export function compileBinary(compiler: Compiler, node: typescript.BinaryExpress
 
       // Logical
       case typescript.SyntaxKind.EqualsEqualsEqualsToken:
-        compiler.warn(node.operatorToken, "Assuming '=='");
+        compiler.report(node.operatorToken, typescript.DiagnosticsEx.Assuming_0_instead_of_1, "==", "===");
       case typescript.SyntaxKind.EqualsEqualsToken:
         result = category.eq(left, right);
         break;
 
       case typescript.SyntaxKind.ExclamationEqualsEqualsToken:
-        compiler.warn(node.operatorToken, "Assuming '!='");
+        compiler.report(node.operatorToken, typescript.DiagnosticsEx.Assuming_0_instead_of_1, "!=", "!==");
       case typescript.SyntaxKind.ExclamationEqualsToken:
         result = category.ne(left, right);
         break;
@@ -316,7 +316,7 @@ export function compileBinary(compiler: Compiler, node: typescript.BinaryExpress
 
       // Logical
       case typescript.SyntaxKind.EqualsEqualsEqualsToken:
-        compiler.warn(node.operatorToken, "Assuming '=='");
+        compiler.report(node.operatorToken, typescript.DiagnosticsEx.Assuming_0_instead_of_1, "==", "===");
       case typescript.SyntaxKind.EqualsEqualsToken:
         result = category.eq(left, right);
         break;
@@ -365,7 +365,7 @@ export function compileBinary(compiler: Compiler, node: typescript.BinaryExpress
       ? compileAssignmentWithValue(compiler, node, result, contextualType)
       : result;
 
-  compiler.error(node.operatorToken, "Unsupported binary operator");
+  compiler.report(node.operatorToken, typescript.DiagnosticsEx.Unsupported_node_kind_0_in_1, node.operatorToken.kind, "expressions.compileBinary");
   return op.unreachable();
 }
 
@@ -379,7 +379,7 @@ export function compileAssignment(compiler: Compiler, node: typescript.BinaryExp
   const rightType = typescript.getReflectedType(node.right);
 
   if (leftType.underlyingClass && (!rightType.underlyingClass || !rightType.underlyingClass.isAssignableTo(leftType.underlyingClass)))
-    compiler.error(node.right, "Incompatible types", "Expected " + leftType.underlyingClass.simpleName + " or a compatible subclass");
+    compiler.report(node.right, typescript.DiagnosticsEx.Types_0_and_1_are_incompatible, leftType.underlyingClass.name, typescript.getTextOfNode(node.right));
 
   return compileAssignmentWithValue(compiler, node, right, contextualType);
 }
@@ -421,7 +421,7 @@ export function compileAssignmentWithValue(compiler: Compiler, node: typescript.
   else if (node.left.kind === typescript.SyntaxKind.PropertyAccessExpression)
     return compilePropertyAccess(compiler, <typescript.PropertyAccessExpression>node.left, contextualType, node.right);
 
-  compiler.error(node.operatorToken, "Unsupported assignment operation", "SyntaxKind " + node.operatorToken.kind);
+  compiler.report(node.operatorToken, typescript.DiagnosticsEx.Unsupported_node_kind_0_in_1, node.operatorToken.kind, "expressions.compileAssignmentWithValue");
   return op.unreachable();
 }
 
@@ -450,7 +450,7 @@ export function compileLogicalAndOr(compiler: Compiler, node: typescript.BinaryE
       /* : */ right
     );
 
-  compiler.error(node.operatorToken, "Unsupported logical operation", "SyntaxKind " + node.operatorToken.kind);
+  compiler.report(node.operatorToken, typescript.DiagnosticsEx.Unsupported_node_kind_0_in_1, node.operatorToken.kind, "expressions.compileLogicalAndOr");
   return op.unreachable();
 }
 
@@ -490,6 +490,6 @@ export function compileIsTrueish(compiler: Compiler, node: typescript.Expression
         return op.i64.ne(expr, op.i64.const(0, 0));
   }
 
-  compiler.error(node, "Unsupported logical operand", "SyntaxKind " + node.kind);
+  compiler.report(node, typescript.DiagnosticsEx.Unsupported_node_kind_0_in_1, node.kind, "expressions.compileIsTrueish");
   return op.unreachable();
 }

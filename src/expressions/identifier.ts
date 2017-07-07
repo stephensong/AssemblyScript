@@ -9,6 +9,8 @@ import * as typescript from "../typescript";
 export function compileIdentifier(compiler: Compiler, node: typescript.Identifier, contextualType: reflection.Type): binaryen.Expression {
   const op = compiler.module;
 
+  typescript.setReflectedType(node, contextualType);
+
   const reference = compiler.resolveReference(node);
   if (reference) {
 
@@ -23,10 +25,8 @@ export function compileIdentifier(compiler: Compiler, node: typescript.Identifie
         ? op.getGlobal(variable.name, binaryen.typeOf(variable.type, compiler.uintptrSize))
         : op.getLocal(variable.index, binaryen.typeOf(variable.type, compiler.uintptrSize));
     }
-
   }
-  compiler.error(node, typescript.Diagnostics.Cannot_find_name_0, node.text);
-  typescript.setReflectedType(node, contextualType);
+  compiler.report(node, typescript.DiagnosticsEx.Unresolvable_identifier_0, typescript.getTextOfNode(node));
   return op.unreachable();
 }
 

@@ -22,10 +22,8 @@ export function compileElementAccess(compiler: Compiler, node: typescript.Elemen
   const expression = compiler.compileExpression(node.expression, compiler.uintptrType);
   const expressionType = typescript.getReflectedType(node.expression);
 
-  if (!(expressionType && expressionType.underlyingClass && expressionType.underlyingClass.isArray)) {
-    compiler.error(node, "Array access used on non-array object");
-    return op.unreachable();
-  }
+  if (!(expressionType && expressionType.underlyingClass && expressionType.underlyingClass.isArray))
+    throw Error("array access used on non-array object"); // handled by typescript
 
   // obtain the reflected element type
   const arrayClass = expressionType.underlyingClass;

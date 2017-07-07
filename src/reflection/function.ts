@@ -145,7 +145,7 @@ export class Function extends FunctionBase {
   }
 
   /** Compiles a call to this function using the specified arguments. Arguments to instance functions include `this` as the first argument or can specifiy it in `thisArg`. */
-  makeCall(compiler: Compiler, diagnosticsNode: typescript.Node, argumentNodes: typescript.Expression[], thisArg?: binaryen.Expression): binaryen.Expression {
+  makeCall(compiler: Compiler, argumentNodes: typescript.Expression[], thisArg?: binaryen.Expression): binaryen.Expression {
     const op = compiler.module;
     const operands: binaryen.Expression[] = new Array(this.parameters.length);
     let operandIndex = 0;
@@ -154,7 +154,7 @@ export class Function extends FunctionBase {
       operands[operandIndex++] = thisArg;
 
     if (operandIndex + argumentNodes.length > this.parameters.length)
-      compiler.error(diagnosticsNode, "Too many arguments", "Expected max. " + this.parameters.length + " but saw " + argumentNodes.length);
+      throw Error("too many arguments: " + argumentNodes.length + " > " + this.parameters.length); // handled by typescript
 
     // specified arguments
     for (let i = 0; i < argumentNodes.length && operandIndex < this.parameters.length; ++i, ++operandIndex)
@@ -168,10 +168,8 @@ export class Function extends FunctionBase {
         // FIXME: initializers are currently compiled in the context of the calling function,
         // preventing proper usage of 'this'
         expr = compiler.compileExpression(initializer, this.parameters[operandIndex].type, this.parameters[operandIndex].type, false);
-      } else {
-        compiler.error(diagnosticsNode, "Too few arguments", "Expected value for '" + this.parameters[operandIndex].name + "' thisArg="+thisArg+", operandIndex="+operandIndex+", length="+argumentNodes.length+"/"+this.parameters.length);
-        expr = op.unreachable();
-      }
+      } else
+        throw Error("too few arguments: " + operandIndex + " < " + this.parameters.length); // handled by typescript
       operands[operandIndex++] = expr;
     }
 
@@ -253,8 +251,10 @@ export class FunctionTemplate extends FunctionBase {
     const parameters: FunctionParameter[] = new Array(this.declaration.parameters.length);
     for (let i = 0, k = this.declaration.parameters.length; i < k; ++i) {
       const parameter = this.declaration.parameters[i];
+
       if (parameter.questionToken && !typescript.isDeclare(this.declaration) && !parameter.initializer)
-        compiler.error(parameter.questionToken, "Initializer expected");
+        compiler.report(parameter.questionToken, typescript.DiagnosticsEx.Optional_parameters_must_specify_an_initializer);
+
       parameters[i] = {
         node: parameter,
         name: typescript.getTextOfNode(parameter.name),
@@ -264,7 +264,7 @@ export class FunctionTemplate extends FunctionBase {
         initializer: parameter.initializer
       };
       if (!parameter.type && typescript.getSourceFileOfNode(this.declaration) !== compiler.libraryFile) // library may use 'any'
-        compiler.error(parameter, typescript.Diagnostics.Type_expected);
+        compiler.report(parameter.name, typescript.DiagnosticsEx.Type_expected);
     }
     if (this.isInstance) {
       parameters.unshift({
@@ -286,7 +286,7 @@ export class FunctionTemplate extends FunctionBase {
     } else {
       returnType = voidType;
       if (typescript.getSourceFileOfNode(this.declaration) !== compiler.libraryFile && this.declaration.kind !== typescript.SyntaxKind.SetAccessor) // library may use 'any'
-        compiler.warn(<typescript.Identifier>this.declaration.name, "Assuming return type 'void'");
+        compiler.report(<typescript.Identifier>this.declaration.name, typescript.DiagnosticsEx.Assuming_return_type_0, "void");
     }
 
     return this.instances[name] = new Function(name, this, typeArgumentsMap, parameters, returnType, parent, this.declaration.body);

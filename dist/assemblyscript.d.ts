@@ -72,7 +72,7 @@ declare module 'assemblyscript/binaryen' {
   export import F32Operations = binaryen.F32Operations;
   export import F64Operations = binaryen.F64Operations;
   export import readBinary = binaryen.readBinary;
-  /** Computes a human readable signature identifier of a reflected type. */
+  /** Computes the signature identifier of a reflected type. */
   export function identifierOf(type: reflection.Type, uintptrSize: number): string;
   /** Computes the binaryen type of a reflected type. */
   export function typeOf(type: reflection.Type, uintptrSize: number): Type;
@@ -92,13 +92,13 @@ declare module 'assemblyscript/builtins' {
     * @module assemblyscript/builtins
     */ /** */
   import * as binaryen from "assemblyscript/binaryen";
+  import Compiler from "assemblyscript/compiler";
   import * as reflection from "assemblyscript/reflection";
   import * as typescript from "assemblyscript/typescript";
-  import Compiler from "assemblyscript/compiler";
   /** Tests if the specified function name corresponds to a built-in function. */
   export function isBuiltin(name: string, isGlobalName?: boolean): boolean;
-  /** Tests if the specified function name corresponds to a built-in malloc function. */
-  export function isBuiltinMalloc(name: string, isGlobalName?: boolean): boolean;
+  /** Tests if the specified function name corresponds to a linked library function. */
+  export function isLibrary(name: string, isGlobalName?: boolean): boolean;
   /** A pair of TypeScript expressions. */
   export interface TypeScriptExpressionPair {
       0: typescript.Expression;
@@ -279,12 +279,8 @@ declare module 'assemblyscript/compiler' {
         * @param options Compiler options
         */
       constructor(program: typescript.Program, options?: CompilerOptions);
-      /** Adds an informative diagnostic to {@link Compiler#diagnostics} and prints it. */
-      info(node: typescript.Node, message: string | typescript.DiagnosticMessage, arg1?: string): void;
-      /** Adds a warning diagnostic to {@link Compiler#diagnostics} and prints it. */
-      warn(node: typescript.Node, message: string | typescript.DiagnosticMessage, arg1?: string): void;
-      /** Adds an error diagnostic to {@link Compiler#diagnostics} and prints it. */
-      error(node: typescript.Node, message: string | typescript.DiagnosticMessage, arg1?: string): void;
+      /** Reports a diagnostic message (adds it to {@link Compiler#diagnostics}) and prints it. */
+      report(node: typescript.Node, message: typescript.DiagnosticMessage, arg0?: string | number, arg1?: string | number, arg2?: string | number): void;
       /** Mangles a global name (of a function, a class, ...) for use with binaryen. */
       mangleGlobalName(name: string, sourceFile: typescript.SourceFile): string;
       /** Scans over the sources and initializes the reflection structure. */
@@ -441,7 +437,6 @@ declare module 'assemblyscript/typescript' {
   export import DiagnosticCollection = ts.DiagnosticCollection;
   export import DiagnosticMessage = ts.DiagnosticMessage;
   export import Diagnostic = ts.Diagnostic;
-  export import Diagnostics = ts.Diagnostics;
   export import DoStatement = ts.DoStatement;
   export import ElementAccessExpression = ts.ElementAccessExpression;
   export import EnumDeclaration = ts.EnumDeclaration;
@@ -495,14 +490,13 @@ declare module 'assemblyscript/typescript' {
   export import createDiagnosticForNode = ts.createDiagnosticForNode;
   export import createProgram = ts.createProgram;
   export import createSourceFile = ts.createSourceFile;
+  export { DiagnosticsEx } from "assemblyscript/generated/diagnosticMessages";
   /** Default format diagnostics host for convenience. */
   export const defaultFormatDiagnosticsHost: FormatDiagnosticsHost;
   /** Default compiler options for AssemblyScript compilation. */
   export const defaultCompilerOptions: ts.CompilerOptions;
   /** Creates an AssemblyScript-compatible compiler host. */
   export function createCompilerHost(moduleSearchLocations: string[], entryFileSource?: string, entryFileName?: string): CompilerHost;
-  /** Creates a diagnostic message referencing a node. */
-  export function createDiagnosticForNodeEx(node: Node, category: DiagnosticCategory, message: string, arg1?: string): ts.Diagnostic;
   /** Formats a diagnostic message in plain text. */
   export function formatDiagnostics(diagnostics: Diagnostic[], host?: FormatDiagnosticsHost): string;
   /** Formats a diagnostic message with terminal colors and source context. */
@@ -541,9 +535,6 @@ declare module 'assemblyscript/typescript' {
   export function getReflectedClassTemplate(node: ClassDeclaration): reflection.ClassTemplate;
   /** Sets the reflected class template (describing a class with unresolved generic types) of a class declaration. */
   export function setReflectedClassTemplate(node: ClassDeclaration, template: reflection.ClassTemplate): void;
-  export const DiagnosticsEx: {
-    Unresolvable_type: ts.DiagnosticMessage;
-  };
 }
 
 declare module 'assemblyscript/statements' {
@@ -629,10 +620,9 @@ declare module 'assemblyscript/expressions/call' {
   /** @module assemblyscript/expressions */ /** */
   import * as binaryen from "assemblyscript/binaryen";
   import Compiler from "assemblyscript/compiler";
-  import * as reflection from "assemblyscript/reflection";
   import * as typescript from "assemblyscript/typescript";
   /** Compiles a function call expression. */
-  export function compileCall(compiler: Compiler, node: typescript.CallExpression, contextualType: reflection.Type): binaryen.Expression;
+  export function compileCall(compiler: Compiler, node: typescript.CallExpression): binaryen.Expression;
   export { compileCall as default };
 }
 
@@ -992,7 +982,7 @@ declare module 'assemblyscript/reflection/function' {
       /** Introduces an additional local variable. */
       addLocal(name: string, type: Type): Variable;
       /** Compiles a call to this function using the specified arguments. Arguments to instance functions include `this` as the first argument or can specifiy it in `thisArg`. */
-      makeCall(compiler: Compiler, diagnosticsNode: typescript.Node, argumentNodes: typescript.Expression[], thisArg?: binaryen.Expression): binaryen.Expression;
+      makeCall(compiler: Compiler, argumentNodes: typescript.Expression[], thisArg?: binaryen.Expression): binaryen.Expression;
   }
   export { Function as default };
   /** A function template with possibly unresolved generic parameters. */
@@ -1191,6 +1181,140 @@ declare module 'assemblyscript/reflection/variable' {
   export interface VariablesMap {
       [key: string]: Variable;
   }
+}
+
+declare module 'assemblyscript/generated/diagnosticMessages' {
+  /** @module assemblyscript/typescript */ /** */
+  import { DiagnosticCategory } from "assemblyscript/typescript";
+  export const DiagnosticsEx: {
+      Unsupported_node_kind_0_in_1: {
+          code: number;
+          category: DiagnosticCategory;
+          key: string;
+          message: string;
+      };
+      Unsupported_modifier_0: {
+          code: number;
+          category: DiagnosticCategory;
+          key: string;
+          message: string;
+      };
+      Unsupported_literal_0: {
+          code: number;
+          category: DiagnosticCategory;
+          key: string;
+          message: string;
+      };
+      Type_expected: {
+          code: number;
+          category: DiagnosticCategory;
+          key: string;
+          message: string;
+      };
+      Unresolvable_type_0: {
+          code: number;
+          category: DiagnosticCategory;
+          key: string;
+          message: string;
+      };
+      Unresolvable_identifier_0: {
+          code: number;
+          category: DiagnosticCategory;
+          key: string;
+          message: string;
+      };
+      Start_function_has_already_been_defined: {
+          code: number;
+          category: DiagnosticCategory;
+          key: string;
+          message: string;
+      };
+      Start_function_already_defined_here: {
+          code: number;
+          category: DiagnosticCategory;
+          key: string;
+          message: string;
+      };
+      Conversion_from_0_to_1_requires_an_explicit_cast: {
+          code: number;
+          category: DiagnosticCategory;
+          key: string;
+          message: string;
+      };
+      Conversion_from_0_to_1_will_fail_when_switching_between_WASM32_64: {
+          code: number;
+          category: DiagnosticCategory;
+          key: string;
+          message: string;
+      };
+      Type_0_is_invalid_in_this_context: {
+          code: number;
+          category: DiagnosticCategory;
+          key: string;
+          message: string;
+      };
+      Identifier_0_is_invalid_in_this_context: {
+          code: number;
+          category: DiagnosticCategory;
+          key: string;
+          message: string;
+      };
+      Assuming_0_instead_of_1: {
+          code: number;
+          category: DiagnosticCategory;
+          key: string;
+          message: string;
+      };
+      Assuming_return_type_0: {
+          code: number;
+          category: DiagnosticCategory;
+          key: string;
+          message: string;
+      };
+      Assuming_variable_type_0: {
+          code: number;
+          category: DiagnosticCategory;
+          key: string;
+          message: string;
+      };
+      Types_0_and_1_are_incompatible: {
+          code: number;
+          category: DiagnosticCategory;
+          key: string;
+          message: string;
+      };
+      Literal_overflow_Compiling_to_a_value_in_range_0_to_1_instead: {
+          code: number;
+          category: DiagnosticCategory;
+          key: string;
+          message: string;
+      };
+      Optional_parameters_must_specify_an_initializer: {
+          code: number;
+          category: DiagnosticCategory;
+          key: string;
+          message: string;
+      };
+      Unconditional_endless_loop_detected: {
+          code: number;
+          category: DiagnosticCategory;
+          key: string;
+          message: string;
+      };
+      Function_with_a_return_type_must_return_a_value: {
+          code: number;
+          category: DiagnosticCategory;
+          key: string;
+          message: string;
+      };
+      Function_without_a_return_type_cannot_return_a_value: {
+          code: number;
+          category: DiagnosticCategory;
+          key: string;
+          message: string;
+      };
+  };
+  export { DiagnosticsEx as default };
 }
 
 declare module 'assemblyscript/statements/block' {

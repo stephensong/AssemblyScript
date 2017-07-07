@@ -259,31 +259,9 @@ export class Compiler {
     }
   }
 
-  /** Adds an informative diagnostic to {@link Compiler#diagnostics} and prints it. */
-  info(node: typescript.Node, message: string | typescript.DiagnosticMessage, arg1?: string): void {
-    const diagnostic = typeof message === "string"
-      ? typescript.createDiagnosticForNodeEx(node, typescript.DiagnosticCategory.Message, message, arg1)
-      : typescript.createDiagnosticForNode(node, message, arg1);
-    this.diagnostics.add(diagnostic);
-    if (!(this.options && this.options.silent))
-      typescript.printDiagnostic(diagnostic);
-  }
-
-  /** Adds a warning diagnostic to {@link Compiler#diagnostics} and prints it. */
-  warn(node: typescript.Node, message: string | typescript.DiagnosticMessage, arg1?: string): void {
-    const diagnostic = typeof message === "string"
-      ? typescript.createDiagnosticForNodeEx(node, typescript.DiagnosticCategory.Warning, message, arg1)
-      : typescript.createDiagnosticForNode(node, message, arg1);
-    this.diagnostics.add(diagnostic);
-    if (!(this.options && this.options.silent))
-      typescript.printDiagnostic(diagnostic);
-  }
-
-  /** Adds an error diagnostic to {@link Compiler#diagnostics} and prints it. */
-  error(node: typescript.Node, message: string | typescript.DiagnosticMessage, arg1?: string): void {
-    const diagnostic = typeof message === "string"
-      ? typescript.createDiagnosticForNodeEx(node, typescript.DiagnosticCategory.Error, message, arg1)
-      : typescript.createDiagnosticForNode(node, message, arg1);
+  /** Reports a diagnostic message (adds it to {@link Compiler#diagnostics}) and prints it. */
+  report(node: typescript.Node, message: typescript.DiagnosticMessage, arg0?: string | number, arg1?: string | number, arg2?: string | number) {
+    const diagnostic = typescript.createDiagnosticForNode(node, message, arg0, arg1, arg2);
     this.diagnostics.add(diagnostic);
     if (!(this.options && this.options.silent))
       typescript.printDiagnostic(diagnostic);
@@ -334,7 +312,7 @@ export class Compiler {
             break;
 
           default:
-            this.error(statement, "Unsupported top-level statement"/*, typescript.SyntaxKind[statement.kind]*/);
+            this.report(statement, typescript.DiagnosticsEx.Unsupported_node_kind_0_in_1, statement.kind, "Compiler#initialize");
             break;
         }
       }
@@ -433,17 +411,20 @@ export class Compiler {
       const declaration = node.declarationList.declarations[i];
       const initializerNode = declaration.initializer;
 
-      if (declaration.type && declaration.symbol) {
+      if (declaration.type) {
+
+        if (!declaration.symbol)
+          throw Error("symbol expected");
+
         const name = this.mangleGlobalName(declaration.symbol.name, typescript.getSourceFileOfNode(declaration));
         const type = this.resolveType(declaration.type);
 
         if (type)
           this.addGlobal(name, type, !typescript.isConst(node.declarationList), initializerNode);
-        else
-          this.error(declaration.type, typescript.Diagnostics.Cannot_find_name_0, typescript.getTextOfNode(declaration.type));
+        // otherwise reported by resolveType
 
       } else
-        this.error(declaration.name, typescript.Diagnostics.Type_expected);
+        this.report(declaration.name, typescript.DiagnosticsEx.Type_expected);
     }
   }
 
@@ -476,7 +457,7 @@ export class Compiler {
 
         this.currentFunction = previousFunction;
       } else
-        this.error(initializerNode, "Unsupported global constant initializer");
+        this.report(initializerNode, typescript.DiagnosticsEx.Unsupported_node_kind_0_in_1, initializerNode.kind, "Compiler#addGlobal");
 
     } else {
       let value: number = 0;
@@ -577,7 +558,7 @@ export class Compiler {
     const sourceFile = typescript.getSourceFileOfNode(node);
 
     if (sourceFile === this.entryFile && typescript.isExport(node))
-      this.warn(<typescript.Identifier>node.name, "Exporting entire classes is not supported yet");
+      this.report(<typescript.Identifier>node.name, typescript.DiagnosticsEx.Unsupported_modifier_0, "export");
 
     let base: reflection.ClassTemplate | undefined;
     let baseTypeArguments: typescript.TypeNode[] | undefined;
@@ -592,13 +573,13 @@ export class Compiler {
               base = reference;
               baseTypeArguments = extendsNode.typeArguments || [];
             } else
-              this.error(clause, "No such base class");
+              this.report(extendsNode.expression, typescript.DiagnosticsEx.Unresolvable_type_0, typescript.getTextOfNode(extendsNode.expression));
           } else
-            this.error(clause, "Unsupported extension");
+            this.report(extendsNode.expression, typescript.DiagnosticsEx.Unsupported_node_kind_0_in_1, extendsNode.expression.kind, "Compiler#initializeClass/1");
         } else if (clause.token === typescript.SyntaxKind.ImplementsKeyword) {
           // TODO
         } else
-          this.error(clause, "Unsupported extension");
+          this.report(clause, typescript.DiagnosticsEx.Unsupported_node_kind_0_in_1, clause.token, "Compiler#initializeClass/2");
       }
     }
 
@@ -627,7 +608,7 @@ export class Compiler {
       return; // already initialized
 
     if (typescript.getSourceFileOfNode(node) === this.entryFile && typescript.isExport(node))
-      this.warn(node.name, "Exporting enums is not supported yet");
+      this.report(node.name, typescript.DiagnosticsEx.Unsupported_modifier_0, "export");
 
     const instance = this.enums[name] = new reflection.Enum(name, node);
     instance.initialize(/* this */);
@@ -815,7 +796,7 @@ export class Compiler {
             compileStore(this, /* solely used for diagnostics anyway */ <typescript.Expression>param.node, property.type, op.getLocal(0, binaryen.typeOf(this.uintptrType, this.uintptrSize)), property.offset, op.getLocal(i + 1, binaryen.typeOf(param.type, this.uintptrSize)))
           );
         else
-          this.error(param.node, "Property initializer parameter without a property");
+          throw Error("missing parameter property");
       }
     }
 
@@ -868,7 +849,8 @@ export class Compiler {
 
     if (!instance.parent && instance.body && typescript.isStartFunction(instance.declaration)) {
       if (this.userStartFunction)
-        this.error(<typescript.Identifier>instance.declaration.name, "Duplicate start function");
+        this.report(<typescript.Identifier>instance.declaration.name, typescript.DiagnosticsEx.Start_function_has_already_been_defined);
+        // TODO: report previous declaration using typescript.DiagnosticsEx.Start_function_already_defined_here
       else
         this.userStartFunction = binaryenFunction;
     }
@@ -940,17 +922,17 @@ export class Compiler {
     const op = this.module;
 
     function illegalImplicitConversion() {
-      compiler.error(node, "Illegal implicit conversion", "'" + fromType + "' to '" + toType + "'");
+      compiler.report(node, typescript.DiagnosticsEx.Conversion_from_0_to_1_requires_an_explicit_cast, fromType.toString(), toType.toString());
       explicit = true; // report this only once for the topmost node
     }
 
     if (!explicit) {
 
-      if (this.uintptrSize === 4 && fromType.kind === reflection.TypeKind.uintptr && toType.isInt)
-        this.warn(node, "Non-portable conversion", "Implicit conversion from 'uintptr' to 'uint' will fail when targeting WASM64");
-
-      if (this.uintptrSize === 8 && fromType.isLong && toType.kind === reflection.TypeKind.uintptr)
-        this.warn(node, "Non-portable conversion", "Implicit conversion from 'ulong' to 'uintptr' will fail when targeting WASM32");
+      if (
+        (this.uintptrSize === 4 && fromType.kind === reflection.TypeKind.uintptr && toType.isInt) ||
+        (this.uintptrSize === 8 && fromType.isLong && toType.kind === reflection.TypeKind.uintptr)
+      )
+        this.report(node, typescript.DiagnosticsEx.Conversion_from_0_to_1_will_fail_when_switching_between_WASM32_64, fromType.toString(), toType.toString());
     }
 
     typescript.setReflectedType(node, toType);
@@ -1169,15 +1151,15 @@ export class Compiler {
 
       case typescript.SyntaxKind.VoidKeyword:
         if (!acceptVoid)
-          this.error(type, "Illegal type", "void");
+          this.report(type, typescript.DiagnosticsEx.Type_0_is_invalid_in_this_context, "void");
         return reflection.voidType;
 
       case typescript.SyntaxKind.BooleanKeyword:
-        this.warn(type, "Assuming 'bool'");
+        this.report(type, typescript.DiagnosticsEx.Assuming_0_instead_of_1, "bool", "boolean");
         return reflection.boolType;
 
       case typescript.SyntaxKind.NumberKeyword:
-        this.warn(type, "Assuming 'double'");
+        this.report(type, typescript.DiagnosticsEx.Assuming_0_instead_of_1, "double", "number");
         return reflection.doubleType;
 
       case typescript.SyntaxKind.ThisKeyword:
@@ -1250,7 +1232,7 @@ export class Compiler {
       }
     }
 
-    this.error(type, "Unsupported type", typescript.getTextOfNode(type));
+    this.report(type, typescript.DiagnosticsEx.Unresolvable_type_0, typescript.getTextOfNode(type));
     return reflection.voidType;
   }
 

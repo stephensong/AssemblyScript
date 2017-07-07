@@ -169,10 +169,9 @@ export class Class extends ClassBase {
                 compiler.addGlobal(this.name + "." + propertyName, propertyType, true, propertyDeclaration.initializer);
               else
                 this.size += propertyType.size;
-            } else
-              compiler.error(propertyDeclaration.type, typescript.Diagnostics.Cannot_find_name_0, typescript.getTextOfNode(propertyDeclaration.type));
+            } // otherwise reported by resolveType
           } else
-            compiler.error(propertyDeclaration.name, typescript.Diagnostics.Type_expected);
+            compiler.report(propertyDeclaration.name, typescript.DiagnosticsEx.Type_expected);
           break;
         }
 
@@ -190,12 +189,9 @@ export class Class extends ClassBase {
                   this.properties[name] = new Property(name, <typescript.PropertyDeclaration>member, type, this.size);
                   localInitializers.push(j);
                   this.size += type.size;
-                } else {
-                  compiler.error(parameterNode.type, typescript.Diagnostics.Cannot_find_name_0, typescript.getTextOfNode(parameterNode.type));
-                }
-              } else {
-                compiler.error(parameterNode, typescript.Diagnostics.Type_expected);
-              }
+                } // otherwise reported by resolveType
+              } else
+                compiler.report(parameterNode, typescript.DiagnosticsEx.Type_expected);
             }
           }
           compiler.initializeFunction(constructorNode);
@@ -208,11 +204,11 @@ export class Class extends ClassBase {
         case typescript.SyntaxKind.MethodDeclaration:
         case typescript.SyntaxKind.GetAccessor:
         case typescript.SyntaxKind.SetAccessor:
-          this.initializeMethod(compiler, <typescript.MethodDeclaration>member);
+          this.initializeMethod(compiler, <typescript.MethodDeclaration>member); // FIXME: get/set are two distinct methods
           break;
 
         default:
-          compiler.error(member, "Unsupported class member", "SyntaxKind " + member.kind);
+          compiler.report(member, typescript.DiagnosticsEx.Unsupported_node_kind_0_in_1, member.kind, "reflection.Class#initialize");
       }
     }
   }
@@ -246,7 +242,8 @@ export class ClassTemplate extends ClassBase {
   constructor(name: string, declaration: typescript.ClassDeclaration, base?: ClassTemplate, baseTypeArguments?: typescript.TypeNode[]) {
     super(name, declaration);
     if (base && !baseTypeArguments)
-      throw Error("missing base type arguments");
+      throw Error("missing base type arguments"); // handled by typescript
+
     this.base = base;
     this.baseTypeArguments = baseTypeArguments || [];
     typescript.setReflectedClassTemplate(declaration, this);

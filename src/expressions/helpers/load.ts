@@ -46,7 +46,7 @@ export function compileLoad(compiler: Compiler, node: typescript.Expression, typ
     case reflection.TypeKind.double:
       return op.f64.load(offset, type.size, ptr);
   }
-  throw Error("unexpected type");
+  throw Error("unexpected type"); // should handle all possible types above
 }
 
 export { compileLoad as default };

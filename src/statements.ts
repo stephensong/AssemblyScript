@@ -77,6 +77,6 @@ export function compile(compiler: Compiler, node: typescript.Statement): binarye
       return compileReturn(compiler, <typescript.ReturnStatement>node);
   }
 
-  compiler.error(node, "Unsupported statement node", "SyntaxKind " + node.kind);
+  compiler.report(node, typescript.DiagnosticsEx.Unsupported_node_kind_0_in_1, node.kind, "statements.compile");
   return op.unreachable();
 }
