@@ -1,7 +1,7 @@
 /** @module assemblyscript/reflection */ /** */
 
 import * as binaryen from "../binaryen";
-import { isBuiltinMalloc } from "../builtins";
+import { isLibrary } from "../builtins";
 import { Class, TypeArgumentsMap } from "./class";
 import { Compiler, CompilerMemoryModel } from "../compiler";
 import { Type, voidType } from "./type";
@@ -181,7 +181,7 @@ export class Function extends FunctionBase {
     // Rewire built-in malloc calls, if necessary
     let internalName = this.name;
     let isImport = this.isImport;
-    if (isImport && isBuiltinMalloc(this.name, true)) {
+    if (isImport && isLibrary(this.name, true)) {
       internalName = this.simpleName;
       if (compiler.memoryModel === CompilerMemoryModel.MALLOC || compiler.memoryModel === CompilerMemoryModel.EXPORT_MALLOC)
         isImport = false;

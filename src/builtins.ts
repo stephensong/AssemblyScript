@@ -8,10 +8,9 @@
  */ /** */
 
 import * as binaryen from "./binaryen";
+import Compiler from "./compiler";
 import * as reflection from "./reflection";
 import * as typescript from "./typescript";
-
-import Compiler from "./compiler";
 
 /** Tests if the specified function name corresponds to a built-in function. */
 export function isBuiltin(name: string, isGlobalName: boolean = true): boolean {
@@ -70,8 +69,8 @@ export function isBuiltin(name: string, isGlobalName: boolean = true): boolean {
   return false;
 }
 
-/** Tests if the specified function name corresponds to a built-in malloc function. */
-export function isBuiltinMalloc(name: string, isGlobalName: boolean = true): boolean {
+/** Tests if the specified function name corresponds to a linked library function. */
+export function isLibrary(name: string, isGlobalName: boolean = true): boolean {
   if (isGlobalName) {
     // Builtins are declared in assembly.d.ts exclusively
     if (name.substring(0, 14) !== "assembly.d.ts/") return false;
