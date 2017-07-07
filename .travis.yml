@@ -4,4 +4,4 @@ node_js:
   - 8
 git:
   submodules: false
-script: npm test
+script: npm run build:diagnostics && npm test
