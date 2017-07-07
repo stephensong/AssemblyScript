@@ -490,7 +490,7 @@ declare module 'assemblyscript/typescript' {
   export import createDiagnosticForNode = ts.createDiagnosticForNode;
   export import createProgram = ts.createProgram;
   export import createSourceFile = ts.createSourceFile;
-  export { DiagnosticsEx } from "assemblyscript/generated/diagnosticMessages";
+  export { DiagnosticsEx } from "assemblyscript/typescript/diagnosticMessages.generated";
   /** Default format diagnostics host for convenience. */
   export const defaultFormatDiagnosticsHost: FormatDiagnosticsHost;
   /** Default compiler options for AssemblyScript compilation. */
@@ -1183,9 +1183,10 @@ declare module 'assemblyscript/reflection/variable' {
   }
 }
 
-declare module 'assemblyscript/generated/diagnosticMessages' {
+declare module 'assemblyscript/typescript/diagnosticMessages.generated' {
   /** @module assemblyscript/typescript */ /** */
   import { DiagnosticCategory } from "assemblyscript/typescript";
+  /** AssemblyScript specific diagnostic messages. */
   export const DiagnosticsEx: {
       Unsupported_node_kind_0_in_1: {
           code: number;
