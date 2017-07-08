@@ -1,29 +1,30 @@
 /** @module assemblyscript/expressions */ /** */
 
-import * as binaryen from "../binaryen";
+import * as binaryen from "binaryen";
 import Compiler from "../compiler";
 import * as Long from "long";
 import * as reflection from "../reflection";
 import * as typescript from "../typescript";
+import * as util from "../util";
 
 /** Compiles a literal expression. */
 export function compileLiteral(compiler: Compiler, node: typescript.LiteralExpression, contextualType: reflection.Type, negate: boolean = false): binaryen.Expression {
   const op = compiler.module;
 
-  typescript.setReflectedType(node, contextualType);
+  util.setReflectedType(node, contextualType);
 
   switch (node.kind) {
     case typescript.SyntaxKind.TrueKeyword:
       negate = !negate;
 
     case typescript.SyntaxKind.FalseKeyword:
-      typescript.setReflectedType(node, reflection.boolType);
+      util.setReflectedType(node, reflection.boolType);
       return negate
         ? contextualType.isLong ? op.i64.const(1, 0) : op.i32.const(1)
         : contextualType.isLong ? op.i64.const(0, 0) : op.i32.const(0);
 
     case typescript.SyntaxKind.NullKeyword:
-      typescript.setReflectedType(node, compiler.uintptrType);
+      util.setReflectedType(node, compiler.uintptrType);
       return compiler.uintptrSize === 4 ? op.i32.const(0) : op.i64.const(0, 0);
 
     case typescript.SyntaxKind.NumericLiteral:
@@ -47,7 +48,7 @@ export function compileLiteral(compiler: Compiler, node: typescript.LiteralExpre
           if (contextualType === reflection.floatType)
             return op.f32.const(floatValue);
           else {
-            typescript.setReflectedType(node, reflection.doubleType);
+            util.setReflectedType(node, reflection.doubleType);
             return op.f64.const(floatValue);
           }
         } else {
@@ -118,7 +119,7 @@ export function compileLiteral(compiler: Compiler, node: typescript.LiteralExpre
     {
       const text = node.text;
       const offset = compiler.createStaticString(text);
-      return binaryen.valueOf(compiler.uintptrType, op, offset);
+      return compiler.valueOf(compiler.uintptrType, offset);
     }
   }
 

@@ -20,10 +20,11 @@ export * from "./expressions/postfixunary";
 export * from "./expressions/prefixunary";
 export * from "./expressions/propertyaccess";
 
-import * as binaryen from "./binaryen";
+import * as binaryen from "binaryen";
 import Compiler from "./compiler";
 import * as reflection from "./reflection";
 import * as typescript from "./typescript";
+import * as util from "./util";
 import {
   compileAs,
   compileBinary,
@@ -43,7 +44,7 @@ import {
 export function compile(compiler: Compiler, node: typescript.Expression, contextualType: reflection.Type): binaryen.Expression {
   const op = compiler.module;
 
-  typescript.setReflectedType(node, contextualType);
+  util.setReflectedType(node, contextualType);
 
   switch (node.kind) {
 
@@ -82,10 +83,10 @@ export function compile(compiler: Compiler, node: typescript.Expression, context
 
     case typescript.SyntaxKind.ThisKeyword:
       if (compiler.currentFunction.isInstance && compiler.currentFunction.parent)
-        typescript.setReflectedType(node, compiler.currentFunction.parent.type);
+        util.setReflectedType(node, compiler.currentFunction.parent.type);
       else
         compiler.report(node, typescript.DiagnosticsEx.Identifier_0_is_invalid_in_this_context, "this");
-      return op.getLocal(0, binaryen.typeOf(compiler.uintptrType, compiler.uintptrSize));
+      return op.getLocal(0, compiler.typeOf(compiler.uintptrType));
 
     case typescript.SyntaxKind.TrueKeyword:
     case typescript.SyntaxKind.FalseKeyword:
@@ -96,6 +97,6 @@ export function compile(compiler: Compiler, node: typescript.Expression, context
   }
 
   compiler.report(node, typescript.DiagnosticsEx.Unsupported_node_kind_0_in_1, node.kind, "expressions.compile");
-  typescript.setReflectedType(node, contextualType);
+  util.setReflectedType(node, contextualType);
   return op.unreachable();
 }

@@ -17,7 +17,6 @@
  * @preferred
  */ /** */
 
-import * as binaryen from "./binaryen";
 import * as builtins from "./builtins";
 import { Compiler, CompilerTarget, CompilerMemoryModel } from "./compiler";
 import * as expressions from "./expressions";
@@ -26,13 +25,12 @@ import Profiler from "./profiler";
 import * as reflection from "./reflection";
 import * as typescript from "./typescript";
 import * as statements from "./statements";
-import * as wabt from "./wabt";
+import * as util from "./util";
 
 /** AssemblyScript version. */
 export const version = library.version;
 
 export {
-  binaryen,
   builtins,
   Compiler,
   CompilerTarget,
@@ -43,5 +41,5 @@ export {
   reflection,
   statements,
   typescript,
-  wabt
+  util
 };

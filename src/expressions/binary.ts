@@ -1,11 +1,12 @@
 /** @module assemblyscript/expressions */ /** */
 
-import * as binaryen from "../binaryen";
+import * as binaryen from "binaryen";
 import Compiler from "../compiler";
 import compileElementAccess from "./elementaccess";
 import compilePropertyAccess from "./propertyaccess";
 import * as reflection from "../reflection";
 import * as typescript from "../typescript";
+import * as util from "../util";
 
 /** Compiles a binary expression. Covers addition, multiplication and so on. */
 export function compileBinary(compiler: Compiler, node: typescript.BinaryExpression, contextualType: reflection.Type): binaryen.Expression {
@@ -17,7 +18,7 @@ export function compileBinary(compiler: Compiler, node: typescript.BinaryExpress
     return compileLogicalAndOr(compiler, node);
 
   let left: binaryen.Expression = compiler.compileExpression(node.left, contextualType);
-  let leftType: reflection.Type = typescript.getReflectedType(node.left);
+  let leftType: reflection.Type = util.getReflectedType(node.left);
 
   let right: binaryen.Expression;
   let rightType: reflection.Type;
@@ -36,7 +37,7 @@ export function compileBinary(compiler: Compiler, node: typescript.BinaryExpress
     case typescript.SyntaxKind.PlusToken:
     case typescript.SyntaxKind.MinusToken:
       right = compiler.compileExpression(node.right, leftType);
-      rightType = typescript.getReflectedType(node.right);
+      rightType = util.getReflectedType(node.right);
 
       if (leftType.isAnyFloat) {
         if (rightType.isAnyFloat)
@@ -92,7 +93,7 @@ export function compileBinary(compiler: Compiler, node: typescript.BinaryExpress
     case typescript.SyntaxKind.ExclamationEqualsToken:
     case typescript.SyntaxKind.ExclamationEqualsEqualsToken:
       right = compiler.compileExpression(node.right, leftType);
-      rightType = typescript.getReflectedType(node.right);
+      rightType = util.getReflectedType(node.right);
 
       if (leftType.isAnyFloat) {
         if (rightType.isAnyFloat)
@@ -125,7 +126,7 @@ export function compileBinary(compiler: Compiler, node: typescript.BinaryExpress
     case typescript.SyntaxKind.BarToken:
     case typescript.SyntaxKind.CaretToken:
       right = compiler.compileExpression(node.right, leftType);
-      rightType = typescript.getReflectedType(node.right);
+      rightType = util.getReflectedType(node.right);
       if (leftType.isLong) {
         if (rightType.isLong) {
           commonType = leftType.isSigned === rightType.isSigned
@@ -177,13 +178,13 @@ export function compileBinary(compiler: Compiler, node: typescript.BinaryExpress
   const isCompound = node.operatorToken.kind >= typescript.SyntaxKind.FirstCompoundAssignment && node.operatorToken.kind <= typescript.SyntaxKind.LastCompoundAssignment;
   const op = compiler.module;
 
-  typescript.setReflectedType(node, resultType);
+  util.setReflectedType(node, resultType);
 
   let result: binaryen.Expression | null = null;
 
   const operandType = commonType || leftType;
-  const operandCategory = binaryen.categoryOf(operandType, op, compiler.uintptrSize);
-  // const resultCategory = binaryen.categoryOf(resultType, op, compiler.uintptrSize);
+  const operandCategory = compiler.categoryOf(operandType);
+  // const resultCategory = compiler.categoryOf(resultType);
 
   if (operandType.isAnyFloat) {
 
@@ -374,9 +375,9 @@ export { compileBinary as default };
 /** Compiles a binary assignment expression. */
 export function compileAssignment(compiler: Compiler, node: typescript.BinaryExpression, contextualType: reflection.Type): binaryen.Expression {
   compiler.compileExpression(node.left, contextualType); // determines left type (usually an identifier anyway)
-  const leftType = typescript.getReflectedType(node.left);
-  const right = compiler.compileExpression(node.right, typescript.getReflectedType(node.left));
-  const rightType = typescript.getReflectedType(node.right);
+  const leftType = util.getReflectedType(node.left);
+  const right = compiler.compileExpression(node.right, util.getReflectedType(node.left));
+  const rightType = util.getReflectedType(node.right);
 
   if (leftType.underlyingClass && (!rightType.underlyingClass || !rightType.underlyingClass.isAssignableTo(leftType.underlyingClass)))
     compiler.report(node.right, typescript.DiagnosticsEx.Types_0_and_1_are_incompatible, leftType.underlyingClass.name, typescript.getTextOfNode(node.right));
@@ -388,7 +389,7 @@ export function compileAssignment(compiler: Compiler, node: typescript.BinaryExp
 export function compileAssignmentWithValue(compiler: Compiler, node: typescript.BinaryExpression, value: binaryen.Expression, contextualType: reflection.Type): binaryen.Expression {
   const op = compiler.module;
 
-  typescript.setReflectedType(node, contextualType);
+  util.setReflectedType(node, contextualType);
 
   // identifier = expression
   if (node.left.kind === typescript.SyntaxKind.Identifier) {
@@ -397,19 +398,19 @@ export function compileAssignmentWithValue(compiler: Compiler, node: typescript.
 
       if (reference instanceof reflection.Variable) {
         const variable = <reflection.Variable>reference;
-        const expression = compiler.maybeConvertValue(node.right, value, typescript.getReflectedType(node.right), variable.type, false);
+        const expression = compiler.maybeConvertValue(node.right, value, util.getReflectedType(node.right), variable.type, false);
 
         if (contextualType === reflection.voidType)
           return variable.isGlobal
             ? op.setGlobal(variable.name, expression)
             : op.setLocal(variable.index, expression);
 
-        typescript.setReflectedType(node, variable.type);
+        util.setReflectedType(node, variable.type);
         return variable.isGlobal
           ? op.block("", [ // emulates teeGlobal
               op.setGlobal(variable.name, expression),
-              op.getGlobal(variable.name, binaryen.typeOf(variable.type, compiler.uintptrSize))
-            ], binaryen.typeOf(variable.type, compiler.uintptrSize))
+              op.getGlobal(variable.name, compiler.typeOf(variable.type))
+            ], compiler.typeOf(variable.type))
           : op.teeLocal(variable.index, expression);
       }
 
@@ -429,7 +430,7 @@ export function compileAssignmentWithValue(compiler: Compiler, node: typescript.
 export function compileLogicalAndOr(compiler: Compiler, node: typescript.BinaryExpression): binaryen.Expression {
   const op = compiler.module;
 
-  typescript.setReflectedType(node, reflection.boolType);
+  util.setReflectedType(node, reflection.boolType);
 
   const left = compileIsTrueish(compiler, node.left);
   const right = compileIsTrueish(compiler, node.right);
@@ -439,14 +440,14 @@ export function compileLogicalAndOr(compiler: Compiler, node: typescript.BinaryE
     return op.select(
       left,
       /* ? */ right,
-      /* : */ binaryen.valueOf(reflection.intType, op, 0)
+      /* : */ compiler.valueOf(reflection.intType, 0)
     );
 
   // ||
   else if (node.operatorToken.kind === typescript.SyntaxKind.BarBarToken)
     return op.select(
       left,
-      /* ? */ binaryen.valueOf(reflection.intType, op, 1),
+      /* ? */ compiler.valueOf(reflection.intType, 1),
       /* : */ right
     );
 
@@ -459,9 +460,9 @@ export function compileIsTrueish(compiler: Compiler, node: typescript.Expression
   const op = compiler.module;
 
   const expr = compiler.compileExpression(node, reflection.intType);
-  const type = typescript.getReflectedType(node);
+  const type = util.getReflectedType(node);
 
-  typescript.setReflectedType(node, reflection.boolType);
+  util.setReflectedType(node, reflection.boolType);
 
   switch (type.kind) {
     case reflection.TypeKind.byte:

@@ -1,9 +1,10 @@
 /** @module assemblyscript/statements */ /** */
 
-import * as binaryen from "../binaryen";
+import * as binaryen from "binaryen";
 import Compiler from "../compiler";
 import * as reflection from "../reflection";
 import * as typescript from "../typescript";
+import * as util from "../util";
 
 import { compileVariableDeclarationList } from "./variable";
 
@@ -36,7 +37,7 @@ export function compileFor(compiler: Compiler, node: typescript.ForStatement): b
     } else /* typescript.Expression */ {
 
       const expr = compiler.compileExpression(<typescript.Expression>node.initializer, reflection.voidType);
-      if (typescript.getReflectedType(node.initializer) === reflection.voidType)
+      if (util.getReflectedType(node.initializer) === reflection.voidType)
         context.push(expr);
       else
         context.push(op.drop(expr));
@@ -48,7 +49,7 @@ export function compileFor(compiler: Compiler, node: typescript.ForStatement): b
 
   if (node.incrementor) {
     const expr = compiler.compileExpression(node.incrementor, reflection.voidType);
-    if (typescript.getReflectedType(node.incrementor) === reflection.voidType)
+    if (util.getReflectedType(node.incrementor) === reflection.voidType)
       ifTrue.push(expr);
     else
       ifTrue.push(op.drop(expr));

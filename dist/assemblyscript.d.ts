@@ -2,6 +2,7 @@
 // Dependencies for this module:
 //   ../binaryen
 //   ../long
+//   ../wabt
 
 declare module 'assemblyscript' {
   /**
@@ -22,7 +23,6 @@ declare module 'assemblyscript' {
     * @module assemblyscript
     * @preferred
     */ /** */
-  import * as binaryen from "assemblyscript/binaryen";
   import * as builtins from "assemblyscript/builtins";
   import { Compiler, CompilerTarget, CompilerMemoryModel } from "assemblyscript/compiler";
   import * as expressions from "assemblyscript/expressions";
@@ -31,55 +31,10 @@ declare module 'assemblyscript' {
   import * as reflection from "assemblyscript/reflection";
   import * as typescript from "assemblyscript/typescript";
   import * as statements from "assemblyscript/statements";
-  import * as wabt from "assemblyscript/wabt";
+  import * as util from "assemblyscript/util";
   /** AssemblyScript version. */
   export const version: string;
-  export { binaryen, builtins, Compiler, CompilerTarget, CompilerMemoryModel, expressions, library, Profiler, reflection, statements, typescript, wabt };
-}
-
-declare module 'assemblyscript/binaryen' {
-  /**
-    * A re-exporting wrapper around binaryen.js providing additional functionality.
-    *
-    * Note that the API documentation does not reference any re-exports because this isn't supported
-    * by the documentation generator.
-    *
-    * For additional exports, see: https://github.com/dcodeIO/binaryen.js/blob/master/README.md#api
-    *
-    * @module assemblyscript/binaryen
-    */ /** */
-  import * as binaryen from "binaryen";
-  import * as Long from "long";
-  import * as reflection from "assemblyscript/reflection";
-  export import none = binaryen.none;
-  export import i32 = binaryen.i32;
-  export import i64 = binaryen.i64;
-  export import f32 = binaryen.f32;
-  export import f64 = binaryen.f64;
-  export import Type = binaryen.Type;
-  export import Signature = binaryen.Signature;
-  export import Function = binaryen.Function;
-  export import Expression = binaryen.Expression;
-  export import Statement = binaryen.Statement;
-  export import MemorySegment = binaryen.MemorySegment;
-  export import Module = binaryen.Module;
-  export import I32Expression = binaryen.I32Expression;
-  export import I64Expression = binaryen.I64Expression;
-  export import F32Expression = binaryen.F32Expression;
-  export import F64Expression = binaryen.F64Expression;
-  export import I32Operations = binaryen.I32Operations;
-  export import I64Operations = binaryen.I64Operations;
-  export import F32Operations = binaryen.F32Operations;
-  export import F64Operations = binaryen.F64Operations;
-  export import readBinary = binaryen.readBinary;
-  /** Computes the signature identifier of a reflected type. */
-  export function identifierOf(type: reflection.Type, uintptrSize: number): string;
-  /** Computes the binaryen type of a reflected type. */
-  export function typeOf(type: reflection.Type, uintptrSize: number): Type;
-  /** Computes the binaryen opcode category (i32, i64, f32, f64) of a reflected type. */
-  export function categoryOf(type: reflection.Type, module: Module, uintptrSize: number): I32Operations | I64Operations | F32Operations | F64Operations;
-  /** Computes the constant value expression of the specified reflected type. */
-  export function valueOf(type: reflection.Type, module: Module, value: number | Long): binaryen.I32Expression;
+  export { builtins, Compiler, CompilerTarget, CompilerMemoryModel, expressions, library, Profiler, reflection, statements, typescript, util };
 }
 
 declare module 'assemblyscript/builtins' {
@@ -91,7 +46,7 @@ declare module 'assemblyscript/builtins' {
     *
     * @module assemblyscript/builtins
     */ /** */
-  import * as binaryen from "assemblyscript/binaryen";
+  import * as binaryen from "binaryen";
   import Compiler from "assemblyscript/compiler";
   import * as reflection from "assemblyscript/reflection";
   import * as typescript from "assemblyscript/typescript";
@@ -156,7 +111,8 @@ declare module 'assemblyscript/builtins' {
 }
 
 declare module 'assemblyscript/compiler' {
-  import * as binaryen from "assemblyscript/binaryen";
+  import * as binaryen from "binaryen";
+  import * as Long from "long";
   import Profiler from "assemblyscript/profiler";
   import * as reflection from "assemblyscript/reflection";
   import * as typescript from "assemblyscript/typescript";
@@ -203,7 +159,7 @@ declare module 'assemblyscript/compiler' {
     * for convenience. Their diagnostics go to {@link Compiler.lastDiagnostics}.
     */
   export class Compiler {
-      /** Diagnostic messages produced by the last invocation of {@link Compiler.compileFile} or {@link Compiler.compileString}. */
+      /** Diagnostic messages reported by the last invocation of {@link Compiler.compileFile} or {@link Compiler.compileString}. */
       static lastDiagnostics: typescript.Diagnostic[];
       options: CompilerOptions;
       program: typescript.Program;
@@ -287,8 +243,8 @@ declare module 'assemblyscript/compiler' {
       initialize(): void;
       /** Gets an existing signature if it exists and otherwise creates it. */
       getOrAddSignature(argumentTypes: reflection.Type[], returnType: reflection.Type): binaryen.Signature;
-      /** Initializes the statically linked or imported malloc implementation. */
-      initializeMalloc(): void;
+      /** Initializes the statically linked or imported library implementation. */
+      initializeLibrary(): void;
       /** Initializes a global variable. */
       initializeGlobal(node: typescript.VariableStatement): void;
       /** Adds a global variable. */
@@ -336,9 +292,17 @@ declare module 'assemblyscript/compiler' {
       /** Resolves a TypeScript type to a AssemblyScript type. */
       resolveType(type: typescript.TypeNode, acceptVoid?: boolean, typeArgumentsMap?: {
           [key: string]: reflection.TypeArgument;
-      }): reflection.Type;
+      }): reflection.Type | null;
       /** Resolves an identifier or name to the corresponding reflection object. */
       resolveReference(node: typescript.Identifier | typescript.EntityName, preferTemplate?: boolean): reflection.Variable | reflection.Enum | reflection.Class | reflection.ClassTemplate | null;
+      /** Computes the binaryen signature identifier of a reflected type. */
+      identifierOf(type: reflection.Type): string;
+      /** Computes the binaryen type of a reflected type. */
+      typeOf(type: reflection.Type): binaryen.Type;
+      /** Computes the binaryen opcode category (i32, i64, f32, f64) of a reflected type. */
+      categoryOf(type: reflection.Type): binaryen.I32Operations | binaryen.I64Operations | binaryen.F32Operations | binaryen.F64Operations;
+      /** Computes the constant value binaryen expression of the specified reflected type. */
+      valueOf(type: reflection.Type, value: number | Long): binaryen.Expression;
   }
   export { Compiler as default };
 }
@@ -364,7 +328,7 @@ declare module 'assemblyscript/expressions' {
   export * from "assemblyscript/expressions/postfixunary";
   export * from "assemblyscript/expressions/prefixunary";
   export * from "assemblyscript/expressions/propertyaccess";
-  import * as binaryen from "assemblyscript/binaryen";
+  import * as binaryen from "binaryen";
   import Compiler from "assemblyscript/compiler";
   import * as reflection from "assemblyscript/reflection";
   import * as typescript from "assemblyscript/typescript";
@@ -407,7 +371,7 @@ declare module 'assemblyscript/profiler' {
 
 declare module 'assemblyscript/reflection' {
   /**
-    * Reflection components representing the actual WebAssembly output.
+    * Reflection components representing the WebAssembly output.
     * @module assemblyscript/reflection
     * @preferred
     */ /** */
@@ -420,7 +384,6 @@ declare module 'assemblyscript/reflection' {
 }
 
 declare module 'assemblyscript/typescript' {
-  import * as reflection from "assemblyscript/reflection";
   import * as ts from "assemblyscript/--/lib/typescript/build";
   export import ArrayTypeNode = ts.ArrayTypeNode;
   export import AsExpression = ts.AsExpression;
@@ -453,6 +416,7 @@ declare module 'assemblyscript/typescript' {
   export import IfStatement = ts.IfStatement;
   export import LiteralExpression = ts.LiteralExpression;
   export import MethodDeclaration = ts.MethodDeclaration;
+  export import ModifierFlags = ts.ModifierFlags;
   export import NewExpression = ts.NewExpression;
   export import NodeArray = ts.NodeArray;
   export import NodeFlags = ts.NodeFlags;
@@ -503,38 +467,6 @@ declare module 'assemblyscript/typescript' {
   export function formatDiagnosticsWithColorAndContext(diagnostics: Diagnostic[], host?: FormatDiagnosticsHost): string;
   /** Prints a diagnostic message to console. */
   export function printDiagnostic(diagnostic: Diagnostic): void;
-  /** Tests if the specified node has an 'export' modifier. */
-  export function isExport(node: Node): boolean;
-  /** Tests if the specified node has a 'declare' modifier or is part of a class with a 'declare' modifier. */
-  export function isDeclare(node: Node): boolean;
-  /** Tests if the specified node has a 'static' modifier or is otherwise part of a static context. */
-  export function isStatic(node: Node): boolean;
-  /** Tests if the specified node has an 'abstract' modifier. */
-  export function isAbstract(node: Node): boolean;
-  /** Tests if the specified node is flagged 'const'. */
-  export function isConst(node: Node): boolean;
-  /** Tests if a function fulfills the requirements to become a start function. */
-  export function isStartFunction(node: FunctionLikeDeclaration): boolean;
-  /** Gets the reflected type of an expression. */
-  export function getReflectedType(node: Expression): reflection.Type;
-  /** Sets the reflected type of an expression. */
-  export function setReflectedType(node: Expression, type: reflection.Type): void;
-  /** Gets the reflected function instance (describing a function with generic types resolved) of a function declaration. */
-  export function getReflectedFunction(node: FunctionLikeDeclaration): reflection.Function;
-  /** Sets the reflected function instance (describing a function with generic types resolved) of a function declaration. */
-  export function setReflectedFunction(node: FunctionLikeDeclaration, instance: reflection.Function): void;
-  /** Gets the reflected function template (describing a function with unresolved generic types) of a function declaration. */
-  export function getReflectedFunctionTemplate(node: FunctionLikeDeclaration): reflection.FunctionTemplate;
-  /** Sets the reflected function template (describing a function with unresolved generic types) of a function declaration. */
-  export function setReflectedFunctionTemplate(node: FunctionLikeDeclaration, template: reflection.FunctionTemplate): void;
-  /** Gets the reflected class instance (describing a class with generic types resolved) of a class declaration. */
-  export function getReflectedClass(node: ClassDeclaration): reflection.Class;
-  /** Sets the reflected class instance (describing a class with generic types resolved) of a class declaration. */
-  export function setReflectedClass(node: ClassDeclaration, instance: reflection.Class): void;
-  /** Gets the reflected class template (describing a class with unresolved generic types) of a class declaration. */
-  export function getReflectedClassTemplate(node: ClassDeclaration): reflection.ClassTemplate;
-  /** Sets the reflected class template (describing a class with unresolved generic types) of a class declaration. */
-  export function setReflectedClassTemplate(node: ClassDeclaration, template: reflection.ClassTemplate): void;
 }
 
 declare module 'assemblyscript/statements' {
@@ -554,41 +486,78 @@ declare module 'assemblyscript/statements' {
   export * from "assemblyscript/statements/switch";
   export * from "assemblyscript/statements/variable";
   export * from "assemblyscript/statements/while";
-  import * as binaryen from "assemblyscript/binaryen";
+  import * as binaryen from "binaryen";
   import Compiler from "assemblyscript/compiler";
   import * as typescript from "assemblyscript/typescript";
   /** Compiles any supported statement. */
   export function compile(compiler: Compiler, node: typescript.Statement): binaryen.Statement;
 }
 
-declare module 'assemblyscript/wabt' {
-  /** Indicates whether WABT-specific functionality is available. */
-  export const available: boolean;
-  /** A reusable error message in case wabt.js is not available. */
-  export const ENOTAVAILABLE: string;
+declare module 'assemblyscript/util' {
+  /**
+    * Utility functions.
+    * @module assemblyscript/util
+    */ /** */
+  import * as typescript from "assemblyscript/typescript";
+  import * as reflection from "assemblyscript/reflection";
+  import * as wabt from "wabt";
+  /** Tests if the specified node, or optionally its parent, has an 'export' modifier. */
+  export function isExport(node: typescript.Node, checkParent?: boolean): boolean;
+  /** Tests if the specified node, or optionally its parent, has a 'declare' modifier. */
+  export function isDeclare(node: typescript.Node, checkParent?: boolean): boolean;
+  /** Tests if the specified node has a 'static' modifier or is otherwise part of a static context. */
+  export function isStatic(node: typescript.Node): boolean;
+  /** Tests if the specified node has an 'abstract' modifier. */
+  export function isAbstract(node: typescript.Node): boolean;
+  /** Tests if the specified node is flagged 'const'. */
+  export function isConst(node: typescript.Node): boolean;
+  /** Tests if a function fulfills the requirements to become a start function. */
+  export function isStartFunction(node: typescript.FunctionLikeDeclaration): boolean;
+  /** Gets the reflected type of an expression. */
+  export function getReflectedType(node: typescript.Expression): reflection.Type;
+  /** Sets the reflected type of an expression. */
+  export function setReflectedType(node: typescript.Expression, type: reflection.Type): void;
+  /** Gets the reflected function instance (describing a function with generic types resolved) of a function declaration. */
+  export function getReflectedFunction(node: typescript.FunctionLikeDeclaration): reflection.Function;
+  /** Sets the reflected function instance (describing a function with generic types resolved) of a function declaration. */
+  export function setReflectedFunction(node: typescript.FunctionLikeDeclaration, instance: reflection.Function): void;
+  /** Gets the reflected function template (describing a function with unresolved generic types) of a function declaration. */
+  export function getReflectedFunctionTemplate(node: typescript.FunctionLikeDeclaration): reflection.FunctionTemplate;
+  /** Sets the reflected function template (describing a function with unresolved generic types) of a function declaration. */
+  export function setReflectedFunctionTemplate(node: typescript.FunctionLikeDeclaration, template: reflection.FunctionTemplate): void;
+  /** Gets the reflected class instance (describing a class with generic types resolved) of a class declaration. */
+  export function getReflectedClass(node: typescript.ClassDeclaration): reflection.Class;
+  /** Sets the reflected class instance (describing a class with generic types resolved) of a class declaration. */
+  export function setReflectedClass(node: typescript.ClassDeclaration, instance: reflection.Class): void;
+  /** Gets the reflected class template (describing a class with unresolved generic types) of a class declaration. */
+  export function getReflectedClassTemplate(node: typescript.ClassDeclaration): reflection.ClassTemplate;
+  /** Sets the reflected class template (describing a class with unresolved generic types) of a class declaration. */
+  export function setReflectedClassTemplate(node: typescript.ClassDeclaration, template: reflection.ClassTemplate): void;
+  /** wabt.js, if available. */
+  export import wabt = wabt;
   /** Options for {@link wasmToWast}. */
   export interface WasmToWastOptions {
-    readDebugNames?: boolean;
-    foldExprs?: boolean;
-    inlineExport?: boolean;
-    generateNames?: boolean;
+      readDebugNames?: boolean;
+      foldExprs?: boolean;
+      inlineExport?: boolean;
+      generateNames?: boolean;
   }
-  /** Converts a WebAssembly binary to text format using stack syntax. */
+  /** Converts a WebAssembly binary to text format using linear syntax. Requires wabt.js to be present. */
   export function wasmToWast(buffer: Uint8Array, options?: WasmToWastOptions): string;
   /** Options for {@link wastToWasm}. */
   export interface WastToWasmOptions {
-    filename?: string;
-    canonicalizeLebs?: boolean;
-    relocatable?: boolean;
-    writeDebugNames?: boolean;
+      filename?: string;
+      canonicalizeLebs?: boolean;
+      relocatable?: boolean;
+      writeDebugNames?: boolean;
   }
-  /** Converts WebAssembly text format using stack syntax to a binary. */
+  /** Converts WebAssembly text format using linear syntax to a binary. Requires wabt.js to be present. */
   export function wastToWasm(text: string, options?: WastToWasmOptions): Uint8Array;
 }
 
 declare module 'assemblyscript/expressions/as' {
   /** @module assemblyscript/expressions */ /** */
-  import * as binaryen from "assemblyscript/binaryen";
+  import * as binaryen from "binaryen";
   import Compiler from "assemblyscript/compiler";
   import * as reflection from "assemblyscript/reflection";
   import * as typescript from "assemblyscript/typescript";
@@ -599,7 +568,7 @@ declare module 'assemblyscript/expressions/as' {
 
 declare module 'assemblyscript/expressions/binary' {
   /** @module assemblyscript/expressions */ /** */
-  import * as binaryen from "assemblyscript/binaryen";
+  import * as binaryen from "binaryen";
   import Compiler from "assemblyscript/compiler";
   import * as reflection from "assemblyscript/reflection";
   import * as typescript from "assemblyscript/typescript";
@@ -618,7 +587,7 @@ declare module 'assemblyscript/expressions/binary' {
 
 declare module 'assemblyscript/expressions/call' {
   /** @module assemblyscript/expressions */ /** */
-  import * as binaryen from "assemblyscript/binaryen";
+  import * as binaryen from "binaryen";
   import Compiler from "assemblyscript/compiler";
   import * as typescript from "assemblyscript/typescript";
   /** Compiles a function call expression. */
@@ -628,7 +597,7 @@ declare module 'assemblyscript/expressions/call' {
 
 declare module 'assemblyscript/expressions/conditional' {
   /** @module assemblyscript/expressions */ /** */
-  import * as binaryen from "assemblyscript/binaryen";
+  import * as binaryen from "binaryen";
   import Compiler from "assemblyscript/compiler";
   import * as reflection from "assemblyscript/reflection";
   import * as typescript from "assemblyscript/typescript";
@@ -639,7 +608,7 @@ declare module 'assemblyscript/expressions/conditional' {
 
 declare module 'assemblyscript/expressions/elementaccess' {
   /** @module assemblyscript/expressions */ /** */
-  import * as binaryen from "assemblyscript/binaryen";
+  import * as binaryen from "binaryen";
   import Compiler from "assemblyscript/compiler";
   import * as reflection from "assemblyscript/reflection";
   import * as typescript from "assemblyscript/typescript";
@@ -650,7 +619,7 @@ declare module 'assemblyscript/expressions/elementaccess' {
 
 declare module 'assemblyscript/expressions/helpers/load' {
   /** @module assemblyscript/expressions */ /** */
-  import * as binaryen from "assemblyscript/binaryen";
+  import * as binaryen from "binaryen";
   import Compiler from "assemblyscript/compiler";
   import * as reflection from "assemblyscript/reflection";
   import * as typescript from "assemblyscript/typescript";
@@ -661,7 +630,7 @@ declare module 'assemblyscript/expressions/helpers/load' {
 
 declare module 'assemblyscript/expressions/helpers/loadorstore' {
   /** @module assemblyscript/expressions */ /** */
-  import * as binaryen from "assemblyscript/binaryen";
+  import * as binaryen from "binaryen";
   import Compiler from "assemblyscript/compiler";
   import * as reflection from "assemblyscript/reflection";
   import * as typescript from "assemblyscript/typescript";
@@ -672,7 +641,7 @@ declare module 'assemblyscript/expressions/helpers/loadorstore' {
 
 declare module 'assemblyscript/expressions/helpers/store' {
   /** @module assemblyscript/expressions */ /** */
-  import * as binaryen from "assemblyscript/binaryen";
+  import * as binaryen from "binaryen";
   import Compiler from "assemblyscript/compiler";
   import * as reflection from "assemblyscript/reflection";
   import * as typescript from "assemblyscript/typescript";
@@ -683,7 +652,7 @@ declare module 'assemblyscript/expressions/helpers/store' {
 
 declare module 'assemblyscript/expressions/identifier' {
   /** @module assemblyscript/expressions */ /** */
-  import * as binaryen from "assemblyscript/binaryen";
+  import * as binaryen from "binaryen";
   import Compiler from "assemblyscript/compiler";
   import * as reflection from "assemblyscript/reflection";
   import * as typescript from "assemblyscript/typescript";
@@ -694,7 +663,7 @@ declare module 'assemblyscript/expressions/identifier' {
 
 declare module 'assemblyscript/expressions/literal' {
   /** @module assemblyscript/expressions */ /** */
-  import * as binaryen from "assemblyscript/binaryen";
+  import * as binaryen from "binaryen";
   import Compiler from "assemblyscript/compiler";
   import * as reflection from "assemblyscript/reflection";
   import * as typescript from "assemblyscript/typescript";
@@ -705,7 +674,7 @@ declare module 'assemblyscript/expressions/literal' {
 
 declare module 'assemblyscript/expressions/new' {
   /** @module assemblyscript/expressions */ /** */
-  import * as binaryen from "assemblyscript/binaryen";
+  import * as binaryen from "binaryen";
   import Compiler from "assemblyscript/compiler";
   import * as reflection from "assemblyscript/reflection";
   import * as typescript from "assemblyscript/typescript";
@@ -716,7 +685,7 @@ declare module 'assemblyscript/expressions/new' {
 
 declare module 'assemblyscript/expressions/parenthesized' {
   /** @module assemblyscript/expressions */ /** */
-  import * as binaryen from "assemblyscript/binaryen";
+  import * as binaryen from "binaryen";
   import Compiler from "assemblyscript/compiler";
   import * as reflection from "assemblyscript/reflection";
   import * as typescript from "assemblyscript/typescript";
@@ -727,7 +696,7 @@ declare module 'assemblyscript/expressions/parenthesized' {
 
 declare module 'assemblyscript/expressions/postfixunary' {
   /** @module assemblyscript/expressions */ /** */
-  import * as binaryen from "assemblyscript/binaryen";
+  import * as binaryen from "binaryen";
   import Compiler from "assemblyscript/compiler";
   import * as reflection from "assemblyscript/reflection";
   import * as typescript from "assemblyscript/typescript";
@@ -738,7 +707,7 @@ declare module 'assemblyscript/expressions/postfixunary' {
 
 declare module 'assemblyscript/expressions/prefixunary' {
   /** @module assemblyscript/expressions */ /** */
-  import * as binaryen from "assemblyscript/binaryen";
+  import * as binaryen from "binaryen";
   import Compiler from "assemblyscript/compiler";
   import * as reflection from "assemblyscript/reflection";
   import * as typescript from "assemblyscript/typescript";
@@ -749,7 +718,7 @@ declare module 'assemblyscript/expressions/prefixunary' {
 
 declare module 'assemblyscript/expressions/propertyaccess' {
   /** @module assemblyscript/expressions */ /** */
-  import * as binaryen from "assemblyscript/binaryen";
+  import * as binaryen from "binaryen";
   import Compiler from "assemblyscript/compiler";
   import * as reflection from "assemblyscript/reflection";
   import * as typescript from "assemblyscript/typescript";
@@ -763,7 +732,7 @@ declare module 'assemblyscript/reflection/class' {
   import Compiler from "assemblyscript/compiler";
   import { FunctionTemplate, Function } from "assemblyscript/reflection/function";
   import Property from "assemblyscript/reflection/property";
-  import Type from "assemblyscript/reflection/type";
+  import { Type } from "assemblyscript/reflection/type";
   import * as typescript from "assemblyscript/typescript";
   /** Common base class of {@link Class} and {@link ClassTemplate}. */
   export abstract class ClassBase {
@@ -895,7 +864,7 @@ declare module 'assemblyscript/reflection/enum' {
 
 declare module 'assemblyscript/reflection/function' {
   /** @module assemblyscript/reflection */ /** */
-  import * as binaryen from "assemblyscript/binaryen";
+  import * as binaryen from "binaryen";
   import { Class, TypeArgumentsMap } from "assemblyscript/reflection/class";
   import { Compiler } from "assemblyscript/compiler";
   import { Type } from "assemblyscript/reflection/type";
@@ -1320,7 +1289,7 @@ declare module 'assemblyscript/typescript/diagnosticMessages.generated' {
 
 declare module 'assemblyscript/statements/block' {
   /** @module assemblyscript/statements */ /** */
-  import * as binaryen from "assemblyscript/binaryen";
+  import * as binaryen from "binaryen";
   import Compiler from "assemblyscript/compiler";
   import * as typescript from "assemblyscript/typescript";
   /** Compiles a block statement. */
@@ -1330,7 +1299,7 @@ declare module 'assemblyscript/statements/block' {
 
 declare module 'assemblyscript/statements/break' {
   /** @module assemblyscript/statements */ /** */
-  import * as binaryen from "assemblyscript/binaryen";
+  import * as binaryen from "binaryen";
   import Compiler from "assemblyscript/compiler";
   import * as typescript from "assemblyscript/typescript";
   /** Compiles a break statement. */
@@ -1340,7 +1309,7 @@ declare module 'assemblyscript/statements/break' {
 
 declare module 'assemblyscript/statements/do' {
   /** @module assemblyscript/statements */ /** */
-  import * as binaryen from "assemblyscript/binaryen";
+  import * as binaryen from "binaryen";
   import Compiler from "assemblyscript/compiler";
   import * as typescript from "assemblyscript/typescript";
   /** Compiles a do loop statement. */
@@ -1350,7 +1319,7 @@ declare module 'assemblyscript/statements/do' {
 
 declare module 'assemblyscript/statements/empty' {
   /** @module assemblyscript/statements */ /** */
-  import * as binaryen from "assemblyscript/binaryen";
+  import * as binaryen from "binaryen";
   import Compiler from "assemblyscript/compiler";
   /** Compiles an empty statement. */
   export function compileEmpty(compiler: Compiler): binaryen.Statement;
@@ -1359,7 +1328,7 @@ declare module 'assemblyscript/statements/empty' {
 
 declare module 'assemblyscript/statements/expression' {
   /** @module assemblyscript/statements */ /** */
-  import * as binaryen from "assemblyscript/binaryen";
+  import * as binaryen from "binaryen";
   import Compiler from "assemblyscript/compiler";
   import * as typescript from "assemblyscript/typescript";
   /** Compiles an expression statement. */
@@ -1369,7 +1338,7 @@ declare module 'assemblyscript/statements/expression' {
 
 declare module 'assemblyscript/statements/for' {
   /** @module assemblyscript/statements */ /** */
-  import * as binaryen from "assemblyscript/binaryen";
+  import * as binaryen from "binaryen";
   import Compiler from "assemblyscript/compiler";
   import * as typescript from "assemblyscript/typescript";
   /** Compiles a for loop statement. */
@@ -1379,7 +1348,7 @@ declare module 'assemblyscript/statements/for' {
 
 declare module 'assemblyscript/statements/if' {
   /** @module assemblyscript/statements */ /** */
-  import * as binaryen from "assemblyscript/binaryen";
+  import * as binaryen from "binaryen";
   import Compiler from "assemblyscript/compiler";
   import * as typescript from "assemblyscript/typescript";
   /** Compiles an if statement. */
@@ -1389,7 +1358,7 @@ declare module 'assemblyscript/statements/if' {
 
 declare module 'assemblyscript/statements/return' {
   /** @module assemblyscript/statements */ /** */
-  import * as binaryen from "assemblyscript/binaryen";
+  import * as binaryen from "binaryen";
   import Compiler from "assemblyscript/compiler";
   import * as typescript from "assemblyscript/typescript";
   /** Compiles a return statement. */
@@ -1399,7 +1368,7 @@ declare module 'assemblyscript/statements/return' {
 
 declare module 'assemblyscript/statements/switch' {
   /** @module assemblyscript/statements */ /** */
-  import * as binaryen from "assemblyscript/binaryen";
+  import * as binaryen from "binaryen";
   import Compiler from "assemblyscript/compiler";
   import * as typescript from "assemblyscript/typescript";
   /** Compiles a switch statement. */
@@ -1409,7 +1378,7 @@ declare module 'assemblyscript/statements/switch' {
 
 declare module 'assemblyscript/statements/variable' {
   /** @module assemblyscript/statements */ /** */
-  import * as binaryen from "assemblyscript/binaryen";
+  import * as binaryen from "binaryen";
   import { Compiler } from "assemblyscript/compiler";
   import * as typescript from "assemblyscript/typescript";
   /** Compiles a variable declaration statement. */
@@ -1421,7 +1390,7 @@ declare module 'assemblyscript/statements/variable' {
 
 declare module 'assemblyscript/statements/while' {
   /** @module assemblyscript/statements */ /** */
-  import * as binaryen from "assemblyscript/binaryen";
+  import * as binaryen from "binaryen";
   import Compiler from "assemblyscript/compiler";
   import * as typescript from "assemblyscript/typescript";
   /** Compiles a while loop statement. */

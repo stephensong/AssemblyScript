@@ -1,17 +1,18 @@
 /** @module assemblyscript/expressions */ /** */
 
-import * as binaryen from "../binaryen";
+import * as binaryen from "binaryen";
 import Compiler from "../compiler";
 import compileLoadOrStore from "./helpers/loadorstore";
 import * as reflection from "../reflection";
 import * as typescript from "../typescript";
+import * as util from "../util";
 
 /** Compiles a property access expression. Sets the property's value to `valueNode` if specified, otherwise gets it. */
 export function compilePropertyAccess(compiler: Compiler, node: typescript.PropertyAccessExpression, contextualType: reflection.Type, valueNode?: typescript.Expression): binaryen.Expression {
   const op = compiler.module;
 
   // fall back to contextual type on error
-  typescript.setReflectedType(node, contextualType);
+  util.setReflectedType(node, contextualType);
 
   // obtain the property's name
   const propertyName = typescript.getTextOfNode(node.name);
@@ -25,7 +26,7 @@ export function compilePropertyAccess(compiler: Compiler, node: typescript.Prope
       if (valueNode)
         throw Error("trying to assign to enum value"); // handled by typescript
 
-      typescript.setReflectedType(node, reflection.intType);
+      util.setReflectedType(node, reflection.intType);
 
       const enm = <reflection.Enum>reference;
       const property = enm.values[propertyName];
@@ -35,8 +36,8 @@ export function compilePropertyAccess(compiler: Compiler, node: typescript.Prope
 
       const value = compiler.checker.getConstantValue(<typescript.EnumMember>property.declaration);
       if (typeof value === "number") {
-        typescript.setReflectedType(node, property.type);
-        return binaryen.valueOf(property.type, op, value);
+        util.setReflectedType(node, property.type);
+        return compiler.valueOf(property.type, value);
       }
 
       compiler.report(node.expression, typescript.DiagnosticsEx.Unsupported_literal_0, value);
@@ -58,16 +59,16 @@ export function compilePropertyAccess(compiler: Compiler, node: typescript.Prope
             if (contextualType === reflection.voidType)
               return op.setGlobal(global.name, valueExpression);
 
-            typescript.setReflectedType(node, global.type);
-            const binaryenType = binaryen.typeOf(global.type, compiler.uintptrSize);
+            util.setReflectedType(node, global.type);
+            const binaryenType = compiler.typeOf(global.type);
             return op.block("", [ // emulate tee_global
               op.setGlobal(global.name, valueExpression),
               op.getGlobal(global.name, binaryenType)
             ], binaryenType);
 
           } else {
-            typescript.setReflectedType(node, global.type);
-            return op.getGlobal(global.name, binaryen.typeOf(global.type, compiler.uintptrSize));
+            util.setReflectedType(node, global.type);
+            return op.getGlobal(global.name, compiler.typeOf(global.type));
           }
         } else
           throw Error("unexpected uninitialized global");
@@ -78,7 +79,7 @@ export function compilePropertyAccess(compiler: Compiler, node: typescript.Prope
   }
 
   const expression = compiler.compileExpression(node.expression, compiler.uintptrType);
-  const expressionType = typescript.getReflectedType(node.expression);
+  const expressionType = util.getReflectedType(node.expression);
 
   if (!(expressionType && expressionType.underlyingClass))
     throw Error("property access used on non-object"); // handled by typescript
@@ -86,11 +87,11 @@ export function compilePropertyAccess(compiler: Compiler, node: typescript.Prope
   const clazz = expressionType.underlyingClass;
   const property = clazz.properties[propertyName];
   if (property) {
-    typescript.setReflectedType(node, property.type);
+    util.setReflectedType(node, property.type);
 
     let valueExpression: binaryen.Expression | undefined;
     if (valueNode)
-      valueExpression = compiler.maybeConvertValue(valueNode, compiler.compileExpression(valueNode, property.type), typescript.getReflectedType(valueNode), property.type, false);
+      valueExpression = compiler.maybeConvertValue(valueNode, compiler.compileExpression(valueNode, property.type), util.getReflectedType(valueNode), property.type, false);
 
     return compileLoadOrStore(compiler, node, property.type, expression, property.offset, valueExpression, contextualType);
   } else {

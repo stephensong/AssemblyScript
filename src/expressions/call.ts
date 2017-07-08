@@ -1,10 +1,11 @@
 /** @module assemblyscript/expressions */ /** */
 
-import * as binaryen from "../binaryen";
+import * as binaryen from "binaryen";
 import * as builtins from "../builtins";
 import Compiler from "../compiler";
 import * as reflection from "../reflection";
 import * as typescript from "../typescript";
+import * as util from "../util";
 
 /** Compiles a function call expression. */
 export function compileCall(compiler: Compiler, node: typescript.CallExpression/*, contextualType: reflection.Type*/): binaryen.Expression {
@@ -23,7 +24,7 @@ export function compileCall(compiler: Compiler, node: typescript.CallExpression/
     const accessNode = <typescript.PropertyAccessExpression>node.expression;
     const methodName = typescript.getTextOfNode(accessNode.name);
     thisArg = compiler.compileExpression(accessNode.expression, compiler.uintptrType);
-    const classType = typescript.getReflectedType(accessNode.expression);
+    const classType = util.getReflectedType(accessNode.expression);
     let method: reflection.ClassMethod;
     if (!classType || !classType.underlyingClass || !(method = classType.underlyingClass.methods[methodName])) {
       compiler.report(accessNode.name, typescript.DiagnosticsEx.Unresolvable_identifier_0, methodName);
@@ -48,7 +49,7 @@ export function compileCall(compiler: Compiler, node: typescript.CallExpression/
       return op.nop(); // no explicit parent constructor
 
     declaration = ctor.declaration;
-    thisArg = op.getLocal(compiler.currentFunction.localsByName.this.index, binaryen.typeOf(compiler.uintptrType, compiler.uintptrSize));
+    thisArg = op.getLocal(compiler.currentFunction.localsByName.this.index, compiler.typeOf(compiler.uintptrType));
 
   } else {
     compiler.report(node, typescript.DiagnosticsEx.Unsupported_node_kind_0_in_1, node.expression.kind, "expressions.compileCall/1");
@@ -70,19 +71,19 @@ export function compileCall(compiler: Compiler, node: typescript.CallExpression/
   }
 
   // Initialize generic function from type arguments
-  let instance = typescript.getReflectedFunction(declaration);
+  let instance = util.getReflectedFunction(declaration);
   if (!instance) {
-    const template = typescript.getReflectedFunctionTemplate(declaration);
+    const template = util.getReflectedFunctionTemplate(declaration);
     if (template) {
       instance = template.resolve(compiler, node.typeArguments || [], typeArgumentsMap);
       instance.initialize(compiler);
       if (!template.isGeneric)
-        typescript.setReflectedFunction(declaration, instance);
+        util.setReflectedFunction(declaration, instance);
     } else
       throw Error("missing declaration"); // handled by typescript
   }
 
-  typescript.setReflectedType(node, instance.returnType);
+  util.setReflectedType(node, instance.returnType);
 
   // Compile built-in call to inline assembly
   if (builtins.isBuiltin(instance.name, true)) {
@@ -214,7 +215,7 @@ export function compileCall(compiler: Compiler, node: typescript.CallExpression/
     if (node.expression.kind === typescript.SyntaxKind.PropertyAccessExpression)
       argumentNodes.push((<typescript.PropertyAccessExpression>node.expression).expression);
     else if (node.expression.kind === typescript.SyntaxKind.SuperKeyword)
-      thisArg = op.getLocal(0, binaryen.typeOf(compiler.uintptrType, compiler.uintptrSize));
+      thisArg = op.getLocal(0, compiler.typeOf(compiler.uintptrType));
     else {
       compiler.report(node.expression, typescript.DiagnosticsEx.Unsupported_node_kind_0_in_1, node.expression.kind, "expressions.compileCall/2");
       return op.unreachable();

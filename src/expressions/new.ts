@@ -1,15 +1,16 @@
 /** @module assemblyscript/expressions */ /** */
 
-import * as binaryen from "../binaryen";
+import * as binaryen from "binaryen";
 import Compiler from "../compiler";
 import * as reflection from "../reflection";
 import * as typescript from "../typescript";
+import * as util from "../util";
 
 /** Compiles a 'new' expression. */
 export function compileNew(compiler: Compiler, node: typescript.NewExpression, contextualType: reflection.Type): binaryen.Expression {
   const op = compiler.module;
 
-  typescript.setReflectedType(node, contextualType);
+  util.setReflectedType(node, contextualType);
 
   if (node.expression.kind !== typescript.SyntaxKind.Identifier) {
     compiler.report(node.expression, typescript.DiagnosticsEx.Unsupported_node_kind_0_in_1, node.expression.kind, "expressions.compileNew");
@@ -54,7 +55,7 @@ export function compileNew(compiler: Compiler, node: typescript.NewExpression, c
 
   const allocate = instance.implicitMalloc
     ? compiler.compileMallocInvocation(instance.size) // implicit allocation
-    : binaryen.valueOf(compiler.uintptrType, op, 0);  // allocates on its own (this=null)
+    : compiler.valueOf(compiler.uintptrType, 0);  // allocates on its own (this=null)
 
   // If there is no constructor defined, just allocate memory
   if (!(ctor && ctor.body))
