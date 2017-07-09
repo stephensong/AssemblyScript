@@ -24,7 +24,7 @@ declare type long = number;
 /** A 64-bit unsigned integer. */
 declare type ulong = number;
 /** A 1-bit unsigned integer. */
-declare type bool = boolean;
+declare type bool = any; // as required for logical '&&' / '||'
 /** A 32-bit float. */
 declare type float = number;
 /** A 64-bit float. */

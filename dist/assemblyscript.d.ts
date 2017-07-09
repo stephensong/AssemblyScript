@@ -10,14 +10,13 @@ declare module 'assemblyscript' {
     *
     * <h4>Sub-namespaces</h4>
     * <ul style="margin: 0; padding: 0; list-style: none">
-    *   <li class="tsd-kind-module"><span class="tsd-kind-icon" /> {@link assemblyscript/binaryen|binaryen}</li>
     *   <li class="tsd-kind-module"><span class="tsd-kind-icon" /> {@link assemblyscript/builtins|builtins}</li>
     *   <li class="tsd-kind-module"><span class="tsd-kind-icon" /> {@link assemblyscript/expressions|expressions}</li>
     *   <li class="tsd-kind-module"><span class="tsd-kind-icon" /> {@link assemblyscript/library|library}</li>
     *   <li class="tsd-kind-module"><span class="tsd-kind-icon" /> {@link assemblyscript/reflection|reflection}</li>
     *   <li class="tsd-kind-module"><span class="tsd-kind-icon" /> {@link assemblyscript/statements|statements}</li>
     *   <li class="tsd-kind-module"><span class="tsd-kind-icon" /> {@link assemblyscript/typescript|typescript}</li>
-    *   <li class="tsd-kind-module"><span class="tsd-kind-icon" /> {@link assemblyscript/wabt|wabt}</li>
+    *   <li class="tsd-kind-module"><span class="tsd-kind-icon" /> {@link assemblyscript/util|util}</li>
     * </ul>
     *
     * @module assemblyscript

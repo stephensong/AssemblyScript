@@ -247,6 +247,7 @@ export class ClassTemplate extends ClassBase {
 
     this.base = base;
     this.baseTypeArguments = baseTypeArguments || [];
+
     util.setReflectedClassTemplate(declaration, this);
   }
 
@@ -281,7 +282,7 @@ export class ClassTemplate extends ClassBase {
     if (this.instances[name])
       return this.instances[name];
 
-    // Resolve base type arguments against current type arguments
+    // resolve base type arguments against current type arguments
     let base: Class | undefined;
     if (this.base) {
       const baseTypeArgumentNodes: typescript.TypeNode[] = [];
@@ -310,17 +311,17 @@ export function patchClassImplementation(compiler: Compiler, declTemplate: Class
     }
   }
 
-  // Patch existing instances.
+  // patch existing instances
   for (let keys = Object.keys(declTemplate.instances), i = 0, k = keys.length; i < k; ++i) {
     const declInstance = declTemplate.instances[keys[i]];
-    const implInstance = implTemplate.resolve(compiler, Object.keys(declInstance.typeArguments).map(key => declInstance.typeArguments[key].node ));
+    const implInstance = implTemplate.resolve(compiler, Object.keys(declInstance.typeArguments).map(key => declInstance.typeArguments[key].node));
 
     implInstance.initialize(compiler);
 
     implInstance.base = declInstance.base;
     declInstance.base = implInstance;
 
-    // Replace already initialized class instance methods with their actual implementations
+    // replace already initialized class instance methods with their actual implementations
     for (let mkeys = Object.keys(declInstance.methods), j = 0, l = mkeys.length; j < l; ++j) {
       const declMethod = declInstance.methods[mkeys[j]];
       const implMethod = implInstance.methods[mkeys[j]];
