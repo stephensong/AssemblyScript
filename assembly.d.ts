@@ -90,6 +90,8 @@ declare class Array<T> extends Disposable {
   slice(begin?: int, end?: int): this;
   /** Reverses the array's elements in place. The first array element becomes the last, and the last array element becomes the first. */
   reverse(): this;
+  /** Grows the array to the specified new capacity, frees the current reference (unsafe) and returns the new reference. Traps if `newCapacity` is less than or equal the current capacity. */
+  // unsafeGrow(newCapacity: int): this;
 }
 
 /** A fixed-size 8-bit signed integer array. */
