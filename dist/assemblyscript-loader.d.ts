@@ -46,6 +46,14 @@ declare module 'assemblyscript-loader' {
     create(value: string): number;
   }
   
+  /** Log message type. */
+  export enum LogType {
+    LOG = 0,
+    INFO = 1,
+    WARN = 2,
+    ERROR = 3
+  }
+  
   /** Common module interface as returned by {@link load}. */
   export interface IModule {
   
@@ -62,6 +70,8 @@ declare module 'assemblyscript-loader' {
     currentMemory(): number;
     /** Grows the memory by the specified number of 64kb pages. */
     growMemory(numPages: number): number;
+    /** An overridable function called for each log message. */
+    log(type: LogType, message: string): void;
   
     /** Signed 8-bit integer accessors. */
     sbyte: INumberMemoryAccessor;

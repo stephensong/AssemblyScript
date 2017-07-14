@@ -51,8 +51,8 @@ declare module 'assemblyscript/builtins' {
   import * as typescript from "assemblyscript/typescript";
   /** Tests if the specified function name corresponds to a built-in function. */
   export function isBuiltin(name: string, isGlobalName?: boolean): boolean;
-  /** Tests if the specified function name corresponds to a linked library function. */
-  export function isLibrary(name: string, isGlobalName?: boolean): boolean;
+  /** Tests if the specified function name corresponds to a linked runtime function. */
+  export function isRuntime(name: string, isGlobalName?: boolean): boolean;
   /** A pair of TypeScript expressions. */
   export interface TypeScriptExpressionPair {
       0: typescript.Expression;
@@ -342,8 +342,8 @@ declare module 'assemblyscript/library' {
   export const files: {
     [key: string]: string;
   };
-  /** Precompiled malloc.wasm as a base64-encoded string. */
-  export const malloc: string;
+  /** Precompiled memory management runtime as a base64-encoded string. */
+  export const runtime: string;
 }
 
 declare module 'assemblyscript/profiler' {
@@ -742,6 +742,7 @@ declare module 'assemblyscript/reflection/class' {
       /** Declaration reference. */
       declaration: typescript.ClassDeclaration;
       protected constructor(name: string, declaration: typescript.ClassDeclaration);
+      /** Tests if this class has been annotated with a decorator of the specified name. */
       hasDecorator(name: string): boolean;
       toString(): string;
   }
@@ -774,9 +775,7 @@ declare module 'assemblyscript/reflection/class' {
       /** Reflected class type. */
       type: Type;
       /** Concrete type arguments. */
-      typeArguments: {
-          [key: string]: TypeArgument;
-      };
+      typeArguments: TypeArgumentsMap;
       /** Base class, if any. */
       base?: Class;
       /** Whether already initialized or not. */
@@ -846,6 +845,8 @@ declare module 'assemblyscript/reflection/enum' {
   export class Enum {
       /** Global name. */
       name: string;
+      /** Simple name. */
+      simpleName: string;
       /** Declaration reference. */
       declaration: typescript.EnumDeclaration;
       /** Enum values. */
@@ -867,7 +868,7 @@ declare module 'assemblyscript/reflection/function' {
   import { Class, TypeArgumentsMap } from "assemblyscript/reflection/class";
   import { Compiler } from "assemblyscript/compiler";
   import { Type } from "assemblyscript/reflection/type";
-  import { Variable, VariablesMap } from "assemblyscript/reflection/variable";
+  import { Variable } from "assemblyscript/reflection/variable";
   import * as typescript from "assemblyscript/typescript";
   /** Common base class of {@link Function} and {@link FunctionTemplate}. */
   export abstract class FunctionBase {
@@ -922,7 +923,9 @@ declare module 'assemblyscript/reflection/function' {
       /** Local variables. */
       locals: Variable[];
       /** Local variables by name for lookups. */
-      localsByName: VariablesMap;
+      localsByName: {
+          [key: string]: Variable;
+      };
       /** Resolved binaryen parameter types. */
       binaryenParameterTypes: binaryen.Type[];
       /** Resolved binaryen return type. */
@@ -958,17 +961,15 @@ declare module 'assemblyscript/reflection/function' {
       /** Declaration reference. */
       declaration: typescript.FunctionLikeDeclaration;
       /** So far resolved instances by global name. */
-      instances: FunctionsMap;
+      instances: {
+          [key: string]: Function;
+      };
       /** Constructs a new reflected function template and binds it to its TypeScript declaration. */
       constructor(name: string, declaration: typescript.FunctionLikeDeclaration);
       /** Tests if this function requires type arguments. */
       readonly isGeneric: boolean;
       /** Resolves this possibly generic function against the provided type arguments. */
       resolve(compiler: Compiler, typeArgumentNodes: typescript.TypeNode[], typeArgumentsMap?: TypeArgumentsMap): Function;
-  }
-  /** A reflected functions map. */
-  export interface FunctionsMap {
-      [key: string]: Function;
   }
 }
 
@@ -980,6 +981,8 @@ declare module 'assemblyscript/reflection/property' {
   export class Property {
       /** Global name. */
       name: string;
+      /** Simple name. */
+      simpleName: string;
       /** Declaration reference. */
       declaration: typescript.PropertyDeclaration | typescript.EnumMember;
       /** Resolved type. */
@@ -990,7 +993,7 @@ declare module 'assemblyscript/reflection/property' {
       initializer: typescript.Expression | undefined;
       /** Constructs a new reflected property. */
       constructor(name: string, declaration: typescript.PropertyDeclaration | typescript.EnumMember, type: Type, offset: number, initializer?: typescript.Expression);
-      /** Tests if this property is an instance member / not static. */
+      /** Tests if this property is an instance member. */
       readonly isInstance: boolean;
       toString(): string;
   }
@@ -1145,10 +1148,6 @@ declare module 'assemblyscript/reflection/variable' {
       toString(): string;
   }
   export { Variable as default };
-  /** A reflected variables map. */
-  export interface VariablesMap {
-      [key: string]: Variable;
-  }
 }
 
 declare module 'assemblyscript/typescript/diagnosticMessages.generated' {
