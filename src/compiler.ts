@@ -55,7 +55,7 @@ export interface CompilerMemorySegment {
 }
 
 // Malloc, free, etc. is present as a base64 encoded blob and prepared once when required.
-let libraryCache: Uint8Array;
+let runtimeCache: Uint8Array;
 
 /**
  * The AssemblyScript compiler.
@@ -239,9 +239,9 @@ export class Compiler {
       this.memoryModel === CompilerMemoryModel.MALLOC ||
       this.memoryModel === CompilerMemoryModel.EXPORT_MALLOC
     ) {
-      if (!libraryCache)
-        base64.decode(library.malloc, libraryCache = new Uint8Array(base64.length(library.malloc)), 0);
-      this.module = binaryen.readBinary(libraryCache);
+      if (!runtimeCache)
+        base64.decode(library.runtime, runtimeCache = new Uint8Array(base64.length(library.runtime)), 0);
+      this.module = binaryen.readBinary(runtimeCache);
     } else
       this.module = new binaryen.Module();
 
@@ -418,7 +418,7 @@ export class Compiler {
         if (!declaration.symbol)
           throw Error("symbol expected");
 
-        const name = this.mangleGlobalName(declaration.symbol.name, typescript.getSourceFileOfNode(declaration));
+        const name = this.mangleGlobalName(<string>declaration.symbol.name, typescript.getSourceFileOfNode(declaration));
         const type = this.resolveType(declaration.type);
 
         if (type)
@@ -636,7 +636,7 @@ export class Compiler {
             const declaration = <typescript.FunctionDeclaration>statement;
             if (util.isExport(declaration) || util.isStartFunction(declaration) || this.options.treeShaking === false) {
               const instance = util.getReflectedFunction(declaration);
-              if (instance) // otherwise generic: compiled once type arguments are known
+              if (instance && !instance.compiled) // otherwise generic: compiled once type arguments are known
                 this.compileFunction(instance);
             }
             break;
@@ -772,13 +772,21 @@ export class Compiler {
   compileFunction(instance: reflection.Function): binaryen.Function | null {
     const op = this.module;
 
+    if (instance.isImport && typescript.getSourceFileOfNode(instance.declaration) === this.libraryFile)
+      throw Error("cannot compile declared library function " + instance);
+
     // Handle imports
     if (instance.isImport) {
+      if (instance.imported)
+        throw Error("duplicate compilation of imported function " + instance);
+
       const importName = Compiler.splitImportName(instance.simpleName);
       this.module.addImport(instance.name, importName.moduleName, importName.name, instance.binaryenSignature);
       instance.imported = true;
+      instance.compiled = true;
       return null;
-    }
+    } else if (instance.compiled)
+      throw Error("duplicate compilation of function " + instance);
 
     // Otherwise compile
     if (!instance.body)
@@ -875,7 +883,7 @@ export class Compiler {
           const methodDeclaration = <typescript.ConstructorDeclaration | typescript.MethodDeclaration>member;
           if (util.isExport(methodDeclaration) || this.options.treeShaking === false) {
             const functionInstance = util.getReflectedFunction(methodDeclaration);
-            if (functionInstance) // otherwise generic: compiled once type arguments are known
+            if (functionInstance && !functionInstance.compiled) // otherwise generic: compiled once type arguments are known
               this.compileFunction(functionInstance);
           }
           break;
@@ -1254,7 +1262,7 @@ export class Compiler {
 
       for (let i = 0, k = symbol.declarations.length; i < k; ++i) {
         const declaration = symbol.declarations[i];
-        const globalName = this.mangleGlobalName(symbol.name, typescript.getSourceFileOfNode(declaration));
+        const globalName = this.mangleGlobalName(<string>symbol.name, typescript.getSourceFileOfNode(declaration));
 
         if (this.globals[globalName])
           return this.globals[globalName];

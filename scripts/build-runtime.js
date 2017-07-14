@@ -1,4 +1,4 @@
-// Compiles the malloc component from C.
+// Compiles the runtime components from C.
 //
 // This requires the "webassembly" dependency to be properly installed and working, which might not
 // be the case in every environment because it depends on precompiled clang and binaryen binaries.
@@ -7,41 +7,40 @@ var util = require("webassembly/cli/util");
 var path = require("path");
 var fs = require("fs");
 
-var basedir = path.join(__dirname, "..", "lib", "malloc");
+var basedir = path.join(__dirname, "..", "lib", "runtime");
 
 util.run(path.join(util.bindir, "clang"), [
-  "malloc.c",
+  "runtime.c",
   "-E",
-  "-o", "build/malloc.pre.c"
+  "-o", "build/runtime.c"
 ], { cwd: basedir })
 
 .then(() =>
 
 util.run(path.join(util.bindir, "clang"), [
-  "malloc.c",
+  "runtime.c",
   "-S",
   "-O",
   "-mlittle-endian",
   "--target=wasm32-unknown-unknown",
   "-nostdinc",
   "-nostdlib",
-  "-o", "build/malloc.s"
+  "-o", "build/runtime.s"
 ], { cwd: basedir }))
 
 .then(() =>
 
 util.run(path.join(util.bindir, "s2wasm"), [
-  "build/malloc.s",
+  "build/runtime.s",
   "--initial-memory", "65536",
-  "--global-base", "64",
   "--validate", "wasm",
-  "-o", "build/malloc.wast"
+  "-o", "build/runtime.wast"
 ], { cwd: basedir }))
 
 .then(() =>
 
 util.run(path.join(util.bindir, "wasm-opt"), [
-  "build/malloc.wast",
+  "build/runtime.wast",
   "-g",
   "-Oz",
   "--coalesce-locals-learning",
@@ -59,14 +58,14 @@ util.run(path.join(util.bindir, "wasm-opt"), [
   "--reorder-locals",
   "--simplify-locals",
   "--vacuum",
-  "-o", "build/malloc.wasm"
+  "-o", "build/runtime.wasm"
 ], { cwd: basedir }))
 
 .then(() =>
 
 util.run(path.join(util.bindir, "wasm-dis"), [
-  "build/malloc.wasm",
-  "-o", "build/malloc.wast"
+  "build/runtime.wasm",
+  "-o", "build/runtime.wast"
 ], { cwd: basedir }))
 
 .then(() => console.log("complete"));

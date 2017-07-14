@@ -61,10 +61,6 @@ export function compileNew(compiler: Compiler, node: typescript.NewExpression, c
   if (!(ctor && ctor.body))
     return allocate;
 
-  // Otherwise compile the constructor if it hasn't been already
-  if (!ctor.compiled && ctor.body)
-    compiler.compileFunction(ctor);
-
   // And call it (inserts 'this')
   return ctor.makeCall(compiler, node.arguments || [], allocate);
 }

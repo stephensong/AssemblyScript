@@ -10,6 +10,8 @@ export class Enum {
 
   /** Global name. */
   name: string;
+  /** Simple name. */
+  simpleName: string;
   /** Declaration reference. */
   declaration: typescript.EnumDeclaration;
   /** Enum values. */
@@ -19,6 +21,7 @@ export class Enum {
   constructor(name: string, declaration: typescript.EnumDeclaration) {
     this.name = name;
     this.declaration = declaration;
+    this.simpleName = typescript.getTextOfNode(this.declaration.name);
     this.values = {};
   }
 

@@ -14,7 +14,8 @@ export function compilePostfixUnary(compiler: Compiler, node: typescript.Postfix
 
   if (node.operand.kind === typescript.SyntaxKind.Identifier) {
 
-    const local = compiler.currentFunction.localsByName[(<typescript.Identifier>node.operand).text];
+    const localName = typescript.getTextOfNode(node.operand);
+    const local = compiler.currentFunction.localsByName[localName];
     if (local) {
 
       switch (node.operator) {

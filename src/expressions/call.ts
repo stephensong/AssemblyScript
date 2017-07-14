@@ -39,10 +39,13 @@ export function compileCall(compiler: Compiler, node: typescript.CallExpression/
     if (!(currentClass && currentClass.base))
       throw Error("missing base class"); // handled by typescript
 
-    const superClass = currentClass.base;
-    let ctor = superClass.ctor;
-    while (!(ctor && ctor.body) && superClass.base) {
-      ctor = superClass.base.ctor;
+    let baseClass: reflection.Class | undefined = currentClass.base;
+    let ctor: reflection.Function | undefined;
+    while (baseClass) {
+      ctor = baseClass.ctor;
+      if (ctor && ctor.body)
+        break;
+      baseClass = baseClass.base;
     }
 
     if (!(ctor && ctor.body))
@@ -202,10 +205,6 @@ export function compileCall(compiler: Compiler, node: typescript.CallExpression/
         return builtins.isFinite(compiler, node.arguments[0], argumentExpressions[0]);
     }
   }
-
-  // Call implementation or import (compile if not yet compiled)
-  if (!instance.compiled && instance.body)
-    compiler.compileFunction(instance); // sets instance.compiled = true
 
   const argumentNodes: typescript.Expression[] = [];
 

@@ -130,6 +130,20 @@ declare class String extends Array<ushort> {
   endsWidth(value: string): bool;
 }
 
+// Console
+
+/** Console bindings. */
+declare class console {
+  /** Logs a message to console. */
+  static log(message: string): void;
+  /** Logs an informative message to console. */
+  static info(message: string): void;
+  /** Logs a warning message to console. */
+  static warn(message: string): void;
+  /** Logs an error message to console. */
+  static error(message: string): void;
+}
+
 // Builtins
 
 /** Performs the sign-agnostic rotate left operation on a 32-bit integer. */

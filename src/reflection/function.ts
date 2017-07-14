@@ -1,11 +1,11 @@
 /** @module assemblyscript/reflection */ /** */
 
 import * as binaryen from "binaryen";
-import { isLibrary } from "../builtins";
+import { isRuntime } from "../builtins";
 import { Class, TypeArgumentsMap } from "./class";
 import { Compiler, CompilerMemoryModel } from "../compiler";
 import { Type, voidType } from "./type";
-import { Variable, VariableFlags, VariablesMap } from "./variable";
+import { Variable, VariableFlags } from "./variable";
 import * as typescript from "../typescript";
 import * as util from "../util";
 
@@ -75,7 +75,7 @@ export class Function extends FunctionBase {
   /** Local variables. */
   locals: Variable[];
   /** Local variables by name for lookups. */
-  localsByName: VariablesMap;
+  localsByName: { [key: string]: Variable };
   /** Resolved binaryen parameter types. */
   binaryenParameterTypes: binaryen.Type[];
   /** Resolved binaryen return type. */
@@ -101,12 +101,14 @@ export class Function extends FunctionBase {
   /** Constructs a new reflected function instance and binds it to its TypeScript declaration. */
   constructor(name: string, template: FunctionTemplate, typeArguments: TypeArgumentsMap, parameters: FunctionParameter[], returnType: Type, parent?: Class, body?: typescript.Block | typescript.Expression) {
     super(name, template.declaration);
+
     this.template = template;
     this.typeArguments = typeArguments;
     this.parameters = parameters;
     this.returnType = returnType;
     this.parent = parent;
     this.body = body;
+
     util.setReflectedFunction(template.declaration, this);
   }
 
@@ -177,13 +179,21 @@ export class Function extends FunctionBase {
     if (operandIndex !== operands.length)
       throw Error("unexpected operand index");
 
-    // Rewire built-in malloc calls, if necessary
     let internalName = this.name;
     let isImport = this.isImport;
-    if (isImport && isLibrary(this.name, true)) {
+
+    // Rewire runtime calls
+    if (isRuntime(this.name, true)) {
       internalName = this.simpleName;
       if (compiler.memoryModel === CompilerMemoryModel.MALLOC || compiler.memoryModel === CompilerMemoryModel.EXPORT_MALLOC)
         isImport = false;
+
+    // Compile if not yet compiled
+    } else if (!this.compiled) {
+      if (this.body || this.isImport)
+        compiler.compileFunction(this);
+      else
+        throw Error("cannot compile a non-import function without a body");
     }
 
     return (isImport ? op.callImport : op.call)(internalName, operands, compiler.typeOf(this.returnType));
@@ -198,13 +208,15 @@ export class FunctionTemplate extends FunctionBase {
   /** Declaration reference. */
   declaration: typescript.FunctionLikeDeclaration;
   /** So far resolved instances by global name. */
-  instances: FunctionsMap;
+  instances: { [key: string]: Function };
 
   /** Constructs a new reflected function template and binds it to its TypeScript declaration. */
   constructor(name: string, declaration: typescript.FunctionLikeDeclaration) {
     super(name, declaration);
+
     this.declaration = declaration;
     this.instances = {};
+
     util.setReflectedFunctionTemplate(declaration, this);
   }
 
@@ -295,9 +307,4 @@ export class FunctionTemplate extends FunctionBase {
 
     return this.instances[name] = new Function(name, this, typeArgumentsMap, parameters, returnType, parent, this.declaration.body);
   }
-}
-
-/** A reflected functions map. */
-export interface FunctionsMap {
-  [key: string]: Function;
 }

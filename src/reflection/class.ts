@@ -24,6 +24,7 @@ export abstract class ClassBase {
     this.simpleName = p > -1 ? name.substring(p + 1) : name;
   }
 
+  /** Tests if this class has been annotated with a decorator of the specified name. */
   hasDecorator(name: string): boolean {
     const decorators = this.declaration.decorators;
     if (!decorators)
@@ -82,7 +83,7 @@ export class Class extends ClassBase {
   /** Reflected class type. */
   type: Type;
   /** Concrete type arguments. */
-  typeArguments: { [key: string]: TypeArgument};
+  typeArguments: TypeArgumentsMap;
   /** Base class, if any. */
   base?: Class;
   /** Whether already initialized or not. */
@@ -114,6 +115,7 @@ export class Class extends ClassBase {
 
     if (isBuiltinArray(this.name) || (!!this.base && this.base.isArray))
       this.isArray = true;
+
     if (isBuiltinString(this.name) || (!!this.base && this.base.isString))
       this.isString = true;
 

@@ -15,3 +15,5 @@ typedef unsigned _Addr uintptr_t;
 typedef _Addr ptrdiff_t;
 
 #undef _Addr
+
+#define NULL ((void*)0)

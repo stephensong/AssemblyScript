@@ -96,8 +96,7 @@ export class Type {
   }
 
   toString(): string {
-    const str = TypeKind[this.kind];
-    return this.underlyingClass ? this.underlyingClass.name : str;
+    return this.underlyingClass ? this.underlyingClass.name : TypeKind[this.kind];
   }
 }
 

@@ -43,8 +43,3 @@ export class Variable {
 }
 
 export { Variable as default };
-
-/** A reflected variables map. */
-export interface VariablesMap {
-  [key: string]: Variable;
-}

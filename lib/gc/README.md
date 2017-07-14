@@ -1,1 +1,0 @@
-The Boehm-Demers-Weiser conservative C/C++ Garbage Collector, put here for experimentation with GC support.

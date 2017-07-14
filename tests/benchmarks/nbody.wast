@@ -5641,6 +5641,50 @@
    (get_local $0)
   )
  )
+ (func $std/array.ts/Array<Body> (type $1) (param $0 i32) (param $1 i32) (result i32)
+  (local $2 i32)
+  (local $3 i32)
+  (if
+   (i32.lt_u
+    (get_local $1)
+    (i32.const 0)
+   )
+   (unreachable)
+  )
+  (i32.store
+   (tee_local $3
+    (tee_local $0
+     (call $malloc
+      (i32.add
+       (tee_local $2
+        (i32.mul
+         (get_local $1)
+         (i32.const 56)
+        )
+       )
+       (i32.const 8)
+      )
+     )
+    )
+   )
+   (get_local $1)
+  )
+  (i32.store offset=4
+   (get_local $3)
+   (get_local $1)
+  )
+  (drop
+   (call $memset
+    (i32.add
+     (get_local $0)
+     (i32.const 8)
+    )
+    (i32.const 0)
+    (get_local $2)
+   )
+  )
+  (get_local $0)
+ )
  (func $Body (type $iFFFFFFFi) (param $0 i32) (param $1 f64) (param $2 f64) (param $3 f64) (param $4 f64) (param $5 f64) (param $6 f64) (param $7 f64) (result i32)
   (f64.store
    (get_local $0)
@@ -5854,7 +5898,7 @@
    (f64.const 0)
   )
   (set_local $8
-   (i32.load offset=4
+   (i32.load offset=12
     (get_local $1)
    )
   )
@@ -5871,7 +5915,7 @@
      (set_local $7
       (f64.load offset=48
        (tee_local $6
-        (i32.load offset=4
+        (i32.load offset=16
          (i32.add
           (get_local $1)
           (i32.mul
@@ -5932,7 +5976,7 @@
   )
   (drop
    (call $Body#offsetMomentum
-    (i32.load offset=4
+    (i32.load offset=16
      (i32.load
       (get_local $0)
      )
@@ -5963,7 +6007,7 @@
   (local $17 f64)
   (local $18 f64)
   (set_local $14
-   (i32.load offset=4
+   (i32.load offset=12
     (tee_local $13
      (i32.load
       (get_local $0)
@@ -5984,7 +6028,7 @@
      (set_local $15
       (f64.load
        (tee_local $0
-        (i32.load offset=4
+        (i32.load offset=16
          (i32.add
           (get_local $13)
           (i32.mul
@@ -6055,7 +6099,7 @@
                    (get_local $15)
                    (f64.load
                     (tee_local $2
-                     (i32.load offset=4
+                     (i32.load offset=16
                       (i32.add
                        (get_local $13)
                        (i32.mul
@@ -6227,7 +6271,7 @@
    (f64.const 0)
   )
   (set_local $5
-   (i32.load offset=4
+   (i32.load offset=12
     (tee_local $4
      (i32.load
       (get_local $0)
@@ -6248,7 +6292,7 @@
      (set_local $7
       (f64.load
        (tee_local $0
-        (i32.load offset=4
+        (i32.load offset=16
          (i32.add
           (get_local $4)
           (i32.mul
@@ -6331,7 +6375,7 @@
           (get_local $7)
           (f64.load
            (tee_local $3
-            (i32.load offset=4
+            (i32.load offset=16
              (i32.add
               (get_local $4)
               (i32.mul
@@ -6414,61 +6458,50 @@
  (func $test (type $iF) (param $0 i32) (result f64)
   (local $1 i32)
   (local $2 i32)
-  (i32.store
-   (tee_local $2
-    (call $memset
-     (call $malloc
-      (i32.add
-       (i32.mul
-        (tee_local $1
-         (i32.const 5)
-        )
-        (i32.const 4)
-       )
-       (i32.const 4)
-      )
-     )
-     (i32.const 0)
-     (get_local $1)
-    )
-   )
-   (get_local $1)
-  )
-  (i32.store offset=4
+  (i32.store offset=16
    (tee_local $1
-    (get_local $2)
+    (call $std/array.ts/Array<Body>
+     (call $memset
+      (call $malloc
+       (i32.const 16)
+      )
+      (i32.const 0)
+      (i32.const 16)
+     )
+     (i32.const 5)
+    )
    )
    (call $Sun)
   )
-  (i32.store offset=4
+  (i32.store offset=16
    (i32.add
     (get_local $1)
     (i32.const 4)
    )
    (call $Jupiter)
   )
-  (i32.store offset=4
+  (i32.store offset=16
    (i32.add
     (get_local $1)
     (i32.const 8)
    )
    (call $Saturn)
   )
-  (i32.store offset=4
+  (i32.store offset=16
    (i32.add
     (get_local $1)
     (i32.const 12)
    )
    (call $Uranus)
   )
-  (i32.store offset=4
+  (i32.store offset=16
    (i32.add
     (get_local $1)
     (i32.const 16)
    )
    (call $Neptune)
   )
-  (drop
+  (set_local $2
    (call $NBodySystem
     (call $memset
      (call $malloc
@@ -6491,7 +6524,7 @@
     )
     (block
      (call $NBodySystem#advance
-      (get_local $0)
+      (get_local $2)
       (f64.const 0.01)
      )
      (set_local $1
@@ -6505,7 +6538,7 @@
    )
   )
   (call $NBodySystem#energy
-   (get_local $0)
+   (get_local $2)
   )
  )
  (func $.start (type $v)

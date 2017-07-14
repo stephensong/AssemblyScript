@@ -6,8 +6,10 @@ ts.getScriptKindFromFileName = function getScriptKindFromFileNameEx(fileName) {
     return ts.ScriptKind.TS;
   return getScriptKindFromFileName_original(fileName);
 };
-ts.supportedTypeScriptExtensions.unshift(".as");
-ts.supportedTypescriptExtensionsForExtractExtension.push(".as");
+(<any>ts.supportedTypeScriptExtensions).unshift(".as");
+(<any>ts.supportedTypescriptExtensionsForExtractExtension).push(".as");
+// ^ Not quite sure why this is changed with every 10th commit and now is a `ReadonlyArray`.
+//   Seems like TypeScript tries hard to prevent others from touching it for some reason.
 
 // Polyfill 'sys' in browsers
 if (!ts.sys) {

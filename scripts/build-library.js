@@ -18,8 +18,10 @@ out.push(
 var files = {};
 [
   "assembly.d.ts", // must be first
+  "std/disposable.ts",
   "std/array.ts",
-  "std/string.ts"
+  "std/string.ts",
+  "std/console.ts",
 ].forEach(file => {
   files[file] = fs.readFileSync(__dirname + "/../" + file).toString().replace(/\r?\n/g, "\n");
 });
@@ -29,10 +31,10 @@ out.push(
   ""
 );
 
-var mallocBlob = fs.readFileSync(__dirname + "/../lib/malloc/build/malloc.wasm");
+var runtimeBlob = fs.readFileSync(__dirname + "/../lib/runtime/build/runtime.wasm");
 out.push(
-  "/** Precompiled malloc.wasm as a base64-encoded string. */",
-  "export const malloc: string = " + JSON.stringify(mallocBlob.toString("base64")) + ";",
+  "/** Precompiled memory management runtime as a base64-encoded string. */",
+  "export const runtime: string = " + JSON.stringify(runtimeBlob.toString("base64")) + ";",
   ""
 );
 

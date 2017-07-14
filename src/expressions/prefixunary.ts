@@ -89,7 +89,8 @@ export function compilePrefixUnary(compiler: Compiler, node: typescript.PrefixUn
     {
       if (node.operand.kind === typescript.SyntaxKind.Identifier) {
 
-        const local = compiler.currentFunction.localsByName[(<typescript.Identifier>node.operand).text];
+        const localName = typescript.getTextOfNode(node.operand);
+        const local = compiler.currentFunction.localsByName[localName];
         if (local) {
 
           const cat = compiler.categoryOf(local.type);

@@ -73,7 +73,7 @@ function runTests(kind: string, exports: typeof assemblyscript) {
           module = <binaryen.Module>Compiler.compileFile(file, options);
         } catch (err) {
           test.fail("should compile without throwing");
-          console.log(err.stack.replace(/^/mg, "> "));
+          console.log((err.stack || (err+"")).replace(/^/mg, "> "));
           test.end();
           return;
         }
@@ -148,7 +148,7 @@ function runTests(kind: string, exports: typeof assemblyscript) {
         module = <binaryen.Module>Compiler.compileFile(file, options);
       } catch (err) {
         test.fail(name + ".ts should compile without throwing");
-        console.log(err.stack.replace(/^/mg, "> "));
+        console.log((err.stack || (err+"")).replace(/^/mg, "> "));
         return;
       }
 
