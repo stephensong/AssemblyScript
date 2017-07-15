@@ -313,6 +313,9 @@ export class Compiler {
             this.initializeEnum(<typescript.EnumDeclaration>statement);
             break;
 
+          // case typescript.SyntaxKind.ModuleDeclaration:
+          // TODO: namespaces
+
           default:
             this.report(statement, typescript.DiagnosticsEx.Unsupported_node_kind_0_in_1, statement.kind, "Compiler#initialize");
             break;
@@ -560,9 +563,6 @@ export class Compiler {
       return; // already initialized
 
     const sourceFile = typescript.getSourceFileOfNode(node);
-
-    if (sourceFile === this.entryFile && util.isExport(node))
-      this.report(<typescript.Identifier>node.name, typescript.DiagnosticsEx.Unsupported_modifier_0, "export");
 
     let base: reflection.ClassTemplate | undefined;
     let baseTypeArguments: typescript.TypeNode[] | undefined;
@@ -881,7 +881,7 @@ export class Compiler {
         case typescript.SyntaxKind.MethodDeclaration:
         {
           const methodDeclaration = <typescript.ConstructorDeclaration | typescript.MethodDeclaration>member;
-          if (util.isExport(methodDeclaration) || this.options.treeShaking === false) {
+          if (util.isExport(methodDeclaration, true) || this.options.treeShaking === false) {
             const functionInstance = util.getReflectedFunction(methodDeclaration);
             if (functionInstance && !functionInstance.compiled) // otherwise generic: compiled once type arguments are known
               this.compileFunction(functionInstance);

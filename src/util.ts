@@ -7,7 +7,7 @@ import * as typescript from "./typescript";
 import * as reflection from "./reflection";
 import * as wabt from "wabt";
 
-/** Tests if the specified node, or optionally its parent, has an 'export' modifier. */
+/** Tests if the specified node, or optionally either its parent, has an 'export' modifier. */
 export function isExport(node: typescript.Node, checkParent: boolean = false): boolean {
   if (node && node.modifiers)
     for (let i = 0, k = node.modifiers.length; i < k; ++i)
@@ -18,7 +18,7 @@ export function isExport(node: typescript.Node, checkParent: boolean = false): b
   return false;
 }
 
-/** Tests if the specified node, or optionally its parent, has a 'declare' modifier. */
+/** Tests if the specified node, or optionally either its parent, has a 'declare' modifier. */
 export function isDeclare(node: typescript.Node, checkParent: boolean = false): boolean {
   if (node && node.modifiers)
     for (let i = 0, k = node.modifiers.length; i < k; ++i)
@@ -27,6 +27,18 @@ export function isDeclare(node: typescript.Node, checkParent: boolean = false): 
   if (checkParent && node.parent && node.parent.kind === typescript.SyntaxKind.ClassDeclaration)
     return isDeclare(node.parent);
   return false;
+}
+
+/** Removes a modifier from a node and optionally also from its parent. */
+export function removeModifier(node: typescript.Node, kind: typescript.SyntaxKind, includingParent: boolean = false): void {
+  if (node && node.modifiers)
+    for (let i = 0; i < node.modifiers.length;)
+      if (node.modifiers[i].kind === kind)
+        node.modifiers.splice(i, 1);
+      else
+        ++i;
+  if (includingParent && node.parent && node.parent.kind === typescript.SyntaxKind.ClassDeclaration)
+    removeModifier(node.parent, kind);
 }
 
 /** Tests if the specified node has a 'static' modifier or is otherwise part of a static context. */

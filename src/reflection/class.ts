@@ -334,4 +334,7 @@ export function patchClassImplementation(compiler: Compiler, declTemplate: Class
       }
     }
   }
+
+  // remove 'export' modifier from implementation (parent) so std classes are not actually exported
+  util.removeModifier(implTemplate.declaration, typescript.SyntaxKind.ExportKeyword, true);
 }
