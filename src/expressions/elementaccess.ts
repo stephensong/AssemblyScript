@@ -27,7 +27,7 @@ export function compileElementAccess(compiler: Compiler, node: typescript.Elemen
 
   // obtain the reflected element type
   const arrayClass = expressionType.underlyingClass;
-  const elementType = arrayClass.typeArguments.T.type;
+  const elementType = arrayClass.typeArgumentsMap.T.type;
   const uintptrCategory = <binaryen.I32Operations | binaryen.I64Operations>compiler.categoryOf(compiler.uintptrType);
   util.setReflectedType(node, elementType);
 

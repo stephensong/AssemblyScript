@@ -161,13 +161,12 @@ exports.main = main;
 /** Writes text format of the specified module, using the specified format. */
 function writeText(wasmModule, format, output, callback) {
   if (format === "linear" || format === "stack") {
-    if (!assemblyscript.wabt.available) {
-      if (!argv.quiet)
-        process.stderr.write("\n" + assemblyscript.wabt.ENOTAVAILABLE + "\n");
+    if (!assemblyscript.util.wabt) {
+      process.stderr.write("\nwabt.js not found\n");
       return callback(EFAILURE);
     }
     var binary = wasmModule.ascCurrentBinary || (wasmModule.ascCurrentBinary = wasmModule.emitBinary()); // reuse
-    output.write(assemblyscript.wabt.wasmToWast(binary, { readDebugNames: true }), "utf8", end);
+    output.write(assemblyscript.util.wasmToWast(binary, { readDebugNames: true }), "utf8", end);
   } else
     output.write(wasmModule.emitText(), "utf8", end);
 

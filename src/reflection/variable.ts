@@ -1,5 +1,6 @@
 /** @module assemblyscript/reflection */ /** */
 
+import Compiler from "../compiler";
 import Type from "./type";
 
 /** Flags describing the kind of a variable. */
@@ -14,6 +15,9 @@ export enum VariableFlags {
 
 /** A reflected variable. */
 export class Variable {
+
+  /** Compiler reference. */
+  compiler: Compiler;
   /** Simple or global name, depending on context. */
   name: string;
   /** Reflected type. */
@@ -26,7 +30,8 @@ export class Variable {
   value?: number | Long;
 
   /** Constructs a new reflected variable. */
-  constructor(name: string, type: Type, flags: VariableFlags, index: number, value?: number | Long) {
+  constructor(compiler: Compiler, name: string, type: Type, flags: VariableFlags, index: number, value?: number | Long) {
+    this.compiler = compiler;
     this.name = name;
     this.type = type;
     this.flags = flags;

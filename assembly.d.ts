@@ -127,7 +127,7 @@ declare class String extends Array<ushort> {
   /** Determines whether the string begins with the specified value. */
   startsWith(value: string): bool;
   /** Determines whether the string ends with the specified value. */
-  endsWidth(value: string): bool;
+  endsWith(value: string): bool;
 }
 
 // Console

@@ -93,19 +93,20 @@ function runTests(kind: string, exports: typeof assemblyscript) {
           if (fs.existsSync(wastFile)) {
             const expected = distill(fs.readFileSync(wastFile, "utf8"));
             if (argv.diff) {
-              const diff = jsdiff.diffChars(expected, actual);
+              const diff = jsdiff.diffLines(expected, actual);
               let changed = false;
               diff.forEach(part => {
                 if (part.added || part.removed)
                   changed = true;
               });
               test.notOk(changed, "should match the precompiled fixture");
-              if (changed) // print it
+              if (changed) { // print it
                 diff.forEach(part => {
                   if (part.added || part.removed)
                     changed = true;
                   process.stderr.write((part.added ? chalk.green : part.removed ? chalk.red : chalk.grey)(part.value));
                 });
+              }
             } else if (expected !== actual)
               test.fail("should match the precompiled fixture");
           } else {

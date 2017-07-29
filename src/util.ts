@@ -88,6 +88,8 @@ export function getReflectedFunction(node: typescript.FunctionLikeDeclaration): 
 export function setReflectedFunction(node: typescript.FunctionLikeDeclaration, instance: reflection.Function): void {
   if (!instance)
     throw Error("instance cannot be null");
+  if (instance.isGeneric)
+    throw Error("instance cannot be generic");
   (<any>node).reflectedFunction = instance;
 }
 
@@ -112,12 +114,14 @@ export function getReflectedClass(node: typescript.ClassDeclaration): reflection
 export function setReflectedClass(node: typescript.ClassDeclaration, instance: reflection.Class): void {
   if (!instance)
     throw Error("instance cannot be null");
+  if (instance.isGeneric)
+    throw Error("instance cannot be generic");
   (<any>node).reflectedClass = instance;
 }
 
 /** Gets the reflected class template (describing a class with unresolved generic types) of a class declaration. */
 export function getReflectedClassTemplate(node: typescript.ClassDeclaration): reflection.ClassTemplate {
-  return <reflection.ClassTemplate>(<any>node).reflectedClass || null;
+  return <reflection.ClassTemplate>(<any>node).reflectedClassTemplate || null;
 }
 
 /** Sets the reflected class template (describing a class with unresolved generic types) of a class declaration. */

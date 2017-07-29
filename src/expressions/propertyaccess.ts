@@ -17,9 +17,9 @@ export function compilePropertyAccess(compiler: Compiler, node: typescript.Prope
   // obtain the property's name
   const propertyName = typescript.getTextOfNode(node.name);
 
-  // handle special cases
+  // handle globals
   if (node.expression.kind === typescript.SyntaxKind.Identifier) {
-    const reference = compiler.resolveReference(<typescript.Identifier>node.expression);
+    const reference = compiler.resolveReference(<typescript.Identifier>node.expression, reflection.ObjectFlags.AnyPropertyParent);
 
     // enum values are constants
     if (reference instanceof reflection.Enum) {
@@ -29,15 +29,15 @@ export function compilePropertyAccess(compiler: Compiler, node: typescript.Prope
       util.setReflectedType(node, reflection.intType);
 
       const enm = <reflection.Enum>reference;
-      const property = enm.values[propertyName];
+      const enmProperty = enm.values[propertyName];
 
-      if (!property)
+      if (!enmProperty)
         throw Error("no such enum property"); // handled by typescript
 
-      const value = compiler.checker.getConstantValue(<typescript.EnumMember>property.declaration);
+      const value = compiler.checker.getConstantValue(<typescript.EnumMember>enmProperty.declaration);
       if (typeof value === "number") {
-        util.setReflectedType(node, property.type);
-        return compiler.valueOf(property.type, value);
+        util.setReflectedType(node, enmProperty.type);
+        return compiler.valueOf(enmProperty.type, value);
       }
 
       compiler.report(node.expression, typescript.DiagnosticsEx.Unsupported_literal_0, value);
@@ -45,12 +45,12 @@ export function compilePropertyAccess(compiler: Compiler, node: typescript.Prope
 
     // static class properties are globals
     } else if (reference instanceof reflection.Class) {
-      const clazz = <reflection.Class>reference;
-      const property = clazz.properties[propertyName];
+      const staticClass = <reflection.Class>reference;
+      const staticClassProperty = staticClass.properties[propertyName];
 
-      if (property && !property.isInstance) {
+      if (staticClassProperty && !staticClassProperty.isInstance) {
 
-        const global = compiler.globals[clazz.name + "." + propertyName];
+        const global = compiler.globals[staticClass.name + "." + propertyName];
         if (global) {
 
           if (valueNode) {
@@ -74,7 +74,7 @@ export function compilePropertyAccess(compiler: Compiler, node: typescript.Prope
           throw Error("unexpected uninitialized global");
 
       } else
-        throw Error("no such static property '" + propertyName + "' on " + clazz.name); // handled by typescript
+        throw Error("no such static property '" + propertyName + "' on " + staticClass.name); // handled by typescript
     }
   }
 

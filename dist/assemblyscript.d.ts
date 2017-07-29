@@ -250,15 +250,16 @@ declare module 'assemblyscript/compiler' {
       addGlobal(name: string, type: reflection.Type, mutable: boolean, initializerNode?: typescript.Expression): void;
       /** Creates or, if it already exists, looks up a static string and returns its offset in linear memory. */
       createStaticString(value: string): number;
-      /** Initializes a function or class method. */
-      initializeFunction(node: typescript.FunctionLikeDeclaration): {
-          template: reflection.FunctionTemplate;
-          instance?: reflection.Function;
-      };
+      /** Initializes a top-level function. */
+      initializeFunction(node: typescript.FunctionDeclaration): reflection.FunctionHandle;
       /** Initializes a class. */
-      initializeClass(node: typescript.ClassDeclaration): void;
+      initializeClass(node: typescript.ClassDeclaration): reflection.ClassHandle;
+      /** Initializes a static method. */
+      initializeStaticMethod(node: typescript.MethodDeclaration | typescript.GetAccessorDeclaration | typescript.SetAccessorDeclaration): reflection.FunctionHandle;
+      /** Initializes an instance method. */
+      initializeInstanceMethod(node: typescript.MethodDeclaration | typescript.GetAccessorDeclaration | typescript.SetAccessorDeclaration | typescript.ConstructorDeclaration, parent: reflection.Class): reflection.FunctionHandle;
       /** Initializes an enum. */
-      initializeEnum(node: typescript.EnumDeclaration): void;
+      initializeEnum(node: typescript.EnumDeclaration): reflection.Enum;
       /** Compiles the module and its components. */
       compile(): void;
       /** Compiles the start function if either a user-provided start function is or global initializes are present. */
@@ -289,11 +290,11 @@ declare module 'assemblyscript/compiler' {
       /** Resolves a TypeScript type alias to the root AssemblyScript type where applicable, by symbol. */
       maybeResolveAlias(symbol: typescript.Symbol): typescript.Symbol;
       /** Resolves a TypeScript type to a AssemblyScript type. */
-      resolveType(type: typescript.TypeNode, acceptVoid?: boolean, typeArgumentsMap?: {
-          [key: string]: reflection.TypeArgument;
-      }): reflection.Type | null;
+      resolveType(type: typescript.TypeNode, acceptVoid?: boolean, typeArgumentsMap?: reflection.TypeArgumentsMap): reflection.Type | null;
       /** Resolves an identifier or name to the corresponding reflection object. */
-      resolveReference(node: typescript.Identifier | typescript.EntityName, preferTemplate?: boolean): reflection.Variable | reflection.Enum | reflection.Class | reflection.ClassTemplate | null;
+      resolveReference(node: typescript.Identifier | typescript.EntityName, filter?: reflection.ObjectFlags): reflection.Object | null;
+      /** Resolves a list of type arguments to a type arguments map. */
+      resolveTypeArgumentsMap(typeArguments: typescript.TypeNode[], declaration: typescript.FunctionLikeDeclaration | typescript.ClassDeclaration, baseTypeArgumentsMap?: reflection.TypeArgumentsMap): reflection.TypeArgumentsMap;
       /** Computes the binaryen signature identifier of a reflected type. */
       identifierOf(type: reflection.Type): string;
       /** Computes the binaryen type of a reflected type. */
@@ -302,6 +303,7 @@ declare module 'assemblyscript/compiler' {
       categoryOf(type: reflection.Type): binaryen.I32Operations | binaryen.I64Operations | binaryen.F32Operations | binaryen.F64Operations;
       /** Computes the constant value binaryen expression of the specified reflected type. */
       valueOf(type: reflection.Type, value: number | Long): binaryen.Expression;
+      debugInfo(): string;
   }
   export { Compiler as default };
 }
@@ -380,6 +382,32 @@ declare module 'assemblyscript/reflection' {
   export * from "assemblyscript/reflection/property";
   export * from "assemblyscript/reflection/type";
   export * from "assemblyscript/reflection/variable";
+  import * as reflection from "assemblyscript/reflection";
+  /** Union type of concrete reflection objects. */
+  export type Object = reflection.Variable | reflection.Enum | reflection.Function | reflection.FunctionTemplate | reflection.Class | reflection.ClassTemplate;
+  /** Filter flags for resolving specific reflection objects only. */
+  export enum ObjectFlags {
+      /** Accept variables. */
+      Variable = 1,
+      /** Accept enums. */
+      Enum = 2,
+      /** Accept class instances. */
+      Class = 4,
+      /** Accept class templates.  */
+      ClassTemplate = 8,
+      /** Accept function instances. */
+      Function = 16,
+      /** Accept function templates. */
+      FunctionTemplate = 32,
+      /** Accepts function instances and templates. */
+      FunctionInclTemplate = 48,
+      /** Accepts class instances and templates. */
+      ClassInclTemplate = 12,
+      /** Accepts any valid property parent. */
+      AnyPropertyParent = 6,
+      /** Accepts any reflection object. */
+      Any = -1,
+  }
 }
 
 declare module 'assemblyscript/typescript' {
@@ -411,6 +439,7 @@ declare module 'assemblyscript/typescript' {
   export import FunctionBody = ts.FunctionBody;
   export import FunctionLikeDeclaration = ts.FunctionLikeDeclaration;
   export import FunctionDeclaration = ts.FunctionDeclaration;
+  export import GetAccessorDeclaration = ts.GetAccessorDeclaration;
   export import Identifier = ts.Identifier;
   export import IfStatement = ts.IfStatement;
   export import LiteralExpression = ts.LiteralExpression;
@@ -440,6 +469,7 @@ declare module 'assemblyscript/typescript' {
   export import VariableStatement = ts.VariableStatement;
   export import ReturnStatement = ts.ReturnStatement;
   export import ScriptTarget = ts.ScriptTarget;
+  export import SetAccessorDeclaration = ts.SetAccessorDeclaration;
   export import SourceFile = ts.SourceFile;
   export import Statement = ts.Statement;
   export import SwitchStatement = ts.SwitchStatement;
@@ -500,10 +530,12 @@ declare module 'assemblyscript/util' {
   import * as typescript from "assemblyscript/typescript";
   import * as reflection from "assemblyscript/reflection";
   import * as wabt from "wabt";
-  /** Tests if the specified node, or optionally its parent, has an 'export' modifier. */
+  /** Tests if the specified node, or optionally either its parent, has an 'export' modifier. */
   export function isExport(node: typescript.Node, checkParent?: boolean): boolean;
-  /** Tests if the specified node, or optionally its parent, has a 'declare' modifier. */
+  /** Tests if the specified node, or optionally either its parent, has a 'declare' modifier. */
   export function isDeclare(node: typescript.Node, checkParent?: boolean): boolean;
+  /** Removes a modifier from a node and optionally also from its parent. */
+  export function removeModifier(node: typescript.Node, kind: typescript.SyntaxKind, includingParent?: boolean): void;
   /** Tests if the specified node has a 'static' modifier or is otherwise part of a static context. */
   export function isStatic(node: typescript.Node): boolean;
   /** Tests if the specified node has an 'abstract' modifier. */
@@ -731,31 +763,26 @@ declare module 'assemblyscript/reflection/class' {
   import Compiler from "assemblyscript/compiler";
   import { FunctionTemplate, Function } from "assemblyscript/reflection/function";
   import Property from "assemblyscript/reflection/property";
-  import { Type } from "assemblyscript/reflection/type";
+  import { Type, TypeArgumentsMap } from "assemblyscript/reflection/type";
   import * as typescript from "assemblyscript/typescript";
   /** Common base class of {@link Class} and {@link ClassTemplate}. */
   export abstract class ClassBase {
+      /** Compiler reference. */
+      compiler: Compiler;
       /** Global name. */
       name: string;
       /** Simple name. */
       simpleName: string;
       /** Declaration reference. */
       declaration: typescript.ClassDeclaration;
-      protected constructor(name: string, declaration: typescript.ClassDeclaration);
+      protected constructor(compiler: Compiler, name: string, declaration: typescript.ClassDeclaration);
+      /** Tests if this class is generic. */
+      readonly isGeneric: boolean;
+      /** Tests if this class is exported. */
+      readonly isExport: boolean;
       /** Tests if this class has been annotated with a decorator of the specified name. */
       hasDecorator(name: string): boolean;
       toString(): string;
-  }
-  /** Interface describing a reflected type argument. */
-  export interface TypeArgument {
-      /** Reflected type. */
-      type: Type;
-      /** TypeScript type node. */
-      node: typescript.TypeNode;
-  }
-  /** Interface describing a reflected type arguments map. */
-  export interface TypeArgumentsMap {
-      [key: string]: TypeArgument;
   }
   /** Interface describing a reflected class method. */
   export interface ClassMethod {
@@ -768,6 +795,11 @@ declare module 'assemblyscript/reflection/class' {
   export function isBuiltinArray(globalName: string): boolean;
   /** Tests if the specified global name references a built-in string. */
   export function isBuiltinString(globalName: string): boolean;
+  /** A class handle consisting of its instance, if any, and its template. */
+  export interface ClassHandle {
+      template: ClassTemplate;
+      instance?: Class;
+  }
   /** A class instance with generic parameters resolved. */
   export class Class extends ClassBase {
       /** Corresponding class template. */
@@ -775,17 +807,25 @@ declare module 'assemblyscript/reflection/class' {
       /** Reflected class type. */
       type: Type;
       /** Concrete type arguments. */
-      typeArguments: TypeArgumentsMap;
+      typeArguments: typescript.TypeNode[];
+      /** Type arguments map. */
+      typeArgumentsMap: TypeArgumentsMap;
       /** Base class, if any. */
       base?: Class;
-      /** Whether already initialized or not. */
-      initialized: boolean;
       /** Static and instance class properties. */
       properties: {
           [key: string]: Property;
       };
       /** Static and instance class methods. */
       methods: {
+          [key: string]: ClassMethod;
+      };
+      /** Getter methods. */
+      getters: {
+          [key: string]: ClassMethod;
+      };
+      /** Setter methods. */
+      setters: {
           [key: string]: ClassMethod;
       };
       /** Class constructor, if any. */
@@ -799,17 +839,11 @@ declare module 'assemblyscript/reflection/class' {
       /** Whether memory must be allocated implicitly. */
       implicitMalloc: boolean;
       /** Constructs a new reflected class and binds it to its TypeScript declaration. */
-      constructor(name: string, template: ClassTemplate, uintptrType: Type, typeArguments: {
-          [key: string]: TypeArgument;
-      }, base?: Class);
+      constructor(compiler: Compiler, name: string, template: ClassTemplate, typeArguments: typescript.TypeNode[], base?: Class);
       /** Tests if this class extends another class. */
       extends(base: Class): boolean;
       /** Tests if this class is assignable to the specified (class) type. */
       isAssignableTo(type: Class): boolean;
-      /** Initializes the class, its properties, methods and constructor. */
-      initialize(compiler: Compiler): void;
-      /** Initializes a single method. */
-      initializeMethod(compiler: Compiler, node: typescript.MethodDeclaration): void;
   }
   export { Class as default };
   /** A class template with possibly unresolved generic parameters. */
@@ -822,41 +856,54 @@ declare module 'assemblyscript/reflection/class' {
       base?: ClassTemplate;
       /** Base type arguments. */
       baseTypeArguments: typescript.TypeNode[];
-      /** Type arguments string postfix. */
-      typeArgumentsString: string;
-      /** Constructs a new reflected class template and binds it to is TypeScript declaration. */
-      constructor(name: string, declaration: typescript.ClassDeclaration, base?: ClassTemplate, baseTypeArguments?: typescript.TypeNode[]);
-      /** Tests if this class requires type arguments. */
-      readonly isGeneric: boolean;
+      /** Static and instance class property declarations by simple name. */
+      propertyDeclarations: {
+          [key: string]: typescript.PropertyDeclaration;
+      };
+      /** Static and instance method declarations by simple name. */
+      methodDeclarations: {
+          [key: string]: typescript.MethodDeclaration;
+      };
+      /** Getter declarations by simple name. */
+      getterDeclarations: {
+          [key: string]: typescript.MethodDeclaration;
+      };
+      /** Setter declarations by simple name. */
+      setterDeclarations: {
+          [key: string]: typescript.MethodDeclaration;
+      };
+      /** Constructor declaration, if any. */
+      ctorDeclaration?: typescript.ConstructorDeclaration;
+      /** Constructs a new reflected class template and binds it to its declaration. */
+      constructor(compiler: Compiler, name: string, declaration: typescript.ClassDeclaration, base?: ClassTemplate, baseTypeArguments?: typescript.TypeNode[]);
       /** Resolves this possibly generic class against the provided type arguments. */
-      resolve(compiler: Compiler, typeArgumentNodes: typescript.TypeNode[], typeArgumentsMap?: {
-          [key: string]: TypeArgument;
-      }): Class;
+      resolve(typeArgumentNodes: typescript.TypeNode[], typeArgumentsMap?: TypeArgumentsMap): Class;
   }
   /** Patches a declaration to inherit from its actual implementation. */
-  export function patchClassImplementation(compiler: Compiler, declTemplate: ClassTemplate, implTemplate: ClassTemplate): void;
+  export function patchClassImplementation(declTemplate: ClassTemplate, implTemplate: ClassTemplate): void;
 }
 
 declare module 'assemblyscript/reflection/enum' {
   /** @module assemblyscript/reflection */ /** */
+  import Compiler from "assemblyscript/compiler";
   import Property from "assemblyscript/reflection/property";
   import * as typescript from "assemblyscript/typescript";
   /** A reflected enum instance. */
   export class Enum {
+      /** Compiler reference. */
+      compiler: Compiler;
       /** Global name. */
       name: string;
       /** Simple name. */
       simpleName: string;
       /** Declaration reference. */
       declaration: typescript.EnumDeclaration;
-      /** Enum values. */
+      /** Enum values by simple name. */
       values: {
           [key: string]: Property;
       };
       /** Constructs a new reflected enum and binds it to its TypeScript declaration. */
-      constructor(name: string, declaration: typescript.EnumDeclaration);
-      /** Initializes the enum and its values. */
-      initialize(): void;
+      constructor(compiler: Compiler, name: string, declaration: typescript.EnumDeclaration);
       toString(): string;
   }
   export { Enum as default };
@@ -865,23 +912,32 @@ declare module 'assemblyscript/reflection/enum' {
 declare module 'assemblyscript/reflection/function' {
   /** @module assemblyscript/reflection */ /** */
   import * as binaryen from "binaryen";
-  import { Class, TypeArgumentsMap } from "assemblyscript/reflection/class";
+  import { Class } from "assemblyscript/reflection/class";
   import { Compiler } from "assemblyscript/compiler";
-  import { Type } from "assemblyscript/reflection/type";
+  import { Type, TypeArgumentsMap } from "assemblyscript/reflection/type";
   import { Variable } from "assemblyscript/reflection/variable";
   import * as typescript from "assemblyscript/typescript";
+  /** A function handle consisting of its instance, if any, and its template. */
+  export interface FunctionHandle {
+      template: FunctionTemplate;
+      instance?: Function;
+  }
   /** Common base class of {@link Function} and {@link FunctionTemplate}. */
   export abstract class FunctionBase {
+      /** Compiler reference. */
+      compiler: Compiler;
       /** Global name. */
       name: string;
+      /** Simple name. */
+      simpleName: string;
       /** Declaration reference. */
       declaration: typescript.FunctionLikeDeclaration;
-      protected constructor(name: string, declaration: typescript.FunctionLikeDeclaration);
-      /** Simple name. */
-      readonly simpleName: string;
-      /** Tests if this function is imported (just a declaration). */
+      /** Class declaration reference, if any. */
+      classDeclaration?: typescript.ClassDeclaration;
+      protected constructor(compiler: Compiler, name: string, declaration: typescript.FunctionLikeDeclaration);
+      /** Tests if this function is an import. */
       readonly isImport: boolean;
-      /** Tests if this function is exported to the embedder. */
+      /** Tests if this function is exported. */
       readonly isExport: boolean;
       /** Tests if this function is an instance member / not static. */
       readonly isInstance: boolean;
@@ -891,6 +947,8 @@ declare module 'assemblyscript/reflection/function' {
       readonly isGetter: boolean;
       /** Tests if this function is a setter. */
       readonly isSetter: boolean;
+      /** Tests if this function is generic. */
+      readonly isGeneric: boolean;
       toString(): string;
   }
   /** Interface describing a reflected function parameter. */
@@ -910,8 +968,10 @@ declare module 'assemblyscript/reflection/function' {
   export class Function extends FunctionBase {
       /** Corresponding function template. */
       template: FunctionTemplate;
+      /** Concrete type arguments. */
+      typeArguments: typescript.TypeNode[];
       /** Resolved type arguments. */
-      typeArguments: TypeArgumentsMap;
+      typeArgumentsMap: TypeArgumentsMap;
       /** Function parameters including `this`. */
       parameters: FunctionParameter[];
       /** Resolved return type. */
@@ -945,15 +1005,13 @@ declare module 'assemblyscript/reflection/function' {
       /** Binaryen function reference. */
       binaryenFunction: binaryen.Function;
       /** Constructs a new reflected function instance and binds it to its TypeScript declaration. */
-      constructor(name: string, template: FunctionTemplate, typeArguments: TypeArgumentsMap, parameters: FunctionParameter[], returnType: Type, parent?: Class, body?: typescript.Block | typescript.Expression);
+      constructor(compiler: Compiler, name: string, template: FunctionTemplate, typeArguments: typescript.TypeNode[], typeArgumentsMap: TypeArgumentsMap, parameters: FunctionParameter[], returnType: Type, parent?: Class, body?: typescript.Block | typescript.Expression);
       /** Gets the current break label for use with binaryen loops and blocks. */
       readonly breakLabel: string;
-      /** Initializes this function. Does not compile it, yet. */
-      initialize(compiler: Compiler): void;
       /** Introduces an additional local variable. */
       addLocal(name: string, type: Type): Variable;
       /** Compiles a call to this function using the specified arguments. Arguments to instance functions include `this` as the first argument or can specifiy it in `thisArg`. */
-      makeCall(compiler: Compiler, argumentNodes: typescript.Expression[], thisArg?: binaryen.Expression): binaryen.Expression;
+      compileCall(argumentNodes: typescript.Expression[], thisArg?: binaryen.Expression): binaryen.Expression;
   }
   export { Function as default };
   /** A function template with possibly unresolved generic parameters. */
@@ -965,20 +1023,21 @@ declare module 'assemblyscript/reflection/function' {
           [key: string]: Function;
       };
       /** Constructs a new reflected function template and binds it to its TypeScript declaration. */
-      constructor(name: string, declaration: typescript.FunctionLikeDeclaration);
-      /** Tests if this function requires type arguments. */
-      readonly isGeneric: boolean;
+      constructor(compiler: Compiler, name: string, declaration: typescript.FunctionLikeDeclaration);
       /** Resolves this possibly generic function against the provided type arguments. */
-      resolve(compiler: Compiler, typeArgumentNodes: typescript.TypeNode[], typeArgumentsMap?: TypeArgumentsMap): Function;
+      resolve(typeArguments: typescript.TypeNode[], typeArgumentsMap?: TypeArgumentsMap): Function;
   }
 }
 
 declare module 'assemblyscript/reflection/property' {
   /** @module assemblyscript/reflection */ /** */
+  import Compiler from "assemblyscript/compiler";
   import Type from "assemblyscript/reflection/type";
   import * as typescript from "assemblyscript/typescript";
   /** A reflected property. Also used to describe enum values. */
   export class Property {
+      /** Compiler reference. */
+      compiler: Compiler;
       /** Global name. */
       name: string;
       /** Simple name. */
@@ -992,7 +1051,7 @@ declare module 'assemblyscript/reflection/property' {
       /** Initializer expression, if applicable. */
       initializer: typescript.Expression | undefined;
       /** Constructs a new reflected property. */
-      constructor(name: string, declaration: typescript.PropertyDeclaration | typescript.EnumMember, type: Type, offset: number, initializer?: typescript.Expression);
+      constructor(compiler: Compiler, name: string, declaration: typescript.PropertyDeclaration | typescript.EnumMember, type: Type, offset: number, initializer?: typescript.Expression);
       /** Tests if this property is an instance member. */
       readonly isInstance: boolean;
       toString(): string;
@@ -1003,6 +1062,7 @@ declare module 'assemblyscript/reflection/property' {
 declare module 'assemblyscript/reflection/type' {
   /** @module assemblyscript/reflection */ /** */
   import Class from "assemblyscript/reflection/class";
+  import * as typescript from "assemblyscript/typescript";
   /** Core type kinds including range aliases. */
   export enum TypeKind {
       /** First integer of any size and signage. */
@@ -1113,10 +1173,22 @@ declare module 'assemblyscript/reflection/type' {
   export const boolType: Type;
   /** Reflected void type. */
   export const voidType: Type;
+  /** Interface describing a reflected type argument. */
+  export interface TypeArgument {
+      /** Reflected type. */
+      type: Type;
+      /** TypeScript type node. */
+      node: typescript.TypeNode;
+  }
+  /** Interface describing a reflected type arguments map. */
+  export interface TypeArgumentsMap {
+      [key: string]: TypeArgument;
+  }
 }
 
 declare module 'assemblyscript/reflection/variable' {
   /** @module assemblyscript/reflection */ /** */
+  import Compiler from "assemblyscript/compiler";
   import Type from "assemblyscript/reflection/type";
   /** Flags describing the kind of a variable. */
   export enum VariableFlags {
@@ -1129,6 +1201,8 @@ declare module 'assemblyscript/reflection/variable' {
   }
   /** A reflected variable. */
   export class Variable {
+      /** Compiler reference. */
+      compiler: Compiler;
       /** Simple or global name, depending on context. */
       name: string;
       /** Reflected type. */
@@ -1140,7 +1214,7 @@ declare module 'assemblyscript/reflection/variable' {
       /** Constant value, if applicable. */
       value?: number | Long;
       /** Constructs a new reflected variable. */
-      constructor(name: string, type: Type, flags: VariableFlags, index: number, value?: number | Long);
+      constructor(compiler: Compiler, name: string, type: Type, flags: VariableFlags, index: number, value?: number | Long);
       /** Tests if this variable is declared constant. */
       readonly isConstant: boolean;
       /** Tests if this is a global variable. */

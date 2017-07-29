@@ -7,7 +7,7 @@
  * @preferred
  */ /** */
 
-import * as path from "path";
+import * as nodePath from "path";
 import * as ts from "../lib/typescript/build";
 import * as library from "./library";
 
@@ -42,6 +42,7 @@ export import ForStatement = ts.ForStatement;
 export import FunctionBody = ts.FunctionBody;
 export import FunctionLikeDeclaration = ts.FunctionLikeDeclaration;
 export import FunctionDeclaration = ts.FunctionDeclaration;
+export import GetAccessorDeclaration = ts.GetAccessorDeclaration;
 export import Identifier = ts.Identifier;
 export import IfStatement = ts.IfStatement;
 export import LiteralExpression = ts.LiteralExpression;
@@ -73,6 +74,7 @@ export import VariableStatement = ts.VariableStatement;
 export import ReturnStatement = ts.ReturnStatement;
        import ResolvedModule = ts.ResolvedModule;
 export import ScriptTarget = ts.ScriptTarget;
+export import SetAccessorDeclaration = ts.SetAccessorDeclaration;
 export import SourceFile = ts.SourceFile;
 export import Statement = ts.Statement;
 export import SwitchStatement = ts.SwitchStatement;
@@ -158,7 +160,7 @@ export function createCompilerHost(moduleSearchLocations: string[], entryFileSou
         return result.resolvedModule;
       // check fallback locations, for simplicity assume that module at location should be represented by '.d.ts' file
       for (const location of moduleSearchLocations) {
-        const modulePath = path.join(location, moduleName + ".d.ts");
+        const modulePath = nodePath.join(location, moduleName + ".d.ts");
         if (fileExists(modulePath))
           return { resolvedFileName: modulePath };
       }

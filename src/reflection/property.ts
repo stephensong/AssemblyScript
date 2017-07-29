@@ -1,5 +1,6 @@
 /** @module assemblyscript/reflection */ /** */
 
+import Compiler from "../compiler";
 import Type from "./type";
 import * as typescript from "../typescript";
 import * as util from "../util";
@@ -7,6 +8,8 @@ import * as util from "../util";
 /** A reflected property. Also used to describe enum values. */
 export class Property {
 
+  /** Compiler reference. */
+  compiler: Compiler;
   /** Global name. */
   name: string;
   /** Simple name. */
@@ -21,7 +24,8 @@ export class Property {
   initializer: typescript.Expression | undefined;
 
   /** Constructs a new reflected property. */
-  constructor(name: string, declaration: typescript.PropertyDeclaration | typescript.EnumMember, type: Type, offset: number, initializer?: typescript.Expression) {
+  constructor(compiler: Compiler, name: string, declaration: typescript.PropertyDeclaration | typescript.EnumMember, type: Type, offset: number, initializer?: typescript.Expression) {
+    this.compiler = compiler;
     this.name = name;
     this.declaration = declaration;
     this.simpleName = typescript.getTextOfNode(this.declaration.name);

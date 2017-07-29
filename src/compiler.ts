@@ -2,11 +2,12 @@
 
 import * as base64 from "@protobufjs/base64";
 import * as binaryen from "binaryen";
+import * as Long from "long";
+
 import * as builtins from "./builtins";
 import * as expressions from "./expressions";
 import compileStore from "./expressions/helpers/store";
 import * as library from "./library";
-import * as Long from "long";
 import Profiler from "./profiler";
 import * as reflection from "./reflection";
 import * as statements from "./statements";
@@ -440,7 +441,7 @@ export class Compiler {
     if (!mutable)
       flags |= reflection.VariableFlags.constant;
 
-    const global = this.globals[name] = new reflection.Variable(name, type, flags, 0);
+    const global = this.globals[name] = new reflection.Variable(this, name, type, flags, 0);
 
     if (initializerNode) {
 
@@ -451,7 +452,7 @@ export class Compiler {
         op.addGlobal(name, this.typeOf(type), mutable, this.valueOf(type, 0));
 
         if (!this.startFunction)
-          (this.startFunction = createStartFunction()).initialize(this);
+          this.startFunction = createStartFunction(this);
 
         const previousFunction = this.currentFunction;
         this.currentFunction = this.startFunction;
@@ -484,15 +485,19 @@ export class Compiler {
 
   /** Creates or, if it already exists, looks up a static string and returns its offset in linear memory. */
   createStaticString(value: string): number {
-    let pooled = this.stringPool[value];
+    let pooled = this.stringPool.hasOwnProperty(value) && this.stringPool[value] || undefined;
     if (!pooled) {
-      if (this.memoryBase & 3) this.memoryBase = (this.memoryBase | 3) + 1; // align to 4 bytes (length is an int)
+
+      // align to 4 bytes (length is an int)
+      if (this.memoryBase & 3) this.memoryBase = (this.memoryBase | 3) + 1;
+
+      // calculate length
       const length = value.length;
       const buffer = new Uint8Array(8 + 2 * length);
       if (length < 0 || length > 0x7fffffff)
         throw Error("string length exceeds INTMAX");
 
-      // Prepend header (capacity = length)
+      // prepend header (capacity = length)
       let offset = 0;
       buffer[offset++] =  length         & 0xff;
       buffer[offset++] = (length >>>  8) & 0xff;
@@ -501,78 +506,82 @@ export class Compiler {
       for (let i = 0; i < 4; ++i)
         buffer[offset++] = buffer[i];
 
-      // Append UTF-16LE chars
+      // append UTF-16LE chars
       for (let i = 0; i < length; ++i) {
         const charCode = value.charCodeAt(i);
         buffer[offset++] =  charCode        & 0xff;
         buffer[offset++] = (charCode >>> 8) & 0xff;
       }
 
-      const memorySegment = <CompilerMemorySegment>{
+      this.memorySegments.push(pooled = this.stringPool[value] = <CompilerMemorySegment>{
         offset: this.memoryBase,
         buffer: buffer
-      };
-      this.memorySegments.push(memorySegment);
-
-      pooled = this.stringPool[value] = memorySegment;
+      });
       this.memoryBase += offset;
     }
     return pooled.offset;
   }
 
-  /** Initializes a function or class method. */
-  initializeFunction(node: typescript.FunctionLikeDeclaration): { template: reflection.FunctionTemplate, instance?: reflection.Function } {
-    let name: string;
-    if (node.kind === typescript.SyntaxKind.FunctionDeclaration) {
-      name = this.mangleGlobalName(typescript.getTextOfNode(<typescript.Identifier>node.name), typescript.getSourceFileOfNode(node));
-    } else {
-      const parent = util.getReflectedClass(<typescript.ClassDeclaration>node.parent);
-      if (!parent)
-        throw Error("missing parent");
-      if (node.kind === typescript.SyntaxKind.Constructor)
-        name = parent.name;
-      else if (util.isStatic(node))
-        name = parent.name + "." + typescript.getTextOfNode(<typescript.Identifier>node.name);
-      else
-        name = parent.name + "#" + typescript.getTextOfNode(<typescript.Identifier>node.name);
-    }
+  /** Initializes a top-level function. */
+  initializeFunction(node: typescript.FunctionDeclaration): reflection.FunctionHandle {
 
+    if (node.parent && node.parent.kind === typescript.SyntaxKind.ClassDeclaration)
+      throw Error("not a top-level function");
+
+    // determine the function's global name
+    const name = this.mangleGlobalName(
+      typescript.getTextOfNode(<typescript.Identifier>node.name),
+      typescript.getSourceFileOfNode(node)
+    );
+
+    // obtain or create the template
     let template = this.functionTemplates[name];
+    if (!template)
+      template = new reflection.FunctionTemplate(this, name, node);
+
+    // instantiate it if applicable
     let instance: reflection.Function | undefined;
-    if (!template) { // not already initialized
-      template = this.functionTemplates[name] = new reflection.FunctionTemplate(name, node);
-      if (template.isGeneric) {
-        if (builtins.isBuiltin(name, false)) { // generic builtins evaluate type parameters dynamically and have a known return type
-          const returnType = this.resolveType(<typescript.TypeNode>template.declaration.type, true); // reports issues
-          util.setReflectedFunction(node, new reflection.Function(name, template, {}, [], returnType || reflection.voidType));
-        }
-      } else {
-        instance = this.functions[name] = template.resolve(this, []);
-        instance.initialize(this);
-      }
-    }
+    if (template.isGeneric) {
+      // special case: generic builtins evaluate type parameters dynamically and have a known return type
+      if (builtins.isBuiltin(name, false))
+        instance = new reflection.Function(this, name, template, [], {}, [], this.resolveType(<typescript.TypeNode>template.declaration.type, true) || reflection.voidType);
+    } else
+      instance = template.resolve([]);
+
     return { template, instance };
   }
 
   /** Initializes a class. */
-  initializeClass(node: typescript.ClassDeclaration): void {
-    const simpleName = typescript.getTextOfNode(<typescript.Identifier>node.name);
-    const name = this.mangleGlobalName(simpleName, typescript.getSourceFileOfNode(node));
+  initializeClass(node: typescript.ClassDeclaration): reflection.ClassHandle {
 
-    if (this.classTemplates[name])
-      return; // already initialized
-
+    // determine the class's global name
     const sourceFile = typescript.getSourceFileOfNode(node);
+    const simpleName = typescript.getTextOfNode(<typescript.Identifier>node.name);
+    const name = this.mangleGlobalName(simpleName, sourceFile);
 
+    // check if it is already initialized
+    let template = this.classTemplates[name];
+    if (template) {
+      if (template.declaration !== node)
+        throw Error("duplicate global name: " + name);
+      return {
+        template: template,
+        instance: util.getReflectedClass(template.declaration)
+      };
+    }
+
+    // handle inheritance
     let base: reflection.ClassTemplate | undefined;
     let baseTypeArguments: typescript.TypeNode[] | undefined;
     if (node.heritageClauses) {
       for (let i = 0, k = node.heritageClauses.length; i < k; ++i) {
         const clause = node.heritageClauses[i];
         if (clause.token === typescript.SyntaxKind.ExtendsKeyword) {
+          if (clause.types.length !== 1)
+            throw Error("expected exactly one extended class");
           const extendsNode = clause.types[0];
           if (extendsNode.expression.kind === typescript.SyntaxKind.Identifier) {
-            const reference = this.resolveReference(<typescript.Identifier>extendsNode.expression, true);
+            const reference = this.resolveReference(<typescript.Identifier>extendsNode.expression, reflection.ObjectFlags.ClassTemplate);
             if (reference instanceof reflection.ClassTemplate) {
               base = reference;
               baseTypeArguments = extendsNode.typeArguments || [];
@@ -587,35 +596,104 @@ export class Compiler {
       }
     }
 
-    const template = this.classTemplates[name] = new reflection.ClassTemplate(name, node, base, baseTypeArguments);
+    // create the template and instantiate it if applicable
+    template = new reflection.ClassTemplate(this, name, node, base, baseTypeArguments);
     let instance: reflection.Class | undefined;
-    if (!template.isGeneric) {
-      instance = this.classes[name] = template.resolve(this, []);
-      instance.initialize(this);
-    }
+    if (!template.isGeneric)
+      instance = template.resolve([]);
 
-    // Remember that this is a declaration that needs to be implemented. The way this works is by
-    // patching in the first class matching this declaration's name as the super class later on.
+    // remember standard library declarations that need to be implemented
     if (sourceFile === this.libraryFile)
       this.pendingImplementations[simpleName] = template;
 
-    // Replace the declaration with the implementation later on
+    // respectively replace the declaration with the implementation later on
     else if (this.pendingImplementations[simpleName])
-      reflection.patchClassImplementation(this, this.pendingImplementations[simpleName], template);
+      reflection.patchClassImplementation(this.pendingImplementations[simpleName], template);
+
+    return { template, instance };
+  }
+
+  /** Initializes a static method. */
+  initializeStaticMethod(node: typescript.MethodDeclaration | typescript.GetAccessorDeclaration | typescript.SetAccessorDeclaration): reflection.FunctionHandle {
+
+    if (!node.parent || node.parent.kind !== typescript.SyntaxKind.ClassDeclaration)
+      throw Error("missing parent");
+    if (!util.isStatic(node))
+      throw Error("not a static method");
+
+    // determine the method's global name
+    const name = this.mangleGlobalName(
+      typescript.getTextOfNode(<typescript.Identifier>(<typescript.ClassDeclaration>node.parent).name) + "." + typescript.getTextOfNode(<typescript.Identifier>node.name),
+      typescript.getSourceFileOfNode(node)
+    );
+
+    // obtain or create the template
+    let template = this.functionTemplates[name];
+    if (!template)
+      template = new reflection.FunctionTemplate(this, name, node);
+
+    // instantiate it if applicable
+    let instance: reflection.Function | undefined;
+    if (!template.isGeneric)
+      instance = template.resolve([]);
+
+    return { template, instance };
+  }
+
+  /** Initializes an instance method. */
+  initializeInstanceMethod(node: typescript.MethodDeclaration | typescript.GetAccessorDeclaration | typescript.SetAccessorDeclaration | typescript.ConstructorDeclaration, parent: reflection.Class): reflection.FunctionHandle {
+
+    if (!node.parent || node.parent.kind !== typescript.SyntaxKind.ClassDeclaration)
+      throw Error("missing parent");
+    if (util.isStatic(node))
+      throw Error("not an instance method");
+
+    // determine the method's global name
+    let name: string;
+    let prefix = "";
+
+    if (node.kind === typescript.SyntaxKind.GetAccessor)
+      prefix = "get_";
+    else if (node.kind === typescript.SyntaxKind.SetAccessor)
+      prefix = "set_";
+
+    // constructors just use the class's name
+    if (node.kind === typescript.SyntaxKind.Constructor)
+      name = parent.name;
+
+    // instance functions are separated with a hash
+    else
+      name = parent.name + "#" + prefix + typescript.getTextOfNode(<typescript.Identifier>node.name);
+
+    // obtain or create the template
+    let template = this.functionTemplates[name];
+    if (!template)
+      template = new reflection.FunctionTemplate(this, name, node);
+
+    // instantiate it if applicable
+    let instance: reflection.Function | undefined;
+    if (!template.isGeneric)
+      instance = template.resolve([]);
+
+    return { template, instance };
   }
 
   /** Initializes an enum. */
-  initializeEnum(node: typescript.EnumDeclaration): void {
+  initializeEnum(node: typescript.EnumDeclaration): reflection.Enum {
+
+    // determine the enum's global name
     const name = this.mangleGlobalName(typescript.getTextOfNode(node.name), typescript.getSourceFileOfNode(node));
 
+    // check if it is already initialized
     if (this.enums[name])
-      return; // already initialized
+      return this.enums[name];
 
+    // enums cannot be exported yet (only functions are supported)
     if (typescript.getSourceFileOfNode(node) === this.entryFile && util.isExport(node))
       this.report(node.name, typescript.DiagnosticsEx.Unsupported_modifier_0, "export");
 
-    const instance = this.enums[name] = new reflection.Enum(name, node);
-    instance.initialize(/* this */);
+    // create the instance
+    return new reflection.Enum(this, name, node); // registers as a side-effect
   }
 
   /** Compiles the module and its components. */
@@ -627,9 +705,8 @@ export class Compiler {
       if (sourceFiles[i].isDeclarationFile)
         continue;
 
-      const statements = sourceFiles[i].statements;
-      for (let j = 0, l = statements.length, statement; j < l; ++j) {
-        switch ((statement = statements[j]).kind) {
+      for (const statement of sourceFiles[i].statements) {
+        switch (statement.kind) {
 
           case typescript.SyntaxKind.FunctionDeclaration:
           {
@@ -696,7 +773,7 @@ export class Compiler {
 
     // create a blank start function if there isn't one already
     if (!this.startFunction)
-      (this.startFunction = createStartFunction()).initialize(this);
+      this.startFunction = createStartFunction(this);
     const previousFunction = this.currentFunction;
     this.currentFunction = this.startFunction;
 
@@ -1157,7 +1234,7 @@ export class Compiler {
   }
 
   /** Resolves a TypeScript type to a AssemblyScript type. */
-  resolveType(type: typescript.TypeNode, acceptVoid: boolean = false, typeArgumentsMap?: { [key: string]: reflection.TypeArgument }): reflection.Type | null {
+  resolveType(type: typescript.TypeNode, acceptVoid: boolean = false, typeArgumentsMap?: reflection.TypeArgumentsMap): reflection.Type | null {
 
     switch (type.kind) {
 
@@ -1209,18 +1286,14 @@ export class Compiler {
               case "string": return this.classes["assembly.d.ts/String"].type;
             }
 
-            const reference = this.resolveReference(referenceNode.typeName);
+            const reference = this.resolveReference(referenceNode.typeName, reflection.ObjectFlags.ClassInclTemplate);
 
             if (reference instanceof reflection.Class)
               return (<reflection.Class>reference).type;
 
             if (reference instanceof reflection.ClassTemplate && referenceNode.typeArguments) {
               const template = <reflection.ClassTemplate>reference;
-              const instance = template.resolve(this, referenceNode.typeArguments, typeArgumentsMap);
-              if (!this.classes[instance.name]) {
-                this.classes[instance.name] = instance;
-                instance.initialize(this);
-              }
+              const instance = template.resolve(referenceNode.typeArguments, typeArgumentsMap);
               return instance.type;
             }
           }
@@ -1228,18 +1301,18 @@ export class Compiler {
         break;
       }
 
-      case typescript.SyntaxKind.StringKeyword:
-        return this.classes["assembly.d.ts/String"].type;
+      case typescript.SyntaxKind.StringKeyword: {
+        const stringClass = this.classes["assembly.d.ts/String"];
+        if (!stringClass)
+          throw Error("missing string class");
+        return stringClass.type;
+      }
 
       case typescript.SyntaxKind.ArrayType:
       {
         const arrayTypeNode = <typescript.ArrayTypeNode>type;
         const template = this.classTemplates["assembly.d.ts/Array"];
-        const instance = template.resolve(this, [ arrayTypeNode.elementType ]);
-        if (!this.classes[instance.name]) {
-          this.classes[instance.name] = instance;
-          instance.initialize(this);
-        }
+        const instance = template.resolve([ arrayTypeNode.elementType ]);
         return instance.type;
       }
     }
@@ -1249,14 +1322,14 @@ export class Compiler {
   }
 
   /** Resolves an identifier or name to the corresponding reflection object. */
-  resolveReference(node: typescript.Identifier | typescript.EntityName, preferTemplate: boolean = false): reflection.Variable | reflection.Enum | reflection.Class | reflection.ClassTemplate | null {
+  resolveReference(node: typescript.Identifier | typescript.EntityName, filter: reflection.ObjectFlags = reflection.ObjectFlags.Any): reflection.Object | null {
 
     // Locals including 'this'
     const localName = typescript.getTextOfNode(node);
     if (this.currentFunction && this.currentFunction.localsByName[localName])
       return this.currentFunction.localsByName[localName];
 
-    // Globals, enums and classes
+    // Globals, enums, functions and classes
     const symbol = this.checker.getSymbolAtLocation(node);
     if (symbol && symbol.declarations) { // Determine declaration site
 
@@ -1264,20 +1337,41 @@ export class Compiler {
         const declaration = symbol.declarations[i];
         const globalName = this.mangleGlobalName(<string>symbol.name, typescript.getSourceFileOfNode(declaration));
 
-        if (this.globals[globalName])
+        if (filter & reflection.ObjectFlags.Variable && this.globals[globalName])
           return this.globals[globalName];
 
-        if (this.enums[globalName])
+        if (filter & reflection.ObjectFlags.Enum && this.enums[globalName])
           return this.enums[globalName];
 
-        if (this.classes[globalName] && !preferTemplate)
+        if (filter & reflection.ObjectFlags.Function && this.functions[globalName])
+          return this.functions[globalName];
+
+        if (filter & reflection.ObjectFlags.FunctionTemplate && this.functionTemplates[globalName])
+          return this.functionTemplates[globalName];
+
+        if (filter & reflection.ObjectFlags.Class && this.classes[globalName])
           return this.classes[globalName];
 
-        if (this.classTemplates[globalName])
+        if (filter & reflection.ObjectFlags.ClassTemplate && this.classTemplates[globalName])
           return this.classTemplates[globalName];
       }
     }
     return null;
+  }
+
+  /** Resolves a list of type arguments to a type arguments map. */
+  resolveTypeArgumentsMap(typeArguments: typescript.TypeNode[], declaration: typescript.FunctionLikeDeclaration | typescript.ClassDeclaration, baseTypeArgumentsMap?: reflection.TypeArgumentsMap): reflection.TypeArgumentsMap {
+    const declarationTypeCount = declaration.typeParameters && declaration.typeParameters.length || 0;
+    if (typeArguments.length !== declarationTypeCount)
+      throw Error("type parameter count mismatch: expected " + declarationTypeCount + " but saw " + typeArguments.length);
+    const map: reflection.TypeArgumentsMap = baseTypeArgumentsMap && Object.create(baseTypeArgumentsMap) || {};
+    for (let i = 0; i < declarationTypeCount; ++i) {
+      const name = typescript.getTextOfNode((<typescript.TypeParameterDeclaration[]>declaration.typeParameters)[i].name);
+      const node = typeArguments[i];
+      const type = baseTypeArgumentsMap && baseTypeArgumentsMap[name] && baseTypeArgumentsMap[name].type || this.resolveType(node, false, baseTypeArgumentsMap) || reflection.voidType; // reports
+      map[name] = { node, type };
+    }
+    return map;
   }
 
   /** Computes the binaryen signature identifier of a reflected type. */
@@ -1417,11 +1511,32 @@ export class Compiler {
     }
     throw Error("unexpected type");
   }
+
+  debugInfo(): string {
+    const sb: string[] = [];
+    sb.push("--- classes ---\n");
+    Object.keys(this.classes).forEach(key => {
+      sb.push(key, ": ", this.classes[key].toString(), "\n");
+    });
+    sb.push("--- class templates ---\n");
+    Object.keys(this.classTemplates).forEach(key => {
+      sb.push(key, ": ", this.classTemplates[key].toString(), "\n");
+    });
+    sb.push("--- functions ---\n");
+    Object.keys(this.functions).forEach(key => {
+      sb.push(key, ": ", this.functions[key].toString(), "\n");
+    });
+    sb.push("--- function templates ---\n");
+    Object.keys(this.functionTemplates).forEach(key => {
+      sb.push(key, ": ", this.functionTemplates[key].toString(), "\n");
+    });
+    return sb.join("");
+  }
 }
 
 export { Compiler as default };
 
 /** Creates a new reflected start function. */
-function createStartFunction(): reflection.Function {
-  return new reflection.Function(".start", new reflection.FunctionTemplate(".start", <typescript.FunctionLikeDeclaration>{}), {}, [], reflection.voidType);
+function createStartFunction(compiler: Compiler): reflection.Function {
+  return new reflection.Function(compiler, ".start", new reflection.FunctionTemplate(compiler, ".start", <typescript.FunctionLikeDeclaration>{}), [], {}, [], reflection.voidType);
 }

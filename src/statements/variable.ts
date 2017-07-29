@@ -24,7 +24,9 @@ export function compileVariableDeclarationList(compiler: Compiler, node: typescr
     let declarationType: reflection.Type;
     if (declaration.type) {
       const declarationTypeName = typescript.getTextOfNode(declaration.type);
-      lastType = declarationType = compiler.currentFunction && compiler.currentFunction.typeArguments[declarationTypeName] && compiler.currentFunction.typeArguments[declarationTypeName].type || compiler.resolveType(declaration.type);
+      lastType = declarationType = compiler.currentFunction && compiler.currentFunction.typeArgumentsMap[declarationTypeName] && compiler.currentFunction.typeArgumentsMap[declarationTypeName].type || compiler.resolveType(declaration.type);
+      if (!declarationType)
+        declarationType = reflection.voidType;
     } else if (lastType) {
       compiler.report(declaration.name, typescript.DiagnosticsEx.Assuming_variable_type_0, lastType.toString());
       declarationType = lastType;

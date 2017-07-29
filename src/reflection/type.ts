@@ -1,6 +1,7 @@
 /** @module assemblyscript/reflection */ /** */
 
 import Class from "./class";
+import * as typescript from "../typescript";
 
 /** Core type kinds including range aliases. */
 export enum TypeKind {
@@ -130,3 +131,16 @@ export const uintptrType64 = new Type(TypeKind.uintptr, 8);
 export const boolType = new Type(TypeKind.bool, 1);
 /** Reflected void type. */
 export const voidType = new Type(TypeKind.void, 0);
+
+/** Interface describing a reflected type argument. */
+export interface TypeArgument {
+  /** Reflected type. */
+  type: Type;
+  /** TypeScript type node. */
+  node: typescript.TypeNode;
+}
+
+/** Interface describing a reflected type arguments map. */
+export interface TypeArgumentsMap {
+  [key: string]: TypeArgument;
+}

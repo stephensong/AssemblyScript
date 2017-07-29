@@ -393,27 +393,23 @@ export function compileAssignmentWithValue(compiler: Compiler, node: typescript.
 
   // identifier = expression
   if (node.left.kind === typescript.SyntaxKind.Identifier) {
-    const reference = compiler.resolveReference(<typescript.Identifier>node.left);
-    if (reference) {
+    const reference = compiler.resolveReference(<typescript.Identifier>node.left, reflection.ObjectFlags.Variable);
+    if (reference instanceof reflection.Variable) {
+      const variable = <reflection.Variable>reference;
+      const expression = compiler.maybeConvertValue(node.right, value, util.getReflectedType(node.right), variable.type, false);
 
-      if (reference instanceof reflection.Variable) {
-        const variable = <reflection.Variable>reference;
-        const expression = compiler.maybeConvertValue(node.right, value, util.getReflectedType(node.right), variable.type, false);
-
-        if (contextualType === reflection.voidType)
-          return variable.isGlobal
-            ? op.setGlobal(variable.name, expression)
-            : op.setLocal(variable.index, expression);
-
-        util.setReflectedType(node, variable.type);
+      if (contextualType === reflection.voidType)
         return variable.isGlobal
-          ? op.block("", [ // emulates teeGlobal
-              op.setGlobal(variable.name, expression),
-              op.getGlobal(variable.name, compiler.typeOf(variable.type))
-            ], compiler.typeOf(variable.type))
-          : op.teeLocal(variable.index, expression);
-      }
+          ? op.setGlobal(variable.name, expression)
+          : op.setLocal(variable.index, expression);
 
+      util.setReflectedType(node, variable.type);
+      return variable.isGlobal
+        ? op.block("", [ // emulates teeGlobal
+            op.setGlobal(variable.name, expression),
+            op.getGlobal(variable.name, compiler.typeOf(variable.type))
+          ], compiler.typeOf(variable.type))
+        : op.teeLocal(variable.index, expression);
     }
 
   } else if (node.left.kind === typescript.SyntaxKind.ElementAccessExpression)

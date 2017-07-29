@@ -1,6 +1,6 @@
 /** @module assemblyscript/reflection */ /** */
 
-// import Compiler from "../compiler";
+import Compiler from "../compiler";
 import Property from "./property";
 import { intType } from "./type";
 import * as typescript from "../typescript";
@@ -8,29 +8,35 @@ import * as typescript from "../typescript";
 /** A reflected enum instance. */
 export class Enum {
 
+  /** Compiler reference. */
+  compiler: Compiler;
   /** Global name. */
   name: string;
   /** Simple name. */
   simpleName: string;
   /** Declaration reference. */
   declaration: typescript.EnumDeclaration;
-  /** Enum values. */
+  /** Enum values by simple name. */
   values: { [key: string]: Property };
 
   /** Constructs a new reflected enum and binds it to its TypeScript declaration. */
-  constructor(name: string, declaration: typescript.EnumDeclaration) {
+  constructor(compiler: Compiler, name: string, declaration: typescript.EnumDeclaration) {
+    this.compiler = compiler;
     this.name = name;
     this.declaration = declaration;
     this.simpleName = typescript.getTextOfNode(this.declaration.name);
-    this.values = {};
-  }
 
-  /** Initializes the enum and its values. */
-  initialize(/* compiler: Compiler */): void {
-    for (let i = 0, k = this.declaration.members.length; i < k; ++i) {
-      const member = this.declaration.members[i];
-      const name = typescript.getTextOfNode(member.name);
-      this.values[name] = new Property(name, member, intType, 0, /* for completeness: */ member.initializer);
+    // register
+    if (compiler.enums[this.name])
+      throw Error("duplicate enum: " + name);
+    compiler.enums[this.name] = this;
+
+    // initialize
+    this.values = {};
+
+    for (const member of this.declaration.members) {
+      const memberName = typescript.getTextOfNode(member.name);
+      this.values[memberName] = new Property(this.compiler, memberName, member, intType, 0, /* for completeness: */ member.initializer);
     }
   }
 

@@ -11,35 +11,53 @@ import * as util from "../util";
 export function compileCall(compiler: Compiler, node: typescript.CallExpression/*, contextualType: reflection.Type*/): binaryen.Expression {
   const op = compiler.module;
 
-  let declaration: typescript.FunctionLikeDeclaration;
-  let thisArg: binaryen.Expression | undefined;
+  // we'll need a reference to the reflected function and, if it is an instance call, evaluate the value of 'this'
+  let instance: reflection.Function | undefined;
+  let template: reflection.FunctionTemplate | undefined;
+  let thisExpression: binaryen.Expression | undefined;
 
-  // Try to resolve the signature of the node: works if it's a call to a global or static function
-  const signature = compiler.checker.getResolvedSignature(node);
-  if (signature && (declaration = <typescript.FunctionLikeDeclaration>signature.declaration)) {
-    // FunctionLikeDeclaration extends SignatureDeclaration
-
-  // Instance method call consisting of thisExpression.methodName
-  } else if (node.expression.kind === typescript.SyntaxKind.PropertyAccessExpression) {
+  // either static (Classname.methodName) or instance (expression.methodName)
+  if (node.expression.kind === typescript.SyntaxKind.PropertyAccessExpression) {
     const accessNode = <typescript.PropertyAccessExpression>node.expression;
     const methodName = typescript.getTextOfNode(accessNode.name);
-    thisArg = compiler.compileExpression(accessNode.expression, compiler.uintptrType);
-    const classType = util.getReflectedType(accessNode.expression);
-    let method: reflection.ClassMethod;
-    if (!classType || !classType.underlyingClass || !(method = classType.underlyingClass.methods[methodName])) {
-      compiler.report(accessNode.name, typescript.DiagnosticsEx.Unresolvable_identifier_0, methodName);
-      return op.unreachable();
+
+    // check for Classname.methodName
+    if (accessNode.expression.kind === typescript.SyntaxKind.Identifier) {
+      const reference = compiler.resolveReference(<typescript.Identifier>accessNode.expression, reflection.ObjectFlags.ClassTemplate);
+      if (reference instanceof reflection.ClassTemplate) {
+        const methodDeclaration = reference.methodDeclarations[methodName];
+        if (methodDeclaration) {
+          const method = compiler.initializeStaticMethod(methodDeclaration);
+          instance = method.instance;
+          template = method.template;
+        } else {
+          compiler.report(accessNode.name, typescript.DiagnosticsEx.Unresolvable_identifier_0, methodName);
+          return op.unreachable();
+        }
+      } // otherwise try next
     }
-    declaration = method.template.declaration;
 
-  // Super constructor call
+    // otherwise expression.methodName
+    if (!template) {
+      thisExpression = compiler.compileExpression(accessNode.expression, compiler.uintptrType);
+      const thisType = util.getReflectedType(accessNode.expression);
+      const underlyingClass = thisType.underlyingClass;
+
+      if (!underlyingClass)
+        throw Error("expected a class type"); // handled by typescript
+
+      instance = underlyingClass.methods[methodName].instance;
+      template = underlyingClass.methods[methodName].template;
+    }
+
+  // super call
   } else if (node.expression.kind === typescript.SyntaxKind.SuperKeyword) {
-    const currentClass = compiler.currentFunction.parent;
+    const thisClass = compiler.currentFunction.parent;
 
-    if (!(currentClass && currentClass.base))
+    if (!(thisClass && thisClass.base))
       throw Error("missing base class"); // handled by typescript
 
-    let baseClass: reflection.Class | undefined = currentClass.base;
+    let baseClass: reflection.Class | undefined = thisClass.base;
     let ctor: reflection.Function | undefined;
     while (baseClass) {
       ctor = baseClass.ctor;
@@ -51,71 +69,57 @@ export function compileCall(compiler: Compiler, node: typescript.CallExpression/
     if (!(ctor && ctor.body))
       return op.nop(); // no explicit parent constructor
 
-    declaration = ctor.declaration;
-    thisArg = op.getLocal(compiler.currentFunction.localsByName.this.index, compiler.typeOf(compiler.uintptrType));
+    instance = ctor;
+    template = ctor.template;
+    thisExpression = op.getLocal(compiler.currentFunction.localsByName.this.index, compiler.typeOf(compiler.uintptrType));
+
+  // top-level function call
+  } else if (node.expression.kind === typescript.SyntaxKind.Identifier) {
+    const reference = <reflection.Function | reflection.FunctionTemplate>compiler.resolveReference(<typescript.Identifier>node.expression, reflection.ObjectFlags.FunctionInclTemplate);
+
+    if (reference instanceof reflection.Function) {
+      instance = reference;
+      template = reference.template;
+
+    } else if (reference instanceof reflection.FunctionTemplate) {
+      template = reference;
+
+    } else {
+      compiler.report(node.expression, typescript.DiagnosticsEx.Unresolvable_identifier_0, typescript.getTextOfNode(node.expression));
+      return op.unreachable();
+    }
 
   } else {
-    compiler.report(node, typescript.DiagnosticsEx.Unsupported_node_kind_0_in_1, node.expression.kind, "expressions.compileCall/1");
+    compiler.report(node.expression, typescript.DiagnosticsEx.Unsupported_node_kind_0_in_1, node.expression.kind, "expressions.compileCall");
     return op.unreachable();
   }
 
-  if (!declaration) {
-    compiler.report(node.expression, typescript.DiagnosticsEx.Unresolvable_identifier_0, typescript.getTextOfNode(node.expression));
-    return op.unreachable();
-  }
-
-  // Inherit type arguments from current class and function
   const typeArgumentsMap: reflection.TypeArgumentsMap = {};
-  const currentFunction = compiler.currentFunction;
-  if (currentFunction) {
-    if (currentFunction.parent)
-      Object.keys(currentFunction.parent.typeArguments).forEach(key => typeArgumentsMap[key] = (<reflection.Class>currentFunction.parent).typeArguments[key]);
-    Object.keys(currentFunction.typeArguments).forEach(key => typeArgumentsMap[key] = currentFunction.typeArguments[key]);
-  }
 
-  // Initialize generic function from type arguments
-  let instance = util.getReflectedFunction(declaration);
+  // at this point, template is known but instance might not
   if (!instance) {
-    const template = util.getReflectedFunctionTemplate(declaration);
-    if (template) {
-      instance = template.resolve(compiler, node.typeArguments || [], typeArgumentsMap);
-      instance.initialize(compiler);
-      if (!template.isGeneric)
-        util.setReflectedFunction(declaration, instance);
-    } else
-      throw Error("missing declaration"); // handled by typescript
+
+    // inherit type arguments from current class and function
+    const currentFunction = compiler.currentFunction;
+    if (currentFunction) {
+      if (currentFunction.parent)
+        Object.keys(currentFunction.parent.typeArgumentsMap).forEach(key => typeArgumentsMap[key] = (<reflection.Class>currentFunction.parent).typeArgumentsMap[key]);
+      Object.keys(currentFunction.typeArgumentsMap).forEach(key => typeArgumentsMap[key] = currentFunction.typeArgumentsMap[key]);
+    }
+
+    instance = template.resolve(node.typeArguments || [], typeArgumentsMap); // reports
   }
 
   util.setReflectedType(node, instance.returnType);
 
-  // Compile built-in call to inline assembly
+  // compile built-in call to inline assembly
   if (builtins.isBuiltin(instance.name, true)) {
 
-    // Validate type arguments
-    let typeArguments: reflection.Type[] = [];
-    if (declaration.typeParameters) {
-
-      if (!node.typeArguments || node.typeArguments.length !== declaration.typeParameters.length)
-        throw Error("invalid number of type arguments"); // handled by typescript
-
-      typeArguments = new Array(node.typeArguments.length);
-      for (let i = 0, k = declaration.typeParameters.length; i < k; ++i) {
-        const argument = node.typeArguments[i];
-        const resolvedType = compiler.resolveType(argument, false, typeArgumentsMap);
-        if (resolvedType)
-          typeArguments[i] = resolvedType;
-        else // otherwise reported by resolveType
-          return op.unreachable();
-      }
-    }
-
-    // Validate arguments
-    if (node.arguments.length !== instance.parameters.length)
-      throw Error("invalid number of arguments"); // handled by typescript
-
     const argumentExpressions: binaryen.Expression[] = new Array(instance.parameters.length);
-    for (let i = 0, k = instance.parameters.length; i < k; ++i)
-      argumentExpressions[i] = compiler.compileExpression(node.arguments[i], instance.parameters[i].type, instance.parameters[i].type, false);
+    for (let i = 0, k = instance.parameters.length; i < k; ++i) {
+      const argumentType = instance.parameters[i].type;
+      argumentExpressions[i] = compiler.compileExpression(node.arguments[i], argumentType, argumentType, false);
+    }
 
     switch (instance.simpleName) {
 
@@ -191,7 +195,7 @@ export function compileCall(compiler: Compiler, node: typescript.CallExpression/
         return builtins.unreachable(compiler);
 
       case "sizeof":
-        return builtins.sizeof(compiler, typeArguments[0]);
+        return builtins.sizeof(compiler, instance.typeArgumentsMap.T.type);
 
       case "unsafe_cast":
         return builtins.unsafe_cast(argumentExpressions[0]);
@@ -206,24 +210,8 @@ export function compileCall(compiler: Compiler, node: typescript.CallExpression/
     }
   }
 
-  const argumentNodes: typescript.Expression[] = [];
-
-  // account for the case where TypeScript was able to resolve the function signature above, in
-  // which case 'this' hasn't been handled yet
-  if (thisArg === undefined && instance.isInstance) {
-    if (node.expression.kind === typescript.SyntaxKind.PropertyAccessExpression)
-      argumentNodes.push((<typescript.PropertyAccessExpression>node.expression).expression);
-    else if (node.expression.kind === typescript.SyntaxKind.SuperKeyword)
-      thisArg = op.getLocal(0, compiler.typeOf(compiler.uintptrType));
-    else {
-      compiler.report(node.expression, typescript.DiagnosticsEx.Unsupported_node_kind_0_in_1, node.expression.kind, "expressions.compileCall/2");
-      return op.unreachable();
-    }
-  }
-
-  Array.prototype.push.apply(argumentNodes, node.arguments);
-
-  return instance.makeCall(compiler, argumentNodes, thisArg);
+  // otherwise call the actual function (compiles it if necessary)
+  return instance.compileCall(node.arguments, thisExpression);
 }
 
 export { compileCall as default };

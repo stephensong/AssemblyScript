@@ -21,7 +21,7 @@ export function compileNew(compiler: Compiler, node: typescript.NewExpression, c
   if (contextualType !== reflection.voidType && !contextualType.underlyingClass)
     throw Error("new used in non-class context"); // handled by typescript
 
-  const reference = compiler.resolveReference(identifierNode);
+  const reference = compiler.resolveReference(identifierNode, reflection.ObjectFlags.ClassInclTemplate);
   let instance: reflection.Class;
 
   if (reference instanceof reflection.ClassTemplate) {
@@ -29,10 +29,9 @@ export function compileNew(compiler: Compiler, node: typescript.NewExpression, c
     let typeArguments: typescript.TypeNode[] | undefined = node.typeArguments;
     if (!typeArguments && contextualType.underlyingClass) { // inherit from contextual class
       const clazz = contextualType.underlyingClass;
-      typeArguments = Object.keys(clazz.typeArguments).map(key => clazz.typeArguments[key].node);
+      typeArguments = Object.keys(clazz.typeArgumentsMap).map(key => clazz.typeArgumentsMap[key].node);
     }
-    instance = template.resolve(compiler, typeArguments || []);
-    instance.initialize(compiler);
+    instance = template.resolve(typeArguments || []);
 
   } else if (reference instanceof reflection.Class) {
     instance = <reflection.Class>reference;
@@ -62,7 +61,7 @@ export function compileNew(compiler: Compiler, node: typescript.NewExpression, c
     return allocate;
 
   // And call it (inserts 'this')
-  return ctor.makeCall(compiler, node.arguments || [], allocate);
+  return ctor.compileCall(node.arguments || [], allocate);
 }
 
 export { compileNew as default };
