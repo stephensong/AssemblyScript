@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>TypeArgument | AssemblyScript API Documentation</title>
+	<title>WasmToWastOptions | AssemblyScript API Documentation</title>
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="../assets/css/main.css">
@@ -54,13 +54,13 @@
 					<a href="../index.html">Globals</a>
 				</li>
 				<li>
-					<a href="../modules/assemblyscript_reflection.html">assemblyscript/reflection</a>
+					<a href="../modules/assemblyscript_util.html">assemblyscript/util</a>
 				</li>
 				<li>
-					<a href="assemblyscript_reflection.typeargument.html">TypeArgument</a>
+					<a href="assemblyscript_util.wasmtowastoptions.html">WasmToWastOptions</a>
 				</li>
 			</ul>
-			<h1>Interface TypeArgument</h1>
+			<h1>Interface WasmToWastOptions</h1>
 		</div>
 	</div>
 </header>
@@ -70,7 +70,7 @@
 			<section class="tsd-panel tsd-comment">
 				<div class="tsd-comment tsd-typography">
 					<div class="lead">
-						<p>Interface describing a reflected type argument.</p>
+						<p>Options for <a href="../modules/assemblyscript_util.html#wasmtowast">wasmToWast</a>.</p>
 					</div>
 				</div>
 			</section>
@@ -78,7 +78,7 @@
 				<h3>Hierarchy</h3>
 				<ul class="tsd-hierarchy">
 					<li>
-						<span class="target">TypeArgument</span>
+						<span class="target">WasmToWastOptions</span>
 					</li>
 				</ul>
 			</section>
@@ -89,8 +89,10 @@
 						<section class="tsd-index-section ">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="assemblyscript_reflection.typeargument.html#node" class="tsd-kind-icon">node</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="assemblyscript_reflection.typeargument.html#type" class="tsd-kind-icon">type</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="assemblyscript_util.wasmtowastoptions.html#foldexprs" class="tsd-kind-icon">fold<wbr>Exprs</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="assemblyscript_util.wasmtowastoptions.html#generatenames" class="tsd-kind-icon">generate<wbr>Names</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="assemblyscript_util.wasmtowastoptions.html#inlineexport" class="tsd-kind-icon">inline<wbr>Export</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="assemblyscript_util.wasmtowastoptions.html#readdebugnames" class="tsd-kind-icon">read<wbr>Debug<wbr>Names</a></li>
 							</ul>
 						</section>
 					</div>
@@ -99,34 +101,44 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Properties</h2>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="node" class="tsd-anchor"></a>
-					<h3>node</h3>
-					<div class="tsd-signature tsd-kind-icon">node<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">typescript.TypeNode</span></div>
+					<a name="foldexprs" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> fold<wbr>Exprs</h3>
+					<div class="tsd-signature tsd-kind-icon">fold<wbr>Exprs<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">true</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">false</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/4687deb/src/reflection/type.ts#L140">reflection/type.ts:140</a></li>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/4687deb/src/util.ts#L140">util.ts:140</a></li>
 						</ul>
 					</aside>
-					<div class="tsd-comment tsd-typography">
-						<div class="lead">
-							<p>TypeScript type node.</p>
-						</div>
-					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="type" class="tsd-anchor"></a>
-					<h3>type</h3>
-					<div class="tsd-signature tsd-kind-icon">type<span class="tsd-signature-symbol">:</span> <a href="../classes/assemblyscript_reflection.type.html" class="tsd-signature-type">Type</a></div>
+					<a name="generatenames" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> generate<wbr>Names</h3>
+					<div class="tsd-signature tsd-kind-icon">generate<wbr>Names<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">true</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">false</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/4687deb/src/reflection/type.ts#L138">reflection/type.ts:138</a></li>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/4687deb/src/util.ts#L142">util.ts:142</a></li>
 						</ul>
 					</aside>
-					<div class="tsd-comment tsd-typography">
-						<div class="lead">
-							<p>Reflected type.</p>
-						</div>
-					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="inlineexport" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> inline<wbr>Export</h3>
+					<div class="tsd-signature tsd-kind-icon">inline<wbr>Export<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">true</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">false</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/4687deb/src/util.ts#L141">util.ts:141</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="readdebugnames" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> read<wbr>Debug<wbr>Names</h3>
+					<div class="tsd-signature tsd-kind-icon">read<wbr>Debug<wbr>Names<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">true</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">false</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/4687deb/src/util.ts#L139">util.ts:139</a></li>
+						</ul>
+					</aside>
 				</section>
 			</section>
 		</div>
@@ -148,7 +160,7 @@
 					<li class=" tsd-kind-external-module">
 						<a href="../modules/assemblyscript_library.html">assemblyscript/library</a>
 					</li>
-					<li class="current tsd-kind-external-module">
+					<li class=" tsd-kind-external-module">
 						<a href="../modules/assemblyscript_reflection.html">assemblyscript/reflection</a>
 					</li>
 					<li class=" tsd-kind-external-module">
@@ -157,135 +169,93 @@
 					<li class=" tsd-kind-external-module">
 						<a href="../modules/assemblyscript_typescript.html">assemblyscript/typescript</a>
 					</li>
-					<li class=" tsd-kind-external-module">
+					<li class="current tsd-kind-external-module">
 						<a href="../modules/assemblyscript_util.html">assemblyscript/util</a>
 					</li>
 				</ul>
 			</nav>
 			<nav class="tsd-navigation secondary menu-sticky">
 				<ul class="before-current">
-					<li class=" tsd-kind-enum tsd-parent-kind-external-module">
-						<a href="../enums/assemblyscript_reflection.objectflags.html" class="tsd-kind-icon">Object<wbr>Flags</a>
-					</li>
-					<li class=" tsd-kind-enum tsd-parent-kind-external-module">
-						<a href="../enums/assemblyscript_reflection.typekind.html" class="tsd-kind-icon">Type<wbr>Kind</a>
-					</li>
-					<li class=" tsd-kind-enum tsd-parent-kind-external-module">
-						<a href="../enums/assemblyscript_reflection.variableflags.html" class="tsd-kind-icon">Variable<wbr>Flags</a>
-					</li>
-					<li class=" tsd-kind-class tsd-parent-kind-external-module">
-						<a href="../classes/assemblyscript_reflection.class.html" class="tsd-kind-icon">Class</a>
-					</li>
-					<li class=" tsd-kind-class tsd-parent-kind-external-module">
-						<a href="../classes/assemblyscript_reflection.classbase.html" class="tsd-kind-icon">Class<wbr>Base</a>
-					</li>
-					<li class=" tsd-kind-class tsd-parent-kind-external-module">
-						<a href="../classes/assemblyscript_reflection.classtemplate.html" class="tsd-kind-icon">Class<wbr>Template</a>
-					</li>
-					<li class=" tsd-kind-class tsd-parent-kind-external-module">
-						<a href="../classes/assemblyscript_reflection.enum.html" class="tsd-kind-icon">Enum</a>
-					</li>
-					<li class=" tsd-kind-class tsd-parent-kind-external-module">
-						<a href="../classes/assemblyscript_reflection.function.html" class="tsd-kind-icon">Function</a>
-					</li>
-					<li class=" tsd-kind-class tsd-parent-kind-external-module">
-						<a href="../classes/assemblyscript_reflection.functionbase.html" class="tsd-kind-icon">Function<wbr>Base</a>
-					</li>
-					<li class=" tsd-kind-class tsd-parent-kind-external-module">
-						<a href="../classes/assemblyscript_reflection.functiontemplate.html" class="tsd-kind-icon">Function<wbr>Template</a>
-					</li>
-					<li class=" tsd-kind-class tsd-parent-kind-external-module">
-						<a href="../classes/assemblyscript_reflection.property.html" class="tsd-kind-icon">Property</a>
-					</li>
-					<li class=" tsd-kind-class tsd-parent-kind-external-module">
-						<a href="../classes/assemblyscript_reflection.type.html" class="tsd-kind-icon">Type</a>
-					</li>
-					<li class=" tsd-kind-class tsd-parent-kind-external-module">
-						<a href="../classes/assemblyscript_reflection.variable.html" class="tsd-kind-icon">Variable</a>
-					</li>
-					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
-						<a href="assemblyscript_reflection.classhandle.html" class="tsd-kind-icon">Class<wbr>Handle</a>
-					</li>
-					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
-						<a href="assemblyscript_reflection.classmethod.html" class="tsd-kind-icon">Class<wbr>Method</a>
-					</li>
-					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
-						<a href="assemblyscript_reflection.functionhandle.html" class="tsd-kind-icon">Function<wbr>Handle</a>
-					</li>
-					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
-						<a href="assemblyscript_reflection.functionparameter.html" class="tsd-kind-icon">Function<wbr>Parameter</a>
-					</li>
 				</ul>
 				<ul class="current">
 					<li class="current tsd-kind-interface tsd-parent-kind-external-module">
-						<a href="assemblyscript_reflection.typeargument.html" class="tsd-kind-icon">Type<wbr>Argument</a>
+						<a href="assemblyscript_util.wasmtowastoptions.html" class="tsd-kind-icon">Wasm<wbr>ToWast<wbr>Options</a>
 						<ul>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="assemblyscript_reflection.typeargument.html#node" class="tsd-kind-icon">node</a>
+								<a href="assemblyscript_util.wasmtowastoptions.html#foldexprs" class="tsd-kind-icon">fold<wbr>Exprs</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="assemblyscript_reflection.typeargument.html#type" class="tsd-kind-icon">type</a>
+								<a href="assemblyscript_util.wasmtowastoptions.html#generatenames" class="tsd-kind-icon">generate<wbr>Names</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="assemblyscript_util.wasmtowastoptions.html#inlineexport" class="tsd-kind-icon">inline<wbr>Export</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="assemblyscript_util.wasmtowastoptions.html#readdebugnames" class="tsd-kind-icon">read<wbr>Debug<wbr>Names</a>
 							</li>
 						</ul>
 					</li>
 				</ul>
 				<ul class="after-current">
 					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
-						<a href="assemblyscript_reflection.typeargumentsmap.html" class="tsd-kind-icon">Type<wbr>Arguments<wbr>Map</a>
-					</li>
-					<li class=" tsd-kind-type-alias tsd-parent-kind-external-module">
-						<a href="../modules/assemblyscript_reflection.html#object" class="tsd-kind-icon">Object</a>
-					</li>
-					<li class=" tsd-kind-variable tsd-parent-kind-external-module">
-						<a href="../modules/assemblyscript_reflection.html#booltype" class="tsd-kind-icon">bool<wbr>Type</a>
-					</li>
-					<li class=" tsd-kind-variable tsd-parent-kind-external-module">
-						<a href="../modules/assemblyscript_reflection.html#bytetype" class="tsd-kind-icon">byte<wbr>Type</a>
-					</li>
-					<li class=" tsd-kind-variable tsd-parent-kind-external-module">
-						<a href="../modules/assemblyscript_reflection.html#doubletype" class="tsd-kind-icon">double<wbr>Type</a>
-					</li>
-					<li class=" tsd-kind-variable tsd-parent-kind-external-module">
-						<a href="../modules/assemblyscript_reflection.html#floattype" class="tsd-kind-icon">float<wbr>Type</a>
-					</li>
-					<li class=" tsd-kind-variable tsd-parent-kind-external-module">
-						<a href="../modules/assemblyscript_reflection.html#inttype" class="tsd-kind-icon">int<wbr>Type</a>
-					</li>
-					<li class=" tsd-kind-variable tsd-parent-kind-external-module">
-						<a href="../modules/assemblyscript_reflection.html#longtype" class="tsd-kind-icon">long<wbr>Type</a>
-					</li>
-					<li class=" tsd-kind-variable tsd-parent-kind-external-module">
-						<a href="../modules/assemblyscript_reflection.html#sbytetype" class="tsd-kind-icon">sbyte<wbr>Type</a>
-					</li>
-					<li class=" tsd-kind-variable tsd-parent-kind-external-module">
-						<a href="../modules/assemblyscript_reflection.html#shorttype" class="tsd-kind-icon">short<wbr>Type</a>
-					</li>
-					<li class=" tsd-kind-variable tsd-parent-kind-external-module">
-						<a href="../modules/assemblyscript_reflection.html#uinttype" class="tsd-kind-icon">uint<wbr>Type</a>
-					</li>
-					<li class=" tsd-kind-variable tsd-parent-kind-external-module">
-						<a href="../modules/assemblyscript_reflection.html#uintptrtype32" class="tsd-kind-icon">uintptr<wbr>Type32</a>
-					</li>
-					<li class=" tsd-kind-variable tsd-parent-kind-external-module">
-						<a href="../modules/assemblyscript_reflection.html#uintptrtype64" class="tsd-kind-icon">uintptr<wbr>Type64</a>
-					</li>
-					<li class=" tsd-kind-variable tsd-parent-kind-external-module">
-						<a href="../modules/assemblyscript_reflection.html#ulongtype" class="tsd-kind-icon">ulong<wbr>Type</a>
-					</li>
-					<li class=" tsd-kind-variable tsd-parent-kind-external-module">
-						<a href="../modules/assemblyscript_reflection.html#ushorttype" class="tsd-kind-icon">ushort<wbr>Type</a>
-					</li>
-					<li class=" tsd-kind-variable tsd-parent-kind-external-module">
-						<a href="../modules/assemblyscript_reflection.html#voidtype" class="tsd-kind-icon">void<wbr>Type</a>
+						<a href="assemblyscript_util.wasttowasmoptions.html" class="tsd-kind-icon">Wast<wbr>ToWasm<wbr>Options</a>
 					</li>
 					<li class=" tsd-kind-function tsd-parent-kind-external-module">
-						<a href="../modules/assemblyscript_reflection.html#isbuiltinarray" class="tsd-kind-icon">is<wbr>Builtin<wbr>Array</a>
+						<a href="../modules/assemblyscript_util.html#getreflectedclass" class="tsd-kind-icon">get<wbr>Reflected<wbr>Class</a>
 					</li>
 					<li class=" tsd-kind-function tsd-parent-kind-external-module">
-						<a href="../modules/assemblyscript_reflection.html#isbuiltinstring" class="tsd-kind-icon">is<wbr>Builtin<wbr>String</a>
+						<a href="../modules/assemblyscript_util.html#getreflectedclasstemplate" class="tsd-kind-icon">get<wbr>Reflected<wbr>Class<wbr>Template</a>
 					</li>
 					<li class=" tsd-kind-function tsd-parent-kind-external-module">
-						<a href="../modules/assemblyscript_reflection.html#patchclassimplementation" class="tsd-kind-icon">patch<wbr>Class<wbr>Implementation</a>
+						<a href="../modules/assemblyscript_util.html#getreflectedfunction" class="tsd-kind-icon">get<wbr>Reflected<wbr>Function</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-external-module">
+						<a href="../modules/assemblyscript_util.html#getreflectedfunctiontemplate" class="tsd-kind-icon">get<wbr>Reflected<wbr>Function<wbr>Template</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-external-module">
+						<a href="../modules/assemblyscript_util.html#getreflectedtype" class="tsd-kind-icon">get<wbr>Reflected<wbr>Type</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-external-module">
+						<a href="../modules/assemblyscript_util.html#isabstract" class="tsd-kind-icon">is<wbr>Abstract</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-external-module">
+						<a href="../modules/assemblyscript_util.html#isconst" class="tsd-kind-icon">is<wbr>Const</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-external-module">
+						<a href="../modules/assemblyscript_util.html#isdeclare" class="tsd-kind-icon">is<wbr>Declare</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-external-module">
+						<a href="../modules/assemblyscript_util.html#isexport" class="tsd-kind-icon">is<wbr>Export</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-external-module">
+						<a href="../modules/assemblyscript_util.html#isstartfunction" class="tsd-kind-icon">is<wbr>Start<wbr>Function</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-external-module">
+						<a href="../modules/assemblyscript_util.html#isstatic" class="tsd-kind-icon">is<wbr>Static</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-external-module">
+						<a href="../modules/assemblyscript_util.html#removemodifier" class="tsd-kind-icon">remove<wbr>Modifier</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-external-module">
+						<a href="../modules/assemblyscript_util.html#setreflectedclass" class="tsd-kind-icon">set<wbr>Reflected<wbr>Class</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-external-module">
+						<a href="../modules/assemblyscript_util.html#setreflectedclasstemplate" class="tsd-kind-icon">set<wbr>Reflected<wbr>Class<wbr>Template</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-external-module">
+						<a href="../modules/assemblyscript_util.html#setreflectedfunction" class="tsd-kind-icon">set<wbr>Reflected<wbr>Function</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-external-module">
+						<a href="../modules/assemblyscript_util.html#setreflectedfunctiontemplate" class="tsd-kind-icon">set<wbr>Reflected<wbr>Function<wbr>Template</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-external-module">
+						<a href="../modules/assemblyscript_util.html#setreflectedtype" class="tsd-kind-icon">set<wbr>Reflected<wbr>Type</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-external-module">
+						<a href="../modules/assemblyscript_util.html#wasmtowast" class="tsd-kind-icon">wasm<wbr>ToWast</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-external-module">
+						<a href="../modules/assemblyscript_util.html#wasttowasm" class="tsd-kind-icon">wast<wbr>ToWasm</a>
 					</li>
 				</ul>
 			</nav>

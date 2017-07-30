@@ -103,6 +103,7 @@
 						<section class="tsd-index-section tsd-is-inherited tsd-is-not-exported">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
+								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited tsd-is-not-exported"><a href="string.html#capacity" class="tsd-kind-icon">capacity</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited tsd-is-not-exported"><a href="string.html#length" class="tsd-kind-icon">length</a></li>
 							</ul>
 						</section>
@@ -110,7 +111,7 @@
 							<h3>Methods</h3>
 							<ul class="tsd-index-list">
 								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited tsd-is-not-exported"><a href="string.html#dispose" class="tsd-kind-icon">dispose</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-not-exported"><a href="string.html#endswidth" class="tsd-kind-icon">ends<wbr>Width</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-not-exported"><a href="string.html#endswith" class="tsd-kind-icon">ends<wbr>With</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited tsd-is-not-exported"><a href="string.html#indexof" class="tsd-kind-icon">index<wbr>Of</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-not-exported"><a href="string.html#indexofstring" class="tsd-kind-icon">index<wbr>OfString</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited tsd-is-not-exported"><a href="string.html#lastindexof" class="tsd-kind-icon">last<wbr>Index<wbr>Of</a></li>
@@ -135,7 +136,7 @@
 							<aside class="tsd-sources">
 								<p>Overrides <a href="array.html">Array</a>.<a href="array.html#constructor">constructor</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/15c5f4b/assembly.d.ts#L116">assembly.d.ts:116</a></li>
+									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/4687deb/assembly.d.ts#L121">assembly.d.ts:121</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -157,18 +158,34 @@
 			<section class="tsd-panel-group tsd-member-group tsd-is-inherited tsd-is-not-exported">
 				<h2>Properties</h2>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-inherited tsd-is-not-exported">
+					<a name="capacity" class="tsd-anchor"></a>
+					<h3>capacity</h3>
+					<div class="tsd-signature tsd-kind-icon">capacity<span class="tsd-signature-symbol">:</span> <a href="../index.html#int" class="tsd-signature-type">int</a></div>
+					<aside class="tsd-sources">
+						<p>Inherited from <a href="array.html">Array</a>.<a href="array.html#capacity">capacity</a></p>
+						<ul>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/4687deb/assembly.d.ts#L78">assembly.d.ts:78</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>Maximum number of elements this array can hold without resizing.</p>
+						</div>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-inherited tsd-is-not-exported">
 					<a name="length" class="tsd-anchor"></a>
 					<h3>length</h3>
 					<div class="tsd-signature tsd-kind-icon">length<span class="tsd-signature-symbol">:</span> <a href="../index.html#int" class="tsd-signature-type">int</a></div>
 					<aside class="tsd-sources">
 						<p>Inherited from <a href="array.html">Array</a>.<a href="array.html#length">length</a></p>
 						<ul>
-							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/15c5f4b/assembly.d.ts#L74">assembly.d.ts:74</a></li>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/4687deb/assembly.d.ts#L80">assembly.d.ts:80</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
 						<div class="lead">
-							<p>Number of array elements.</p>
+							<p>Number of elements this array currently holds.</p>
 						</div>
 					</div>
 				</section>
@@ -185,9 +202,9 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<p>Implementation of <a href="../interfaces/idisposable.html">IDisposable</a>.<a href="../interfaces/idisposable.html#dispose">dispose</a></p>
-								<p>Inherited from <a href="array.html">Array</a>.<a href="array.html#dispose">dispose</a></p>
+								<p>Inherited from <a href="disposable.html">Disposable</a>.<a href="disposable.html#dispose">dispose</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/15c5f4b/assembly.d.ts#L89">assembly.d.ts:89</a></li>
+									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/4687deb/assembly.d.ts#L70">assembly.d.ts:70</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
@@ -195,16 +212,16 @@
 					</ul>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-not-exported">
-					<a name="endswidth" class="tsd-anchor"></a>
-					<h3>ends<wbr>Width</h3>
+					<a name="endswith" class="tsd-anchor"></a>
+					<h3>ends<wbr>With</h3>
 					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-not-exported">
-						<li class="tsd-signature tsd-kind-icon">ends<wbr>Width<span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="../index.html#bool" class="tsd-signature-type">bool</a></li>
+						<li class="tsd-signature tsd-kind-icon">ends<wbr>With<span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="../index.html#bool" class="tsd-signature-type">bool</a></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/15c5f4b/assembly.d.ts#L125">assembly.d.ts:125</a></li>
+									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/4687deb/assembly.d.ts#L130">assembly.d.ts:130</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -233,7 +250,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from <a href="array.html">Array</a>.<a href="array.html#indexof">indexOf</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/15c5f4b/assembly.d.ts#L80">assembly.d.ts:80</a></li>
+									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/4687deb/assembly.d.ts#L86">assembly.d.ts:86</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -264,7 +281,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/15c5f4b/assembly.d.ts#L121">assembly.d.ts:121</a></li>
+									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/4687deb/assembly.d.ts#L126">assembly.d.ts:126</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -293,7 +310,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from <a href="array.html">Array</a>.<a href="array.html#lastindexof">lastIndexOf</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/15c5f4b/assembly.d.ts#L82">assembly.d.ts:82</a></li>
+									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/4687deb/assembly.d.ts#L88">assembly.d.ts:88</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -325,7 +342,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from <a href="array.html">Array</a>.<a href="array.html#reverse">reverse</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/15c5f4b/assembly.d.ts#L86">assembly.d.ts:86</a></li>
+									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/4687deb/assembly.d.ts#L92">assembly.d.ts:92</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -348,7 +365,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from <a href="array.html">Array</a>.<a href="array.html#slice">slice</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/15c5f4b/assembly.d.ts#L84">assembly.d.ts:84</a></li>
+									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/4687deb/assembly.d.ts#L90">assembly.d.ts:90</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -379,7 +396,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/15c5f4b/assembly.d.ts#L123">assembly.d.ts:123</a></li>
+									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/4687deb/assembly.d.ts#L128">assembly.d.ts:128</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -418,13 +435,16 @@
 								<a href="string.html#constructor" class="tsd-kind-icon">constructor</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-inherited tsd-is-not-exported">
+								<a href="string.html#capacity" class="tsd-kind-icon">capacity</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-inherited tsd-is-not-exported">
 								<a href="string.html#length" class="tsd-kind-icon">length</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-inherited tsd-is-not-exported">
 								<a href="string.html#dispose" class="tsd-kind-icon">dispose</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-not-exported">
-								<a href="string.html#endswidth" class="tsd-kind-icon">ends<wbr>Width</a>
+								<a href="string.html#endswith" class="tsd-kind-icon">ends<wbr>With</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-inherited tsd-is-not-exported">
 								<a href="string.html#indexof" class="tsd-kind-icon">index<wbr>Of</a>

@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>VariablesMap | AssemblyScript API Documentation</title>
+	<title>ObjectFlags | AssemblyScript API Documentation</title>
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="../assets/css/main.css">
@@ -57,10 +57,10 @@
 					<a href="../modules/assemblyscript_reflection.html">assemblyscript/reflection</a>
 				</li>
 				<li>
-					<a href="assemblyscript_reflection.variablesmap.html">VariablesMap</a>
+					<a href="assemblyscript_reflection.objectflags.html">ObjectFlags</a>
 				</li>
 			</ul>
-			<h1>Interface VariablesMap</h1>
+			<h1>Enumeration ObjectFlags</h1>
 		</div>
 	</div>
 </header>
@@ -70,26 +70,184 @@
 			<section class="tsd-panel tsd-comment">
 				<div class="tsd-comment tsd-typography">
 					<div class="lead">
-						<p>A reflected variables map.</p>
+						<p>Filter flags for resolving specific reflection objects only.</p>
 					</div>
 				</div>
 			</section>
-			<section class="tsd-panel tsd-hierarchy">
-				<h3>Hierarchy</h3>
-				<ul class="tsd-hierarchy">
-					<li>
-						<span class="target">VariablesMap</span>
-					</li>
-				</ul>
-			</section>
-			<section class="tsd-panel tsd-kind-interface tsd-parent-kind-external-module">
-				<h3 class="tsd-before-signature">Indexable</h3>
-				<div class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">[</span>key: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">]: </span><a href="../classes/assemblyscript_reflection.variable.html" class="tsd-signature-type">Variable</a></div>
-				<div class="tsd-comment tsd-typography">
-					<div class="lead">
-						<p>A reflected variables map.</p>
+			<section class="tsd-panel-group tsd-index-group">
+				<h2>Index</h2>
+				<section class="tsd-panel tsd-index-panel">
+					<div class="tsd-index-content">
+						<section class="tsd-index-section ">
+							<h3>Enumeration members</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-enum-member tsd-parent-kind-enum"><a href="assemblyscript_reflection.objectflags.html#any" class="tsd-kind-icon">Any</a></li>
+								<li class="tsd-kind-enum-member tsd-parent-kind-enum"><a href="assemblyscript_reflection.objectflags.html#anypropertyparent" class="tsd-kind-icon">Any<wbr>Property<wbr>Parent</a></li>
+								<li class="tsd-kind-enum-member tsd-parent-kind-enum"><a href="assemblyscript_reflection.objectflags.html#class" class="tsd-kind-icon">Class</a></li>
+								<li class="tsd-kind-enum-member tsd-parent-kind-enum"><a href="assemblyscript_reflection.objectflags.html#classincltemplate" class="tsd-kind-icon">Class<wbr>Incl<wbr>Template</a></li>
+								<li class="tsd-kind-enum-member tsd-parent-kind-enum"><a href="assemblyscript_reflection.objectflags.html#classtemplate" class="tsd-kind-icon">Class<wbr>Template</a></li>
+								<li class="tsd-kind-enum-member tsd-parent-kind-enum"><a href="assemblyscript_reflection.objectflags.html#enum" class="tsd-kind-icon">Enum</a></li>
+								<li class="tsd-kind-enum-member tsd-parent-kind-enum"><a href="assemblyscript_reflection.objectflags.html#function" class="tsd-kind-icon">Function</a></li>
+								<li class="tsd-kind-enum-member tsd-parent-kind-enum"><a href="assemblyscript_reflection.objectflags.html#functionincltemplate" class="tsd-kind-icon">Function<wbr>Incl<wbr>Template</a></li>
+								<li class="tsd-kind-enum-member tsd-parent-kind-enum"><a href="assemblyscript_reflection.objectflags.html#functiontemplate" class="tsd-kind-icon">Function<wbr>Template</a></li>
+								<li class="tsd-kind-enum-member tsd-parent-kind-enum"><a href="assemblyscript_reflection.objectflags.html#variable" class="tsd-kind-icon">Variable</a></li>
+							</ul>
+						</section>
 					</div>
-				</div>
+				</section>
+			</section>
+			<section class="tsd-panel-group tsd-member-group ">
+				<h2>Enumeration members</h2>
+				<section class="tsd-panel tsd-member tsd-kind-enum-member tsd-parent-kind-enum">
+					<a name="any" class="tsd-anchor"></a>
+					<h3>Any</h3>
+					<div class="tsd-signature tsd-kind-icon">Any<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol"> =&nbsp;-1</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/4687deb/src/reflection.ts#L43">reflection.ts:43</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>Accepts any reflection object.</p>
+						</div>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-enum-member tsd-parent-kind-enum">
+					<a name="anypropertyparent" class="tsd-anchor"></a>
+					<h3>Any<wbr>Property<wbr>Parent</h3>
+					<div class="tsd-signature tsd-kind-icon">Any<wbr>Property<wbr>Parent<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol"> =&nbsp;ObjectFlags.Enum | ObjectFlags.Class</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/4687deb/src/reflection.ts#L40">reflection.ts:40</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>Accepts any valid property parent.</p>
+						</div>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-enum-member tsd-parent-kind-enum">
+					<a name="class" class="tsd-anchor"></a>
+					<h3>Class</h3>
+					<div class="tsd-signature tsd-kind-icon">Class<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol"> =&nbsp;1 &lt;&lt; 2</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/4687deb/src/reflection.ts#L27">reflection.ts:27</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>Accept class instances.</p>
+						</div>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-enum-member tsd-parent-kind-enum">
+					<a name="classincltemplate" class="tsd-anchor"></a>
+					<h3>Class<wbr>Incl<wbr>Template</h3>
+					<div class="tsd-signature tsd-kind-icon">Class<wbr>Incl<wbr>Template<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol"> =&nbsp;ObjectFlags.Class | ObjectFlags.ClassTemplate</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/4687deb/src/reflection.ts#L38">reflection.ts:38</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>Accepts class instances and templates.</p>
+						</div>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-enum-member tsd-parent-kind-enum">
+					<a name="classtemplate" class="tsd-anchor"></a>
+					<h3>Class<wbr>Template</h3>
+					<div class="tsd-signature tsd-kind-icon">Class<wbr>Template<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol"> =&nbsp;1 &lt;&lt; 3</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/4687deb/src/reflection.ts#L29">reflection.ts:29</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>Accept class templates.</p>
+						</div>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-enum-member tsd-parent-kind-enum">
+					<a name="enum" class="tsd-anchor"></a>
+					<h3>Enum</h3>
+					<div class="tsd-signature tsd-kind-icon">Enum<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol"> =&nbsp;1 &lt;&lt; 1</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/4687deb/src/reflection.ts#L25">reflection.ts:25</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>Accept enums.</p>
+						</div>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-enum-member tsd-parent-kind-enum">
+					<a name="function" class="tsd-anchor"></a>
+					<h3>Function</h3>
+					<div class="tsd-signature tsd-kind-icon">Function<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol"> =&nbsp;1 &lt;&lt; 4</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/4687deb/src/reflection.ts#L31">reflection.ts:31</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>Accept function instances.</p>
+						</div>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-enum-member tsd-parent-kind-enum">
+					<a name="functionincltemplate" class="tsd-anchor"></a>
+					<h3>Function<wbr>Incl<wbr>Template</h3>
+					<div class="tsd-signature tsd-kind-icon">Function<wbr>Incl<wbr>Template<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol"> =&nbsp;ObjectFlags.Function | ObjectFlags.FunctionTemplate</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/4687deb/src/reflection.ts#L36">reflection.ts:36</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>Accepts function instances and templates.</p>
+						</div>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-enum-member tsd-parent-kind-enum">
+					<a name="functiontemplate" class="tsd-anchor"></a>
+					<h3>Function<wbr>Template</h3>
+					<div class="tsd-signature tsd-kind-icon">Function<wbr>Template<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol"> =&nbsp;1 &lt;&lt; 5</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/4687deb/src/reflection.ts#L33">reflection.ts:33</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>Accept function templates.</p>
+						</div>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-enum-member tsd-parent-kind-enum">
+					<a name="variable" class="tsd-anchor"></a>
+					<h3>Variable</h3>
+					<div class="tsd-signature tsd-kind-icon">Variable<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol"> =&nbsp;1 &lt;&lt; 0</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/4687deb/src/reflection.ts#L23">reflection.ts:23</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>Accept variables.</p>
+						</div>
+					</div>
+				</section>
 			</section>
 		</div>
 		<div class="col-4 col-menu menu-sticky-wrap menu-highlight">
@@ -100,9 +258,6 @@
 					</li>
 					<li class=" tsd-kind-external-module">
 						<a href="../modules/assemblyscript.html">assemblyscript</a>
-					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="../modules/assemblyscript_binaryen.html">assemblyscript/binaryen</a>
 					</li>
 					<li class=" tsd-kind-external-module">
 						<a href="../modules/assemblyscript_builtins.html">assemblyscript/builtins</a>
@@ -123,17 +278,56 @@
 						<a href="../modules/assemblyscript_typescript.html">assemblyscript/typescript</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="../modules/assemblyscript_wabt.html">assemblyscript/wabt</a>
+						<a href="../modules/assemblyscript_util.html">assemblyscript/util</a>
 					</li>
 				</ul>
 			</nav>
 			<nav class="tsd-navigation secondary menu-sticky">
 				<ul class="before-current">
+				</ul>
+				<ul class="current">
+					<li class="current tsd-kind-enum tsd-parent-kind-external-module">
+						<a href="assemblyscript_reflection.objectflags.html" class="tsd-kind-icon">Object<wbr>Flags</a>
+						<ul>
+							<li class=" tsd-kind-enum-member tsd-parent-kind-enum">
+								<a href="assemblyscript_reflection.objectflags.html#any" class="tsd-kind-icon">Any</a>
+							</li>
+							<li class=" tsd-kind-enum-member tsd-parent-kind-enum">
+								<a href="assemblyscript_reflection.objectflags.html#anypropertyparent" class="tsd-kind-icon">Any<wbr>Property<wbr>Parent</a>
+							</li>
+							<li class=" tsd-kind-enum-member tsd-parent-kind-enum">
+								<a href="assemblyscript_reflection.objectflags.html#class" class="tsd-kind-icon">Class</a>
+							</li>
+							<li class=" tsd-kind-enum-member tsd-parent-kind-enum">
+								<a href="assemblyscript_reflection.objectflags.html#classincltemplate" class="tsd-kind-icon">Class<wbr>Incl<wbr>Template</a>
+							</li>
+							<li class=" tsd-kind-enum-member tsd-parent-kind-enum">
+								<a href="assemblyscript_reflection.objectflags.html#classtemplate" class="tsd-kind-icon">Class<wbr>Template</a>
+							</li>
+							<li class=" tsd-kind-enum-member tsd-parent-kind-enum">
+								<a href="assemblyscript_reflection.objectflags.html#enum" class="tsd-kind-icon">Enum</a>
+							</li>
+							<li class=" tsd-kind-enum-member tsd-parent-kind-enum">
+								<a href="assemblyscript_reflection.objectflags.html#function" class="tsd-kind-icon">Function</a>
+							</li>
+							<li class=" tsd-kind-enum-member tsd-parent-kind-enum">
+								<a href="assemblyscript_reflection.objectflags.html#functionincltemplate" class="tsd-kind-icon">Function<wbr>Incl<wbr>Template</a>
+							</li>
+							<li class=" tsd-kind-enum-member tsd-parent-kind-enum">
+								<a href="assemblyscript_reflection.objectflags.html#functiontemplate" class="tsd-kind-icon">Function<wbr>Template</a>
+							</li>
+							<li class=" tsd-kind-enum-member tsd-parent-kind-enum">
+								<a href="assemblyscript_reflection.objectflags.html#variable" class="tsd-kind-icon">Variable</a>
+							</li>
+						</ul>
+					</li>
+				</ul>
+				<ul class="after-current">
 					<li class=" tsd-kind-enum tsd-parent-kind-external-module">
-						<a href="../enums/assemblyscript_reflection.typekind.html" class="tsd-kind-icon">Type<wbr>Kind</a>
+						<a href="assemblyscript_reflection.typekind.html" class="tsd-kind-icon">Type<wbr>Kind</a>
 					</li>
 					<li class=" tsd-kind-enum tsd-parent-kind-external-module">
-						<a href="../enums/assemblyscript_reflection.variableflags.html" class="tsd-kind-icon">Variable<wbr>Flags</a>
+						<a href="assemblyscript_reflection.variableflags.html" class="tsd-kind-icon">Variable<wbr>Flags</a>
 					</li>
 					<li class=" tsd-kind-class tsd-parent-kind-external-module">
 						<a href="../classes/assemblyscript_reflection.class.html" class="tsd-kind-icon">Class</a>
@@ -166,27 +360,26 @@
 						<a href="../classes/assemblyscript_reflection.variable.html" class="tsd-kind-icon">Variable</a>
 					</li>
 					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
-						<a href="assemblyscript_reflection.classmethod.html" class="tsd-kind-icon">Class<wbr>Method</a>
+						<a href="../interfaces/assemblyscript_reflection.classhandle.html" class="tsd-kind-icon">Class<wbr>Handle</a>
 					</li>
 					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
-						<a href="assemblyscript_reflection.functionparameter.html" class="tsd-kind-icon">Function<wbr>Parameter</a>
+						<a href="../interfaces/assemblyscript_reflection.classmethod.html" class="tsd-kind-icon">Class<wbr>Method</a>
 					</li>
 					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
-						<a href="assemblyscript_reflection.functionsmap.html" class="tsd-kind-icon">Functions<wbr>Map</a>
+						<a href="../interfaces/assemblyscript_reflection.functionhandle.html" class="tsd-kind-icon">Function<wbr>Handle</a>
 					</li>
 					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
-						<a href="assemblyscript_reflection.typeargument.html" class="tsd-kind-icon">Type<wbr>Argument</a>
+						<a href="../interfaces/assemblyscript_reflection.functionparameter.html" class="tsd-kind-icon">Function<wbr>Parameter</a>
 					</li>
 					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
-						<a href="assemblyscript_reflection.typeargumentsmap.html" class="tsd-kind-icon">Type<wbr>Arguments<wbr>Map</a>
+						<a href="../interfaces/assemblyscript_reflection.typeargument.html" class="tsd-kind-icon">Type<wbr>Argument</a>
 					</li>
-				</ul>
-				<ul class="current">
-					<li class="current tsd-kind-interface tsd-parent-kind-external-module">
-						<a href="assemblyscript_reflection.variablesmap.html" class="tsd-kind-icon">Variables<wbr>Map</a>
+					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
+						<a href="../interfaces/assemblyscript_reflection.typeargumentsmap.html" class="tsd-kind-icon">Type<wbr>Arguments<wbr>Map</a>
 					</li>
-				</ul>
-				<ul class="after-current">
+					<li class=" tsd-kind-type-alias tsd-parent-kind-external-module">
+						<a href="../modules/assemblyscript_reflection.html#object" class="tsd-kind-icon">Object</a>
+					</li>
 					<li class=" tsd-kind-variable tsd-parent-kind-external-module">
 						<a href="../modules/assemblyscript_reflection.html#booltype" class="tsd-kind-icon">bool<wbr>Type</a>
 					</li>

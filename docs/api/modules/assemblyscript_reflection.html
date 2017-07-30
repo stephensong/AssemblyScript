@@ -67,7 +67,7 @@
 			<section class="tsd-panel tsd-comment">
 				<div class="tsd-comment tsd-typography">
 					<div class="lead">
-						<p>Reflection components representing the actual WebAssembly output.</p>
+						<p>Reflection components representing the WebAssembly output.</p>
 					</div>
 				</div>
 			</section>
@@ -78,6 +78,7 @@
 						<section class="tsd-index-section ">
 							<h3>Enumerations</h3>
 							<ul class="tsd-index-list">
+								<li class="tsd-kind-enum tsd-parent-kind-external-module"><a href="../enums/assemblyscript_reflection.objectflags.html" class="tsd-kind-icon">Object<wbr>Flags</a></li>
 								<li class="tsd-kind-enum tsd-parent-kind-external-module"><a href="../enums/assemblyscript_reflection.typekind.html" class="tsd-kind-icon">Type<wbr>Kind</a></li>
 								<li class="tsd-kind-enum tsd-parent-kind-external-module"><a href="../enums/assemblyscript_reflection.variableflags.html" class="tsd-kind-icon">Variable<wbr>Flags</a></li>
 							</ul>
@@ -100,12 +101,18 @@
 						<section class="tsd-index-section ">
 							<h3>Interfaces</h3>
 							<ul class="tsd-index-list">
+								<li class="tsd-kind-interface tsd-parent-kind-external-module"><a href="../interfaces/assemblyscript_reflection.classhandle.html" class="tsd-kind-icon">Class<wbr>Handle</a></li>
 								<li class="tsd-kind-interface tsd-parent-kind-external-module"><a href="../interfaces/assemblyscript_reflection.classmethod.html" class="tsd-kind-icon">Class<wbr>Method</a></li>
+								<li class="tsd-kind-interface tsd-parent-kind-external-module"><a href="../interfaces/assemblyscript_reflection.functionhandle.html" class="tsd-kind-icon">Function<wbr>Handle</a></li>
 								<li class="tsd-kind-interface tsd-parent-kind-external-module"><a href="../interfaces/assemblyscript_reflection.functionparameter.html" class="tsd-kind-icon">Function<wbr>Parameter</a></li>
-								<li class="tsd-kind-interface tsd-parent-kind-external-module"><a href="../interfaces/assemblyscript_reflection.functionsmap.html" class="tsd-kind-icon">Functions<wbr>Map</a></li>
 								<li class="tsd-kind-interface tsd-parent-kind-external-module"><a href="../interfaces/assemblyscript_reflection.typeargument.html" class="tsd-kind-icon">Type<wbr>Argument</a></li>
 								<li class="tsd-kind-interface tsd-parent-kind-external-module"><a href="../interfaces/assemblyscript_reflection.typeargumentsmap.html" class="tsd-kind-icon">Type<wbr>Arguments<wbr>Map</a></li>
-								<li class="tsd-kind-interface tsd-parent-kind-external-module"><a href="../interfaces/assemblyscript_reflection.variablesmap.html" class="tsd-kind-icon">Variables<wbr>Map</a></li>
+							</ul>
+						</section>
+						<section class="tsd-index-section ">
+							<h3>Type aliases</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-type-alias tsd-parent-kind-external-module"><a href="assemblyscript_reflection.html#object" class="tsd-kind-icon">Object</a></li>
 							</ul>
 						</section>
 						<section class="tsd-index-section ">
@@ -139,6 +146,24 @@
 				</section>
 			</section>
 			<section class="tsd-panel-group tsd-member-group ">
+				<h2>Type aliases</h2>
+				<section class="tsd-panel tsd-member tsd-kind-type-alias tsd-parent-kind-external-module">
+					<a name="object" class="tsd-anchor"></a>
+					<h3>Object</h3>
+					<div class="tsd-signature tsd-kind-icon">Object<span class="tsd-signature-symbol">:</span> <a href="../classes/assemblyscript_reflection.variable.html" class="tsd-signature-type">Variable</a><span class="tsd-signature-symbol"> | </span><a href="../classes/assemblyscript_reflection.enum.html" class="tsd-signature-type">Enum</a><span class="tsd-signature-symbol"> | </span><a href="../classes/assemblyscript_reflection.function.html" class="tsd-signature-type">Function</a><span class="tsd-signature-symbol"> | </span><a href="../classes/assemblyscript_reflection.functiontemplate.html" class="tsd-signature-type">FunctionTemplate</a><span class="tsd-signature-symbol"> | </span><a href="../classes/assemblyscript_reflection.class.html" class="tsd-signature-type">Class</a><span class="tsd-signature-symbol"> | </span><a href="../classes/assemblyscript_reflection.classtemplate.html" class="tsd-signature-type">ClassTemplate</a></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/4687deb/src/reflection.ts#L17">reflection.ts:17</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>Union type of concrete reflection objects.</p>
+						</div>
+					</div>
+				</section>
+			</section>
+			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Variables</h2>
 				<section class="tsd-panel tsd-member tsd-kind-variable tsd-parent-kind-external-module">
 					<a name="booltype" class="tsd-anchor"></a>
@@ -146,7 +171,7 @@
 					<div class="tsd-signature tsd-kind-icon">bool<wbr>Type<span class="tsd-signature-symbol">:</span> <a href="../classes/assemblyscript_reflection.type.html" class="tsd-signature-type">Type</a><span class="tsd-signature-symbol"> =&nbsp;new Type(TypeKind.bool, 1)</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/15c5f4b/src/reflection/type.ts#L131">reflection/type.ts:131</a></li>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/4687deb/src/reflection/type.ts#L131">reflection/type.ts:131</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -161,7 +186,7 @@
 					<div class="tsd-signature tsd-kind-icon">byte<wbr>Type<span class="tsd-signature-symbol">:</span> <a href="../classes/assemblyscript_reflection.type.html" class="tsd-signature-type">Type</a><span class="tsd-signature-symbol"> =&nbsp;new Type(TypeKind.byte, 1)</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/15c5f4b/src/reflection/type.ts#L109">reflection/type.ts:109</a></li>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/4687deb/src/reflection/type.ts#L109">reflection/type.ts:109</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -176,7 +201,7 @@
 					<div class="tsd-signature tsd-kind-icon">double<wbr>Type<span class="tsd-signature-symbol">:</span> <a href="../classes/assemblyscript_reflection.type.html" class="tsd-signature-type">Type</a><span class="tsd-signature-symbol"> =&nbsp;new Type(TypeKind.double, 8)</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/15c5f4b/src/reflection/type.ts#L125">reflection/type.ts:125</a></li>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/4687deb/src/reflection/type.ts#L125">reflection/type.ts:125</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -191,7 +216,7 @@
 					<div class="tsd-signature tsd-kind-icon">float<wbr>Type<span class="tsd-signature-symbol">:</span> <a href="../classes/assemblyscript_reflection.type.html" class="tsd-signature-type">Type</a><span class="tsd-signature-symbol"> =&nbsp;new Type(TypeKind.float, 4)</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/15c5f4b/src/reflection/type.ts#L123">reflection/type.ts:123</a></li>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/4687deb/src/reflection/type.ts#L123">reflection/type.ts:123</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -206,7 +231,7 @@
 					<div class="tsd-signature tsd-kind-icon">int<wbr>Type<span class="tsd-signature-symbol">:</span> <a href="../classes/assemblyscript_reflection.type.html" class="tsd-signature-type">Type</a><span class="tsd-signature-symbol"> =&nbsp;new Type(TypeKind.int, 4)</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/15c5f4b/src/reflection/type.ts#L115">reflection/type.ts:115</a></li>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/4687deb/src/reflection/type.ts#L115">reflection/type.ts:115</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -221,7 +246,7 @@
 					<div class="tsd-signature tsd-kind-icon">long<wbr>Type<span class="tsd-signature-symbol">:</span> <a href="../classes/assemblyscript_reflection.type.html" class="tsd-signature-type">Type</a><span class="tsd-signature-symbol"> =&nbsp;new Type(TypeKind.long, 8)</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/15c5f4b/src/reflection/type.ts#L119">reflection/type.ts:119</a></li>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/4687deb/src/reflection/type.ts#L119">reflection/type.ts:119</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -236,7 +261,7 @@
 					<div class="tsd-signature tsd-kind-icon">sbyte<wbr>Type<span class="tsd-signature-symbol">:</span> <a href="../classes/assemblyscript_reflection.type.html" class="tsd-signature-type">Type</a><span class="tsd-signature-symbol"> =&nbsp;new Type(TypeKind.sbyte, 1)</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/15c5f4b/src/reflection/type.ts#L107">reflection/type.ts:107</a></li>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/4687deb/src/reflection/type.ts#L107">reflection/type.ts:107</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -251,7 +276,7 @@
 					<div class="tsd-signature tsd-kind-icon">short<wbr>Type<span class="tsd-signature-symbol">:</span> <a href="../classes/assemblyscript_reflection.type.html" class="tsd-signature-type">Type</a><span class="tsd-signature-symbol"> =&nbsp;new Type(TypeKind.short, 2)</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/15c5f4b/src/reflection/type.ts#L111">reflection/type.ts:111</a></li>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/4687deb/src/reflection/type.ts#L111">reflection/type.ts:111</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -266,7 +291,7 @@
 					<div class="tsd-signature tsd-kind-icon">uint<wbr>Type<span class="tsd-signature-symbol">:</span> <a href="../classes/assemblyscript_reflection.type.html" class="tsd-signature-type">Type</a><span class="tsd-signature-symbol"> =&nbsp;new Type(TypeKind.uint, 4)</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/15c5f4b/src/reflection/type.ts#L117">reflection/type.ts:117</a></li>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/4687deb/src/reflection/type.ts#L117">reflection/type.ts:117</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -281,7 +306,7 @@
 					<div class="tsd-signature tsd-kind-icon">uintptr<wbr>Type32<span class="tsd-signature-symbol">:</span> <a href="../classes/assemblyscript_reflection.type.html" class="tsd-signature-type">Type</a><span class="tsd-signature-symbol"> =&nbsp;new Type(TypeKind.uintptr, 4)</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/15c5f4b/src/reflection/type.ts#L127">reflection/type.ts:127</a></li>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/4687deb/src/reflection/type.ts#L127">reflection/type.ts:127</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -296,7 +321,7 @@
 					<div class="tsd-signature tsd-kind-icon">uintptr<wbr>Type64<span class="tsd-signature-symbol">:</span> <a href="../classes/assemblyscript_reflection.type.html" class="tsd-signature-type">Type</a><span class="tsd-signature-symbol"> =&nbsp;new Type(TypeKind.uintptr, 8)</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/15c5f4b/src/reflection/type.ts#L129">reflection/type.ts:129</a></li>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/4687deb/src/reflection/type.ts#L129">reflection/type.ts:129</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -311,7 +336,7 @@
 					<div class="tsd-signature tsd-kind-icon">ulong<wbr>Type<span class="tsd-signature-symbol">:</span> <a href="../classes/assemblyscript_reflection.type.html" class="tsd-signature-type">Type</a><span class="tsd-signature-symbol"> =&nbsp;new Type(TypeKind.ulong, 8)</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/15c5f4b/src/reflection/type.ts#L121">reflection/type.ts:121</a></li>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/4687deb/src/reflection/type.ts#L121">reflection/type.ts:121</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -326,7 +351,7 @@
 					<div class="tsd-signature tsd-kind-icon">ushort<wbr>Type<span class="tsd-signature-symbol">:</span> <a href="../classes/assemblyscript_reflection.type.html" class="tsd-signature-type">Type</a><span class="tsd-signature-symbol"> =&nbsp;new Type(TypeKind.ushort, 2)</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/15c5f4b/src/reflection/type.ts#L113">reflection/type.ts:113</a></li>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/4687deb/src/reflection/type.ts#L113">reflection/type.ts:113</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -341,7 +366,7 @@
 					<div class="tsd-signature tsd-kind-icon">void<wbr>Type<span class="tsd-signature-symbol">:</span> <a href="../classes/assemblyscript_reflection.type.html" class="tsd-signature-type">Type</a><span class="tsd-signature-symbol"> =&nbsp;new Type(TypeKind.void, 0)</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/15c5f4b/src/reflection/type.ts#L133">reflection/type.ts:133</a></li>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/4687deb/src/reflection/type.ts#L133">reflection/type.ts:133</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -363,7 +388,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/15c5f4b/src/reflection/class.ts#L67">reflection/class.ts:67</a></li>
+									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/4687deb/src/reflection/class.ts#L66">reflection/class.ts:66</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -391,7 +416,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/15c5f4b/src/reflection/class.ts#L72">reflection/class.ts:72</a></li>
+									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/4687deb/src/reflection/class.ts#L71">reflection/class.ts:71</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -413,13 +438,13 @@
 					<a name="patchclassimplementation" class="tsd-anchor"></a>
 					<h3>patch<wbr>Class<wbr>Implementation</h3>
 					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-external-module">
-						<li class="tsd-signature tsd-kind-icon">patch<wbr>Class<wbr>Implementation<span class="tsd-signature-symbol">(</span>compiler<span class="tsd-signature-symbol">: </span><a href="../classes/assemblyscript.compiler.html" class="tsd-signature-type">Compiler</a>, declTemplate<span class="tsd-signature-symbol">: </span><a href="../classes/assemblyscript_reflection.classtemplate.html" class="tsd-signature-type">ClassTemplate</a>, implTemplate<span class="tsd-signature-symbol">: </span><a href="../classes/assemblyscript_reflection.classtemplate.html" class="tsd-signature-type">ClassTemplate</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+						<li class="tsd-signature tsd-kind-icon">patch<wbr>Class<wbr>Implementation<span class="tsd-signature-symbol">(</span>declTemplate<span class="tsd-signature-symbol">: </span><a href="../classes/assemblyscript_reflection.classtemplate.html" class="tsd-signature-type">ClassTemplate</a>, implTemplate<span class="tsd-signature-symbol">: </span><a href="../classes/assemblyscript_reflection.classtemplate.html" class="tsd-signature-type">ClassTemplate</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/15c5f4b/src/reflection/class.ts#L300">reflection/class.ts:300</a></li>
+									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/4687deb/src/reflection/class.ts#L383">reflection/class.ts:383</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -429,9 +454,6 @@
 							</div>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
-								<li>
-									<h5>compiler: <a href="../classes/assemblyscript.compiler.html" class="tsd-signature-type">Compiler</a></h5>
-								</li>
 								<li>
 									<h5>declTemplate: <a href="../classes/assemblyscript_reflection.classtemplate.html" class="tsd-signature-type">ClassTemplate</a></h5>
 								</li>
@@ -455,9 +477,6 @@
 						<a href="assemblyscript.html">assemblyscript</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="assemblyscript_binaryen.html">assemblyscript/binaryen</a>
-					</li>
-					<li class=" tsd-kind-external-module">
 						<a href="assemblyscript_builtins.html">assemblyscript/builtins</a>
 					</li>
 					<li class=" tsd-kind-external-module">
@@ -476,12 +495,15 @@
 						<a href="assemblyscript_typescript.html">assemblyscript/typescript</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="assemblyscript_wabt.html">assemblyscript/wabt</a>
+						<a href="assemblyscript_util.html">assemblyscript/util</a>
 					</li>
 				</ul>
 			</nav>
 			<nav class="tsd-navigation secondary menu-sticky">
 				<ul class="before-current">
+					<li class=" tsd-kind-enum tsd-parent-kind-external-module">
+						<a href="../enums/assemblyscript_reflection.objectflags.html" class="tsd-kind-icon">Object<wbr>Flags</a>
+					</li>
 					<li class=" tsd-kind-enum tsd-parent-kind-external-module">
 						<a href="../enums/assemblyscript_reflection.typekind.html" class="tsd-kind-icon">Type<wbr>Kind</a>
 					</li>
@@ -519,13 +541,16 @@
 						<a href="../classes/assemblyscript_reflection.variable.html" class="tsd-kind-icon">Variable</a>
 					</li>
 					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
+						<a href="../interfaces/assemblyscript_reflection.classhandle.html" class="tsd-kind-icon">Class<wbr>Handle</a>
+					</li>
+					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
 						<a href="../interfaces/assemblyscript_reflection.classmethod.html" class="tsd-kind-icon">Class<wbr>Method</a>
 					</li>
 					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
-						<a href="../interfaces/assemblyscript_reflection.functionparameter.html" class="tsd-kind-icon">Function<wbr>Parameter</a>
+						<a href="../interfaces/assemblyscript_reflection.functionhandle.html" class="tsd-kind-icon">Function<wbr>Handle</a>
 					</li>
 					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
-						<a href="../interfaces/assemblyscript_reflection.functionsmap.html" class="tsd-kind-icon">Functions<wbr>Map</a>
+						<a href="../interfaces/assemblyscript_reflection.functionparameter.html" class="tsd-kind-icon">Function<wbr>Parameter</a>
 					</li>
 					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
 						<a href="../interfaces/assemblyscript_reflection.typeargument.html" class="tsd-kind-icon">Type<wbr>Argument</a>
@@ -533,8 +558,8 @@
 					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
 						<a href="../interfaces/assemblyscript_reflection.typeargumentsmap.html" class="tsd-kind-icon">Type<wbr>Arguments<wbr>Map</a>
 					</li>
-					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
-						<a href="../interfaces/assemblyscript_reflection.variablesmap.html" class="tsd-kind-icon">Variables<wbr>Map</a>
+					<li class=" tsd-kind-type-alias tsd-parent-kind-external-module">
+						<a href="assemblyscript_reflection.html#object" class="tsd-kind-icon">Object</a>
 					</li>
 					<li class=" tsd-kind-variable tsd-parent-kind-external-module">
 						<a href="assemblyscript_reflection.html#booltype" class="tsd-kind-icon">bool<wbr>Type</a>

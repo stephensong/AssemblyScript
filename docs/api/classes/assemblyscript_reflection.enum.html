@@ -95,15 +95,16 @@
 						<section class="tsd-index-section ">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="assemblyscript_reflection.enum.html#compiler" class="tsd-kind-icon">compiler</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-class"><a href="assemblyscript_reflection.enum.html#declaration" class="tsd-kind-icon">declaration</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-class"><a href="assemblyscript_reflection.enum.html#name" class="tsd-kind-icon">name</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="assemblyscript_reflection.enum.html#simplename" class="tsd-kind-icon">simple<wbr>Name</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-class"><a href="assemblyscript_reflection.enum.html#values" class="tsd-kind-icon">values</a></li>
 							</ul>
 						</section>
 						<section class="tsd-index-section ">
 							<h3>Methods</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-method tsd-parent-kind-class"><a href="assemblyscript_reflection.enum.html#initialize" class="tsd-kind-icon">initialize</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="assemblyscript_reflection.enum.html#tostring" class="tsd-kind-icon">to<wbr>String</a></li>
 							</ul>
 						</section>
@@ -116,13 +117,13 @@
 					<a name="constructor" class="tsd-anchor"></a>
 					<h3>constructor</h3>
 					<ul class="tsd-signatures tsd-kind-constructor tsd-parent-kind-class">
-						<li class="tsd-signature tsd-kind-icon">new <wbr>Enum<span class="tsd-signature-symbol">(</span>name<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, declaration<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">typescript.EnumDeclaration</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="assemblyscript_reflection.enum.html" class="tsd-signature-type">Enum</a></li>
+						<li class="tsd-signature tsd-kind-icon">new <wbr>Enum<span class="tsd-signature-symbol">(</span>compiler<span class="tsd-signature-symbol">: </span><a href="assemblyscript.compiler.html" class="tsd-signature-type">Compiler</a>, name<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, declaration<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">typescript.EnumDeclaration</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="assemblyscript_reflection.enum.html" class="tsd-signature-type">Enum</a></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/15c5f4b/src/reflection/enum.ts#L16">reflection/enum.ts:16</a></li>
+									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/4687deb/src/reflection/enum.ts#L20">reflection/enum.ts:20</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -132,6 +133,9 @@
 							</div>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
+								<li>
+									<h5>compiler: <a href="assemblyscript.compiler.html" class="tsd-signature-type">Compiler</a></h5>
+								</li>
 								<li>
 									<h5>name: <span class="tsd-signature-type">string</span></h5>
 								</li>
@@ -147,12 +151,27 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Properties</h2>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="compiler" class="tsd-anchor"></a>
+					<h3>compiler</h3>
+					<div class="tsd-signature tsd-kind-icon">compiler<span class="tsd-signature-symbol">:</span> <a href="assemblyscript.compiler.html" class="tsd-signature-type">Compiler</a></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/4687deb/src/reflection/enum.ts#L12">reflection/enum.ts:12</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>Compiler reference.</p>
+						</div>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="declaration" class="tsd-anchor"></a>
 					<h3>declaration</h3>
 					<div class="tsd-signature tsd-kind-icon">declaration<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">typescript.EnumDeclaration</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/15c5f4b/src/reflection/enum.ts#L14">reflection/enum.ts:14</a></li>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/4687deb/src/reflection/enum.ts#L18">reflection/enum.ts:18</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -167,7 +186,7 @@
 					<div class="tsd-signature tsd-kind-icon">name<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/15c5f4b/src/reflection/enum.ts#L12">reflection/enum.ts:12</a></li>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/4687deb/src/reflection/enum.ts#L14">reflection/enum.ts:14</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -177,17 +196,32 @@
 					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="simplename" class="tsd-anchor"></a>
+					<h3>simple<wbr>Name</h3>
+					<div class="tsd-signature tsd-kind-icon">simple<wbr>Name<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/4687deb/src/reflection/enum.ts#L16">reflection/enum.ts:16</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>Simple name.</p>
+						</div>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="values" class="tsd-anchor"></a>
 					<h3>values</h3>
 					<div class="tsd-signature tsd-kind-icon">values<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/15c5f4b/src/reflection/enum.ts#L16">reflection/enum.ts:16</a></li>
+							<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/4687deb/src/reflection/enum.ts#L20">reflection/enum.ts:20</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
 						<div class="lead">
-							<p>Enum values.</p>
+							<p>Enum values by simple name.</p>
 						</div>
 					</div>
 					<div class="tsd-type-declaration">
@@ -203,34 +237,6 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Methods</h2>
 				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
-					<a name="initialize" class="tsd-anchor"></a>
-					<h3>initialize</h3>
-					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-						<li class="tsd-signature tsd-kind-icon">initialize<span class="tsd-signature-symbol">(</span>compiler<span class="tsd-signature-symbol">: </span><a href="assemblyscript.compiler.html" class="tsd-signature-type">Compiler</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
-					</ul>
-					<ul class="tsd-descriptions">
-						<li class="tsd-description">
-							<aside class="tsd-sources">
-								<ul>
-									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/15c5f4b/src/reflection/enum.ts#L26">reflection/enum.ts:26</a></li>
-								</ul>
-							</aside>
-							<div class="tsd-comment tsd-typography">
-								<div class="lead">
-									<p>Initializes the enum and its values.</p>
-								</div>
-							</div>
-							<h4 class="tsd-parameters-title">Parameters</h4>
-							<ul class="tsd-parameters">
-								<li>
-									<h5>compiler: <a href="assemblyscript.compiler.html" class="tsd-signature-type">Compiler</a></h5>
-								</li>
-							</ul>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
-						</li>
-					</ul>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
 					<a name="tostring" class="tsd-anchor"></a>
 					<h3>to<wbr>String</h3>
 					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -240,7 +246,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/15c5f4b/src/reflection/enum.ts#L34">reflection/enum.ts:34</a></li>
+									<li>Defined in <a href="https://github.com/dcodeIO/AssemblyScript/blob/4687deb/src/reflection/enum.ts#L43">reflection/enum.ts:43</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span></h4>
@@ -257,9 +263,6 @@
 					</li>
 					<li class=" tsd-kind-external-module">
 						<a href="../modules/assemblyscript.html">assemblyscript</a>
-					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="../modules/assemblyscript_binaryen.html">assemblyscript/binaryen</a>
 					</li>
 					<li class=" tsd-kind-external-module">
 						<a href="../modules/assemblyscript_builtins.html">assemblyscript/builtins</a>
@@ -280,12 +283,15 @@
 						<a href="../modules/assemblyscript_typescript.html">assemblyscript/typescript</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="../modules/assemblyscript_wabt.html">assemblyscript/wabt</a>
+						<a href="../modules/assemblyscript_util.html">assemblyscript/util</a>
 					</li>
 				</ul>
 			</nav>
 			<nav class="tsd-navigation secondary menu-sticky">
 				<ul class="before-current">
+					<li class=" tsd-kind-enum tsd-parent-kind-external-module">
+						<a href="../enums/assemblyscript_reflection.objectflags.html" class="tsd-kind-icon">Object<wbr>Flags</a>
+					</li>
 					<li class=" tsd-kind-enum tsd-parent-kind-external-module">
 						<a href="../enums/assemblyscript_reflection.typekind.html" class="tsd-kind-icon">Type<wbr>Kind</a>
 					</li>
@@ -310,16 +316,19 @@
 								<a href="assemblyscript_reflection.enum.html#constructor" class="tsd-kind-icon">constructor</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="assemblyscript_reflection.enum.html#compiler" class="tsd-kind-icon">compiler</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
 								<a href="assemblyscript_reflection.enum.html#declaration" class="tsd-kind-icon">declaration</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-class">
 								<a href="assemblyscript_reflection.enum.html#name" class="tsd-kind-icon">name</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-class">
-								<a href="assemblyscript_reflection.enum.html#values" class="tsd-kind-icon">values</a>
+								<a href="assemblyscript_reflection.enum.html#simplename" class="tsd-kind-icon">simple<wbr>Name</a>
 							</li>
-							<li class=" tsd-kind-method tsd-parent-kind-class">
-								<a href="assemblyscript_reflection.enum.html#initialize" class="tsd-kind-icon">initialize</a>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="assemblyscript_reflection.enum.html#values" class="tsd-kind-icon">values</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class">
 								<a href="assemblyscript_reflection.enum.html#tostring" class="tsd-kind-icon">to<wbr>String</a>
@@ -347,13 +356,16 @@
 						<a href="assemblyscript_reflection.variable.html" class="tsd-kind-icon">Variable</a>
 					</li>
 					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
+						<a href="../interfaces/assemblyscript_reflection.classhandle.html" class="tsd-kind-icon">Class<wbr>Handle</a>
+					</li>
+					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
 						<a href="../interfaces/assemblyscript_reflection.classmethod.html" class="tsd-kind-icon">Class<wbr>Method</a>
 					</li>
 					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
-						<a href="../interfaces/assemblyscript_reflection.functionparameter.html" class="tsd-kind-icon">Function<wbr>Parameter</a>
+						<a href="../interfaces/assemblyscript_reflection.functionhandle.html" class="tsd-kind-icon">Function<wbr>Handle</a>
 					</li>
 					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
-						<a href="../interfaces/assemblyscript_reflection.functionsmap.html" class="tsd-kind-icon">Functions<wbr>Map</a>
+						<a href="../interfaces/assemblyscript_reflection.functionparameter.html" class="tsd-kind-icon">Function<wbr>Parameter</a>
 					</li>
 					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
 						<a href="../interfaces/assemblyscript_reflection.typeargument.html" class="tsd-kind-icon">Type<wbr>Argument</a>
@@ -361,8 +373,8 @@
 					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
 						<a href="../interfaces/assemblyscript_reflection.typeargumentsmap.html" class="tsd-kind-icon">Type<wbr>Arguments<wbr>Map</a>
 					</li>
-					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
-						<a href="../interfaces/assemblyscript_reflection.variablesmap.html" class="tsd-kind-icon">Variables<wbr>Map</a>
+					<li class=" tsd-kind-type-alias tsd-parent-kind-external-module">
+						<a href="../modules/assemblyscript_reflection.html#object" class="tsd-kind-icon">Object</a>
 					</li>
 					<li class=" tsd-kind-variable tsd-parent-kind-external-module">
 						<a href="../modules/assemblyscript_reflection.html#booltype" class="tsd-kind-icon">bool<wbr>Type</a>
