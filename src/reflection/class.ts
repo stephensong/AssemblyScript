@@ -326,6 +326,8 @@ export class ClassTemplate extends ClassBase {
           this.ctorDeclaration = ctorDeclaration;
           break;
         }
+        case typescript.SyntaxKind.SemicolonClassElement: // ignore
+          break;
         default:
           this.compiler.report(member, typescript.DiagnosticsEx.Unsupported_node_kind_0_in_1, member.kind, "reflection.ClassTemplate#constructor");
       }

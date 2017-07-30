@@ -630,7 +630,7 @@ export class Compiler {
     // obtain or create the template
     let template = this.functionTemplates[name];
     if (!template)
-      template = new reflection.FunctionTemplate(this, name, node);
+      template = new reflection.FunctionTemplate(this, name, node/*, parent is irrelevant here */);
 
     // instantiate it if applicable
     let instance: reflection.Function | undefined;
@@ -668,7 +668,7 @@ export class Compiler {
     // obtain or create the template
     let template = this.functionTemplates[name];
     if (!template)
-      template = new reflection.FunctionTemplate(this, name, node);
+      template = new reflection.FunctionTemplate(this, name, node, parent);
 
     // instantiate it if applicable
     let instance: reflection.Function | undefined;

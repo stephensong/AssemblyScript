@@ -241,10 +241,13 @@ export class FunctionTemplate extends FunctionBase {
   declaration: typescript.FunctionLikeDeclaration;
   /** So far resolved instances by global name. */
   instances: { [key: string]: Function };
+  /** Parent class, if any. */
+  parent: Class | undefined;
 
   /** Constructs a new reflected function template and binds it to its TypeScript declaration. */
-  constructor(compiler: Compiler, name: string, declaration: typescript.FunctionLikeDeclaration) {
+  constructor(compiler: Compiler, name: string, declaration: typescript.FunctionLikeDeclaration, parent?: Class) {
     super(compiler, name, declaration);
+    this.parent = parent;
 
     // register
     if (compiler.functionTemplates[this.name])

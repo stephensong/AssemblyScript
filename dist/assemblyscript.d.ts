@@ -1022,8 +1022,10 @@ declare module 'assemblyscript/reflection/function' {
       instances: {
           [key: string]: Function;
       };
+      /** Parent class, if any. */
+      parent: Class | undefined;
       /** Constructs a new reflected function template and binds it to its TypeScript declaration. */
-      constructor(compiler: Compiler, name: string, declaration: typescript.FunctionLikeDeclaration);
+      constructor(compiler: Compiler, name: string, declaration: typescript.FunctionLikeDeclaration, parent?: Class);
       /** Resolves this possibly generic function against the provided type arguments. */
       resolve(typeArguments: typescript.TypeNode[], typeArgumentsMap?: TypeArgumentsMap): Function;
   }

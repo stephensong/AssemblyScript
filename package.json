@@ -1,7 +1,7 @@
 {
   "name": "assemblyscript",
   "description": "A subset of TypeScript that compiles to WebAssembly.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": "Daniel Wirtz <dcode+assemblyscript@dcode.io>",
   "license": "Apache-2.0",
   "repository": {
@@ -68,7 +68,7 @@
     "tape": "^4.7.0",
     "ts-node": "^3.3.0",
     "tslint": "^5.5.0",
-    "typedoc": "^0.7.2",
+    "typedoc": "^0.8.0",
     "typedoc-plugin-external-module-name": "github:dcodeIO/typedoc-plugin-external-module-name",
     "typescript": "^2.4.2",
     "vinyl-buffer": "^1.0.0",

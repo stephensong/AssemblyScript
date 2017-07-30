@@ -94,10 +94,9 @@ export function compileCall(compiler: Compiler, node: typescript.CallExpression/
     return op.unreachable();
   }
 
-  const typeArgumentsMap: reflection.TypeArgumentsMap = {};
-
   // at this point, template is known but instance might not
   if (!instance) {
+    const typeArgumentsMap: reflection.TypeArgumentsMap = {};
 
     // inherit type arguments from current class and function
     const currentFunction = compiler.currentFunction;
@@ -106,6 +105,10 @@ export function compileCall(compiler: Compiler, node: typescript.CallExpression/
         Object.keys(currentFunction.parent.typeArgumentsMap).forEach(key => typeArgumentsMap[key] = (<reflection.Class>currentFunction.parent).typeArgumentsMap[key]);
       Object.keys(currentFunction.typeArgumentsMap).forEach(key => typeArgumentsMap[key] = currentFunction.typeArgumentsMap[key]);
     }
+
+    // but always prefer bound parent arguments, if applicable
+    if (template.parent)
+      Object.keys(template.parent.typeArgumentsMap).forEach(key => typeArgumentsMap[key] = (<reflection.Class>(<reflection.FunctionTemplate>template).parent).typeArgumentsMap[key]);
 
     instance = template.resolve(node.typeArguments || [], typeArgumentsMap); // reports
   }
