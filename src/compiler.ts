@@ -852,7 +852,14 @@ export class Compiler {
     if (instance.isImport && typescript.getSourceFileOfNode(instance.declaration) === this.libraryFile)
       throw Error("cannot compile declared library function " + instance);
 
-    // Handle imports
+    // register signature
+    if (!instance.binaryenSignature) {
+      instance.binaryenSignature = this.module.getFunctionTypeBySignature(instance.binaryenReturnType, instance.binaryenParameterTypes);
+      if (!instance.binaryenSignature)
+        instance.binaryenSignature = this.module.addFunctionType(instance.binaryenSignatureId, instance.binaryenReturnType, instance.binaryenParameterTypes);
+    }
+
+    // handle imports
     if (instance.isImport) {
       if (instance.imported)
         throw Error("duplicate compilation of imported function " + instance);
@@ -865,7 +872,7 @@ export class Compiler {
     } else if (instance.compiled)
       throw Error("duplicate compilation of function " + instance);
 
-    // Otherwise compile
+    // otherwise compile
     if (!instance.body)
       throw Error("cannot compile a function without a body: " + instance.name);
 

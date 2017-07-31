@@ -111,11 +111,11 @@ export class Function extends FunctionBase {
   binaryenReturnType: binaryen.Type;
   /** Binaryen signature id, for example "iiv". */
   binaryenSignatureId: string;
-  /** Binaryen signature reference. */
-  binaryenSignature: binaryen.Signature;
 
   // Set on compilation
 
+  /** Binaryen signature reference. */
+  binaryenSignature: binaryen.Signature;
   /** Whether this function has already been compiled. */
   compiled: boolean = false;
   /** Whether this function has been imported. */
@@ -163,9 +163,6 @@ export class Function extends FunctionBase {
     ids.push(this.compiler.identifierOf(this.returnType));
 
     this.binaryenSignatureId = ids.join("");
-    this.binaryenSignature = this.compiler.module.getFunctionTypeBySignature(this.binaryenReturnType, this.binaryenParameterTypes);
-    if (!this.binaryenSignature)
-      this.binaryenSignature = this.compiler.module.addFunctionType(this.binaryenSignatureId, this.binaryenReturnType, this.binaryenParameterTypes);
   }
 
   /** Gets the current break label for use with binaryen loops and blocks. */
