@@ -146,7 +146,7 @@ export function createCompilerHost(moduleSearchLocations: string[], entryFileSou
   function getSourceFile(fileName: string, languageVersion: ScriptTarget, onError?: (message: string) => void): SourceFile {
     if (files[fileName])
       return files[fileName];
-    const sourceText = sys.readFile(fileName);
+    const sourceText = /[\/\\]assembly\.d\.ts$/.test(fileName) ? "" : sys.readFile(fileName);
     if (sourceText === undefined && onError)
       onError("file not found: " + fileName);
     return files[fileName] = createSourceFile(fileName, sourceText || "", languageVersion);
