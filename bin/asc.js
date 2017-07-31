@@ -90,9 +90,9 @@ function main(args, callback) {
       var cmd = " --" + key;
       if (opt.aliases && opt.aliases.length && opt.aliases[0].length === 1)
         cmd += ", -" + opt.aliases[0];
-      while (cmd.length < 20)
+      while (cmd.length < 18)
         cmd += " ";
-      return cmd + opt.desc.replace(/\n/g, "\n                    ") + "\n";
+      return cmd + "  " + opt.desc.replace(/\n/g, "\n                    ") + "\n";
     })).join("\n").replace(/\[default\]/g, chalk.gray("[default]")));
     return callback(argv.help ? ESUCCESS : EUSAGE);
   }
@@ -101,7 +101,9 @@ function main(args, callback) {
   var wasmModule = Compiler.compileFile(files[0], {
     silent: !!argv.quiet,
     target: argv.target,
-    memoryModel: argv.memoryModel
+    memoryModel: argv.memoryModel,
+    noTreeShaking: !!argv.noTreeShaking,
+    noImplicitConversion: !!argv.noImplicitConversion
   });
 
   // bail out if that didn't work

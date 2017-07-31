@@ -18,12 +18,14 @@ import * as util from "./util";
 export interface CompilerOptions {
   /** Whether compilation shall be performed in silent mode without writing to console. Defaults to `false`. */
   silent?: boolean;
-  /** Whether to use built-in tree-shaking. Defaults to `true`. Disable this when building a dynamically linked library. */
-  treeShaking?: boolean;
   /** Specifies the target architecture. Defaults to {@link CompilerTarget.WASM32}. */
   target?: CompilerTarget | "wasm32" | "wasm64";
   /** Specifies the memory model to use. Defaults to {@link CompilerMemoryModel.MALLOC}. */
   memoryModel?: CompilerMemoryModel | "malloc" | "exportmalloc" | "importmalloc" | "bare";
+  /** Whether to disable built-in tree-shaking. Defaults to `false`. */
+  noTreeShaking?: boolean;
+  /** Whether to disallow implicit type conversions. Defaults to `false`. */
+  noImplicitConversion?: boolean;
 }
 
 /** Compiler target. */
@@ -711,7 +713,7 @@ export class Compiler {
           case typescript.SyntaxKind.FunctionDeclaration:
           {
             const declaration = <typescript.FunctionDeclaration>statement;
-            if (util.isExport(declaration) || util.isStartFunction(declaration) || this.options.treeShaking === false) {
+            if (util.isExport(declaration) || util.isStartFunction(declaration) || this.options.noTreeShaking) {
               const instance = util.getReflectedFunction(declaration);
               if (instance && !instance.compiled) // otherwise generic: compiled once type arguments are known
                 this.compileFunction(instance);
@@ -965,7 +967,7 @@ export class Compiler {
         case typescript.SyntaxKind.MethodDeclaration:
         {
           const methodDeclaration = <typescript.ConstructorDeclaration | typescript.MethodDeclaration>member;
-          if (util.isExport(methodDeclaration, true) || this.options.treeShaking === false) {
+          if (util.isExport(methodDeclaration, true) || this.options.noTreeShaking) {
             const functionInstance = util.getReflectedFunction(methodDeclaration);
             if (functionInstance && !functionInstance.compiled) // otherwise generic: compiled once type arguments are known
               this.compileFunction(functionInstance);
@@ -1011,9 +1013,6 @@ export class Compiler {
 
   /** Wraps an expression with a conversion where necessary. */
   maybeConvertValue(node: typescript.Expression, expr: binaryen.Expression, fromType: reflection.Type, toType: reflection.Type, explicit: boolean): binaryen.Expression {
-    if (fromType.kind === toType.kind)
-      return expr;
-
     const compiler = this;
     const op = this.module;
 
@@ -1021,6 +1020,19 @@ export class Compiler {
       compiler.report(node, typescript.DiagnosticsEx.Conversion_from_0_to_1_requires_an_explicit_cast, fromType.toString(), toType.toString());
       explicit = true; // report this only once for the topmost node
     }
+
+    // no conversion required
+    if (fromType.kind === toType.kind) {
+
+      if (fromType.kind === reflection.TypeKind.uintptr && fromType.underlyingClass !== toType.underlyingClass)
+        compiler.report(node, typescript.DiagnosticsEx.Types_0_and_1_are_incompatible, toType.underlyingClass ? toType.underlyingClass.toString() : "uintptr", fromType.underlyingClass ? fromType.underlyingClass.toString() : "uintptr");
+
+      return expr;
+    }
+
+    // possibly disallowed implicit conversion
+    if (!explicit && this.options.noImplicitConversion)
+      illegalImplicitConversion();
 
     if (!explicit) {
 

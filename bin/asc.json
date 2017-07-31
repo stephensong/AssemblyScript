@@ -49,6 +49,18 @@
     "type": "string",
     "aliases": [ "textfile", "text-file", "textOut", "textout", "text-out" ]
   },
+  "noTreeShaking": {
+    "desc": "Whether to disable built-in tree-shaking.",
+    "type": "boolean",
+    "aliases": [ "no-tree-shaking" ],
+    "default": false
+  },
+  "noImplicitConversion": {
+    "desc": "Whether to disallow implicit type conversions.",
+    "type": "boolean",
+    "aliases": [ "no-implicit-conversion" ],
+    "default": false
+  },
   "help": {
     "desc": "Displays this help message.",
     "type": "boolean",

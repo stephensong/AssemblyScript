@@ -353,6 +353,10 @@ Options:
 
  --textFile         Can be used to save text format alongside a binary in one command.
 
+ --noTreeShaking    Whether to disable built-in tree-shaking.
+
+ --noImplicitConversion  Whether to disallow implicit type conversions.
+
  --help, -h         Displays this help message.
 ```
 
@@ -377,12 +381,14 @@ It's also possible to use the API programmatically:
 
   * **silent**: `boolean`<br />
     Whether compilation shall be performed in silent mode without writing to console. Defaults to `false`.
-  * **treeShaking**: `boolean`<br />
-    Whether to use built-in tree-shaking. Defaults to `true`. Disable this when building a dynamically linked library.
   * **target**: `CompilerTarget | string`<br />
     Specifies the target architecture. Defaults to `CompilerTarget.WASM32`.
   * **memoryModel**: `CompilerMemoryModel | string`<br />
     Specifies the memory model to use. Defaults to `CompilerMemoryModel.MALLOC`.
+  * **noTreeShaking**: `boolean`<br />
+    Whether to disable built-in tree-shaking. Defaults to `false`.
+  * **noImplicitConversion**: `boolean`<br />
+    Whether to disallow implicit type conversions. Defaults to `false`.
 
  * **CompilerTarget**<br />
    Compiler target.
