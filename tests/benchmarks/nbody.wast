@@ -2,12 +2,12 @@
  (type $0 (func (param i32 i32 i32) (result i32)))
  (type $1 (func (param i32 i32) (result i32)))
  (type $2 (func (param i32) (result i32)))
+ (type $iF (func (param i32) (result f64)))
  (type $i (func (result i32)))
- (type $v (func))
  (type $iFFFFFFFi (func (param i32 f64 f64 f64 f64 f64 f64 f64) (result i32)))
  (type $iFFFi (func (param i32 f64 f64 f64) (result i32)))
  (type $iFv (func (param i32 f64)))
- (type $iF (func (param i32) (result f64)))
+ (type $v (func))
  (global $PI f64 (f64.const 3.141592653589793))
  (global $SOLAR_MASS (mut f64) (f64.const 0))
  (global $DAYS_PER_YEAR f64 (f64.const 365.24))
@@ -316,7 +316,7 @@
   (set_local $7
    (i32.sub
     (i32.load
-     (i32.const 64)
+     (i32.const 4)
     )
     (i32.const 16)
    )
@@ -2103,13 +2103,13 @@
                              (br_if $label$60
                               (i32.eqz
                                (i32.load
-                                (i32.const 72)
+                                (i32.const 12)
                                )
                               )
                              )
                              (br $label$59
                               (i32.load
-                               (i32.const 80)
+                               (i32.const 20)
                               )
                              )
                             )
@@ -2157,15 +2157,15 @@
                            )
                           )
                           (i64.store align=4
-                           (i32.const 76)
+                           (i32.const 16)
                            (i64.const 281474976776192)
                           )
                           (i64.store align=4
-                           (i32.const 84)
+                           (i32.const 24)
                            (i64.const -1)
                           )
                           (i32.store
-                           (i32.const 72)
+                           (i32.const 12)
                            (i32.xor
                             (i32.and
                              (i32.add
@@ -2178,7 +2178,7 @@
                            )
                           )
                           (i32.store
-                           (i32.const 92)
+                           (i32.const 32)
                            (i32.const 0)
                           )
                           (i32.const 65536)
@@ -2309,7 +2309,7 @@
                            (i32.add
                             (tee_local $2
                              (i32.load
-                              (i32.const 76)
+                              (i32.const 16)
                              )
                             )
                             (i32.const -1)
@@ -2579,7 +2579,7 @@
                             )
                             (tee_local $1
                              (i32.load
-                              (i32.const 80)
+                              (i32.const 20)
                              )
                             )
                            )
@@ -2874,7 +2874,7 @@
                   (i32.store offset=36
                    (get_local $0)
                    (i32.load
-                    (i32.const 72)
+                    (i32.const 12)
                    )
                   )
                   (loop $label$87
@@ -2999,7 +2999,7 @@
                   (i32.store offset=28
                    (get_local $0)
                    (i32.load
-                    (i32.const 88)
+                    (i32.const 28)
                    )
                   )
                   (br $label$80)
@@ -3084,7 +3084,7 @@
                  (i32.store offset=28
                   (get_local $0)
                   (i32.load
-                   (i32.const 88)
+                   (i32.const 28)
                   )
                  )
                  (i32.store
@@ -3434,7 +3434,7 @@
                         (i32.store offset=28
                          (get_local $0)
                          (i32.load
-                          (i32.const 88)
+                          (i32.const 28)
                          )
                         )
                         (i32.store
@@ -5312,11 +5312,11 @@
    )
   )
   (i32.store
-   (i32.const 64)
+   (i32.const 4)
    (tee_local $8
     (i32.sub
      (i32.load
-      (i32.const 64)
+      (i32.const 4)
      )
      (i32.const 16)
     )
@@ -5329,21 +5329,21 @@
    (i32.eqz
     (tee_local $2
      (i32.load
-      (i32.const 72)
+      (i32.const 12)
      )
     )
    )
    (block
     (i64.store align=4
-     (i32.const 76)
+     (i32.const 16)
      (i64.const 281474976776192)
     )
     (i64.store align=4
-     (i32.const 84)
+     (i32.const 24)
      (i64.const -1)
     )
     (i32.store
-     (i32.const 72)
+     (i32.const 12)
      (tee_local $2
       (i32.xor
        (i32.and
@@ -5358,7 +5358,7 @@
      )
     )
     (i32.store
-     (i32.const 92)
+     (i32.const 32)
      (i32.const 0)
     )
    )
@@ -5378,7 +5378,7 @@
      (i32.sub
       (i32.const -520)
       (i32.load
-       (i32.const 76)
+       (i32.const 16)
       )
      )
      (get_local $4)
@@ -5482,7 +5482,7 @@
    )
    (set_local $2
     (i32.load
-     (i32.const 92)
+     (i32.const 32)
     )
    )
    (i32.store
@@ -5607,7 +5607,7 @@
    (i32.store offset=28
     (get_local $5)
     (i32.load
-     (i32.const 88)
+     (i32.const 28)
     )
    )
    (i32.store offset=24
@@ -5627,7 +5627,7 @@
    )
   )
   (i32.store
-   (i32.const 64)
+   (i32.const 4)
    (i32.add
     (get_local $8)
     (i32.const 16)
