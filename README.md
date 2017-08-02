@@ -232,6 +232,10 @@ WebAssembly-specific operations are available as built-in functions that transla
   Grows linear memory by a given unsigned delta of pages. One page is 64kb. Returns the previous memory size in units of pages or `-1` on failure.
 * **unreachable**(): `void`<br />
   Emits an unreachable operation that results in a runtime error when executed.
+* **load**<`T`>(offset: `uintptr`): `T`<br />
+  Loads a value of the specified type from memory.
+* **store**<`T`>(offset: `uintptr`, value: `T`): `void`<br />
+  Stores a value of the specified type to memory.
 
 The following AssemblyScript-specific operations are implemented as built-ins as well:
 

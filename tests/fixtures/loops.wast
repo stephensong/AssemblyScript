@@ -2,6 +2,7 @@
  (export "testWhile" (func $testWhile))
  (export "testWhileEmpty" (func $testWhileEmpty))
  (export "testFor" (func $testFor))
+ (export "memory" (memory $0))
  (func $testDo (type $ii) (param $0 i32) (result i32)
   (local $1 i32)
   (set_local $1

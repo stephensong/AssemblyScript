@@ -6,6 +6,7 @@
  (export "testUint" (func $testUint))
  (export "testLong" (func $testLong))
  (export "testUlong" (func $testUlong))
+ (export "memory" (memory $0))
  (func $testSbyte (type $i) (result i32)
   (return
    (i32.shr_s

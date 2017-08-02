@@ -745,7 +745,7 @@ export class Compiler {
     });
     if (this.memoryBase & 7) this.memoryBase = (this.memoryBase | 7) + 1; // align to 8 bytes
     const initialSize = Math.floor((this.memoryBase - 1) / 65536) + 1;
-    this.module.setMemory(initialSize, 0xffff, undefined, binaryenSegments);
+    this.module.setMemory(initialSize, 0xffff, this.memoryModel === CompilerMemoryModel.BARE ? "memory" :  undefined, binaryenSegments);
 
     // compile start function (initializes malloc mspaces)
     this.maybeCompileStartFunction();

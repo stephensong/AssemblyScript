@@ -1,6 +1,7 @@
  (export "testInt" (func $testInt))
  (export "testFloat" (func $testFloat))
  (export "testDouble" (func $testDouble))
+ (export "memory" (memory $0))
  (func $testInt (type $iiv) (param $0 i32) (param $1 i32)
   (drop
    (i32.add

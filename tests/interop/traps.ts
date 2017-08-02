@@ -26,7 +26,7 @@ export function rem_by_zero(): int {
 
 export function div_overflow(): int {
   const a: int = -2147483648;
-  return a / - 1;
+  return a / -1;
 }
 
 export function oob_access(): int {

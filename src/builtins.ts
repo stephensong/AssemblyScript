@@ -9,6 +9,8 @@
 
 import * as binaryen from "binaryen";
 import Compiler from "./compiler";
+import { compileLoad } from "./expressions/helpers/load";
+import { compileStore } from "./expressions/helpers/store";
 import * as reflection from "./reflection";
 import * as typescript from "./typescript";
 import * as util from "./util";
@@ -59,6 +61,8 @@ export function isBuiltin(name: string, isGlobalName: boolean = true): boolean {
     case "current_memory":
     case "grow_memory":
     case "unreachable":
+    case "load":
+    case "store":
     case "sizeof":
     case "unsafe_cast":
     case "isNaN":
@@ -105,10 +109,10 @@ export interface BinaryenExpressionPair {
 }
 
 /** Compiles a sign-agnostic rotate left operation. */
-export function rotl(compiler: Compiler, node: TypeScriptExpressionPair, expr: BinaryenExpressionPair): binaryen.Expression {
+export function rotl(compiler: Compiler, nodes: TypeScriptExpressionPair, exprs: BinaryenExpressionPair): binaryen.Expression {
   const op = compiler.module;
-  const leftType = util.getReflectedType(node[0]);
-  const rightType = util.getReflectedType(node[1]);
+  const leftType = util.getReflectedType(nodes[0]);
+  const rightType = util.getReflectedType(nodes[1]);
 
   if (leftType === rightType) {
 
@@ -117,23 +121,23 @@ export function rotl(compiler: Compiler, node: TypeScriptExpressionPair, expr: B
       case reflection.intType:
       case reflection.uintType:
       case reflection.uintptrType32:
-        return op.i32.rotl(expr[0], expr[1]);
+        return op.i32.rotl(exprs[0], exprs[1]);
 
       case reflection.longType:
       case reflection.ulongType:
       case reflection.uintptrType64:
-        return op.i64.rotl(expr[0], expr[1]);
+        return op.i64.rotl(exprs[0], exprs[1]);
     }
   }
   throw Error("unsupported operation");
 }
 
 /** Compiles a sign-agnostic rotate right operation. */
-export function rotr(compiler: Compiler, node: TypeScriptExpressionPair, expr: BinaryenExpressionPair): binaryen.Expression {
+export function rotr(compiler: Compiler, nodes: TypeScriptExpressionPair, exprs: BinaryenExpressionPair): binaryen.Expression {
   const op = compiler.module;
 
-  const leftType = util.getReflectedType(node[0]);
-  const rightType = util.getReflectedType(node[1]);
+  const leftType = util.getReflectedType(nodes[0]);
+  const rightType = util.getReflectedType(nodes[1]);
 
   if (leftType === rightType) {
     switch (leftType) {
@@ -141,12 +145,12 @@ export function rotr(compiler: Compiler, node: TypeScriptExpressionPair, expr: B
       case reflection.intType:
       case reflection.uintType:
       case reflection.uintptrType32:
-        return op.i32.rotr(expr[0], expr[1]);
+        return op.i32.rotr(exprs[0], exprs[1]);
 
       case reflection.longType:
       case reflection.ulongType:
       case reflection.uintptrType64:
-        return op.i64.rotr(expr[0], expr[1]);
+        return op.i64.rotr(exprs[0], exprs[1]);
     }
   }
   throw Error("unsupported operation");
@@ -309,60 +313,60 @@ export function nearest(compiler: Compiler, node: typescript.Expression, expr: b
 }
 
 /** Compiles a minimum of two floats operation. */
-export function min(compiler: Compiler, node: TypeScriptExpressionPair, expr: BinaryenExpressionPair): binaryen.Expression {
+export function min(compiler: Compiler, nodes: TypeScriptExpressionPair, exprs: BinaryenExpressionPair): binaryen.Expression {
   const op = compiler.module;
 
-  const leftType = util.getReflectedType(node[0]);
-  const rightType = util.getReflectedType(node[1]);
+  const leftType = util.getReflectedType(nodes[0]);
+  const rightType = util.getReflectedType(nodes[1]);
 
   if (leftType === rightType) {
     switch (leftType) {
 
       case reflection.floatType:
-        return op.f32.min(expr[0], expr[1]);
+        return op.f32.min(exprs[0], exprs[1]);
 
       case reflection.doubleType:
-        return op.f64.min(expr[0], expr[1]);
+        return op.f64.min(exprs[0], exprs[1]);
     }
   }
   throw Error("unsupported operation");
 }
 
 /** Compiles a maximum of two floats operation. */
-export function max(compiler: Compiler, node: TypeScriptExpressionPair, expr: BinaryenExpressionPair): binaryen.Expression {
+export function max(compiler: Compiler, nodes: TypeScriptExpressionPair, exprs: BinaryenExpressionPair): binaryen.Expression {
   const op = compiler.module;
 
-  const leftType = util.getReflectedType(node[0]);
-  const rightType = util.getReflectedType(node[1]);
+  const leftType = util.getReflectedType(nodes[0]);
+  const rightType = util.getReflectedType(nodes[1]);
 
   if (leftType === rightType) {
     switch (leftType) {
 
       case reflection.floatType:
-        return op.f32.max(expr[0], expr[1]);
+        return op.f32.max(exprs[0], exprs[1]);
 
       case reflection.doubleType:
-        return op.f64.max(expr[0], expr[1]);
+        return op.f64.max(exprs[0], exprs[1]);
     }
   }
   throw Error("unsupported operation");
 }
 
 /** Compiles a copysign operation that composes a float from the magnitude of `x` and the sign of `y`. */
-export function copysign(compiler: Compiler, node: TypeScriptExpressionPair, expr: BinaryenExpressionPair): binaryen.Expression {
+export function copysign(compiler: Compiler, nodes: TypeScriptExpressionPair, exprs: BinaryenExpressionPair): binaryen.Expression {
   const op = compiler.module;
 
-  const leftType = util.getReflectedType(node[0]);
-  const rightType = util.getReflectedType(node[1]);
+  const leftType = util.getReflectedType(nodes[0]);
+  const rightType = util.getReflectedType(nodes[1]);
 
   if (leftType === rightType) {
     switch (leftType) {
 
       case reflection.floatType:
-        return op.f32.copysign(expr[0], expr[1]);
+        return op.f32.copysign(exprs[0], exprs[1]);
 
       case reflection.doubleType:
-        return op.f64.copysign(expr[0], expr[1]);
+        return op.f64.copysign(exprs[0], exprs[1]);
     }
   }
   throw Error("unsupported operation");
@@ -416,6 +420,18 @@ export function grow_memory(compiler: Compiler, node: typescript.Expression, exp
 export function unreachable(compiler: Compiler): binaryen.Expression {
   const op = compiler.module;
   return op.unreachable();
+}
+
+/** Compiles a load from memory operation. */
+export function load(compiler: Compiler, type: reflection.Type, node: typescript.Expression, expr: binaryen.Expression): binaryen.Expression {
+  const callNode = <typescript.CallExpression>node.parent;
+  return compileLoad(compiler, callNode, type, expr, 0);
+}
+
+/** Compiles a store to memory operation. */
+export function store(compiler: Compiler, type: reflection.Type, nodes: TypeScriptExpressionPair, exprs: BinaryenExpressionPair): binaryen.Expression {
+  const callNode = <typescript.CallExpression>nodes[0].parent;
+  return compileStore(compiler, callNode, type, exprs[0], 0, exprs[1]);
 }
 
 /** Compiles a sizeof operation determining the byte size of a type. */

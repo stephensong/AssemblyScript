@@ -1,4 +1,5 @@
  (export "test" (func $test))
+ (export "memory" (memory $0))
  (func $test (type $ifIii) (param $0 i32) (param $1 f32) (param $2 i64) (param $3 i32) (result i32)
   (if
    (select

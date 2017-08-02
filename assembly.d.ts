@@ -219,6 +219,10 @@ declare function unreachable(): void;
 
 /** Determines the byte size of the specified core or class type. Compiles to a constant. */
 declare function sizeof<T>(): uintptr;
+/** Loads a value of the specified type from memory. */
+declare function load<T>(offset: uintptr): T;
+/** Stores a value of the specified type to memory. */
+declare function store<T>(offset: uintptr, value: T): void;
 /** Casts a value of type `T1` to a value of type `T2`. Useful for casting classes to pointers and vice-versa. Does not perform any checks. */
 declare function unsafe_cast<T1,T2>(value: T1): T2;
 /** Tests if a 64-bit float is a NaN. */

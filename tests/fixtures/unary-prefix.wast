@@ -2,6 +2,7 @@
  (export "testLong" (func $testLong))
  (export "testFloat" (func $testFloat))
  (export "testDouble" (func $testDouble))
+ (export "memory" (memory $0))
  (func $testInt (type $iv) (param $0 i32)
   (local $1 i32)
   (local $2 i32)

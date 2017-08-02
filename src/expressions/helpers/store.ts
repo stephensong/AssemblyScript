@@ -10,7 +10,7 @@ import * as util from "../../util";
 export function compileStore(compiler: Compiler, node: typescript.Expression, type: reflection.Type, ptr: binaryen.Expression, offset: number, value: binaryen.Expression): binaryen.Expression {
   const op = compiler.module;
 
-  util.setReflectedType(node, type);
+  util.setReflectedType(node, reflection.voidType);
 
   switch (type.kind) {
 

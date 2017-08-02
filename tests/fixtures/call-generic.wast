@@ -1,4 +1,5 @@
  (export "test" (func $test))
+ (export "memory" (memory $0))
  (func $SomeClass<int>#instanceMethod<float> (type $iff) (param $0 i32) (param $1 f32) (result f32)
   (return
    (get_local $1)

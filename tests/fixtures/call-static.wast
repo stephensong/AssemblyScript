@@ -1,4 +1,5 @@
  (export "test" (func $test))
+ (export "memory" (memory $0))
  (func $A.a (type $v)
  )
  (func $test (type $v)

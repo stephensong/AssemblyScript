@@ -2,7 +2,6 @@
 
 import * as binaryen from "binaryen";
 import Compiler from "../compiler";
-import compileLiteral from "./literal";
 import * as reflection from "../reflection";
 import * as typescript from "../typescript";
 import * as util from "../util";
@@ -44,7 +43,7 @@ export function compilePrefixUnary(compiler: Compiler, node: typescript.PrefixUn
       util.setReflectedType(node, operandType);
 
       if (node.operand.kind === typescript.SyntaxKind.NumericLiteral)
-        return compileLiteral(compiler, <typescript.LiteralExpression>node.operand, operandType, true);
+        return operand; // implicitly compiled the negated form previously, see expressions.ts case typescript.SyntaxKind.NumericLiteral
 
       if (operandType === reflection.floatType)
         return op.f32.neg(operand);

@@ -91,9 +91,12 @@ export function compile(compiler: Compiler, node: typescript.Expression, context
     case typescript.SyntaxKind.TrueKeyword:
     case typescript.SyntaxKind.FalseKeyword:
     case typescript.SyntaxKind.NullKeyword:
-    case typescript.SyntaxKind.NumericLiteral:
     case typescript.SyntaxKind.StringLiteral:
       return compileLiteral(compiler, <typescript.LiteralExpression>node, contextualType);
+
+    case typescript.SyntaxKind.NumericLiteral:
+      const parent = <typescript.Node>node.parent;
+      return compileLiteral(compiler, <typescript.LiteralExpression>node, contextualType, parent.kind === typescript.SyntaxKind.PrefixUnaryExpression && (<typescript.PrefixUnaryExpression>parent).operator === typescript.SyntaxKind.MinusToken);
   }
 
   compiler.report(node, typescript.DiagnosticsEx.Unsupported_node_kind_0_in_1, node.kind, "expressions.compile");

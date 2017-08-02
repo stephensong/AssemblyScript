@@ -64,9 +64,9 @@ declare module 'assemblyscript/builtins' {
       1: binaryen.Expression;
   }
   /** Compiles a sign-agnostic rotate left operation. */
-  export function rotl(compiler: Compiler, node: TypeScriptExpressionPair, expr: BinaryenExpressionPair): binaryen.Expression;
+  export function rotl(compiler: Compiler, nodes: TypeScriptExpressionPair, exprs: BinaryenExpressionPair): binaryen.Expression;
   /** Compiles a sign-agnostic rotate right operation. */
-  export function rotr(compiler: Compiler, node: TypeScriptExpressionPair, expr: BinaryenExpressionPair): binaryen.Expression;
+  export function rotr(compiler: Compiler, nodes: TypeScriptExpressionPair, exprs: BinaryenExpressionPair): binaryen.Expression;
   /** Compiles a sign-agnostic count leading zero bits operation. */
   export function clz(compiler: Compiler, node: typescript.Expression, expr: binaryen.Expression): binaryen.Expression;
   /** Compiles a sign-agnostic count tailing zero bits operation. */
@@ -86,11 +86,11 @@ declare module 'assemblyscript/builtins' {
   /** Compiles a round to the nearest integer tied to even operation. */
   export function nearest(compiler: Compiler, node: typescript.Expression, expr: binaryen.Expression): binaryen.Expression;
   /** Compiles a minimum of two floats operation. */
-  export function min(compiler: Compiler, node: TypeScriptExpressionPair, expr: BinaryenExpressionPair): binaryen.Expression;
+  export function min(compiler: Compiler, nodes: TypeScriptExpressionPair, exprs: BinaryenExpressionPair): binaryen.Expression;
   /** Compiles a maximum of two floats operation. */
-  export function max(compiler: Compiler, node: TypeScriptExpressionPair, expr: BinaryenExpressionPair): binaryen.Expression;
+  export function max(compiler: Compiler, nodes: TypeScriptExpressionPair, exprs: BinaryenExpressionPair): binaryen.Expression;
   /** Compiles a copysign operation that composes a float from the magnitude of `x` and the sign of `y`. */
-  export function copysign(compiler: Compiler, node: TypeScriptExpressionPair, expr: BinaryenExpressionPair): binaryen.Expression;
+  export function copysign(compiler: Compiler, nodes: TypeScriptExpressionPair, exprs: BinaryenExpressionPair): binaryen.Expression;
   /** Compiles a reinterpretation of a float as an int respectively of an int as a float. */
   export function reinterpret(compiler: Compiler, node: typescript.Expression, expr: binaryen.Expression): binaryen.Expression;
   /** Compiles a current memory operation. */
@@ -99,6 +99,10 @@ declare module 'assemblyscript/builtins' {
   export function grow_memory(compiler: Compiler, node: typescript.Expression, expr: binaryen.Expression): binaryen.Expression;
   /** Compiles an unreachable operation. */
   export function unreachable(compiler: Compiler): binaryen.Expression;
+  /** Compiles a load from memory operation. */
+  export function load(compiler: Compiler, type: reflection.Type, node: typescript.Expression, expr: binaryen.Expression): binaryen.Expression;
+  /** Compiles a store to memory operation. */
+  export function store(compiler: Compiler, type: reflection.Type, nodes: TypeScriptExpressionPair, exprs: BinaryenExpressionPair): binaryen.Expression;
   /** Compiles a sizeof operation determining the byte size of a type. */
   export function sizeof(compiler: Compiler, type: reflection.Type): binaryen.Expression;
   /** Compiles an unsafe cast operation casting a value from one type to another. */
@@ -119,12 +123,14 @@ declare module 'assemblyscript/compiler' {
   export interface CompilerOptions {
       /** Whether compilation shall be performed in silent mode without writing to console. Defaults to `false`. */
       silent?: boolean;
-      /** Whether to use built-in tree-shaking. Defaults to `true`. Disable this when building a dynamically linked library. */
-      treeShaking?: boolean;
       /** Specifies the target architecture. Defaults to {@link CompilerTarget.WASM32}. */
       target?: CompilerTarget | "wasm32" | "wasm64";
       /** Specifies the memory model to use. Defaults to {@link CompilerMemoryModel.MALLOC}. */
       memoryModel?: CompilerMemoryModel | "malloc" | "exportmalloc" | "importmalloc" | "bare";
+      /** Whether to disable built-in tree-shaking. Defaults to `false`. */
+      noTreeShaking?: boolean;
+      /** Whether to disallow implicit type conversions. Defaults to `false`. */
+      noImplicitConversion?: boolean;
   }
   /** Compiler target. */
   export enum CompilerTarget {

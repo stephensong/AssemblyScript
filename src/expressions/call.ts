@@ -200,6 +200,12 @@ export function compileCall(compiler: Compiler, node: typescript.CallExpression/
       case "sizeof":
         return builtins.sizeof(compiler, instance.typeArgumentsMap.T.type);
 
+      case "load":
+        return builtins.load(compiler, instance.typeArgumentsMap.T.type, node.arguments[0], argumentExpressions[0]);
+
+      case "store":
+        return builtins.store(compiler, instance.typeArgumentsMap.T.type, [ node.arguments[0], node.arguments[1] ], [ argumentExpressions[0], argumentExpressions[1] ]);
+
       case "unsafe_cast":
         return builtins.unsafe_cast(argumentExpressions[0]);
 

@@ -1,4 +1,5 @@
  (export "test" (func $test))
+ (export "memory" (memory $0))
  (func $test (type $iv) (param $0 i32)
   (drop
    (i32.load

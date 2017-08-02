@@ -2,6 +2,7 @@
  (export "testLongToDouble" (func $testLongToDouble))
  (export "testFloatToInt" (func $testFloatToInt))
  (export "testDoubleToLong" (func $testDoubleToLong))
+ (export "memory" (memory $0))
  (func $testIntToFloat (type $if) (param $0 i32) (result f32)
   (return
    (f32.reinterpret/i32
