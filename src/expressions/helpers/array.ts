@@ -18,7 +18,7 @@ export function compileNewArray(compiler: Compiler, elementType: reflection.Type
   const block = [
     op.setLocal(
       arrptr.index,
-      compiler.compileMallocInvocation(arrayHeaderSize + elementType.size * elementCount) // capacity + length + N * element
+      compiler.compileMallocInvocation(arrayHeaderSize + elementCount * elementType.size) // capacity + length + N * element
     ),
     op.i32.store(0, 4, op.getLocal(arrptr.index, binaryenUintptrType), binaryenElementSize), // capacity
     op.i32.store(4, 4, op.getLocal(arrptr.index, binaryenUintptrType), binaryenElementSize)  // length
