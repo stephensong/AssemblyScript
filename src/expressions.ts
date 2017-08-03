@@ -4,6 +4,7 @@
  * @preferred
  */ /** */
 
+export * from "./expressions/arrayliteral";
 export * from "./expressions/as";
 export * from "./expressions/binary";
 export * from "./expressions/call";
@@ -15,6 +16,7 @@ export * from "./expressions/helpers/store";
 export * from "./expressions/identifier";
 export * from "./expressions/literal";
 export * from "./expressions/new";
+export * from "./expressions/omitted";
 export * from "./expressions/parenthesized";
 export * from "./expressions/postfixunary";
 export * from "./expressions/prefixunary";
@@ -26,6 +28,7 @@ import * as reflection from "./reflection";
 import * as typescript from "./typescript";
 import * as util from "./util";
 import {
+  compileArrayLiteral,
   compileAs,
   compileBinary,
   compileCall,
@@ -37,7 +40,8 @@ import {
   compileParenthesized,
   compilePostfixUnary,
   compilePrefixUnary,
-  compilePropertyAccess
+  compilePropertyAccess,
+  compileOmitted
 } from "./expressions";
 
 /** Compiles any supported expression. */
@@ -97,6 +101,12 @@ export function compile(compiler: Compiler, node: typescript.Expression, context
     case typescript.SyntaxKind.NumericLiteral:
       const parent = <typescript.Node>node.parent;
       return compileLiteral(compiler, <typescript.LiteralExpression>node, contextualType, parent.kind === typescript.SyntaxKind.PrefixUnaryExpression && (<typescript.PrefixUnaryExpression>parent).operator === typescript.SyntaxKind.MinusToken);
+
+    case typescript.SyntaxKind.ArrayLiteralExpression:
+      return compileArrayLiteral(compiler, <typescript.ArrayLiteralExpression>node, contextualType);
+
+    case typescript.SyntaxKind.OmittedExpression:
+      return compileOmitted(compiler, <typescript.OmittedExpression>node, contextualType);
   }
 
   compiler.report(node, typescript.DiagnosticsEx.Unsupported_node_kind_0_in_1, node.kind, "expressions.compile");

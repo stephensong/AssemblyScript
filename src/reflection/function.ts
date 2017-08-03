@@ -98,6 +98,8 @@ export class Function extends FunctionBase {
   parent?: Class;
   /** Body reference, if not just a declaration. */
   body?: typescript.Block | typescript.Expression;
+  /** Current unique local id. */
+  uniqueLocalId: 1;
 
   // Set on initialization
 
@@ -168,12 +170,17 @@ export class Function extends FunctionBase {
   /** Gets the current break label for use with binaryen loops and blocks. */
   get breakLabel(): string { return this.breakNumber + "." + this.breakDepth; }
 
-  /** Introduces an additional local variable. */
+  /** Introduces an additional local variable of the specified name and type. */
   addLocal(name: string, type: Type): Variable {
     const variable = new Variable(this.compiler, name, type, VariableFlags.none, this.locals.length);
     this.locals.push(variable);
     this.localsByName[variable.name] = variable;
     return variable;
+  }
+
+  /** Introduces an additional unique local variable of the specified type. */
+  addUniqueLocal(type: Type, prefix?: string): Variable {
+    return this.addLocal("." + (prefix || this.compiler.identifierOf(type)) + this.uniqueLocalId++, type);
   }
 
   /** Compiles a call to this function using the specified arguments. Arguments to instance functions include `this` as the first argument or can specifiy it in `thisArg`. */
