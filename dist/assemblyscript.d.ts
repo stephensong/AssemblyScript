@@ -320,6 +320,7 @@ declare module 'assemblyscript/expressions' {
     * @module assemblyscript/expressions
     * @preferred
     */ /** */
+  export * from "assemblyscript/expressions/arrayliteral";
   export * from "assemblyscript/expressions/as";
   export * from "assemblyscript/expressions/binary";
   export * from "assemblyscript/expressions/call";
@@ -331,6 +332,7 @@ declare module 'assemblyscript/expressions' {
   export * from "assemblyscript/expressions/identifier";
   export * from "assemblyscript/expressions/literal";
   export * from "assemblyscript/expressions/new";
+  export * from "assemblyscript/expressions/omitted";
   export * from "assemblyscript/expressions/parenthesized";
   export * from "assemblyscript/expressions/postfixunary";
   export * from "assemblyscript/expressions/prefixunary";
@@ -418,6 +420,7 @@ declare module 'assemblyscript/reflection' {
 
 declare module 'assemblyscript/typescript' {
   import * as ts from "assemblyscript/--/lib/typescript/build";
+  export import ArrayLiteralExpression = ts.ArrayLiteralExpression;
   export import ArrayTypeNode = ts.ArrayTypeNode;
   export import AsExpression = ts.AsExpression;
   export import BinaryExpression = ts.BinaryExpression;
@@ -455,6 +458,8 @@ declare module 'assemblyscript/typescript' {
   export import NodeArray = ts.NodeArray;
   export import NodeFlags = ts.NodeFlags;
   export import Node = ts.Node;
+  export import NumericLiteral = ts.NumericLiteral;
+  export import OmittedExpression = ts.OmittedExpression;
   export import ParameterDeclaration = ts.ParameterDeclaration;
   export import ParenthesizedExpression = ts.ParenthesizedExpression;
   export import PostfixUnaryExpression = ts.PostfixUnaryExpression;
@@ -592,6 +597,16 @@ declare module 'assemblyscript/util' {
   export function wastToWasm(text: string, options?: WastToWasmOptions): Uint8Array;
 }
 
+declare module 'assemblyscript/expressions/arrayliteral' {
+  /** @module assemblyscript/expressions */ /** */
+  import * as binaryen from "binaryen";
+  import Compiler from "assemblyscript/compiler";
+  import * as reflection from "assemblyscript/reflection";
+  import * as typescript from "assemblyscript/typescript";
+  /** Compiles an array literal expression. */
+  export function compileArrayLiteral(compiler: Compiler, node: typescript.ArrayLiteralExpression, contextualType: reflection.Type): binaryen.Expression;
+}
+
 declare module 'assemblyscript/expressions/as' {
   /** @module assemblyscript/expressions */ /** */
   import * as binaryen from "binaryen";
@@ -718,6 +733,17 @@ declare module 'assemblyscript/expressions/new' {
   /** Compiles a 'new' expression. */
   export function compileNew(compiler: Compiler, node: typescript.NewExpression, contextualType: reflection.Type): binaryen.Expression;
   export { compileNew as default };
+}
+
+declare module 'assemblyscript/expressions/omitted' {
+  /** @module assemblyscript/expressions */ /** */
+  import * as binaryen from "binaryen";
+  import Compiler from "assemblyscript/compiler";
+  import * as reflection from "assemblyscript/reflection";
+  import * as typescript from "assemblyscript/typescript";
+  /** Compiles an omitted expression. */
+  export function compileOmitted(compiler: Compiler, node: typescript.OmittedExpression, contextualType: reflection.Type): binaryen.Expression;
+  export { compileOmitted as default };
 }
 
 declare module 'assemblyscript/expressions/parenthesized' {
@@ -986,6 +1012,8 @@ declare module 'assemblyscript/reflection/function' {
       parent?: Class;
       /** Body reference, if not just a declaration. */
       body?: typescript.Block | typescript.Expression;
+      /** Current unique local id. */
+      uniqueLocalId: 1;
       /** Local variables. */
       locals: Variable[];
       /** Local variables by name for lookups. */
@@ -1014,8 +1042,10 @@ declare module 'assemblyscript/reflection/function' {
       constructor(compiler: Compiler, name: string, template: FunctionTemplate, typeArguments: typescript.TypeNode[], typeArgumentsMap: TypeArgumentsMap, parameters: FunctionParameter[], returnType: Type, parent?: Class, body?: typescript.Block | typescript.Expression);
       /** Gets the current break label for use with binaryen loops and blocks. */
       readonly breakLabel: string;
-      /** Introduces an additional local variable. */
+      /** Introduces an additional local variable of the specified name and type. */
       addLocal(name: string, type: Type): Variable;
+      /** Introduces an additional unique local variable of the specified type. */
+      addUniqueLocal(type: Type, prefix?: string): Variable;
       /** Compiles a call to this function using the specified arguments. Arguments to instance functions include `this` as the first argument or can specifiy it in `thisArg`. */
       compileCall(argumentNodes: typescript.Expression[], thisArg?: binaryen.Expression): binaryen.Expression;
   }

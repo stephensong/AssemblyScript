@@ -229,9 +229,10 @@ function runTests(kind: string, exports: typeof assemblyscript) {
 
 /** Strips everything before the first export. */
 function distill(text: string): string {
+  text = text.replace(/\r\n/g, "\n");
   const match = /^ *\(export/m.exec(text);
   if (match)
-    return text.substring(match.index).replace(/\r?\n\)\r?\n?$/, "\n");
+    return text.substring(match.index).replace(/\n\)\n?$/, "\n");
   return text;
 }
 
