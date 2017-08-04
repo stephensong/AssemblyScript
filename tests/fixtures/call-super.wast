@@ -28,7 +28,5 @@
   )
  )
  (func $.start (type $v)
-  (call $malloc_init
-   (i32.const 8)
-  )
+  (call $init)
  )

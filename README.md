@@ -266,9 +266,13 @@ These constants are present as immutable globals (note that optimizers might inl
 By default, standard memory management routines based on [dlmalloc](http://g.oswego.edu/dl/html/malloc.html) and [musl](http://www.musl-libc.org/) will be linked statically and can be configured to be exported to the embedder:
 
 * **malloc**(size: `uintptr`): `uintptr`<br />
-  Allocates a chunk of memory of the specified size and returns a pointer to it.
+  Allocates a chunk of memory of the specified size.
+* **calloc**(count: `uintptr`, size: `uintptr`): `uintptr`<br />
+  Allocates a chunk of memory for an array of count elements of the specified size.
+* **realloc**(ptr: `uintptr`, size: `uintptr`): `uintptr`<br />
+  Changes the size of an allocated memory block.
 * **free**(ptr: `uintptr`): `void`<br />
-  Frees a previously allocated chunk of memory by its pointer.
+  Frees a previously allocated chunk of memory.
 * **memcpy**(dest: `uintptr`, src: `uintptr`, size: `uintptr`): `uintptr`<br />
   Copies data from one chunk of memory to another.
 * **memset**(dest: `uintptr`, c: `int`, size: `uintptr`): `uintptr`<br />

@@ -249,7 +249,7 @@ export class Compiler {
       this.module = new binaryen.Module();
 
     this.uintptrType = this.target === CompilerTarget.WASM64 ? reflection.uintptrType64 : reflection.uintptrType32;
-    this.memoryBase = this.uintptrSize; // leave space for NULL
+    this.memoryBase = 4 * 8; // NULL + HEAP + MSPACE + GC, each aligned to 8 bytes
 
     const sourceFiles = program.getSourceFiles();
     for (let i = sourceFiles.length - 1; i >= 0; --i) {
@@ -331,7 +331,7 @@ export class Compiler {
       this.memoryModel === CompilerMemoryModel.EXPORT_MALLOC ||
       this.memoryModel === CompilerMemoryModel.IMPORT_MALLOC
     ) {
-      this.initializeLibrary();
+      this.initializeRuntime();
     }
   }
 
@@ -351,66 +351,46 @@ export class Compiler {
     return signature;
   }
 
-  /** Initializes the statically linked or imported library implementation. */
-  initializeLibrary(): void {
+  /** Initializes the statically linked or imported runtime. */
+  initializeRuntime(): void {
     const op = this.module;
-    const binaryenPtrType = this.typeOf(this.uintptrType);
 
     // these are required in any case
-    const mallocSignature = this.getOrAddSignature([this.uintptrType], this.uintptrType); // void *malloc(size_t)
-    const freeSignature   = this.getOrAddSignature([this.uintptrType], reflection.voidType); // void free(void *)
-    const memsetSignature = this.getOrAddSignature([this.uintptrType, reflection.intType, this.uintptrType], this.uintptrType); // void *memset(void *, int, size_t)
-    const memcpySignature = this.getOrAddSignature([this.uintptrType, this.uintptrType, this.uintptrType], this.uintptrType); // void *memcpy(void *, void *, size_t)
-    const memcmpSignature = this.getOrAddSignature([this.uintptrType, this.uintptrType, this.uintptrType], reflection.intType); // void *memcmp(void *, void *, size_t)
+    const mallocSignature  = this.getOrAddSignature([this.uintptrType], this.uintptrType); // void *malloc(size_t)
+    const callocSignature  = this.getOrAddSignature([this.uintptrType, this.uintptrType], this.uintptrType); // void *calloc(size_t, size_t)
+    const reallocSignature = this.getOrAddSignature([this.uintptrType, this.uintptrType], this.uintptrType); // void *realloc(void *, size_t)
+    const freeSignature    = this.getOrAddSignature([this.uintptrType], reflection.voidType); // void free(void *)
+    const memsetSignature  = this.getOrAddSignature([this.uintptrType, reflection.intType, this.uintptrType], this.uintptrType); // void *memset(void *, int, size_t)
+    const memcpySignature  = this.getOrAddSignature([this.uintptrType, this.uintptrType, this.uintptrType], this.uintptrType); // void *memcpy(void *, void *, size_t)
+    const memcmpSignature  = this.getOrAddSignature([this.uintptrType, this.uintptrType, this.uintptrType], reflection.intType); // void *memcmp(void *, void *, size_t)
 
     if (this.memoryModel === CompilerMemoryModel.IMPORT_MALLOC) {
 
-      const initSignature = this.getOrAddSignature([this.uintptrType], reflection.voidType); // void init(void *)
+      const initSignature = this.getOrAddSignature([], reflection.voidType); // void init()
 
-      op.addImport("malloc_init", "env", "malloc_init", initSignature);
+      op.addImport("init", "env", "init", initSignature);
       op.addImport("malloc", "env", "malloc", mallocSignature);
+      op.addImport("calloc", "env", "calloc", callocSignature);
+      op.addImport("realloc", "env", "realloc", reallocSignature);
       op.addImport("free", "env", "free", freeSignature);
       op.addImport("memcpy", "env", "memcpy", memcpySignature);
       op.addImport("memset", "env", "memset", memsetSignature);
       op.addImport("memcmp", "env", "memcmp", memcmpSignature);
 
-    } else {
+    } else if (this.memoryModel === CompilerMemoryModel.MALLOC) {
 
-      // initialize mspace'd malloc on start and remember the mspace within `.msp`:
-      op.addGlobal(".msp", binaryenPtrType, true, this.valueOf(this.uintptrType, 0));
-      this.globalInitializers.unshift( // must be initialized before other global initializers use 'new'
-        op.setGlobal(".msp", op.call("mspace_init", [
-          this.valueOf(this.uintptrType, this.uintptrSize) // Leave space for null
-        ], binaryenPtrType))
-      );
+      op.removeExport("malloc");
+      op.removeExport("calloc");
+      op.removeExport("realloc");
+      op.removeExport("free");
+      op.removeExport("memcpy");
+      op.removeExport("memset");
+      op.removeExport("memcmp");
 
-      // now, instead of exposing mspace'd functions ...
-      this.module.removeExport("mspace_init");
-      this.module.removeExport("mspace_malloc");
-      this.module.removeExport("mspace_free");
-
-      // ... wrap each in a non-mspace'd version
-      this.module.addFunction("malloc", mallocSignature, [], op.block("", [
-        op.return(
-          op.call("mspace_malloc", [ op.getGlobal(".msp", binaryenPtrType), op.getLocal(0, binaryenPtrType) ], binaryenPtrType)
-        )
-      ]));
-      this.module.addFunction("free", freeSignature, [], op.block("", [
-        op.call("mspace_free", [ op.getGlobal(".msp", binaryenPtrType), op.getLocal(0, binaryenPtrType) ], binaryen.none)
-      ]));
-
-      if (this.memoryModel === CompilerMemoryModel.MALLOC) {
-
-        this.module.removeExport("memset");
-        this.module.removeExport("memcpy");
-        this.module.removeExport("memcmp");
-
-      } else /* CompilerMemoryModel.MALLOC_EXPORT */ {
-
-        this.module.addExport("malloc", "malloc");
-        this.module.addExport("free", "free");
-      }
     }
+
+    if (this.memoryModel === CompilerMemoryModel.MALLOC || this.memoryModel === CompilerMemoryModel.EXPORT_MALLOC)
+      op.removeExport("init");
   }
 
   /** Initializes a global variable. */
@@ -739,11 +719,25 @@ export class Compiler {
     const binaryenSegments: binaryen.MemorySegment[] = [];
     this.memorySegments.forEach(segment => {
       binaryenSegments.push({
-        offset: this.valueOf(reflection.uintType, segment.offset),
+        offset: this.valueOf(this.uintptrType, segment.offset),
         data: segment.buffer
       });
     });
     if (this.memoryBase & 7) this.memoryBase = (this.memoryBase | 7) + 1; // align to 8 bytes
+
+    // initialize runtime heap pointer
+    if (this.memoryModel !== CompilerMemoryModel.BARE) {
+      binaryenSegments.unshift({
+        offset: this.valueOf(this.uintptrType, 8),
+        data: new Uint8Array([
+           this.memoryBase         & 0xff, // FIXME: wasm32 version
+          (this.memoryBase >>>  8) & 0xff,
+          (this.memoryBase >>> 16) & 0xff,
+          (this.memoryBase >>> 24) & 0xff
+        ])
+      });
+    }
+
     const initialSize = Math.floor((this.memoryBase - 1) / 65536) + 1;
     this.module.setMemory(initialSize, 0xffff, this.memoryModel === CompilerMemoryModel.BARE ? "memory" :  undefined, binaryenSegments);
 
@@ -755,23 +749,13 @@ export class Compiler {
   maybeCompileStartFunction(): void {
 
     // just use the user start function, if declared, if there is no other initialization to perform
-    if (this.globalInitializers.length === 0 && !(this.memoryModel === CompilerMemoryModel.IMPORT_MALLOC)) {
+    if (this.globalInitializers.length === 0 && this.memoryModel === CompilerMemoryModel.BARE) {
       if (this.userStartFunction)
         this.module.setStart(this.userStartFunction);
       return;
     }
 
     const op = this.module;
-
-    // if malloc is bundled, override malloc initializer with actual static offset
-    if (
-      this.memoryModel === CompilerMemoryModel.MALLOC ||
-      this.memoryModel === CompilerMemoryModel.EXPORT_MALLOC
-    ) {
-      this.globalInitializers[0] = op.setGlobal(".msp", op.call("mspace_init", [
-        this.valueOf(this.uintptrType, this.memoryBase) // memoryBase is aligned at this point
-      ], this.typeOf(this.uintptrType)));
-    }
 
     // create a blank start function if there isn't one already
     if (!this.startFunction)
@@ -781,14 +765,14 @@ export class Compiler {
 
     const body: binaryen.Statement[] = [];
 
-    // first of all, call imported malloc_init with memoryBase if applicable
-    if (
-      this.memoryModel === CompilerMemoryModel.IMPORT_MALLOC
-    ) {
-      body.push(op.callImport("malloc_init", [
-        this.valueOf(this.uintptrType, this.memoryBase)
-      ], binaryen.none));
-    }
+    // call init first if the runtime is bundled
+    body.push(
+      (this.memoryModel === CompilerMemoryModel.IMPORT_MALLOC ? op.callImport : op.call)(
+        "init",
+        [],
+        this.typeOf(reflection.voidType)
+      )
+    );
 
     // include global initializes
     let i = 0;

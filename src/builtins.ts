@@ -85,12 +85,14 @@ export function isRuntime(name: string, isGlobalName: boolean = true): boolean {
       name = name.substring(0, p);
   }
   switch (name) {
-    case "malloc_init":
+    case "init":
     case "malloc":
+    case "calloc":
+    case "realloc":
+    case "free":
     case "memset":
     case "memcpy":
     case "memcmp":
-    case "free":
       return true;
   }
   return false;

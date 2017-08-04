@@ -3,17 +3,10 @@
 #include "deps/memcmp.c"
 #include "deps/memcpy.c"
 #include "deps/memset.c"
-
-#include "config.h"
 #include "deps/dlmalloc.c"
 
-// initializes the single mspace used by the internal malloc implementation, starting at 'base'
-void *mspace_init(void *base) {
-  return create_mspace_with_base(base, (void *)((uintptr_t)__builtin_wasm_current_memory() << 16) - base, 0);
-}
-
 // called by dlmalloc when requesting more memory
-void *mspace_more(ptrdiff_t size) {
+void *morecore(ptrdiff_t size) {
   uintptr_t heapMax = (uintptr_t)__builtin_wasm_current_memory() << 16;
 
   if (size > 0) {
@@ -25,4 +18,28 @@ void *mspace_more(ptrdiff_t size) {
     return (void *) MFAIL;
 
   return (void *) heapMax;
+}
+
+// #include "deps/setjmp.c"
+// #include "deps/tgc.c"
+
+void init() {
+  _MSPACE = (uintptr_t)create_mspace_with_base((void *)_HEAP, (__builtin_wasm_current_memory() << 16) - _HEAP, 0);
+  _GC = 0; // not yet implemented
+}
+
+void *malloc(size_t size) {
+  return mspace_malloc((void *)_MSPACE, size);
+}
+
+void *calloc(size_t n, size_t size) {
+  return mspace_calloc((void *)_MSPACE, n, size);
+}
+
+void *realloc(void *ptr, size_t size) {
+  return mspace_realloc((void *)_MSPACE, ptr, size);
+}
+
+void free(void *ptr) {
+  return mspace_free((void *)_MSPACE, ptr);
 }

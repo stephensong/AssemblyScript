@@ -248,8 +248,8 @@ declare module 'assemblyscript/compiler' {
       initialize(): void;
       /** Gets an existing signature if it exists and otherwise creates it. */
       getOrAddSignature(argumentTypes: reflection.Type[], returnType: reflection.Type): binaryen.Signature;
-      /** Initializes the statically linked or imported library implementation. */
-      initializeLibrary(): void;
+      /** Initializes the statically linked or imported runtime. */
+      initializeRuntime(): void;
       /** Initializes a global variable. */
       initializeGlobal(node: typescript.VariableStatement): void;
       /** Adds a global variable. */

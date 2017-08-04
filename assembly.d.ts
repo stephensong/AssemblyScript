@@ -242,12 +242,14 @@ declare function memset(dest: uintptr, c: int, size: uintptr): uintptr;
 declare function memcpy(dest: uintptr, src: uintptr, size: uintptr): uintptr;
 /** Compares a chunk of memory to another. Returns `0` if both are equal, otherwise the difference `vl[i] - vr[i]` of the first differing byte values. */
 declare function memcmp(left: uintptr, right: uintptr, size: uintptr): int;
-/** Allocates a chunk of memory of the specified size and returns a pointer to it. */
+/** Allocates a chunk of memory of the specified size. */
 declare function malloc(size: uintptr): uintptr;
-/** Frees a previously allocated chunk of memory by its pointer. */
+/** Allocates a chunk of memory for an array of count elements of the specified size. */
+declare function calloc(count: uintptr, size: uintptr): uintptr;
+/** Changes the size of an allocated memory block. */
+declare function realloc(ptr: uintptr, size: uintptr): uintptr;
+/** Frees a previously allocated chunk of memory. */
 declare function free(ptr: uintptr): void;
-/** Called to initialize malloc if imported. */
-declare function malloc_init(offset: uintptr): void;
 
 // Temporary fillers
 

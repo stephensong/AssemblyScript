@@ -17,3 +17,7 @@ typedef _Addr ptrdiff_t;
 #undef _Addr
 
 #define NULL ((void*)0)
+
+#define UINTPTR_MAX (0xffffffff)
+
+typedef unsigned long __jmp_buf[6];
