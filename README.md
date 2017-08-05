@@ -263,24 +263,22 @@ These constants are present as immutable globals (note that optimizers might inl
 * **Infinityf**: `float`<br />
   Positive infinity as a 32-bit float.
 
-By default, standard memory management routines based on [dlmalloc](http://g.oswego.edu/dl/html/malloc.html) and [musl](http://www.musl-libc.org/) will be linked statically and can be configured to be exported to the embedder:
+By default, [AssemblyScript's memory management runtime](./lib/runtime) will be linked statically:
 
-* **malloc**(size: `uintptr`): `uintptr`<br />
-  Allocates a chunk of memory of the specified size.
-* **calloc**(count: `uintptr`, size: `uintptr`): `uintptr`<br />
-  Allocates a chunk of memory for an array of count elements of the specified size.
-* **realloc**(ptr: `uintptr`, size: `uintptr`): `uintptr`<br />
-  Changes the size of an allocated memory block.
-* **free**(ptr: `uintptr`): `void`<br />
-  Frees a previously allocated chunk of memory.
 * **memcpy**(dest: `uintptr`, src: `uintptr`, size: `uintptr`): `uintptr`<br />
   Copies data from one chunk of memory to another.
 * **memset**(dest: `uintptr`, c: `int`, size: `uintptr`): `uintptr`<br />
   Sets a chunk of memory to the provided value `c`. Usually used to reset it to all `0`s.
 * **memcmp**(vl: `uintptr`, vr: `uintptr`, n: `uintptr`): `int`<br />
   Compares a chunk of memory to another. Returns `0` if both are equal, otherwise `vl[i] - vr[i]` at the first difference's byte offset `i`.
+* **malloc**(size: `uintptr`): `uintptr`<br />
+  Allocates a chunk of memory of the specified size.
+* **realloc**(ptr: `uintptr`, size: `uintptr`): `uintptr`<br />
+  Changes the size of an allocated memory block.
+* **free**(ptr: `uintptr`): `void`<br />
+  Frees a previously allocated chunk of memory.
 
-Linking in memory management routines adds about 11kb to a module. Once WebAssembly exposes the garbage collector natively, there'll be other options as well. Note that the `new` operator depends on `malloc` and will break when `--no-malloc` is specified (and no other `malloc` is present). Also note that calling `grow_memory` where `malloc` is present will most likely break `malloc` as it expects contiguous memory.
+Linking in the runtime adds up to 14kb to a module, but the optimizer is able to eliminate unused runtime code. Once WebAssembly exposes the garbage collector natively, there'll be other options as well. If the runtime has been excluded through `--noRuntime`, its methods will be imported where referenced (i.e. when using `new`). Also note that manually calling `grow_memory` where the runtime is present will most likely break it.
 
 Type coercion requires an explicit cast where precision or signage is lost respectively is implicit where it is maintained. For example, to cast a `double` to an `int`:
 
@@ -345,13 +343,6 @@ Options:
                     wasm32  Compiles to 32-bit WebAssembly [default]
                     wasm64  Compiles to 64-bit WebAssembly
 
- --memoryModel, -m  Specifies the memory model to use / how to proceed with malloc etc.:
-
-                    malloc        Bundles malloc etc. [default]
-                    exportmalloc  Bundles malloc etc. and exports each
-                    importmalloc  Imports malloc etc. from 'env'
-                    bare          Excludes malloc etc. entirely
-
  --textFormat, -f   Specifies the format to use for text output:
 
                     sexpr   Emits s-expression syntax (.wast) [default]
@@ -364,6 +355,10 @@ Options:
  --noTreeShaking    Whether to disable built-in tree-shaking.
 
  --noImplicitConversion  Whether to disallow implicit type conversions.
+
+ --noRuntime        Whether to exclude the runtime.
+
+ --exportRuntime, -e  Runtime functions to export, defaults to 'malloc' and 'free'. [multiple]
 
  --help, -h         Displays this help message.
 ```
@@ -391,12 +386,14 @@ It's also possible to use the API programmatically:
     Whether compilation shall be performed in silent mode without writing to console. Defaults to `false`.
   * **target**: `CompilerTarget | string`<br />
     Specifies the target architecture. Defaults to `CompilerTarget.WASM32`.
-  * **memoryModel**: `CompilerMemoryModel | string`<br />
-    Specifies the memory model to use. Defaults to `CompilerMemoryModel.MALLOC`.
   * **noTreeShaking**: `boolean`<br />
     Whether to disable built-in tree-shaking. Defaults to `false`.
   * **noImplicitConversion**: `boolean`<br />
     Whether to disallow implicit type conversions. Defaults to `false`.
+  * **noRuntime**: `boolean`<br />
+    Whether to exclude the runtime.
+  * **exportRuntime**: `string[]`<br />
+    Runtime functions to export, defaults to 'malloc' and 'free'.
 
  * **CompilerTarget**<br />
    Compiler target.
@@ -405,18 +402,6 @@ It's also possible to use the API programmatically:
      32-bit WebAssembly target using uint pointers.
    * **WASM64**<br />
      64-bit WebAssembly target using ulong pointers.
-
-  * **CompilerMemoryModel**<br />
-    Compiler memory model.
-
-    * **BARE**<br />
-      Does not bundle any memory management routines.
-    * **MALLOC**<br />
-      Bundles malloc, free, etc.
-    * **EXPORT_MALLOC**<br />
-      Bundles malloc, free, etc. and exports each to the embedder.
-    * **IMPORT_MALLOC**<br />
-      Imports malloc, free, etc. as provided by the embedder.
 
 ### Example
 
@@ -429,7 +414,6 @@ export function add(a: int, b: int): int {
 }
 `, {
   target: CompilerTarget.WASM32,
-  memoryModel: CompilerMemoryModel.MALLOC,
   silent: true
 });
 

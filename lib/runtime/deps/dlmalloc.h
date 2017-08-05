@@ -29,5 +29,6 @@
 #define MORECORE morecore
 #define malloc_getpagesize 65536
 #define DEFAULT_GRANULARITY 65536
+#define USE_DL_PREFIX 1
 
 static inline void *morecore(ptrdiff_t);

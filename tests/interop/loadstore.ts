@@ -1,4 +1,4 @@
-//! { "memoryModel": "bare" }
+//! { "noRuntime": true }
 
 export function doload(offset: uintptr): int {
   return load<int>(offset);

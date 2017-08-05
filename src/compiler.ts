@@ -20,12 +20,14 @@ export interface CompilerOptions {
   silent?: boolean;
   /** Specifies the target architecture. Defaults to {@link CompilerTarget.WASM32}. */
   target?: CompilerTarget | "wasm32" | "wasm64";
-  /** Specifies the memory model to use. Defaults to {@link CompilerMemoryModel.MALLOC}. */
-  memoryModel?: CompilerMemoryModel | "malloc" | "exportmalloc" | "importmalloc" | "bare";
   /** Whether to disable built-in tree-shaking. Defaults to `false`. */
   noTreeShaking?: boolean;
   /** Whether to disallow implicit type conversions. Defaults to `false`. */
   noImplicitConversion?: boolean;
+  /** Whether to exclude the runtime. */
+  noRuntime?: boolean;
+  /** Runtime functions to export, defaults to 'malloc' and 'free'. */
+  exportRuntime?: string[];
 }
 
 /** Compiler target. */
@@ -36,23 +38,10 @@ export enum CompilerTarget {
   WASM64
 }
 
-/** Compiler memory model. */
-export enum CompilerMemoryModel {
-  /** Does not bundle any memory management routines. */
-  BARE,
-  /** Bundles malloc, free, etc. */
-  MALLOC,
-  /** Bundles malloc, free, etc. and exports it to the embedder. */
-  EXPORT_MALLOC,
-  /** Imports malloc, free, etc. as provided by the embedder. */
-  IMPORT_MALLOC
-  // TODO: GC, once natively supported
-}
-
 /** A static memory segment. */
 export interface CompilerMemorySegment {
   /** Offset in linear memory. */
-  offset: number;
+  offset: Long;
   /** Data in linear memory. */
   buffer: Uint8Array;
 }
@@ -84,16 +73,16 @@ export class Compiler {
   module: binaryen.Module;
   signatures: { [key: string]: binaryen.Signature } = {};
   globalInitializers: binaryen.Expression[] = [];
-  userStartFunction?: binaryen.Function;
-  memoryBase: number;
+  userStartFunction?: reflection.Function;
+  memoryBase: Long;
   memorySegments: CompilerMemorySegment[] = [];
 
   // Codegen
   target: CompilerTarget;
-  memoryModel: CompilerMemoryModel;
   profiler = new Profiler();
   currentFunction: reflection.Function;
   stringPool: { [key: string]: CompilerMemorySegment } = {};
+  runtimeExports: string[];
 
   // Reflection
   uintptrType: reflection.Type;
@@ -223,33 +212,18 @@ export class Compiler {
     else
       this.target = CompilerTarget.WASM32;
 
-    if (typeof this.options.memoryModel === "string") {
-      const memoryModelLower = this.options.memoryModel.toLowerCase().replace(/_/g, "");
-      if (memoryModelLower === "exportmalloc")
-        this.memoryModel = CompilerMemoryModel.EXPORT_MALLOC;
-      else if (memoryModelLower === "importmalloc")
-        this.memoryModel = CompilerMemoryModel.IMPORT_MALLOC;
-      else if (memoryModelLower === "bare")
-        this.memoryModel = CompilerMemoryModel.BARE;
-      else
-        this.memoryModel = CompilerMemoryModel.MALLOC;
-    } else if (typeof this.options.memoryModel === "number" && CompilerMemoryModel[this.options.memoryModel])
-      this.memoryModel = this.options.memoryModel;
-    else
-      this.memoryModel = CompilerMemoryModel.MALLOC;
-
-    if (
-      this.memoryModel === CompilerMemoryModel.MALLOC ||
-      this.memoryModel === CompilerMemoryModel.EXPORT_MALLOC
-    ) {
+    if (!this.options.noRuntime) {
       if (!runtimeCache)
         base64.decode(library.runtime, runtimeCache = new Uint8Array(base64.length(library.runtime)), 0);
       this.module = binaryen.readBinary(runtimeCache);
-    } else
+      this.runtimeExports = this.options.exportRuntime || ["malloc", "free"];
+    } else {
       this.module = new binaryen.Module();
+      this.runtimeExports = [];
+    }
 
     this.uintptrType = this.target === CompilerTarget.WASM64 ? reflection.uintptrType64 : reflection.uintptrType32;
-    this.memoryBase = 4 * 8; // NULL + HEAP + MSPACE + GC, each aligned to 8 bytes
+    this.memoryBase = Long.fromInt(32, true); // NULL + HEAP + MSPACE + GC, each aligned to 8 bytes
 
     const sourceFiles = program.getSourceFiles();
     for (let i = sourceFiles.length - 1; i >= 0; --i) {
@@ -326,13 +300,8 @@ export class Compiler {
       }
     }
 
-    if (
-      this.memoryModel === CompilerMemoryModel.MALLOC ||
-      this.memoryModel === CompilerMemoryModel.EXPORT_MALLOC ||
-      this.memoryModel === CompilerMemoryModel.IMPORT_MALLOC
-    ) {
+    if (!this.options.noRuntime)
       this.initializeRuntime();
-    }
   }
 
   /** Gets an existing signature if it exists and otherwise creates it. */
@@ -353,44 +322,14 @@ export class Compiler {
 
   /** Initializes the statically linked or imported runtime. */
   initializeRuntime(): void {
-    const op = this.module;
+    if (this.options.noRuntime)
+      return;
 
-    // these are required in any case
-    const mallocSignature  = this.getOrAddSignature([this.uintptrType], this.uintptrType); // void *malloc(size_t)
-    const callocSignature  = this.getOrAddSignature([this.uintptrType, this.uintptrType], this.uintptrType); // void *calloc(size_t, size_t)
-    const reallocSignature = this.getOrAddSignature([this.uintptrType, this.uintptrType], this.uintptrType); // void *realloc(void *, size_t)
-    const freeSignature    = this.getOrAddSignature([this.uintptrType], reflection.voidType); // void free(void *)
-    const memsetSignature  = this.getOrAddSignature([this.uintptrType, reflection.intType, this.uintptrType], this.uintptrType); // void *memset(void *, int, size_t)
-    const memcpySignature  = this.getOrAddSignature([this.uintptrType, this.uintptrType, this.uintptrType], this.uintptrType); // void *memcpy(void *, void *, size_t)
-    const memcmpSignature  = this.getOrAddSignature([this.uintptrType, this.uintptrType, this.uintptrType], reflection.intType); // void *memcmp(void *, void *, size_t)
-
-    if (this.memoryModel === CompilerMemoryModel.IMPORT_MALLOC) {
-
-      const initSignature = this.getOrAddSignature([], reflection.voidType); // void init()
-
-      op.addImport("init", "env", "init", initSignature);
-      op.addImport("malloc", "env", "malloc", mallocSignature);
-      op.addImport("calloc", "env", "calloc", callocSignature);
-      op.addImport("realloc", "env", "realloc", reallocSignature);
-      op.addImport("free", "env", "free", freeSignature);
-      op.addImport("memcpy", "env", "memcpy", memcpySignature);
-      op.addImport("memset", "env", "memset", memsetSignature);
-      op.addImport("memcmp", "env", "memcmp", memcmpSignature);
-
-    } else if (this.memoryModel === CompilerMemoryModel.MALLOC) {
-
-      op.removeExport("malloc");
-      op.removeExport("calloc");
-      op.removeExport("realloc");
-      op.removeExport("free");
-      op.removeExport("memcpy");
-      op.removeExport("memset");
-      op.removeExport("memcmp");
-
-    }
-
-    if (this.memoryModel === CompilerMemoryModel.MALLOC || this.memoryModel === CompilerMemoryModel.EXPORT_MALLOC)
-      op.removeExport("init");
+    // set up exports
+    builtins.runtimeNames.forEach(fname => {
+      if (this.runtimeExports.indexOf(fname) < 0)
+        this.module.removeExport(fname); // does not throw if not existent
+    });
   }
 
   /** Initializes a global variable. */
@@ -466,12 +405,13 @@ export class Compiler {
   }
 
   /** Creates or, if it already exists, looks up a static string and returns its offset in linear memory. */
-  createStaticString(value: string): number {
+  createStaticString(value: string): Long {
     let pooled = this.stringPool.hasOwnProperty(value) && this.stringPool[value] || undefined;
     if (!pooled) {
 
       // align to 4 bytes (length is an int)
-      if (this.memoryBase & 3) this.memoryBase = (this.memoryBase | 3) + 1;
+      if (!this.memoryBase.and(3).isZero())
+        this.memoryBase = this.memoryBase.or(3).add(1);
 
       // calculate length
       const length = value.length;
@@ -499,7 +439,7 @@ export class Compiler {
         offset: this.memoryBase,
         buffer: buffer
       });
-      this.memoryBase += offset;
+      this.memoryBase = this.memoryBase.add(offset);
     }
     return pooled.offset;
   }
@@ -723,23 +663,28 @@ export class Compiler {
         data: segment.buffer
       });
     });
-    if (this.memoryBase & 7) this.memoryBase = (this.memoryBase | 7) + 1; // align to 8 bytes
+    if (!this.memoryBase.and(7).isZero()) // align to 8 bytes
+      this.memoryBase = this.memoryBase.or(7).add(1);
 
     // initialize runtime heap pointer
-    if (this.memoryModel !== CompilerMemoryModel.BARE) {
+    if (!this.options.noRuntime) {
       binaryenSegments.unshift({
         offset: this.valueOf(this.uintptrType, 8),
         data: new Uint8Array([
-           this.memoryBase         & 0xff, // FIXME: wasm32 version
-          (this.memoryBase >>>  8) & 0xff,
-          (this.memoryBase >>> 16) & 0xff,
-          (this.memoryBase >>> 24) & 0xff
+           this.memoryBase.low          & 0xff,
+          (this.memoryBase.low  >>>  8) & 0xff,
+          (this.memoryBase.low  >>> 16) & 0xff,
+          (this.memoryBase.low  >>> 24) & 0xff,
+           this.memoryBase.high         & 0xff,
+          (this.memoryBase.high >>>  8) & 0xff,
+          (this.memoryBase.high >>> 16) & 0xff,
+          (this.memoryBase.high >>> 24) & 0xff
         ])
       });
     }
 
-    const initialSize = Math.floor((this.memoryBase - 1) / 65536) + 1;
-    this.module.setMemory(initialSize, 0xffff, this.memoryModel === CompilerMemoryModel.BARE ? "memory" :  undefined, binaryenSegments);
+    const initialSize = Math.floor((this.memoryBase.sub(1).toNumber()) / 65536) + 1;
+    this.module.setMemory(initialSize, 0xffff, this.options.noRuntime ? "memory" :  undefined, binaryenSegments);
 
     // compile start function (initializes malloc mspaces)
     this.maybeCompileStartFunction();
@@ -749,7 +694,7 @@ export class Compiler {
   maybeCompileStartFunction(): void {
 
     // just use the user start function, if declared, if there is no other initialization to perform
-    if (this.globalInitializers.length === 0 && this.memoryModel === CompilerMemoryModel.BARE) {
+    if (this.globalInitializers.length === 0 && this.options.noRuntime) {
       if (this.userStartFunction)
         this.module.setStart(this.userStartFunction);
       return;
@@ -766,13 +711,10 @@ export class Compiler {
     const body: binaryen.Statement[] = [];
 
     // call init first if the runtime is bundled
-    body.push(
-      (this.memoryModel === CompilerMemoryModel.IMPORT_MALLOC ? op.callImport : op.call)(
-        "init",
-        [],
-        this.typeOf(reflection.voidType)
-      )
-    );
+    if (!this.options.noRuntime)
+      body.push(
+        op.call(".init", [], binaryen.none)
+      );
 
     // include global initializes
     let i = 0;
@@ -781,7 +723,9 @@ export class Compiler {
 
     // call the user's start function, if applicable
     if (this.userStartFunction)
-      body.push(op.call("start", [], binaryen.none));
+      body.push(
+        this.userStartFunction.call([])
+      );
 
     // make sure to check for additional locals
     const additionalLocals: binaryen.Type[] = [];
@@ -815,35 +759,34 @@ export class Compiler {
   /** Compiles a malloc invocation using the specified byte size. */
   compileMallocInvocation(size: number, clearMemory: boolean = true): binaryen.Expression {
     const op = this.module;
-    const binaryenPtrType = this.typeOf(this.uintptrType);
-    const mallocIsBuiltin = this.memoryModel === CompilerMemoryModel.MALLOC || this.memoryModel === CompilerMemoryModel.EXPORT_MALLOC;
+
+    const mallocFunction = this.functions["assembly.d.ts/malloc"];
+    const memsetFunction = this.functions["assembly.d.ts/memset"];
 
     // Simplify if possible but always obtain a pointer for consistency
     if (size === 0 || !clearMemory)
-      return (mallocIsBuiltin ? op.call : op.callImport)("malloc", [ this.valueOf(this.uintptrType, size) ], binaryenPtrType);
+      return mallocFunction.call([ this.valueOf(this.uintptrType, size) ]);
 
-    return (mallocIsBuiltin ? op.call : op.callImport)("memset", [
-      (mallocIsBuiltin ? op.call : op.callImport)("malloc", [ // use wrapped malloc here so mspace_malloc can be inlined
+    return memsetFunction.call([
+      mallocFunction.call([
         this.valueOf(this.uintptrType, size)
-      ], binaryenPtrType),
+      ]),
       op.i32.const(0), // 2nd memset argument is int
       this.valueOf(this.uintptrType, size)
-    ], binaryenPtrType);
+    ]);
   }
 
   /** Compiles a function. */
   compileFunction(instance: reflection.Function): binaryen.Function | null {
     const op = this.module;
 
-    if (instance.isImport && typescript.getSourceFileOfNode(instance.declaration) === this.libraryFile)
-      throw Error("cannot compile declared library function " + instance);
+    if (instance.compiled)
+      throw Error("duplicate compilation of function " + instance);
 
     // register signature
-    if (!instance.binaryenSignature) {
-      instance.binaryenSignature = this.module.getFunctionTypeBySignature(instance.binaryenReturnType, instance.binaryenParameterTypes);
-      if (!instance.binaryenSignature)
-        instance.binaryenSignature = this.module.addFunctionType(instance.binaryenSignatureId, instance.binaryenReturnType, instance.binaryenParameterTypes);
-    }
+    if (!instance.binaryenSignature)
+      instance.binaryenSignature = this.signatureOf(instance);
+    instance.compiled = true;
 
     // handle imports
     if (instance.isImport) {
@@ -853,16 +796,16 @@ export class Compiler {
       const importName = Compiler.splitImportName(instance.simpleName);
       this.module.addImport(instance.name, importName.moduleName, importName.name, instance.binaryenSignature);
       instance.imported = true;
-      instance.compiled = true;
       return null;
-    } else if (instance.compiled)
-      throw Error("duplicate compilation of function " + instance);
+    }
+
+    // handle statically linked runtime functions
+    if (builtins.isRuntime(instance.name))
+      return null;
 
     // otherwise compile
     if (!instance.body)
-      throw Error("cannot compile a function without a body: " + instance.name);
-
-    instance.compiled = true;
+      throw Error("cannot compile a non-import function without a body: " + instance.name);
 
     const body: binaryen.Statement[] = [];
     const previousFunction = this.currentFunction;
@@ -934,7 +877,7 @@ export class Compiler {
         this.report(<typescript.Identifier>instance.declaration.name, typescript.DiagnosticsEx.Start_function_has_already_been_defined);
         // TODO: report previous declaration using typescript.DiagnosticsEx.Start_function_already_defined_here
       else
-        this.userStartFunction = binaryenFunction;
+        this.userStartFunction = instance;
     }
 
     this.currentFunction = previousFunction;
@@ -1407,6 +1350,17 @@ export class Compiler {
         return "v";
     }
     throw Error("unexpected type");
+  }
+
+  /** Obtains the signature of the specified reflected function. */
+  signatureOf(instance: reflection.Function): binaryen.Signature {
+    let signature = instance.binaryenSignature;
+    if (!signature) {
+      signature = this.module.getFunctionTypeBySignature(instance.binaryenReturnType, instance.binaryenParameterTypes);
+      if (!signature)
+        signature = this.module.addFunctionType(instance.binaryenSignatureId, instance.binaryenReturnType, instance.binaryenParameterTypes);
+    }
+    return signature;
   }
 
   /** Computes the binaryen type of a reflected type. */

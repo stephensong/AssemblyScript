@@ -1,5 +1,5 @@
  (export "test" (func $test))
- (start $.start)
+ (export "memory" (memory $0))
  (func $std/array.ts/Array<sbyte> (type $iii) (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
   (local $3 i32)
@@ -19,7 +19,7 @@
    )
   )
   (set_local $3
-   (call $malloc
+   (call $assembly.d.ts/malloc
     (i32.add
      (i32.const 8)
      (get_local $2)
@@ -38,7 +38,7 @@
    (get_local $1)
   )
   (drop
-   (call $memset
+   (call $assembly.d.ts/memset
     (i32.add
      (get_local $3)
      (i32.const 8)
@@ -70,7 +70,7 @@
    )
   )
   (set_local $3
-   (call $malloc
+   (call $assembly.d.ts/malloc
     (i32.add
      (i32.const 8)
      (get_local $2)
@@ -89,7 +89,7 @@
    (get_local $1)
   )
   (drop
-   (call $memset
+   (call $assembly.d.ts/memset
     (i32.add
      (get_local $3)
      (i32.const 8)
@@ -121,7 +121,7 @@
    )
   )
   (set_local $3
-   (call $malloc
+   (call $assembly.d.ts/malloc
     (i32.add
      (i32.const 8)
      (get_local $2)
@@ -140,7 +140,7 @@
    (get_local $1)
   )
   (drop
-   (call $memset
+   (call $assembly.d.ts/memset
     (i32.add
      (get_local $3)
      (i32.const 8)
@@ -172,7 +172,7 @@
    )
   )
   (set_local $3
-   (call $malloc
+   (call $assembly.d.ts/malloc
     (i32.add
      (i32.const 8)
      (get_local $2)
@@ -191,7 +191,7 @@
    (get_local $1)
   )
   (drop
-   (call $memset
+   (call $assembly.d.ts/memset
     (i32.add
      (get_local $3)
      (i32.const 8)
@@ -223,7 +223,7 @@
    )
   )
   (set_local $3
-   (call $malloc
+   (call $assembly.d.ts/malloc
     (i32.add
      (i32.const 8)
      (get_local $2)
@@ -242,7 +242,7 @@
    (get_local $1)
   )
   (drop
-   (call $memset
+   (call $assembly.d.ts/memset
     (i32.add
      (get_local $3)
      (i32.const 8)
@@ -274,7 +274,7 @@
    )
   )
   (set_local $3
-   (call $malloc
+   (call $assembly.d.ts/malloc
     (i32.add
      (i32.const 8)
      (get_local $2)
@@ -293,7 +293,7 @@
    (get_local $1)
   )
   (drop
-   (call $memset
+   (call $assembly.d.ts/memset
     (i32.add
      (get_local $3)
      (i32.const 8)
@@ -325,7 +325,7 @@
    )
   )
   (set_local $3
-   (call $malloc
+   (call $assembly.d.ts/malloc
     (i32.add
      (i32.const 8)
      (get_local $2)
@@ -344,7 +344,7 @@
    (get_local $1)
   )
   (drop
-   (call $memset
+   (call $assembly.d.ts/memset
     (i32.add
      (get_local $3)
      (i32.const 8)
@@ -376,7 +376,7 @@
    )
   )
   (set_local $3
-   (call $malloc
+   (call $assembly.d.ts/malloc
     (i32.add
      (i32.const 8)
      (get_local $2)
@@ -395,7 +395,7 @@
    (get_local $1)
   )
   (drop
-   (call $memset
+   (call $assembly.d.ts/memset
     (i32.add
      (get_local $3)
      (i32.const 8)
@@ -427,7 +427,7 @@
    )
   )
   (set_local $3
-   (call $malloc
+   (call $assembly.d.ts/malloc
     (i32.add
      (i32.const 8)
      (get_local $2)
@@ -446,7 +446,7 @@
    (get_local $1)
   )
   (drop
-   (call $memset
+   (call $assembly.d.ts/memset
     (i32.add
      (get_local $3)
      (i32.const 8)
@@ -478,7 +478,7 @@
    )
   )
   (set_local $3
-   (call $malloc
+   (call $assembly.d.ts/malloc
     (i32.add
      (i32.const 8)
      (get_local $2)
@@ -497,7 +497,7 @@
    (get_local $1)
   )
   (drop
-   (call $memset
+   (call $assembly.d.ts/memset
     (i32.add
      (get_local $3)
      (i32.const 8)
@@ -524,8 +524,8 @@
   (local $10 i32)
   (set_local $0
    (call $std/array.ts/Array<sbyte>
-    (call $memset
-     (call $malloc
+    (call $assembly.d.ts/memset
+     (call $assembly.d.ts/malloc
       (i32.const 8)
      )
      (i32.const 0)
@@ -536,8 +536,8 @@
   )
   (set_local $1
    (call $std/array.ts/Array<byte>
-    (call $memset
-     (call $malloc
+    (call $assembly.d.ts/memset
+     (call $assembly.d.ts/malloc
       (i32.const 8)
      )
      (i32.const 0)
@@ -548,8 +548,8 @@
   )
   (set_local $2
    (call $std/array.ts/Array<short>
-    (call $memset
-     (call $malloc
+    (call $assembly.d.ts/memset
+     (call $assembly.d.ts/malloc
       (i32.const 8)
      )
      (i32.const 0)
@@ -560,8 +560,8 @@
   )
   (set_local $3
    (call $std/array.ts/Array<ushort>
-    (call $memset
-     (call $malloc
+    (call $assembly.d.ts/memset
+     (call $assembly.d.ts/malloc
       (i32.const 8)
      )
      (i32.const 0)
@@ -572,8 +572,8 @@
   )
   (set_local $4
    (call $std/array.ts/Array<int>
-    (call $memset
-     (call $malloc
+    (call $assembly.d.ts/memset
+     (call $assembly.d.ts/malloc
       (i32.const 8)
      )
      (i32.const 0)
@@ -584,8 +584,8 @@
   )
   (set_local $5
    (call $std/array.ts/Array<uint>
-    (call $memset
-     (call $malloc
+    (call $assembly.d.ts/memset
+     (call $assembly.d.ts/malloc
       (i32.const 8)
      )
      (i32.const 0)
@@ -596,8 +596,8 @@
   )
   (set_local $6
    (call $std/array.ts/Array<long>
-    (call $memset
-     (call $malloc
+    (call $assembly.d.ts/memset
+     (call $assembly.d.ts/malloc
       (i32.const 8)
      )
      (i32.const 0)
@@ -608,8 +608,8 @@
   )
   (set_local $7
    (call $std/array.ts/Array<ulong>
-    (call $memset
-     (call $malloc
+    (call $assembly.d.ts/memset
+     (call $assembly.d.ts/malloc
       (i32.const 8)
      )
      (i32.const 0)
@@ -620,8 +620,8 @@
   )
   (set_local $8
    (call $std/array.ts/Array<float>
-    (call $memset
-     (call $malloc
+    (call $assembly.d.ts/memset
+     (call $assembly.d.ts/malloc
       (i32.const 8)
      )
      (i32.const 0)
@@ -632,8 +632,8 @@
   )
   (set_local $9
    (call $std/array.ts/Array<double>
-    (call $memset
-     (call $malloc
+    (call $assembly.d.ts/memset
+     (call $assembly.d.ts/malloc
       (i32.const 8)
      )
      (i32.const 0)
@@ -644,8 +644,8 @@
   )
   (set_local $10
    (call $std/array.ts/Array<sbyte>
-    (call $memset
-     (call $malloc
+    (call $assembly.d.ts/memset
+     (call $assembly.d.ts/malloc
       (i32.const 8)
      )
      (i32.const 0)
@@ -654,7 +654,4 @@
     (i32.const 11)
    )
   )
- )
- (func $.start (type $v)
-  (call $init)
  )

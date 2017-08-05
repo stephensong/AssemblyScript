@@ -1,13 +1,13 @@
  (export "test" (func $test))
  (export "testNested" (func $testNested))
- (start $.start)
+ (export "memory" (memory $0))
  (func $test (type $i) (result i32)
   (local $0 i32)
   (return
    (block (result i32)
     (set_local $0
-     (call $memset
-      (call $malloc
+     (call $assembly.d.ts/memset
+      (call $assembly.d.ts/malloc
        (i32.const 24)
       )
       (i32.const 0)
@@ -50,8 +50,8 @@
   (return
    (block (result i32)
     (set_local $0
-     (call $memset
-      (call $malloc
+     (call $assembly.d.ts/memset
+      (call $assembly.d.ts/malloc
        (i32.const 20)
       )
       (i32.const 0)
@@ -70,8 +70,8 @@
      (get_local $0)
      (block (result i32)
       (set_local $1
-       (call $memset
-        (call $malloc
+       (call $assembly.d.ts/memset
+        (call $assembly.d.ts/malloc
          (i32.const 24)
         )
         (i32.const 0)
@@ -109,8 +109,8 @@
      (get_local $0)
      (block (result i32)
       (set_local $2
-       (call $memset
-        (call $malloc
+       (call $assembly.d.ts/memset
+        (call $assembly.d.ts/malloc
          (i32.const 12)
         )
         (i32.const 0)
@@ -136,8 +136,8 @@
      (get_local $0)
      (block (result i32)
       (set_local $3
-       (call $memset
-        (call $malloc
+       (call $assembly.d.ts/memset
+        (call $assembly.d.ts/malloc
          (i32.const 8)
         )
         (i32.const 0)
@@ -158,7 +158,4 @@
     (get_local $0)
    )
   )
- )
- (func $.start (type $v)
-  (call $init)
  )

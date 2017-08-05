@@ -74,6 +74,24 @@ export function isBuiltin(name: string, isGlobalName: boolean = true): boolean {
   return false;
 }
 
+/** An array of the statically linked runtime function names. */
+export const runtimeNames = [
+  "memset",
+  "memcpy",
+  "memcmp",
+  "init",
+  "malloc",
+  "realloc",
+  "free",
+  "gc_pause",
+  "gc_resume",
+  "gc_collect",
+  "gc_alloc",
+  "gc_realloc",
+  "gc_retain",
+  "gc_release"
+];
+
 /** Tests if the specified function name corresponds to a linked runtime function. */
 export function isRuntime(name: string, isGlobalName: boolean = true): boolean {
   if (isGlobalName) {
@@ -84,18 +102,7 @@ export function isRuntime(name: string, isGlobalName: boolean = true): boolean {
     if (p > -1)
       name = name.substring(0, p);
   }
-  switch (name) {
-    case "init":
-    case "malloc":
-    case "calloc":
-    case "realloc":
-    case "free":
-    case "memset":
-    case "memcpy":
-    case "memcmp":
-      return true;
-  }
-  return false;
+  return runtimeNames.indexOf(name) > -1;
 }
 
 /** A pair of TypeScript expressions. */

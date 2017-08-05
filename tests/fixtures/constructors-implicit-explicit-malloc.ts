@@ -1,4 +1,4 @@
-//! { "memoryModel": "importmalloc" }
+//! { "noRuntime": true }
 
 class TestImplicit {
   constructor() {

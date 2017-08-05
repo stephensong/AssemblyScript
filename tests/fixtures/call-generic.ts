@@ -1,4 +1,4 @@
-//! { "memoryModel": "bare" }
+//! { "noRuntime": true }
 
 class SomeClass<T> {
   instanceMethod<V>(a: V): V {

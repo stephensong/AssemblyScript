@@ -1,4 +1,4 @@
-//! { "memoryModel": "bare" }
+//! { "noRuntime": true }
 
 export function test1(a: int): int {
   switch (a) {

@@ -1,4 +1,4 @@
-//! { "memoryModel": "bare" }
+//! { "noRuntime": true }
 
 export function test(n: int): int {
   let i: int, t: int, a: int = 0, b: int = 1;

@@ -1,4 +1,4 @@
-//! { "memoryModel": "bare" }
+//! { "noRuntime": true }
 
 enum A {
   ZERO,

@@ -1,4 +1,4 @@
-//! { "memoryModel": "bare" }
+//! { "noRuntime": true }
 
 export function testIntToFloat(a: int): float {
   return reinterpretf(a);

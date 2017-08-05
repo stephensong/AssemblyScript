@@ -1,4 +1,4 @@
-//! { "memoryModel": "bare" }
+//! { "noRuntime": true }
 
 export function testFloat(a: float): void {
   if (a) {}

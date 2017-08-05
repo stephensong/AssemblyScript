@@ -1,5 +1,3 @@
-//! { "memoryModel": "exportmalloc" }
-
 export function test(): void {
   console.log("log message");
   console.info("info message");

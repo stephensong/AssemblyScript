@@ -3,7 +3,7 @@
 import * as binaryen from "binaryen";
 import { isRuntime } from "../builtins";
 import { Class } from "./class";
-import { Compiler, CompilerMemoryModel } from "../compiler";
+import Compiler from "../compiler";
 import { Type, TypeArgumentsMap, voidType } from "./type";
 import { Variable, VariableFlags } from "./variable";
 import * as typescript from "../typescript";
@@ -39,7 +39,7 @@ export abstract class FunctionBase {
   }
 
   /** Tests if this function is an import. */
-  get isImport(): boolean { return util.isDeclare(this.declaration); }
+  get isImport(): boolean { return util.isDeclare(this.declaration) && (this.compiler.options.noRuntime || typescript.getSourceFileOfNode(this.declaration) !== this.compiler.libraryFile || !isRuntime(this.name)); }
 
   /** Tests if this function is exported. */
   get isExport(): boolean { return util.isExport(this.declaration, true) && typescript.getSourceFileOfNode(this.declaration) === this.compiler.entryFile; }
@@ -84,6 +84,8 @@ export interface FunctionParameter {
 /** A function instance with generic parameters resolved. */
 export class Function extends FunctionBase {
 
+  /** Internal name for use with call operations. */
+  internalName: string;
   /** Corresponding function template. */
   template: FunctionTemplate;
   /** Concrete type arguments. */
@@ -132,6 +134,11 @@ export class Function extends FunctionBase {
   /** Constructs a new reflected function instance and binds it to its TypeScript declaration. */
   constructor(compiler: Compiler, name: string, template: FunctionTemplate, typeArguments: typescript.TypeNode[], typeArgumentsMap: TypeArgumentsMap, parameters: FunctionParameter[], returnType: Type, parent?: Class, body?: typescript.Block | typescript.Expression) {
     super(compiler, name, template.declaration);
+
+    if (!this.compiler.options.noRuntime && isRuntime(this.name, true))
+      this.internalName = "." + this.simpleName;
+    else
+      this.internalName = this.name;
 
     // register
     if (compiler.functions[this.name])
@@ -185,7 +192,6 @@ export class Function extends FunctionBase {
 
   /** Compiles a call to this function using the specified arguments. Arguments to instance functions include `this` as the first argument or can specifiy it in `thisArg`. */
   compileCall(argumentNodes: typescript.Expression[], thisArg?: binaryen.Expression): binaryen.Expression {
-    const op = this.compiler.module;
     const operands: binaryen.Expression[] = new Array(this.parameters.length);
     let operandIndex = 0;
 
@@ -215,24 +221,18 @@ export class Function extends FunctionBase {
     if (operandIndex !== operands.length)
       throw Error("unexpected operand index");
 
-    let internalName = this.name;
-    let isImport = this.isImport;
+    return this.call(operands);
+  }
 
-    // Rewire runtime calls
-    if (isRuntime(this.name, true)) {
-      internalName = this.simpleName;
-      if (this.compiler.memoryModel === CompilerMemoryModel.MALLOC || this.compiler.memoryModel === CompilerMemoryModel.EXPORT_MALLOC)
-        isImport = false;
+  /** Makes a call to this function using the specified operands. */
+  call(operands: binaryen.Expression[]): binaryen.Expression {
 
     // Compile if not yet compiled
-    } else if (!this.compiled) {
-      if (this.body || this.isImport)
-        this.compiler.compileFunction(this);
-      else
-        throw Error("cannot compile a non-import function without a body: " + this.name);
-    }
+    if (!this.compiled)
+      this.compiler.compileFunction(this);
 
-    return (isImport ? op.callImport : op.call)(internalName, operands, this.compiler.typeOf(this.returnType));
+    const op = this.compiler.module;
+    return (this.isImport ? op.callImport : op.call)(this.internalName, operands, this.compiler.typeOf(this.returnType));
   }
 }
 

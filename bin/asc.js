@@ -101,9 +101,12 @@ function main(args, callback) {
   var wasmModule = Compiler.compileFile(files[0], {
     silent: !!argv.quiet,
     target: argv.target,
-    memoryModel: argv.memoryModel,
     noTreeShaking: !!argv.noTreeShaking,
-    noImplicitConversion: !!argv.noImplicitConversion
+    noImplicitConversion: !!argv.noImplicitConversion,
+    noRuntime: !!argv.noRuntime,
+    exportRuntime: Array.isArray(argv.exportRuntime) ? argv.exportRuntime
+                 : typeof argv.exportRuntime === "string" ? [ argv.exportRuntime ]
+                 : undefined
   });
 
   // bail out if that didn't work

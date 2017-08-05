@@ -26,7 +26,7 @@ The initial test sample must then be checked by hand for possible errors before 
 
 Note that test samples are reduced to just the relevant parts starting at the first `(export ...)` section.
 
-Additional compiler options can be specified per test case on the respective .ts-file's first line as a JSON object starting with a `//!` comment. For example, where malloc is not required specifying `//! { "memoryModel": "bare" }` if it is not used at all or `//! { "memoryModel": "importmalloc" }` if malloc isn't specifically tested is recommended.
+Additional compiler options can be specified per test case on the respective .ts-file's first line as a JSON object starting with a `//!` comment. For example, if the runtime is not required, specify `//! { "noRuntime": true }`.
 
 Interop
 -------

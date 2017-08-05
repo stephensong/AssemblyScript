@@ -1,4 +1,4 @@
-//! { "memoryModel": "importmalloc" }
+//! { "noRuntime": true }
 
 /* class A {
   a: int = 1;

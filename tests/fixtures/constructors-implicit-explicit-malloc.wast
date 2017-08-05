@@ -1,5 +1,5 @@
  (export "test" (func $test))
- (start $.start)
+ (export "memory" (memory $0))
  (func $TestImplicit (type $ii) (param $0 i32) (result i32)
   (return
    (get_local $0)
@@ -8,7 +8,7 @@
  (func $TestExplicit (type $ii) (param $0 i32) (result i32)
   (local $1 i32)
   (set_local $1
-   (call $malloc
+   (call $assembly.d.ts/malloc
     (i32.const 1)
    )
   )
@@ -21,7 +21,7 @@
   (local $1 i32)
   (set_local $0
    (call $TestImplicit
-    (call $malloc
+    (call $assembly.d.ts/malloc
      (i32.const 0)
     )
    )
@@ -31,7 +31,4 @@
     (i32.const 0)
    )
   )
- )
- (func $.start (type $v)
-  (call $init)
  )

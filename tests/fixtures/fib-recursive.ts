@@ -1,4 +1,4 @@
-//! { "memoryModel": "bare" }
+//! { "noRuntime": true }
 
 export function test(num: int): int {
   if (num <= 1) return 1;

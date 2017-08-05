@@ -1,3 +1,33 @@
+/*
+Licensed Under BSD
+
+Copyright (c) 2013, Daniel Holden
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+The views and conclusions contained in the software and documentation are those
+of the authors and should not be interpreted as representing official policies,
+either expressed or implied, of the FreeBSD Project.
+*/
 #include "tgc.h"
 
 static size_t tgc_hash(void *ptr) {
@@ -183,33 +213,32 @@ static void tgc_mark_ptr(tgc_t *gc, void *ptr) {
 
 }
 
-static void tgc_mark_stack(tgc_t *gc) {
+// static void tgc_mark_stack(tgc_t *gc) {
 
-  void *stk, *bot, *top, *p;
-  bot = gc->bottom; top = &stk;
+//   void *stk, *bot, *top, *p;
+//   bot = gc->bottom; top = &stk;
 
-  if (bot == top) { return; }
+//   if (bot == top) { return; }
 
-  if (bot < top) {
-    for (p = top; p >= bot; p = ((char*)p) - sizeof(void*)) {
-      tgc_mark_ptr(gc, *((void**)p));
-    }
-  }
+//   if (bot < top) {
+//     for (p = top; p >= bot; p = ((char*)p) - sizeof(void*)) {
+//       tgc_mark_ptr(gc, *((void**)p));
+//     }
+//   }
 
-  if (bot > top) {
-    for (p = top; p <= bot; p = ((char*)p) + sizeof(void*)) {
-      tgc_mark_ptr(gc, *((void**)p));
-    }
-  }
+//   if (bot > top) {
+//     for (p = top; p <= bot; p = ((char*)p) + sizeof(void*)) {
+//       tgc_mark_ptr(gc, *((void**)p));
+//     }
+//   }
 
-}
+// }
 
 static void tgc_mark(tgc_t *gc) {
 
   size_t i, k;
-
-  jmp_buf env;
-  void (*volatile mark_stack)(tgc_t*) = tgc_mark_stack;
+  // jmp_buf env;
+  // void (*volatile mark_stack)(tgc_t*) = tgc_mark_stack;
 
   if (gc->nitems == 0) { return; }
 
@@ -226,13 +255,13 @@ static void tgc_mark(tgc_t *gc) {
     }
   }
 
-  memset(&env, 0, sizeof(jmp_buf));
-  setjmp(env);
-  mark_stack(gc);
+  // memset(&env, 0, sizeof(jmp_buf));
+  // setjmp(env);
+  // mark_stack(gc);
 
 }
 
-void tgc_sweep(tgc_t *gc) {
+static void tgc_sweep(tgc_t *gc) {
 
   size_t i, j, k, nj, nh;
 
@@ -312,11 +341,11 @@ void tgc_start(tgc_t *gc, void *stk) {
   gc->sweepfactor = 0.5;
 }
 
-void tgc_stop(tgc_t *gc) {
-  tgc_sweep(gc);
-  free(gc->items);
-  free(gc->frees);
-}
+// void tgc_stop(tgc_t *gc) {
+//   tgc_sweep(gc);
+//   free(gc->items);
+//   free(gc->frees);
+// }
 
 void tgc_pause(tgc_t *gc) {
   gc->paused = 1;
@@ -420,15 +449,15 @@ void *tgc_alloc_opt(tgc_t *gc, size_t size, int flags, void(*dtor)(void*)) {
   return ptr;
 }
 
-// void *tgc_calloc_opt(
-//   tgc_t *gc, size_t num, size_t size,
-//   int flags, void(*dtor)(void*)) {
-//   void *ptr = calloc(num, size);
-//   if (ptr != NULL) {
-//     ptr = tgc_add(gc, ptr, num * size, flags, dtor);
-//   }
-//   return ptr;
-// }
+void *tgc_calloc_opt(
+  tgc_t *gc, size_t num, size_t size,
+  int flags, void(*dtor)(void*)) {
+  void *ptr = calloc(num, size);
+  if (ptr != NULL) {
+    ptr = tgc_add(gc, ptr, num * size, flags, dtor);
+  }
+  return ptr;
+}
 
 void tgc_set_dtor(tgc_t *gc, void *ptr, void(*dtor)(void*)) {
   tgc_ptr_t *p  = tgc_get_ptr(gc, ptr);

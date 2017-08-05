@@ -1,5 +1,3 @@
-//! { "memoryModel": "exportmalloc" }
-
 export function i32_trunc_s_f32(): int {
   const a: float = 4294967296.0;
   return a as int; // traps

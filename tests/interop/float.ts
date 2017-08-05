@@ -1,5 +1,3 @@
-//! { "memoryModel": "exportmalloc" }
-
 let a: float[] = new Array(1);
 let b: double[] = new Array(1);
 

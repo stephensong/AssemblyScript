@@ -1,4 +1,4 @@
-//! { "memoryModel": "bare" }
+//! { "noRuntime": true }
 
 export function testSbyte(): sbyte {
   return -1 + 1;

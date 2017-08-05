@@ -1,5 +1,3 @@
-//! { "memoryModel": "exportmalloc" }
-
 let a: string = "abc";
 
 export function getString(): string {

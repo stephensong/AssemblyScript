@@ -234,7 +234,7 @@ declare function isFinite(value: double): bool;
 /** Tests if a 32-bit float is finite. */
 declare function isFinitef(value: float): bool;
 
-// Optional malloc implementation
+// Core runtime
 
 /** Sets a chunk of memory to the provided value `c`. Usually used to reset it to all `0`s. */
 declare function memset(dest: uintptr, c: int, size: uintptr): uintptr;
@@ -244,12 +244,27 @@ declare function memcpy(dest: uintptr, src: uintptr, size: uintptr): uintptr;
 declare function memcmp(left: uintptr, right: uintptr, size: uintptr): int;
 /** Allocates a chunk of memory of the specified size. */
 declare function malloc(size: uintptr): uintptr;
-/** Allocates a chunk of memory for an array of count elements of the specified size. */
-declare function calloc(count: uintptr, size: uintptr): uintptr;
 /** Changes the size of an allocated memory block. */
 declare function realloc(ptr: uintptr, size: uintptr): uintptr;
 /** Frees a previously allocated chunk of memory. */
 declare function free(ptr: uintptr): void;
+
+// Experimental garbage collector runtime
+
+/** Pauses automatic garbage collection. */
+declare function gc_pause(): void;
+/** Resumes automatic garbage collection. */
+declare function gc_resume(): void;
+/** Runs the garbage collector. */
+declare function gc_collect(): void;
+/** Allocates a garbage collector controlled chunk of memory of the specified size. */
+declare function gc_alloc(size: uintptr, flags: int): uintptr;
+/** Changes the size of a garbage collector controlled memory block. */
+declare function gc_realloc(ptr: uintptr, size: uintptr): uintptr;
+/** Retains a gargabe collector controlled memory block. */
+declare function gc_retain(ptr: uintptr): uintptr;
+/** Releases a garbage collector controlled memory block previously retained. */
+declare function gc_release(ptr: uintptr): uintptr;
 
 // Temporary fillers
 

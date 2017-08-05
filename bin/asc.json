@@ -33,12 +33,6 @@
     "aliases": [ "t", "arch" ],
     "default": "wasm32"
   },
-  "memoryModel": {
-    "desc": "Specifies the memory model to use / how to proceed with malloc etc.:\n\nmalloc        Bundles malloc etc. [default]\nexportmalloc  Bundles malloc etc. and exports each\nimportmalloc  Imports malloc etc. from 'env'\nbare          Excludes malloc etc. entirely",
-    "type": "string",
-    "aliases": [ "m", "memorymodel", "memory-model" ],
-    "default": "malloc"
-  },
   "textFormat": {
     "desc": "Specifies the format to use for text output:\n\nsexpr   Emits s-expression syntax (.wast) [default]\nlinear  Emits official linear syntax (.wat)\n\nText format only is emitted when used without --textFile.",
     "type": "string",
@@ -60,6 +54,17 @@
     "type": "boolean",
     "aliases": [ "no-implicit-conversion" ],
     "default": false
+  },
+  "noRuntime": {
+    "desc": "Whether to exclude the runtime.",
+    "type": "boolean",
+    "aliases": [ "no-runtime" ],
+    "default": false
+  },
+  "exportRuntime": {
+    "desc": "Runtime functions to export, defaults to 'malloc' and 'free'. [multiple]",
+    "type": "string",
+    "aliases": [ "e", "export-runtime", "export" ]
   },
   "help": {
     "desc": "Displays this help message.",

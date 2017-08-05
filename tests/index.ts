@@ -164,7 +164,14 @@ function runTests(kind: string, exports: typeof assemblyscript) {
 
       // async subtest
       test.test(kind + " - interop - " + name, test => {
-        testUtil.load(buffer)
+        testUtil.load(buffer, {
+          imports: { // dummy functions for noRuntime=true
+            env: {
+              malloc: function(size: number) { return 0; },
+              memset: function(ptr: number, value: number, size: number) { return ptr; }
+            }
+          }
+        })
         .then(module => runner(test, module))
         .catch(err => {
           test.fail("loading " + name + ".wasm should not be rejected (" + err.message + ")");

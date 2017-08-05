@@ -1,4 +1,4 @@
-//! { "memoryModel": "importmalloc" }
+//! { "noRuntime": true }
 
 export class MyClass {
   static myStaticFunction(): void {}

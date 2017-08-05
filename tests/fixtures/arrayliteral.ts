@@ -1,4 +1,4 @@
-//! { "memoryModel": "importmalloc" }
+//! { "noRuntime": true }
 
 export function test(): int[] {
   return [1, 2, , 3];

@@ -1,4 +1,4 @@
-//! { "memoryModel": "importmalloc" }
+//! { "noRuntime": true }
 
 class A {
   constructor(a: int, b: int = 2) {

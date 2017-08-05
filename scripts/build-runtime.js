@@ -9,63 +9,85 @@ var fs = require("fs");
 
 var basedir = path.join(__dirname, "..", "lib", "runtime");
 
-util.run(path.join(util.bindir, "clang"), [
-  "runtime.c",
-  "-E",
-  "-o", "build/runtime.c"
-], { cwd: basedir })
+build("runtime", "wasm32", { WASM32: 1 })
+.then(() => console.log("complete."));
 
-.then(() =>
+// build("runtime64", "wasm64", { WASM64: 1 })
+// .then(() => console.log("complete."));
 
-util.run(path.join(util.bindir, "clang"), [
-  "runtime.c",
-  "-S",
-  "-O",
-  "-mlittle-endian",
-  "--target=wasm32-unknown-unknown",
-  "-nostdinc",
-  "-nostdlib",
-  "-o", "build/runtime.s"
-], { cwd: basedir }))
+function build(name, target, defines) {
 
-.then(() =>
+  // preprocess
+  var args = [
+    "runtime.c",
+    "-E",
+    "-o", "build/" + name + ".c"
+  ];
+  if (defines)
+    Object.keys(defines).forEach(key => args.push("-D", key + "=" + defines[key]));
 
-util.run(path.join(util.bindir, "s2wasm"), [
-  "build/runtime.s",
-  "--initial-memory", "65536",
-  "--validate", "wasm",
-  "-o", "build/runtime.wast"
-], { cwd: basedir }))
+  return util.run(path.join(util.bindir, "clang"), args, { cwd: basedir })
 
-.then(() =>
+  .then(() => // compile to s-expressions
 
-util.run(path.join(util.bindir, "wasm-opt"), [
-  "build/runtime.wast",
-  "-g",
-  "-Oz",
-  "--coalesce-locals-learning",
-  "--ignore-implicit-traps",
-  "--dce",
-  "--duplicate-function-elimination",
-  "--inlining",
-  "--local-cse",
-  "--merge-blocks",
-  "--optimize-instructions",
-  "--pick-load-signs",
-  "--precompute",
-  "--remove-unused-brs",
-  "--remove-unused-module-elements",
-  "--reorder-locals",
-  "--simplify-locals",
-  "--vacuum",
-  "-o", "build/runtime.wasm"
-], { cwd: basedir }))
+  util.run(path.join(util.bindir, "clang"), [
+    "build/" + name + ".c",
+    "-S",
+    "-Oz",
+    "-mlittle-endian",
+    "--target=" + target + "-unknown-unknown",
+    "-nostdinc",
+    "-nostdlib",
+    "-o", "build/" + name + ".s"
+  ], { cwd: basedir }))
 
-.then(() =>
+  .then(() => // convert to wast
 
-util.run(path.join(util.bindir, "wasm-dis"), [
-  "build/runtime.wasm",
-  "-o", "build/runtime.wast"
-], { cwd: basedir }))
+  util.run(path.join(util.bindir, "s2wasm"), [
+    "build/" + name + ".s",
+    "--initial-memory", "65536",
+    "--validate", "wasm",
+    "-o", "build/" + name + ".wast"
+  ], { cwd: basedir }))
 
-.then(() => console.log("complete"));
+  .then(() => { // internalize functions
+
+    var wastFile = path.join(basedir, "build", name + ".wast");
+    var wast = fs.readFileSync(wastFile, "utf8");
+    wast = wast.replace(/(func|call) (\$)(\w+)\b/g, "$1 $2.$3");
+    fs.writeFileSync(wastFile, wast);
+
+  })
+
+  .then(() => // optimize and convert to wasm
+
+  util.run(path.join(util.bindir, "wasm-opt"), [
+    "build/" + name + ".wast",
+    "-g",
+    "-Oz",
+    "--coalesce-locals-learning",
+    "--ignore-implicit-traps",
+    "--dce",
+    "--duplicate-function-elimination",
+    "--inlining",
+    "--local-cse",
+    "--merge-blocks",
+    "--optimize-instructions",
+    "--pick-load-signs",
+    "--precompute",
+    "--remove-unused-brs",
+    "--remove-unused-module-elements",
+    "--reorder-locals",
+    "--simplify-locals",
+    "--vacuum",
+    "-o", "build/" + name + ".wasm"
+  ], { cwd: basedir }))
+
+  .then(() => // disassemble to optimized wast
+
+  util.run(path.join(util.bindir, "wasm-dis"), [
+    "build/" + name + ".wasm",
+    "-o", "build/" + name + ".wast"
+  ], { cwd: basedir }));
+
+}

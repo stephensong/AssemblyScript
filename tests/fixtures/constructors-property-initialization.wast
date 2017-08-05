@@ -1,5 +1,5 @@
  (export "test" (func $test))
- (start $.start)
+ (export "memory" (memory $0))
  (func $B (type $ii) (param $0 i32) (result i32)
   (i32.store
    (get_local $0)
@@ -22,8 +22,8 @@
   (local $0 i32)
   (set_local $0
    (call $B
-    (call $memset
-     (call $malloc
+    (call $assembly.d.ts/memset
+     (call $assembly.d.ts/malloc
       (i32.const 8)
      )
      (i32.const 0)
@@ -31,7 +31,4 @@
     )
    )
   )
- )
- (func $.start (type $v)
-  (call $init)
  )

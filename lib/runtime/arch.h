@@ -3,9 +3,11 @@
 #define export __attribute__((visibility("default")))
 
 #ifdef WASM64
-#define _Addr long long
+#define _Addr long
+#define UINTPTR_MAX (0xffffffffffffffff)
 #else
 #define _Addr int
+#define UINTPTR_MAX (0xffffffff)
 #endif
 
 typedef unsigned int uint32_t;
@@ -17,7 +19,3 @@ typedef _Addr ptrdiff_t;
 #undef _Addr
 
 #define NULL ((void*)0)
-
-#define UINTPTR_MAX (0xffffffff)
-
-typedef unsigned long __jmp_buf[6];

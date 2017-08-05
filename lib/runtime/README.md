@@ -7,7 +7,7 @@ Memory layout
                                        1               2
        0               8               6               4
       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-      ^ NULL          | HEAP     (1)  | MSPACE (2)    | GC     (3)    |
+      ^ NULL          | _HEAP (1)      | _MSPACE (2)    | _GC (3)     |
       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
       | static memory ...                                           >>>
       |                                                             >>>
@@ -27,4 +27,36 @@ heap is not necessarily aligned to 32 bytes as the table might suggest.
 
 Setup is done by calling init() from the WebAssembly start function. It takes
 the pre-calculated heap offset from memory and configures the runtime
-accordingly by setting MSPACE and GC to their respective values.
+accordingly by setting `_MSPACE` and `_GC` to their respective values.
+
+API
+---
+
+Core runtime:
+
+* **init**(): `void`
+* **memcmp**(vl: `uintptr`, vr: `uintptr`, n: `uintptr`): `int`
+* **memcpy**(dest: `uintptr`, src: `uintptr`, n: `uintptr`): `uintptr`
+* **memset**(dest: `uintptr`, c: `int`, n: `uintptr`): `uintptr`
+* **malloc**(size: `uintptr`): `uintptr`
+* **realloc**(ptr: `uintptr`, size: `uintptr`): `uintptr`
+* **free**(ptr: `uintptr`): `void`
+
+Experimental garbage collector runtime:
+
+* **gc_pause**(): `void`
+* **gc_resume**(): `void`
+* **gc_collect**(): `void`
+* **gc_alloc**(size: `uintptr`, flags: `int`): `uintptr`
+* **gc_realloc**(ptr: `uintptr`, size: `uintptr`): `uintptr`
+* **gc_retain**(ptr: `uintptr`): `uintptr`
+* **gc_release**(ptr: `uintptr`): `uintptr`
+
+In the final WebAssembly binary, runtime function names are prefixed with a dot to avoid conflicts with user-defined functions.
+
+Building
+--------
+
+```
+$> npm run build:runtime
+```

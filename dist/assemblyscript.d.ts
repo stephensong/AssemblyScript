@@ -23,7 +23,7 @@ declare module 'assemblyscript' {
     * @preferred
     */ /** */
   import * as builtins from "assemblyscript/builtins";
-  import { Compiler, CompilerTarget, CompilerMemoryModel } from "assemblyscript/compiler";
+  import { Compiler, CompilerTarget } from "assemblyscript/compiler";
   import * as expressions from "assemblyscript/expressions";
   import * as library from "assemblyscript/library";
   import Profiler from "assemblyscript/profiler";
@@ -33,7 +33,7 @@ declare module 'assemblyscript' {
   import * as util from "assemblyscript/util";
   /** AssemblyScript version. */
   export const version: string;
-  export { builtins, Compiler, CompilerTarget, CompilerMemoryModel, expressions, library, Profiler, reflection, statements, typescript, util };
+  export { builtins, Compiler, CompilerTarget, expressions, library, Profiler, reflection, statements, typescript, util };
 }
 
 declare module 'assemblyscript/builtins' {
@@ -51,6 +51,8 @@ declare module 'assemblyscript/builtins' {
   import * as typescript from "assemblyscript/typescript";
   /** Tests if the specified function name corresponds to a built-in function. */
   export function isBuiltin(name: string, isGlobalName?: boolean): boolean;
+  /** An array of the statically linked runtime function names. */
+  export const runtimeNames: string[];
   /** Tests if the specified function name corresponds to a linked runtime function. */
   export function isRuntime(name: string, isGlobalName?: boolean): boolean;
   /** A pair of TypeScript expressions. */
@@ -125,12 +127,14 @@ declare module 'assemblyscript/compiler' {
       silent?: boolean;
       /** Specifies the target architecture. Defaults to {@link CompilerTarget.WASM32}. */
       target?: CompilerTarget | "wasm32" | "wasm64";
-      /** Specifies the memory model to use. Defaults to {@link CompilerMemoryModel.MALLOC}. */
-      memoryModel?: CompilerMemoryModel | "malloc" | "exportmalloc" | "importmalloc" | "bare";
       /** Whether to disable built-in tree-shaking. Defaults to `false`. */
       noTreeShaking?: boolean;
       /** Whether to disallow implicit type conversions. Defaults to `false`. */
       noImplicitConversion?: boolean;
+      /** Whether to exclude the runtime. */
+      noRuntime?: boolean;
+      /** Runtime functions to export, defaults to 'malloc' and 'free'. */
+      exportRuntime?: string[];
   }
   /** Compiler target. */
   export enum CompilerTarget {
@@ -139,21 +143,10 @@ declare module 'assemblyscript/compiler' {
       /** 64-bit WebAssembly target using ulong pointers. */
       WASM64 = 1,
   }
-  /** Compiler memory model. */
-  export enum CompilerMemoryModel {
-      /** Does not bundle any memory management routines. */
-      BARE = 0,
-      /** Bundles malloc, free, etc. */
-      MALLOC = 1,
-      /** Bundles malloc, free, etc. and exports it to the embedder. */
-      EXPORT_MALLOC = 2,
-      /** Imports malloc, free, etc. as provided by the embedder. */
-      IMPORT_MALLOC = 3,
-  }
   /** A static memory segment. */
   export interface CompilerMemorySegment {
       /** Offset in linear memory. */
-      offset: number;
+      offset: Long;
       /** Data in linear memory. */
       buffer: Uint8Array;
   }
@@ -177,16 +170,16 @@ declare module 'assemblyscript/compiler' {
           [key: string]: binaryen.Signature;
       };
       globalInitializers: binaryen.Expression[];
-      userStartFunction?: binaryen.Function;
-      memoryBase: number;
+      userStartFunction?: reflection.Function;
+      memoryBase: Long;
       memorySegments: CompilerMemorySegment[];
       target: CompilerTarget;
-      memoryModel: CompilerMemoryModel;
       profiler: Profiler;
       currentFunction: reflection.Function;
       stringPool: {
           [key: string]: CompilerMemorySegment;
       };
+      runtimeExports: string[];
       uintptrType: reflection.Type;
       functionTemplates: {
           [key: string]: reflection.FunctionTemplate;
@@ -255,7 +248,7 @@ declare module 'assemblyscript/compiler' {
       /** Adds a global variable. */
       addGlobal(name: string, type: reflection.Type, mutable: boolean, initializerNode?: typescript.Expression): void;
       /** Creates or, if it already exists, looks up a static string and returns its offset in linear memory. */
-      createStaticString(value: string): number;
+      createStaticString(value: string): Long;
       /** Initializes a top-level function. */
       initializeFunction(node: typescript.FunctionDeclaration): reflection.FunctionHandle;
       /** Initializes a class. */
@@ -303,6 +296,8 @@ declare module 'assemblyscript/compiler' {
       resolveTypeArgumentsMap(typeArguments: typescript.TypeNode[], declaration: typescript.FunctionLikeDeclaration | typescript.ClassDeclaration, baseTypeArgumentsMap?: reflection.TypeArgumentsMap): reflection.TypeArgumentsMap;
       /** Computes the binaryen signature identifier of a reflected type. */
       identifierOf(type: reflection.Type): string;
+      /** Obtains the signature of the specified reflected function. */
+      signatureOf(instance: reflection.Function): binaryen.Signature;
       /** Computes the binaryen type of a reflected type. */
       typeOf(type: reflection.Type): binaryen.Type;
       /** Computes the binaryen opcode category (i32, i64, f32, f64) of a reflected type. */
@@ -945,7 +940,7 @@ declare module 'assemblyscript/reflection/function' {
   /** @module assemblyscript/reflection */ /** */
   import * as binaryen from "binaryen";
   import { Class } from "assemblyscript/reflection/class";
-  import { Compiler } from "assemblyscript/compiler";
+  import Compiler from "assemblyscript/compiler";
   import { Type, TypeArgumentsMap } from "assemblyscript/reflection/type";
   import { Variable } from "assemblyscript/reflection/variable";
   import * as typescript from "assemblyscript/typescript";
@@ -998,6 +993,8 @@ declare module 'assemblyscript/reflection/function' {
   }
   /** A function instance with generic parameters resolved. */
   export class Function extends FunctionBase {
+      /** Internal name for use with call operations. */
+      internalName: string;
       /** Corresponding function template. */
       template: FunctionTemplate;
       /** Concrete type arguments. */
@@ -1048,6 +1045,8 @@ declare module 'assemblyscript/reflection/function' {
       addUniqueLocal(type: Type, prefix?: string): Variable;
       /** Compiles a call to this function using the specified arguments. Arguments to instance functions include `this` as the first argument or can specifiy it in `thisArg`. */
       compileCall(argumentNodes: typescript.Expression[], thisArg?: binaryen.Expression): binaryen.Expression;
+      /** Makes a call to this function using the specified operands. */
+      call(operands: binaryen.Expression[]): binaryen.Expression;
   }
   export { Function as default };
   /** A function template with possibly unresolved generic parameters. */

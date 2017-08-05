@@ -1,5 +1,3 @@
-//! { "memoryModel": "exportmalloc" }
-
 let a: long[] = new Array(1);
 
 function start(): void {
