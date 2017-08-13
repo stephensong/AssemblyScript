@@ -82,7 +82,7 @@ function compile() {
   currentModule = assemblyscript.Compiler.compileString(source, {
     silent: true,
     target: assemblyscript.CompilerTarget.WASM32,
-    memoryModel: /\bnew\b/.test(source) ? assemblyscript.CompilerMemoryModel.MALLOC : assemblyscript.CompilerMemoryModel.BARE
+    noRuntime: !/\bnew\b/.test(source)
   });
 
   var diagnostics = assemblyscript.typescript.formatDiagnostics(assemblyscript.Compiler.lastDiagnostics).trim();
